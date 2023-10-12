@@ -1,4 +1,4 @@
-FROM php:8.3-rc-zts
+FROM php:8.3-rc-apache
 
 RUN a2enmod rewrite
 

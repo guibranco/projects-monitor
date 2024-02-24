@@ -20,7 +20,7 @@ require_once("config.php");
 
     function loadData() {
       var xhr = new XMLHttpRequest();
-      xhr.open("GET", "<?php echo BASE_URL; ?>api.php", false);
+      xhr.open("GET", "https://guilhermebranco.com.br/webhooks/api.php", false);
       xhr.send();
       return JSON.parse(xhr.responseText);
     }

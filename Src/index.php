@@ -66,7 +66,7 @@ require_once("config.php");
       var table = new google.visualization.Table(document.getElementById('table_div'));
       table.draw(dataFeed, optionsFeed);
 
-      setTimeout(drawChart, 15000);
+      setTimeout(drawChart, 10000);
     }
   </script>
 </head>

@@ -4,7 +4,9 @@ require_once("config.php");
 
 ?>
 
-<html>
+<!DOCTYPE html>
+<html lang="en">
+
 <head>
   <title>Projects Monitor</title>
   <style>

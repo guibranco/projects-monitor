@@ -65,6 +65,8 @@ require_once("config.php");
       pieChart.draw(dataEvents, optionsEvents);
       var table = new google.visualization.Table(document.getElementById('table_div'));
       table.draw(dataFeed, optionsFeed);
+
+      setTimeout(drawChart, 15000);
     }
   </script>
 </head>

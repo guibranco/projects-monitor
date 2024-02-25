@@ -62,7 +62,6 @@ require_once("config.php");
 
       var maxTo = Math.round(response["total"] * 1.1);
       var maxFrom = Math.round(response["total"] * 0.9);
-
       var minTo = Math.round(response["total"] * 0.5);
 
       var optionsTotal = {
@@ -72,10 +71,10 @@ require_once("config.php");
         width: '100%',
         height: '100%',
         min: 0,
-        max: maxTo,
-        greenFrom: 0, greenTo: minTo,
-        yellowFrom: minTo, yellowTo: maxFrom,
-        redFrom: maxFrom, redTo: maxTo
+        max: 120000,
+        greenFrom: 0, greenTo: 40000,
+        yellowFrom: 40000, yellowTo: 80000,
+        redFrom: 80000, redTo: 120000
       };
 
       var lineChart = new google.visualization.LineChart(document.getElementById('line_chart'));

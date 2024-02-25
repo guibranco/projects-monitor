@@ -87,7 +87,7 @@ require_once("config.php");
       table.draw(dataFeed, optionsFeed);
       var guageChart = new google.visualization.Gauge(document.getElementById('guage_chart'));
       guageChart.draw(dataTotal, optionsTotal);
-      setTimeout(drawChart, 10000);
+      setTimeout(drawChart, 15000);
     }
   </script>
 </head>

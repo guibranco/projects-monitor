@@ -95,7 +95,7 @@ require_once("config.php");
   <img alt=""
     src="https://github-readme-stats-guibranco.vercel.app/api?username=guibranco&line_height=28&card_width=490&hide_title=true&hide_border=true&show_icons=true&theme=chartreuse-dark&icon_color=7FFF00&include_all_commits=true&count_private=true&show=reviews,discussions_started&count_private=true" />
   <img alt=""
-    src="https://github-readme-streak-stats-flax.vercel.app/?user=guibranco&theme=github-green-purple&fire=FF6600" />
+    src="https://github-readme-streak-stats-guibranco.vercel.app/?user=guibranco&theme=github-green-purple&fire=FF6600" />
   <div style="clear:both;"></div>
   <div id="pie_chart" style="width: 70%; height: 300px; float: left;"></div>
   <div id="guage_chart" style="width: 20%; height: 300px; float: left;background-color: rgb(13, 17, 23);"></div>

@@ -2,5 +2,9 @@
     "sonarlint.connectedMode.project": {
         "connectionId": "guibranco",
         "projectKey": "guibranco_projects-monitor"
-    }
+    },
+    "cSpell.words": [
+        "corechart",
+        "guibranco"
+    ]
 }

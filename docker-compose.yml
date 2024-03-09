@@ -2,11 +2,49 @@ version: "3.1"
 
 services:
   www:
+    container_name: www
     build: .
     ports:
-      - "8005:80"
+      - "8009:80"
     volumes:
       - ./Src:/var/www/html/
       - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
     networks:
       - default
+
+  database:
+    container_name: database
+    image: mysql:5.7
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: test
+      MYSQL_USER: test
+      MYSQL_PASSWORD: test
+    volumes:
+      - my-db:/var/lib/mysql
+    networks:
+      - default
+
+  queue:
+    container_name: queue
+    image: rabbitmq:3-management    
+    ports:
+      - 15672:15672
+      - 5672:5672
+    restart: unless-stopped
+    networks:
+      - default
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - default
+
+volumes:
+  my-db:

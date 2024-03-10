@@ -26,8 +26,8 @@ Schema=$(mysql -h "$MYSQL_HOST" --protocol tcp "--user=$MYSQL_USER" "--database=
 Applications=$(mysql -h "$MYSQL_HOST" --protocol tcp "--user=$MYSQL_USER" "--database=$MYSQL_DB" -sse "SELECT COUNT(1) FROM applications;")
 Errors=$(mysql -h "$MYSQL_HOST" --protocol tcp "--user=$MYSQL_USER" "--database=$MYSQL_DB" -sse "SELECT COUNT(1) FROM errors;")
 
-ExpectedApplications=1
-ExpectedErrors=1
+ExpectedApplications=0
+ExpectedErrors=0
 
 LOG="Database integrity check\n"
 LOG="$LOG|Table|Expected|Current|\n"

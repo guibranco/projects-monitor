@@ -13,7 +13,7 @@ class Logger
         $data = $config->getRequestData();
         $conn = (new Database())->getConn();
 
-        $sql = "INSERT INTO logs (`application_id`, `class`, `method`, `file`, `line`, `message`, `stack_trace`) ";
+        $sql = "INSERT INTO errors (`application_id`, `class`, `method`, `file`, `line`, `message`, `stack_trace`) ";
         $sql .= "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = $conn->prepare($sql);

@@ -5,8 +5,10 @@ namespace GuiBranco\ProjectsMonitor\Library;
 use GuiBranco\ProjectsMonitor\Configuration\Config;
 use GuiBranco\ProjectsMonitor\Library\Database;
 
-class Logger {
-    public function saveLog($applicationId) {
+class Logger
+{
+    public function saveLog($applicationId)
+    {
         $config = new Config();
         $data = $config->getRequestData();
         $conn = (new Database())->getConn();
@@ -15,7 +17,7 @@ class Logger {
         $sql .= "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = $conn->prepare($sql);
-        
+
         $appId = $applicationId;
         $class = $data["class"];
         $method = $data["method"];
@@ -23,7 +25,7 @@ class Logger {
         $line = $data["line"];
         $message = $data["message"];
         $stackTrace = $data["stack_trace"];
-        
+
         $stmt->bind_param("isssiss", $appId, $class, $method, $file, $line, $message, $stackTrace);
 
         if(!$stmt->execute()) {

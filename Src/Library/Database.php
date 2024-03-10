@@ -11,7 +11,8 @@ class Database
 
     private $conn = null;
 
-    public function getConn() {
+    public function getConn()
+    {
         return $this->conn;
     }
 
@@ -22,7 +23,7 @@ class Database
         }
 
         require_once __DIR__ . "/../secrets/mySql.secrets.php";
-        
+
         $this->host = $mySqlHost;
         $this->user = $mySqlUser;
         $this->password = $mySqlPassword;
@@ -35,7 +36,8 @@ class Database
         $this->connect();
     }
 
-    public function connect(){
+    public function connect()
+    {
         $this->conn = new \mysqli($this->host, $this->user, $this->password, $this->database);
         if ($this->conn->connect_error) {
             throw new \Exception("Connection failed: " . $this->conn->connect_error);

@@ -28,9 +28,11 @@ class Config
         return $headers;
     }
 
-    public function getRequestData($headers)
+    public function getRequestData()
     {
         $data = json_decode(file_get_contents('php://input'), true);
+
+        $headers = $this->getRequestHeaders();
 
         if (
             isset($headers["Content-Type"]) &&

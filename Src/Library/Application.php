@@ -11,7 +11,8 @@ class Application
     private $database = null;
     private $application = null;
 
-    public function getApplicationId(){
+    public function getApplicationId()
+    {
         return $this->application["id"];
     }
 

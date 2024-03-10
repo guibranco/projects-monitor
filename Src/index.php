@@ -129,9 +129,9 @@ require_once("config.php");
   <img id="gh_stats" alt="" src="" />
   <img id="gh_streak" alt="" src="" />
   <div style="clear:both;"></div>
-  <div id="pie_chart" style="width: 35%; height: 300px; float: left;"></div>
-  <div id="guage_chart" style="width: 20%; height: 300px; float: left;background-color: rgb(13, 17, 23);"></div>
-  <div id="guage_chart_2" style="width: 20%; height: 300px; float: left;background-color: rgb(13, 17, 23);"></div>
+  <div id="pie_chart" style="width: 33%; height: 300px; float: left;"></div>
+  <div id="guage_chart" style="width: 20%; height: 300px; float: left;background-color: white;"></div>
+  <div id="guage_chart_2" style="width: 20%; height: 300px; float: left;background-color: white;"></div>
   <div id="queues" style="width:25%; padding-top: 10px; float: left;"></div>
   <div style="clear:both;"></div>
   <div id="feed"></div>

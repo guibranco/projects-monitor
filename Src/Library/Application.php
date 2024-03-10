@@ -36,18 +36,19 @@ class Application
 
         $conn = $this->database->getConn();
 
-        $sql = "SELECT * FROM applications WHERE app_key = :app_key AND app_secret = :app_secret";
+        $sql = "SELECT * FROM applications WHERE app_key = ? AND app_secret = ?";
         $stmt = $conn->prepare($sql);
-        $stmt->bindParam(":app_key", $appKey);
-        $stmt->bindParam(":app_secret", $appSecret);
+        $stmt->bind_param("ss", $appKey, $appSecret);
         $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_array(MYSQLI_ASSOC);
 
-        if ($stmt->rowCount() == 0) {
+        if($row ==null){
             http_response_code(403);
             return false;
         }
 
-        $this->application = $stmt->fetch();
+        $this->application = $row;
 
         $stmt->close();
     }

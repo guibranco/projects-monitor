@@ -51,5 +51,6 @@ class Application
         $this->application = $row;
 
         $stmt->close();
+        return true;
     }
 }

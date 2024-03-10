@@ -1,6 +1,11 @@
 name: PHP Linting
 
-on: pull_request
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
 
 jobs:
 
@@ -9,6 +14,8 @@ jobs:
 
     steps:
 
-        - uses: actions/checkout@v4
+        - name: Checkout code
+          uses: actions/checkout@v4
 
-        - uses: michaelw90/PHP-Lint@master
+        - name: Check PHP Lint
+          uses: michaelw90/PHP-Lint@master

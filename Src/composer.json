@@ -1,0 +1,18 @@
+{
+    "name": "guibranco/projects-monitor",
+    "description": "The projects monitor",
+    "type": "project",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "GuiBranco\\ProjectsMonitor\\": "."
+        }
+    },
+    "authors": [
+        {
+            "name": "Guilherme Branco Stracini",
+            "email": "guilherme@guilhermebranco.com.br"
+        }
+    ],
+    "require": {}
+}

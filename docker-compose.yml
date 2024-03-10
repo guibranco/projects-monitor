@@ -5,12 +5,29 @@ services:
     container_name: projects-monitor
     build: .
     ports:
-      - "8009:80"
+      - "8000:80"
     volumes:
       - ./Src:/var/www/html/
       - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
     networks:
       - default
+
+  database:
+    container_name: database
+    image: mysql:5.7
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: test
+      MYSQL_USER: test
+      MYSQL_PASSWORD: test
+    volumes:
+      - my-db:/var/lib/mysql
+    networks:
+      - default
+
 
 volumes:
   my-db:

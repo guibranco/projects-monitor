@@ -1,7 +1,10 @@
 <?php
 
-require_once("config.php");
+require_once 'vendor/autoload.php';
 
+use GuiBranco\ProjectsMonitor\Configuration\Config;
+
+$config = new Config();
 ?>
 
 <!DOCTYPE html>

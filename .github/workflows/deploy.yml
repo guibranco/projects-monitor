@@ -1,10 +1,11 @@
 name: Deploy via ftp
+
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
-concurrency: 
+concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
@@ -12,14 +13,143 @@ jobs:
   deploy:
     name: Deploy to FTP
     runs-on: ubuntu-latest
+    outputs:
+      semVer: ${{ steps.gitversion.outputs.semVer }}
+
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Upload service
+        with:
+          fetch-depth: 0
+
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            src:
+              - "Src/**"
+
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v0
+        with:
+          versionSpec: "5.x"
+
+      - name: Determine Version
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v0
+        with:
+          useConfigFile: true
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        if: ${{ steps.changes.outputs.src == 'true' }}
+        with:
+          path: /tmp/composer-cache
+          key: ${{ runner.os }}-${{ hashFiles('**/composer.lock') }}
+
+      - name: Install dependencies
+        uses: "php-actions/composer@v6"
+        if: ${{ steps.changes.outputs.src == 'true' }}
+        with:
+          php_extensions: sockets
+          dev: no
+          progress: yes
+          working_dir: "./Src/"
+
+      - name: Create .htaccess secrets file
+        if: ${{ steps.changes.outputs.src == 'true' }}
+        run: |
+          cd Src
+          mkdir -p secrets
+          cd secrets
+          echo "Deny from all" >> .htaccess
+
+      - name: Create MySQL secrets file
+        if: ${{ steps.changes.outputs.src == 'true' }}
+        run: |
+          cd Src
+          mkdir -p secrets
+          cd secrets
+          echo "<?php" >> mySql.secrets.php
+          echo "\$mySqlHost     = \"127.0.0.1\";" >> mySql.secrets.php
+          echo "\$mySqlUser     = \"${{ secrets.MYSQL_USER }}\";" >> mySql.secrets.php
+          echo "\$mySqlPassword = \"${{ secrets.MYSQL_PASSWORD }}\";" >> mySql.secrets.php
+          echo "\$mySqlDatabase = \"${{ secrets.MYSQL_DATABASE }}\";" >> mySql.secrets.php
+
+      - name: Upload files
+        if: ${{ steps.changes.outputs.src == 'true' }}
         uses: sebastianpopp/ftp-action@releases/v2
         with:
           host: ${{ secrets.FTP_SERVER }}
           user: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          localDir: "Src"
+          localDir: "Src/"
           remoteDir: "/"
+
+  database_migrations:
+    name: Database migrations
+    runs-on: ubuntu-latest
+    needs: [deploy]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check changes in Sql folder
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            sql:
+              - "Sql/**"
+              - "Tools/**"
+
+      - name: Attach WireGuard connection
+        shell: bash
+        run: |
+          sudo apt install resolvconf
+          sudo apt install wireguard
+          echo "${{ secrets.WIREGUARD_CONFIG }}" > wg0.conf
+          sudo chmod 600 wg0.conf
+          sudo wg-quick up ./wg0.conf
+        
+      - name: Check if schema version table exists
+        id: new_installation
+        if: ${{ steps.changes.outputs.sql != 'true' }}
+        env:
+          MYSQL_PWD: ${{ secrets.MYSQL_PASSWORD_MIGRATION }}
+        run: |
+          chmod +x Tools/db-check.sh
+          Tools/db-check.sh "${{ secrets.MYSQL_SERVER }}" "${{ secrets.MYSQL_USER_MIGRATION }}" "${{ secrets.MYSQL_DATABASE }}"
+
+      - name: Run database migrations
+        if: ${{ steps.changes.outputs.sql == 'true' || steps.new_installation.outputs.not_found == 'true' }}
+        env:
+          MYSQL_PWD: ${{ secrets.MYSQL_PASSWORD_MIGRATION }}
+        run: |
+          chmod +x Tools/db-migration.sh
+          Tools/db-migration.sh Sql "${{ secrets.MYSQL_SERVER }}" "${{ secrets.MYSQL_USER_MIGRATION }}" "${{ secrets.MYSQL_DATABASE }}"
+
+      - name: Detach WireGuard connection
+        shell: bash
+        run: sudo wg-quick down ./wg0.conf
+
+  create_release:
+    name: Create release
+    needs: [deploy, database_migrations]
+    env:
+      SEMVER: ${{ needs.deploy.outputs.semVer }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create Release
+        uses: ncipollo/release-action@v1.14.0
+        with:
+          skipIfReleaseExists: true
+          allowUpdates: false
+          draft: false
+          makeLatest: true
+          tag: v${{ env.SEMVER }}
+          name: Release v${{ env.SEMVER }}
+          generateReleaseNotes: true
+          body: Release ${{ env.SEMVER }} of ${{ github.repository }}

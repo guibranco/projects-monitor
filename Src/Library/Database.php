@@ -1,0 +1,46 @@
+<?php
+
+namespace GuiBranco\ProjectsMonitor\Library;
+
+class Database
+{
+    private $host = "localhost";
+    private $user = "";
+    private $password = "";
+    private $database = "";
+
+    private $conn = null;
+
+    public function getConn() {
+        return $this->conn;
+    }
+
+    public function __construct()
+    {
+        if (!file_exists(__DIR__ . "/../secrets/mySql.secrets.php")) {
+            throw new \Exception("File not found: mySql.secrets.php");
+        }
+
+        require_once __DIR__ . "/../secrets/mySql.secrets.php";
+        
+        $this->host = $mySqlHost;
+        $this->user = $mySqlUser;
+        $this->password = $mySqlPass;
+        $this->database = $mySqlDatabase;
+
+        if (empty($this->host) || empty($this->user) || empty($this->password) || empty($this->database)) {
+            throw new \Exception("Invalid mySql.secrets.php");
+        }
+
+        $this->connect();
+    }
+
+    public function connect(){
+        $this->conn = new \mysqli($this->host, $this->user, $this->password, $this->database);
+        if ($this->conn->connect_error) {
+            throw new \Exception("Connection failed: " . $this->conn->connect_error);
+        }
+
+        $this->conn->set_charset("utf8mb4");
+    }
+}

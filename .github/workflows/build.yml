@@ -1,0 +1,236 @@
+name: Build
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    permissions: write-all
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            src:
+              - "Src/**"
+              - "Tests/**"
+              - "Tools/**"
+            sql:
+              - "Sql/**"
+              - "Tools/**"
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: /tmp/composer-cache
+          key: ${{ runner.os }}-${{ hashFiles('**/composer.lock') }}
+
+      - name: Install dependencies
+        uses: "php-actions/composer@v6"
+        with:
+          php_extensions: sockets
+          dev: no
+          progress: yes
+          working_dir: "./Src/"
+
+      - name: Create MySQL secrets file
+        run: |
+          cd Src
+          mkdir -p secrets
+          cd secrets
+          echo "<?php" >> mySql.secrets.php
+          echo "\$mySqlHost     = \"database\";" >> mySql.secrets.php
+          echo "\$mySqlUser     = \"test\";" >> mySql.secrets.php
+          echo "\$mySqlPassword = \"test\";" >> mySql.secrets.php
+          echo "\$mySqlDatabase = \"test\";" >> mySql.secrets.php
+
+      - name: Docker compose up
+        run: docker-compose up -d
+
+      - name: Wait for database to start
+        run: sleep 10
+
+      - name: Run database migrations
+        id: db_migration
+        env:
+          MYSQL_PWD: test
+        run: |
+          chmod +x Tools/db-migration.sh
+          Tools/db-migration.sh Sql "localhost" "test" "test"
+
+      - name: Check database
+        env:
+          MYSQL_PWD: test
+        run: |
+          chmod +x Tools/db-check.sh
+          Tools/db-check.sh "localhost" "test" "test"
+
+      - name: Test Requests
+        id: test_requests
+        run: |
+          chmod +x Tests/request-tests.sh
+          Tests/request-tests.sh "Tests/Requests"
+
+      - name: Update PR with comment (request tests - failed)
+        if: failure() && steps.test_requests.outputs.error == 'true'
+        uses: mshick/add-pr-comment@v2
+        with:
+          refresh-message-position: true
+          message-id: "requests"
+          message: |
+            :test_tube: **Request tests summary**
+
+            :x: The request tests failed.
+            ${{ steps.test_requests.outputs.requests_failed }}
+
+            <details>
+              <summary>Last failed response</summary>
+
+              ```
+              ${{ steps.test_requests.outputs.response }}
+              
+              ```
+              
+            </details>
+
+      - name: Update PR with comment (request tests - successed)
+        if: success()
+        uses: mshick/add-pr-comment@v2
+        with:
+          refresh-message-position: true
+          message-id: "requests"
+          message: |
+            :test_tube: **Request tests summary**
+
+            :white_check_mark: All test requests succeeded
+
+      - name: Check database
+        id: db_integrity
+        env:
+          MYSQL_PWD: test
+        run: |
+          chmod +x Tests/db-integrity.sh
+          Tests/db-integrity.sh "localhost" "test" "test"
+
+      - name: Update PR with comment (database integrity - failed)
+        if: failure() && steps.db_integrity.outputs.error == 'true'
+        uses: mshick/add-pr-comment@v2
+        with:
+          refresh-message-position: true
+          message-id: "db-integrity"
+          message: |
+            :mag: **Database integrity summary**
+
+            :x: The database integrity check failed.
+            ${{ steps.db_integrity.outputs.log }}
+
+      - name: Update PR with comment (database integrity - successed)
+        if: success()
+        uses: mshick/add-pr-comment@v2
+        with:
+          refresh-message-position: true
+          message-id: "db-integrity"
+          message: |
+            :mag: **Database integrity summary**
+
+            :white_check_mark: The database integrity check succeeded
+
+      - name: Attach WireGuard connection
+        if: steps.changes.outputs.sql == 'true'
+        shell: bash
+        run: |
+          sudo apt install resolvconf
+          sudo apt install wireguard
+          echo "${{ secrets.WIREGUARD_CONFIG }}" > wg0.conf
+          sudo chmod 600 wg0.conf
+          sudo wg-quick up ./wg0.conf
+
+      - name: Dry Run database migrations
+        if: github.actor != 'dependabot[bot]' && steps.changes.outputs.sql == 'true'
+        continue-on-error: true
+        id: dry_run
+        env:
+          MYSQL_PWD: ${{ secrets.MYSQL_PASSWORD_MIGRATION }}
+        run: |
+          chmod +x Tools/db-migration.sh
+          Tools/db-migration.sh Sql "${{ secrets.MYSQL_SERVER }}" "${{ secrets.MYSQL_USER_MIGRATION }}" "${{ secrets.MYSQL_DATABASE }}" --dry-run
+
+      - name: Detach WireGuard connection
+        if: steps.changes.outputs.sql == 'true'
+        shell: bash
+        run: sudo wg-quick down ./wg0.conf
+
+      - name: Update PR with comment (migration error)
+        if: failure() && steps.dry_run.outputs.error == 'true'
+        uses: mshick/add-pr-comment@v2
+        with:
+          refresh-message-position: true
+          message-id: "migrations"
+          message: |
+            :game_die: **Database migration summary**
+
+            :x: The database migration plan failed.
+            ${{ steps.db_migration.outputs.error }}
+
+      - name: Update PR with comment (migration steps - changed)
+        if: steps.changes.outputs.sql == 'true' && steps.dry_run.outputs.files != ''
+        uses: mshick/add-pr-comment@v2
+        with:
+          refresh-message-position: true
+          message-id: "migrations"
+          message: |
+            :game_die: **Database migration summary**
+
+            :rocket: The following files will be applied to the database when this PR is merged:
+            ${{ steps.dry_run.outputs.files }}
+
+      - name: Update PR with comment (migration steps - no changes)
+        if: steps.changes.outputs.sql == 'true' && steps.dry_run.outputs.files == ''
+        uses: mshick/add-pr-comment@v2
+        with:
+          refresh-message-position: true
+          message-id: "migrations"
+          message: |
+            :game_die: **Database migration summary**
+
+            :white_check_mark: All migrations have been already applied to the database.
+
+      - name: Smoke tests on API
+        id: smoke_tests
+        run: |
+          chmod +x Tests/smoke-tests.sh
+          Tests/smoke-tests.sh
+
+      - name: Update PR with comment (smoke tests - failed)
+        if: failure() && steps.smoke_tests.outputs.error == 'true'
+        uses: mshick/add-pr-comment@v2
+        with:
+          refresh-message-position: true
+          message-id: "smoke-tests"
+          message: |
+            :fire_engine: **Smoke tests summary**
+
+            :rotating_light: The smoke tests failed.
+
+            ```
+              ${{ steps.smoke_tests.outputs.content }}
+              
+            ```
+
+      - name: Update PR with comment (smoke tests - successed)
+        if: steps.smoke_tests.outputs.error != 'true'
+        uses: mshick/add-pr-comment@v2
+        with:
+          refresh-message-position: true
+          message-id: "smoke-tests"
+          message: |
+            :fire_engine: **Smoke tests summary**
+
+            :fire: Smoke tests passed!

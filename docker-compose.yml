@@ -5,7 +5,7 @@ services:
     container_name: projects-monitor
     build: .
     ports:
-      - "8009:80"
+      - "8000:80"
     volumes:
       - ./Src:/var/www/html/
       - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini

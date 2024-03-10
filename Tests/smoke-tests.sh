@@ -8,9 +8,9 @@ if [ "$RESULT" -ne 200 ]; then
     exit 1
 fi
 
-RESULT=$(curl -s -o /dev/null -w "%{http_code}" --location "http://localhost:8000/api/v1/logs.php")
+RESULT=$(curl -s -o /dev/null -w "%{http_code}" --location "http://localhost:8000/api/v1/track-error.php")
 if [ "$RESULT" -ne 401 ]; then
-    CONTENT=$(curl --location "http://localhost:8000/api/v1/logs.php")
+    CONTENT=$(curl --location "http://localhost:8000/api/v1/track-error.php")
     echo "content=$CONTENT">>"$GITHUB_OUTPUT"
     echo "error=true">>"$GITHUB_OUTPUT"
     exit 1

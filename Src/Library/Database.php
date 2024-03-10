@@ -19,7 +19,7 @@ class Database
     public function __construct()
     {
         global $mySqlHost, $mySqlUser, $mySqlPassword, $mySqlDatabase;
-        
+
         if (!file_exists(__DIR__ . "/../secrets/mySql.secrets.php")) {
             throw new \Exception("File not found: mySql.secrets.php");
         }

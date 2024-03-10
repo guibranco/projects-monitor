@@ -43,7 +43,7 @@ class Application
         $result = $stmt->get_result();
         $row = $result->fetch_array(MYSQLI_ASSOC);
 
-        if($row ==null){
+        if($row == null) {
             http_response_code(403);
             return false;
         }

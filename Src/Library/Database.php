@@ -25,7 +25,7 @@ class Database
         
         $this->host = $mySqlHost;
         $this->user = $mySqlUser;
-        $this->password = $mySqlPass;
+        $this->password = $mySqlPassword;
         $this->database = $mySqlDatabase;
 
         if (empty($this->host) || empty($this->user) || empty($this->password) || empty($this->database)) {

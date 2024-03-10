@@ -19,6 +19,19 @@ class Logger
         $stmt = $conn->prepare($sql);
 
         $appId = $applicationId;
+
+        if (
+            !isset($data["class"]) ||
+            !isset($data["method"]) ||
+            !isset($data["file"]) ||
+            !isset($data["line"]) ||
+            !isset($data["message"]) ||
+            !isset($data["stack_trace"])
+        ) {
+            return false;
+        }
+
+
         $class = $data["class"];
         $method = $data["method"];
         $file = $data["file"];
@@ -28,7 +41,7 @@ class Logger
 
         $stmt->bind_param("isssiss", $appId, $class, $method, $file, $line, $message, $stackTrace);
 
-        if(!$stmt->execute()) {
+        if (!$stmt->execute()) {
             return false;
         }
         return true;

@@ -9,6 +9,4 @@ CREATE TABLE
         PRIMARY KEY (`Sequence`),
         UNIQUE (`Filename`),
         UNIQUE (`Checksum`)
-    ) ENGINE = InnoDB;
-
-ALTER TABLE `schema_version` CONVERT TO CHARACTER SET utf8;
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8;

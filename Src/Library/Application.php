@@ -49,7 +49,5 @@ class Application
         $this->application = $stmt->fetch();
 
         $stmt->close();
-
-        print_r($this->application);
     }
 }

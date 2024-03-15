@@ -58,7 +58,7 @@ class Logger
         $message = isset($data["message"]) ? $data["message"] : "none";
         $details = isset($data["details"]) ? $data["details"] : "none";
 
-        $stmt->bind_param("isssisssss", $appId, $class, $function, $file, $line, $object, $type, $args, $message, details);
+        $stmt->bind_param("isssisssss", $appId, $class, $function, $file, $line, $object, $type, $args, $message, $details);
 
         return $stmt->execute();
     }

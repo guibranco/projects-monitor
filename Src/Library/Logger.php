@@ -26,15 +26,15 @@ class Logger
 
         $appId = $applicationId;
 
-        $class = isset ($data["class"]) ? $data["class"] : "none";
-        $function = isset ($data["function"]) ? $data["function"] : "none";
-        $file = isset ($data["file"]) ? $data["file"] : "none";
-        $line = isset ($data["line"]) ? $data["line"] : "none";
-        $object = isset ($data["object"]) ? $data["object"] : "none";
-        $type = isset ($data["type"]) ? $data["type"] : "none";
-        $args = isset ($data["args"]) ? $data["args"] : "none";
-        $message = isset ($data["message"]) ? $data["message"] : "none";
-        $details = isset ($data["details"]) ? $data["details"] : "none";
+        $class = isset($data["class"]) ? $data["class"] : "none";
+        $function = isset($data["function"]) ? $data["function"] : "none";
+        $file = isset($data["file"]) ? $data["file"] : "none";
+        $line = isset($data["line"]) ? $data["line"] : "none";
+        $object = isset($data["object"]) ? $data["object"] : "none";
+        $type = isset($data["type"]) ? $data["type"] : "none";
+        $args = isset($data["args"]) ? $data["args"] : "none";
+        $message = isset($data["message"]) ? $data["message"] : "none";
+        $details = isset($data["details"]) ? $data["details"] : "none";
 
         $stmt->bind_param("isssisssss", $appId, $class, $function, $file, $line, $object, $type, $args, $message, $details);
 
@@ -44,7 +44,8 @@ class Logger
         return $result;
     }
 
-    public function getTotal(){
+    public function getTotal()
+    {
         $sql = "SELECT COUNT(1) as total FROM messages;";
         $stmt = $this->connection->prepare($sql);
         $stmt->execute();
@@ -55,7 +56,8 @@ class Logger
         return $total;
     }
 
-    public function getTotalByApplications(){
+    public function getTotalByApplications()
+    {
         $sql = "SELECT a.name, COUNT(1) as total FROM messages as m ";
         $sql .= "INNER JOIN applications as a ON m.application_id = a.id ";
         $sql .= "GROUP BY m.application_id;";

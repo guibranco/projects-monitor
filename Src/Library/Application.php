@@ -36,7 +36,7 @@ class Application
 
         $conn = $this->database->getConnection();
 
-        $sql = "SELECT * FROM applications WHERE `key` = ? AND `secret` = ?";
+        $sql = "SELECT * FROM applications WHERE `key` = ? AND `token` = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("ss", $appKey, $appSecret);
         $stmt->execute();

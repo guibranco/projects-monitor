@@ -34,7 +34,7 @@ class Application
         $appKey = $headers["X-API-KEY"];
         $appSecret = $headers["X-API-TOKEN"];
 
-        $conn = $this->database->getConn();
+        $conn = $this->database->getConnection();
 
         $sql = "SELECT * FROM applications WHERE `key` = ? AND `secret` = ?";
         $stmt = $conn->prepare($sql);

@@ -12,5 +12,5 @@ if(!$application->validate()) {
 }
 
 $log = new Logger();
-$result = $log->saveLog($application->getApplicationId());
+$result = $log->saveError($application->getApplicationId());
 echo json_encode($result);

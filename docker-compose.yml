@@ -1,8 +1,8 @@
 version: "3.1"
 
 services:
-  www:
-    container_name: projects-monitor
+  web:
+    container_name: projects-monitor-web
     build: .
     ports:
       - "8000:80"
@@ -13,7 +13,7 @@ services:
       - default
 
   database:
-    container_name: database
+    container_name: projects-monitor-database
     image: mysql:5.7
     restart: always
     ports:
@@ -24,10 +24,10 @@ services:
       MYSQL_USER: test
       MYSQL_PASSWORD: test
     volumes:
-      - my-db:/var/lib/mysql
+      - projects-monitor-db:/var/lib/mysql
     networks:
       - default
 
 
 volumes:
-  my-db:
+  projects-monitor-db:

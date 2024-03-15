@@ -24,17 +24,17 @@ SqlFiles=(Sql/*.sql)
 Files=${#SqlFiles[@]}
 Schema=$(mysql -h "$MYSQL_HOST" --protocol tcp "--user=$MYSQL_USER" "--database=$MYSQL_DB" -sse "SELECT COUNT(1) FROM schema_version;")
 Applications=$(mysql -h "$MYSQL_HOST" --protocol tcp "--user=$MYSQL_USER" "--database=$MYSQL_DB" -sse "SELECT COUNT(1) FROM applications;")
-Errors=$(mysql -h "$MYSQL_HOST" --protocol tcp "--user=$MYSQL_USER" "--database=$MYSQL_DB" -sse "SELECT COUNT(1) FROM errors;")
+Messages=$(mysql -h "$MYSQL_HOST" --protocol tcp "--user=$MYSQL_USER" "--database=$MYSQL_DB" -sse "SELECT COUNT(1) FROM messages;")
 
-ExpectedApplications=0
-ExpectedErrors=0
+ExpectedApplications=1
+ExpectedMessages=1
 
 LOG="Database integrity check\n"
 LOG="$LOG|Table|Expected|Current|\n"
 LOG="$LOG|---|---|---|\n"
 LOG="$LOG|Schema|$Files|$Schema|\n"
 LOG="$LOG|Applications|$ExpectedApplications|$Applications|\n"
-LOG="$LOG|Errors|$ExpectedErrors|$Errors|\n"
+LOG="$LOG|Messages|$ExpectedMessages|$Messages|\n"
 
 echo -e "$LOG"
 {
@@ -45,7 +45,7 @@ echo -e "$LOG"
 
 if [ "$Schema" -eq "$Files" ] &&
     [ "$Applications" -eq "$ExpectedApplications" ] &&
-    [ "$Errors" -eq "$ExpectedErrors" ]; then
+    [ "$Messages" -eq "$ExpectedMessages" ]; then
     echo "Database is correct."
 else
     echo "Database is incorrect."

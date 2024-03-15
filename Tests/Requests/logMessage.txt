@@ -1,0 +1,4 @@
+Content-Type: application/json
+User-Agent: log-message-test/1.0.0
+X-API-KEY: test_application
+X-API-TOKEN: 1234567890

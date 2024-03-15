@@ -2,7 +2,7 @@
 
 namespace GuiBranco\ProjectsMonitor\Configuration;
 
-class Config
+class Configuration
 {
     public function __construct()
     {

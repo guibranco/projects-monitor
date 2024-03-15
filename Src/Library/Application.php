@@ -2,7 +2,7 @@
 
 namespace GuiBranco\ProjectsMonitor\Library;
 
-use GuiBranco\ProjectsMonitor\Configuration\Config;
+use GuiBranco\ProjectsMonitor\Configuration\Configuration;
 use GuiBranco\ProjectsMonitor\Library\Database;
 
 class Application
@@ -18,7 +18,7 @@ class Application
 
     public function __construct()
     {
-        $this->config = new Config();
+        $this->config = new Configuration();
         $this->database = new Database();
     }
 
@@ -26,13 +26,13 @@ class Application
     {
         $headers = $this->config->getRequestHeaders();
 
-        if (!isset($headers["X-API-KEY"]) || !isset($headers["X-API-SECRET"])) {
+        if (!isset($headers["X-API-KEY"]) || !isset($headers["X-API-TOKEN"])) {
             http_response_code(401);
             return false;
         }
 
         $appKey = $headers["X-API-KEY"];
-        $appSecret = $headers["X-API-SECRET"];
+        $appSecret = $headers["X-API-TOKEN"];
 
         $conn = $this->database->getConn();
 

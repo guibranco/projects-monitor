@@ -20,7 +20,7 @@ if [ "$CONNECT" -eq 1 ]; then
     exit 1
 fi
 
-err=$(mysql -h "$MYSQL_HOST" --protocol tcp "--user=$MYSQL_USER" "--database=$MYSQL_DB" <"data-for-testing.sql" 2>&1)
+err=$(mysql -h "$MYSQL_HOST" --protocol tcp "--user=$MYSQL_USER" "--database=$MYSQL_DB" <"Tests/data-for-testing.sql" 2>&1)
 if [ "$err" != "" ]; then
     echo "::error file=$0,line=$LINENO::$err"
     echo "error=$err" >>"$GITHUB_OUTPUT"

@@ -20,7 +20,7 @@ echo "" >>"$GITHUB_STEP_SUMMARY"
 for FILE in *.json; do
 
     API_ENDPOINT="${FILE/.json/}"
-    ENDPOINT="http://localhost:8000/api/v1/${API_ENDPOINT%%_*}.php"
+    ENDPOINT="http://localhost:8000/api/v1/${API_ENDPOINT%%_*}"
     HEADERS="${FILE/.json/".txt"}"
     RESULT=$(curl -s -o /dev/null -w "%{http_code}" --location "$ENDPOINT" --header @"$HEADERS" --data @"$FILE")
 

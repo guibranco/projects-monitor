@@ -9,11 +9,11 @@ class Database
     private $password = "";
     private $database = "";
 
-    private $conn = null;
+    private $connection = null;
 
-    public function getConn()
+    public function getConnection()
     {
-        return $this->conn;
+        return $this->connection;
     }
 
     public function __construct()
@@ -40,11 +40,11 @@ class Database
 
     public function connect()
     {
-        $this->conn = new \mysqli($this->host, $this->user, $this->password, $this->database);
-        if ($this->conn->connect_error) {
-            throw new \Exception("Connection failed: " . $this->conn->connect_error);
+        $this->connection = new \mysqli($this->host, $this->user, $this->password, $this->database);
+        if ($this->connection->connect_error) {
+            throw new \Exception("Connection failed: " . $this->connection->connect_error);
         }
 
-        $this->conn->set_charset("utf8mb4");
+        $this->connection->set_charset("utf8mb4");
     }
 }

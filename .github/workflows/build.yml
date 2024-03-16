@@ -72,6 +72,13 @@ jobs:
           chmod +x Tools/db-check.sh
           Tools/db-check.sh "localhost" "test" "test"
 
+      - name: Populate database
+        env:
+          MYSQL_PWD: test
+        run: |
+          chmod +x Tools/db-populate.sh
+          Tools/db-populate.sh "localhost" "test" "test"
+
       - name: Test Requests
         id: test_requests
         run: |

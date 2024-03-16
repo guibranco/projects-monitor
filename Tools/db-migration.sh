@@ -20,7 +20,7 @@ DRY_RUN="$5"
 
 CONNECT=$(
     mysql -h "$MYSQL_HOST" --protocol tcp "--user=$MYSQL_USER" --batch --skip-column-names -e \
-        "SHOW DATABASES LIKE '$DBNAME';" | grep "$DBNAME" >/dev/null
+        "SHOW DATABASES LIKE '$MYSQL_DB';" | grep "$MYSQL_DB" >/dev/null
     echo "$?"
 )
 

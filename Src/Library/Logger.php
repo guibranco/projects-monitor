@@ -26,15 +26,15 @@ class Logger
 
         $appId = $applicationId;
 
-        $class = isset($data["class"]) ? $data["class"] : "none";
-        $function = isset($data["function"]) ? $data["function"] : "none";
-        $file = isset($data["file"]) ? $data["file"] : "none";
-        $line = isset($data["line"]) ? $data["line"] : "none";
-        $object = isset($data["object"]) ? $data["object"] : "none";
-        $type = isset($data["type"]) ? $data["type"] : "none";
-        $args = isset($data["args"]) ? $data["args"] : "none";
-        $message = isset($data["message"]) ? $data["message"] : "none";
-        $details = isset($data["details"]) ? $data["details"] : "none";
+        $class = isset ($data["class"]) ? $data["class"] : "none";
+        $function = isset ($data["function"]) ? $data["function"] : "none";
+        $file = isset ($data["file"]) ? $data["file"] : "none";
+        $line = isset ($data["line"]) ? $data["line"] : "none";
+        $object = isset ($data["object"]) ? $data["object"] : "none";
+        $type = isset ($data["type"]) ? $data["type"] : "none";
+        $args = isset ($data["args"]) ? $data["args"] : "none";
+        $message = isset ($data["message"]) ? $data["message"] : "none";
+        $details = isset ($data["details"]) ? $data["details"] : "none";
 
         $stmt->bind_param("isssisssss", $appId, $class, $function, $file, $line, $object, $type, $args, $message, $details);
 
@@ -73,36 +73,11 @@ class Logger
         return $data;
     }
 
-    public function showLastMessages($quantity)
+    private function getFieldList()
     {
-        $sql = "SELECT m.id, m.application_id, a.name, m.class, m.function, m.file, m.line, ";
-        $sql .= "m.object, m.type, m.args, m.message, m.details, m.stack_trace, m.created_at ";
-        $sql .= "FROM errors as e INNER JOIN applications as a ON m.application_id = a.id ";
-        $sql .= "ORDER BY m.created_at DESC LIMIT 0, ?;";
-        $stmt = $this->connection->prepare($sql);
-        $stmt->bind_param("i", $quantity);
-        $stmt->execute();
-        $stmt->bind_result(
-            $id,
-            $applicationId,
-            $applicationName,
-            $class,
-            $function,
-            $file,
-            $line,
-            $object,
-            $type,
-            $args,
-            $message,
-            $details,
-            $stackTrace,
-            $createdAt
-        );
-        $data = array();
-        $data[] = array(
+        return array(
             "Id",
             "ApplicationId",
-            "ApplicationName",
             "Class",
             "Function",
             "File",
@@ -112,26 +87,28 @@ class Logger
             "Args",
             "Message",
             "Details",
-            "StackTrace",
             "CreatedAt"
         );
-        while ($stmt->fetch()) {
-            $data[] = array(
-                $id,
-                $applicationId,
-                $applicationName,
-                $class,
-                $function,
-                $file,
-                $line,
-                $object,
-                $type,
-                $args,
-                $message,
-                $details,
-                $stackTrace,
-                $createdAt
-            );
+    }
+
+    private function getQuery()
+    {
+        $sql = "SELECT m.id, m.application_id, a.name, m.class, m.function, m.file, m.line, ";
+        $sql .= "m.object, m.type, m.args, m.message, m.details, m.created_at ";
+        $sql .= "FROM errors as e INNER JOIN applications as a ON m.application_id = a.id ";
+        return $sql;
+    }
+
+    public function showLastMessages($quantity)
+    {
+        $stmt = $this->connection->prepare($this->getQuery());
+        $stmt->bind_param("i", $quantity);
+        $stmt->execute();        
+        $data = array();
+        $data[] = $this->getFieldList();
+        $result = $stmt->get_result();
+        while ($row = $result->fetch_array(MYSQLI_NUM)) {
+            $data[] = array_values($row);
         }
         $stmt->close();
 

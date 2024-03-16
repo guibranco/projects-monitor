@@ -95,7 +95,7 @@ class Logger
     {
         $sql = "SELECT m.id, m.application_id, a.name, m.class, m.function, m.file, m.line, ";
         $sql .= "m.object, m.type, m.args, m.message, m.details, m.created_at ";
-        $sql .= "FROM errors as e INNER JOIN applications as a ON m.application_id = a.id ";
+        $sql .= "FROM messages as e INNER JOIN applications as a ON m.application_id = a.id ";
         return $sql;
     }
 

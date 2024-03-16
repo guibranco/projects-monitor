@@ -7,11 +7,15 @@ use GuiBranco\ProjectsMonitor\Library\Logger;
 
 $application = new Application();
 
-if(!$application->validate()) {
+if (!$application->validate()) {
     die();
 }
 
 $log = new Logger();
 $result = $log->saveMessage($application->getApplicationId());
-http_response_code(202);
+if ($result) {
+    http_response_code(202);
+} else {
+    http_response_code(500);
+}
 echo json_encode($result);

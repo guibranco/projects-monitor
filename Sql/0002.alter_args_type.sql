@@ -1,0 +1,3 @@
+ALTER TABLE `messages` 
+  MODIFY `args` LONGTEXT NULL,
+  MODIFY `object` LONGTEXT NULL;

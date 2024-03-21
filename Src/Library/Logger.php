@@ -32,7 +32,8 @@ class Logger
         $line = isset($data["line"]) ? $data["line"] : "none";
         $object = isset($data["object"]) ? $data["object"] : "none";
         $type = isset($data["type"]) ? $data["type"] : "none";
-        $args = isset($data["args"]) ? $data["args"] : "none";
+        //$args = isset($data["args"]) ? $data["args"] : "none";
+        $args = "unset";
         $message = isset($data["message"]) ? $data["message"] : "none";
         $details = isset($data["details"]) ? $data["details"] : "none";
 

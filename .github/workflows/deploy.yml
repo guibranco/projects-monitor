@@ -74,6 +74,21 @@ jobs:
           echo "\$mySqlUser     = \"${{ secrets.MYSQL_USER }}\";" >> mySql.secrets.php
           echo "\$mySqlPassword = \"${{ secrets.MYSQL_PASSWORD }}\";" >> mySql.secrets.php
           echo "\$mySqlDatabase = \"${{ secrets.MYSQL_DATABASE }}\";" >> mySql.secrets.php
+      
+      - name: Create RabbitMQ secrets file
+        if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
+        run: |
+          cd Src
+          mkdir -p secrets
+          cd secrets
+          echo "<?php" >> rabbitMq.secrets.php
+          echo "\$rabbitMqConnectionStrings[] = \"${{ secrets.RABBITMQ_CS1 }}\";" >> rabbitMq.secrets.php
+          echo "\$rabbitMqConnectionStrings[] = \"${{ secrets.RABBITMQ_CS2 }}\";" >> rabbitMq.secrets.php
+          echo "\$rabbitMqConnectionStrings[] = \"${{ secrets.RABBITMQ_CS3 }}\";" >> rabbitMq.secrets.php
+          echo "\$rabbitMqConnectionStrings[] = \"${{ secrets.RABBITMQ_CS4 }}\";" >> rabbitMq.secrets.php
+          echo "\$rabbitMqConnectionStrings[] = \"${{ secrets.RABBITMQ_CS5 }}\";" >> rabbitMq.secrets.php
+          echo "\$rabbitMqConnectionStrings[] = \"${{ secrets.RABBITMQ_CS6 }}\";" >> rabbitMq.secrets.php
+          echo "\$rabbitMqConnectionStrings[] = \"${{ secrets.RABBITMQ_CS7 }}\";" >> rabbitMq.secrets.php
 
       - name: Upload files
         if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
@@ -115,7 +130,7 @@ jobs:
         
       - name: Check if schema version table exists
         id: new_installation
-        if: ${{ steps.changes.outputs.sql != 'true' }}
+        if: steps.changes.outputs.sql == 'true' || github.event_name == 'workflow_dispatch'
         env:
           MYSQL_PWD: ${{ secrets.MYSQL_PASSWORD_MIGRATION }}
         run: |
@@ -123,7 +138,7 @@ jobs:
           Tools/db-check.sh "${{ secrets.MYSQL_SERVER }}" "${{ secrets.MYSQL_USER_MIGRATION }}" "${{ secrets.MYSQL_DATABASE }}"
 
       - name: Run database migrations
-        if: ${{ steps.changes.outputs.sql == 'true' || steps.new_installation.outputs.not_found == 'true' }}
+        if: steps.changes.outputs.sql == 'true' || github.event_name == 'workflow_dispatch' || steps.new_installation.outputs.not_found == 'true'
         env:
           MYSQL_PWD: ${{ secrets.MYSQL_PASSWORD_MIGRATION }}
         run: |

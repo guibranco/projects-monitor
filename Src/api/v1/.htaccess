@@ -5,3 +5,4 @@ RewriteCond %{REQUEST_FILENAME} !-f
 
 RewriteRule ^log-message$ log-message.php [NC,L]
 RewriteRule ^messages$ messages.php [NC,L]
+RewriteRule ^queues$ queues.php [NC,L]

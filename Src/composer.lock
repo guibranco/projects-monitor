@@ -4,8 +4,49 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "94a92acf83311b6420b735bc12457c74",
-    "packages": [],
+    "content-hash": "6e6c7f55a39f16538910468fbd061fb1",
+    "packages": [
+        {
+            "name": "guibranco/pancake",
+            "version": "v0.2.5",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/guibranco/Pancake.git",
+                "reference": "7a14815724affa4cd5aa6c8b98e3e18e6bf46719"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/guibranco/Pancake/zipball/7a14815724affa4cd5aa6c8b98e3e18e6bf46719",
+                "reference": "7a14815724affa4cd5aa6c8b98e3e18e6bf46719",
+                "shasum": ""
+            },
+            "require-dev": {
+                "phpunit/phpunit": "11"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "GuiBranco\\Pancake\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Guilherme Branco Stracini",
+                    "email": "guilherme@guilhermebranco.com.br"
+                }
+            ],
+            "description": "The Pancake project, a toolkit for PHP projects",
+            "support": {
+                "issues": "https://github.com/guibranco/Pancake/issues",
+                "source": "https://github.com/guibranco/Pancake/tree/v0.2.5"
+            },
+            "time": "2024-03-21T22:38:29+00:00"
+        }
+    ],
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "stable",

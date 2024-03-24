@@ -110,8 +110,8 @@ $config = new Configuration();
 
       var lineChart = new google.visualization.LineChart(document.getElementById('line_chart'));
       lineChart.draw(dataWebhooks, optionsWebhooks);
-      var pieChart = new google.visualization.PieChart(document.getElementById('pie_chart'));
-      pieChart.draw(dataEvents, optionsEvents);
+      var pieChart1 = new google.visualization.PieChart(document.getElementById('pie_chart_1'));
+      pieChart1.draw(dataEvents, optionsEvents);
       var feed = new google.visualization.Table(document.getElementById('feed'));
       feed.draw(dataFeed, optionsFeed);
       var guageChart1 = new google.visualization.Gauge(document.getElementById('guage_chart_1'));
@@ -140,6 +140,7 @@ $config = new Configuration();
       var response = loadMessages();
       var dataMessages = google.visualization.arrayToDataTable(response["messages"]);
       var dataTotal = google.visualization.arrayToDataTable([["Items", "Total"], ["Messages", response["total"]]]);
+      var dataByApplications = google.visualization.arrayToDataTable(response["byApplications"]);
 
       var optionsMessages = {
         title: 'Messages',
@@ -161,10 +162,18 @@ $config = new Configuration();
         redFrom: 500, redTo: 1000
       };
 
+      var optionsByApplications = {
+        title: 'Messages by applications',
+        legend: { position: 'right' }
+      };
+
+
       var messages = new google.visualization.Table(document.getElementById('messages'));
       messages.draw(dataMessages, optionsMessages);
       var guageChart3 = new google.visualization.Gauge(document.getElementById('guage_chart_3'));
       guageChart3.draw(dataTotal, optionsTotal);
+      var pieChart2 = new google.visualization.PieChart(document.getElementById('pie_chart_2'));
+      pieChart2.draw(dataByApplications, optionsByApplications);
     }
   </script>
 </head>
@@ -177,11 +186,13 @@ $config = new Configuration();
   <div id="guage_chart_1" style="width: 20%; height: 300px; float: left;background-color: white;"></div>
   <div id="guage_chart_2" style="width: 20%; height: 300px; float: left;background-color: white;"></div>
   <div id="guage_chart_3" style="width: 20%; height: 300px; float: left;background-color: white;"></div>
-  <div id="pie_chart" style="width: 33%; height: 300px; float: left;"></div>
   <div style="clear:both;"></div>
-  <div id="queues"></div>
-  <div id="feed"></div>
-  <div id="messages"></div>
+  <div id="pie_chart_1" style="width: 30%; height: 300px; float: left;"></div>
+  <div id="pie_chart_2" style="width: 30%; height: 300px; float: left;"></div>
+  <div id="queues" style="width: 30%; height: 300px; float: left;background-color: white;"></div>
+  <div style="clear:both;"></div>
+  <div id="feed" style="width: 50%; float: left;background-color: white;"></div>
+  <div id="messages" style="width: 50%; float: left;background-color: white;"></div>
 </body>
 <script>
   var ghStats = document.getElementById("gh_stats");

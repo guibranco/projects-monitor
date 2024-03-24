@@ -65,8 +65,9 @@ class Logger
         $stmt->execute();
         $stmt->bind_result($name, $total);
         $data = array();
+        $data[] = array("Application", "Messages");
         while ($stmt->fetch()) {
-            $data[] = array("name" => $name, "total" => $total);
+            $data[] = array($name, $total);
         }
         $stmt->close();
 

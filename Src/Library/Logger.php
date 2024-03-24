@@ -2,7 +2,7 @@
 
 namespace GuiBranco\ProjectsMonitor\Library;
 
-use GuiBranco\ProjectsMonitor\Configuration\Configuration;
+use GuiBranco\ProjectsMonitor\Library\Configuration;
 use GuiBranco\ProjectsMonitor\Library\Database;
 
 class Logger

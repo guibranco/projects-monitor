@@ -51,6 +51,14 @@ jobs:
           echo "\$mySqlPassword = \"test\";" >> mySql.secrets.php
           echo "\$mySqlDatabase = \"test\";" >> mySql.secrets.php
 
+      - name: Create RabbitMQ secrets file
+        run: |
+          cd Src
+          mkdir -p secrets
+          cd secrets
+          echo "<?php" >> rabbitMq.secrets.php
+          echo "\$rabbitMqConnectionStrings[] = \"amqp://guest:guest@queue:5672/\";" >> rabbitMq.secrets.php
+
       - name: Docker compose up
         run: docker-compose up -d
 

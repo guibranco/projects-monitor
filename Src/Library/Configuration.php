@@ -1,6 +1,6 @@
 <?php
 
-namespace GuiBranco\ProjectsMonitor\Configuration;
+namespace GuiBranco\ProjectsMonitor\Library;
 
 class Configuration
 {

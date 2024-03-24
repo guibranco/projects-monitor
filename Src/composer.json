@@ -14,5 +14,7 @@
             "email": "guilherme@guilhermebranco.com.br"
         }
     ],
-    "require": {}
+    "require": {
+        "guibranco/pancake": "^0.2.5"
+    }
 }

@@ -2,9 +2,10 @@
 
 require_once 'vendor/autoload.php';
 
-use GuiBranco\ProjectsMonitor\Configuration\Config;
+use GuiBranco\ProjectsMonitor\Library\Configuration;
 
-$config = new Config();
+$config = new Configuration();
+$hostPrefix = strpos($_SERVER['HTTP_HOST'], "localhost") >= 0 ? $_SERVER['HTTP_POST'] : "https://guilhermebranco.com.br/projects-monitor";
 ?>
 
 <!DOCTYPE html>
@@ -22,7 +23,6 @@ $config = new Config();
     google.charts.load('current', { 'packages': ['corechart', 'table', 'gauge'] });
     google.charts.setOnLoadCallback(drawChart);
 
-
     function loadData() {
       var xhr = new XMLHttpRequest();
       xhr.open("GET", "https://guilhermebranco.com.br/webhooks/api.php", false);
@@ -30,14 +30,28 @@ $config = new Config();
       return JSON.parse(xhr.responseText);
     }
 
+    function loadMessages() {
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", "<?php echo $hostPrefix; ?>/api/v1/messages", false);
+      xhr.send();
+      return JSON.parse(xhr.responseText);
+    }
+
     function loadQueueStats() {
       var xhr = new XMLHttpRequest();
-      xhr.open("GET", "https://guilhermebranco.com.br/webhooks/queue.php", false);
+      xhr.open("GET", "<?php echo $hostPrefix; ?>/api/v1/queues", false);
       xhr.send();
       return JSON.parse(xhr.responseText);
     }
 
     function drawChart() {
+      showChartsAndFeed();
+      showQueues();
+      showMessages();
+      setTimeout(drawChart, 30000);
+    }
+
+    function showChartsAndFeed() {
       var response = loadData();
       var dataWebhooks = google.visualization.arrayToDataTable(response["webhooks"]);
       var dataEvents = google.visualization.arrayToDataTable(response["events"]);
@@ -105,13 +119,11 @@ $config = new Config();
       guageChart.draw(dataTotal, optionsTotal);
       var guageChart2 = new google.visualization.Gauge(document.getElementById('guage_chart_2'));
       guageChart2.draw(dataFailed, optionsFailed);
-      showQueues();
-      setTimeout(drawChart, 30000);
     }
 
     function showQueues() {
       var response = loadQueueStats();
-      var dataQueues = google.visualization.arrayToDataTable(response["queues"]);
+      var dataQueues = google.visualization.arrayToDataTable(response);
 
       var optionsQueues = {
         title: 'Messages',
@@ -124,6 +136,22 @@ $config = new Config();
       var queues = new google.visualization.Table(document.getElementById('queues'));
       queues.draw(dataQueues, optionsQueues);
     }
+
+    function showMessages() {
+      var response = loadMessages();
+      var dataMessages = google.visualization.arrayToDataTable(response["messages"]);
+
+      var optionsMessages = {
+        title: 'Messages',
+        legend: { position: 'none' },
+        showRowNumber: true,
+        width: '100%',
+        height: '100%'
+      };
+
+      var messages = new google.visualization.Table(document.getElementById('messages'));
+      messages.draw(dataMessages, optionsMessages);
+    }
   </script>
 </head>
 
@@ -135,9 +163,10 @@ $config = new Config();
   <div id="pie_chart" style="width: 33%; height: 300px; float: left;"></div>
   <div id="guage_chart" style="width: 20%; height: 300px; float: left;background-color: white;"></div>
   <div id="guage_chart_2" style="width: 20%; height: 300px; float: left;background-color: white;"></div>
-  <div id="queues" style="width:25%; padding-top: 10px; float: left;"></div>
   <div style="clear:both;"></div>
+  <div id="queues"></div>
   <div id="feed"></div>
+  <div id="messages"></div>
 </body>
 <script>
   var ghStats = document.getElementById("gh_stats");

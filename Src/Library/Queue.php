@@ -1,12 +1,12 @@
 <?php
 
 namespace GuiBranco\ProjectsMonitor\Library;
+
 use GuiBranco\Pancake\Request;
 use Exception;
 
 class Queue
 {
-
     private $connectionStrings = array();
 
     private $request;
@@ -38,7 +38,7 @@ class Queue
                 "vhost" => ($url['path'] == '/' || !isset($url['path'])) ? '/' : substr($url['path'], 1)
             ];
         }
-    
+
         return $servers;
     }
 

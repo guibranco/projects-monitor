@@ -45,9 +45,9 @@ $hostPrefix = strpos($_SERVER['HTTP_HOST'], "localhost") >= 0 ? $_SERVER['HTTP_P
     }
 
     function drawChart() {
-      showChartsAndFeed();
-      showQueues();
-      showMessages();
+      setTimeout(showChartsAndFeed, 1000);
+      setTimeout(showQueues, 1000);
+      setTimeout(showMessages, 1000);
       setTimeout(drawChart, 30000);
     }
 
@@ -115,8 +115,8 @@ $hostPrefix = strpos($_SERVER['HTTP_HOST'], "localhost") >= 0 ? $_SERVER['HTTP_P
       pieChart.draw(dataEvents, optionsEvents);
       var feed = new google.visualization.Table(document.getElementById('feed'));
       feed.draw(dataFeed, optionsFeed);
-      var guageChart = new google.visualization.Gauge(document.getElementById('guage_chart'));
-      guageChart.draw(dataTotal, optionsTotal);
+      var guageChart1 = new google.visualization.Gauge(document.getElementById('guage_chart_1'));
+      guageChart1.draw(dataTotal, optionsTotal);
       var guageChart2 = new google.visualization.Gauge(document.getElementById('guage_chart_2'));
       guageChart2.draw(dataFailed, optionsFailed);
     }
@@ -140,6 +140,7 @@ $hostPrefix = strpos($_SERVER['HTTP_HOST'], "localhost") >= 0 ? $_SERVER['HTTP_P
     function showMessages() {
       var response = loadMessages();
       var dataMessages = google.visualization.arrayToDataTable(response["messages"]);
+      var dataTotal = google.visualization.arrayToDataTable([["Items", "Total"], ["Messages", response["total"]]]);
 
       var optionsMessages = {
         title: 'Messages',
@@ -149,8 +150,22 @@ $hostPrefix = strpos($_SERVER['HTTP_HOST'], "localhost") >= 0 ? $_SERVER['HTTP_P
         height: '100%'
       };
 
+      var optionsTotal = {
+        legend: { position: 'none' },
+        showRowNumber: true,
+        width: '100%',
+        height: '100%',
+        min: 0,
+        max: 1000,
+        greenFrom: 0, greenTo: 250,
+        yellowFrom: 250, yellowTo: 500,
+        redFrom: 500, redTo: 1000
+      };
+
       var messages = new google.visualization.Table(document.getElementById('messages'));
       messages.draw(dataMessages, optionsMessages);
+      var guageChart3 = new google.visualization.Gauge(document.getElementById('guage_chart_3'));
+      guageChart3.draw(dataTotal, optionsTotal);
     }
   </script>
 </head>
@@ -160,9 +175,10 @@ $hostPrefix = strpos($_SERVER['HTTP_HOST'], "localhost") >= 0 ? $_SERVER['HTTP_P
   <img id="gh_stats" alt="" src="" />
   <img id="gh_streak" alt="" src="" />
   <div style="clear:both;"></div>
-  <div id="pie_chart" style="width: 33%; height: 300px; float: left;"></div>
-  <div id="guage_chart" style="width: 20%; height: 300px; float: left;background-color: white;"></div>
+  <div id="guage_chart_1" style="width: 20%; height: 300px; float: left;background-color: white;"></div>
   <div id="guage_chart_2" style="width: 20%; height: 300px; float: left;background-color: white;"></div>
+  <div id="guage_chart_3" style="width: 20%; height: 300px; float: left;background-color: white;"></div>
+  <div id="pie_chart" style="width: 33%; height: 300px; float: left;"></div>
   <div style="clear:both;"></div>
   <div id="queues"></div>
   <div id="feed"></div>

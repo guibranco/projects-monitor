@@ -5,7 +5,6 @@ require_once 'vendor/autoload.php';
 use GuiBranco\ProjectsMonitor\Library\Configuration;
 
 $config = new Configuration();
-$hostPrefix = strpos($_SERVER['HTTP_HOST'], "localhost") >= 0 ? $_SERVER['HTTP_POST'] : "https://guilhermebranco.com.br/projects-monitor";
 ?>
 
 <!DOCTYPE html>
@@ -32,14 +31,14 @@ $hostPrefix = strpos($_SERVER['HTTP_HOST'], "localhost") >= 0 ? $_SERVER['HTTP_P
 
     function loadMessages() {
       var xhr = new XMLHttpRequest();
-      xhr.open("GET", "<?php echo $hostPrefix; ?>/api/v1/messages", false);
+      xhr.open("GET", "api/v1/messages", false);
       xhr.send();
       return JSON.parse(xhr.responseText);
     }
 
     function loadQueueStats() {
       var xhr = new XMLHttpRequest();
-      xhr.open("GET", "<?php echo $hostPrefix; ?>/api/v1/queues", false);
+      xhr.open("GET", "api/v1/queues", false);
       xhr.send();
       return JSON.parse(xhr.responseText);
     }

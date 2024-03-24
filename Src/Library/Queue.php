@@ -45,7 +45,8 @@ class Queue
     public function getQueueLength()
     {
         $data = array();
-        $data[] = array("Server", "Queue", "Messages");
+        $data["total"] = 0;
+        $data["queues"][] = array("Server", "Queue", "Messages");
         foreach ($this->getServers() as $server) {
             $headers = array("Authorization: Basic " . base64_encode($server["user"] . ":" . $server["password"]));
             $url = "https://" . $server["host"] . "/api/queues/" . $server["vhost"] . "/";
@@ -53,7 +54,8 @@ class Queue
             $node = json_decode($response->body, true);
             foreach ($node as $queue) {
                 $item = array($server["host"], $queue["name"], $queue["messages"]);
-                $data[] = $item;
+                $data["queues"][] = $item;
+                $data["total"] += $queue["messages"];
             }
         }
         ksort($data);

@@ -122,7 +122,20 @@ $config = new Configuration();
 
     function showQueues() {
       var response = loadQueueStats();
-      var dataQueues = google.visualization.arrayToDataTable(response);
+      var dataTotal = google.visualization.arrayToDataTable([["Items", "Total"], ["Messages", response["total"]]]);
+      var dataQueues = google.visualization.arrayToDataTable(response["queues"]);
+
+      var optionsTotal = {
+        legend: { position: 'none' },
+        showRowNumber: true,
+        width: '100%',
+        height: '100%',
+        min: 0,
+        max: 1000,
+        greenFrom: 0, greenTo: 250,
+        yellowFrom: 250, yellowTo: 500,
+        redFrom: 500, redTo: 1000
+      };
 
       var optionsQueues = {
         title: 'Messages',
@@ -134,6 +147,8 @@ $config = new Configuration();
 
       var queues = new google.visualization.Table(document.getElementById('queues'));
       queues.draw(dataQueues, optionsQueues);
+      var guageChart4 = new google.visualization.Gauge(document.getElementById('guage_chart_4'));
+      guageChart4.draw(dataTotal, optionsTotal);
     }
 
     function showMessages() {
@@ -167,7 +182,6 @@ $config = new Configuration();
         legend: { position: 'right' }
       };
 
-
       var messages = new google.visualization.Table(document.getElementById('messages'));
       messages.draw(dataMessages, optionsMessages);
       var guageChart3 = new google.visualization.Gauge(document.getElementById('guage_chart_3'));
@@ -186,6 +200,7 @@ $config = new Configuration();
   <div id="guage_chart_1" style="width: 20%; height: 300px; float: left;background-color: white;"></div>
   <div id="guage_chart_2" style="width: 20%; height: 300px; float: left;background-color: white;"></div>
   <div id="guage_chart_3" style="width: 20%; height: 300px; float: left;background-color: white;"></div>
+  <div id="guage_chart_4" style="width: 20%; height: 300px; float: left;background-color: white;"></div>
   <div style="clear:both;"></div>
   <div id="pie_chart_1" style="width: 30%; height: 300px; float: left;"></div>
   <div id="pie_chart_2" style="width: 30%; height: 300px; float: left;"></div>

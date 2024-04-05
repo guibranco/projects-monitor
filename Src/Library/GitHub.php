@@ -6,7 +6,6 @@ use GuiBranco\Pancake\Request;
 
 class GitHub
 {
-
     private const GITHUB_API_URL = "https://api.github.com/search/";
 
     private $token;

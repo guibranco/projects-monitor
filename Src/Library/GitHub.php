@@ -26,15 +26,8 @@ class GitHub
         $this->request = new Request();
     }
 
-    public function getIssues()
+    private function getRequest($users)
     {
-        $users = array(
-            "guibranco",
-            "ApiBR",
-            "GuilhermeStracini",
-            "InovacaoMediaBrasil",
-        );
-
         $url = self::GITHUB_API_URL .
             "issues?q=" .
             urlencode("is:open is:issue archived:false " .
@@ -56,6 +49,19 @@ class GitHub
 
         $data = json_decode($response->body);
         return $data->total_count;
+
+    }
+
+    public function getIssues()
+    {
+        $users = array(
+            "guibranco",
+            "ApiBR",
+            "GuilhermeStracini",
+            "InovacaoMediaBrasil",
+        );
+
+        return $this->getRequest($users);
     }
 
     public function getPullRequests()
@@ -78,26 +84,6 @@ class GitHub
             "developersRJ"
         );
 
-        $url = self::GITHUB_API_URL .
-            "issues?q=" .
-            urlencode("is:open is:pr archived:false sort:updated-desc " .
-                implode(" ", array_map(function ($user) {
-                    return "user:{$user}";
-                }, $users)));
-        $headers = [
-            "Authorization: token {$this->token}",
-            "Accept: application/vnd.github.v3+json",
-            "X-GitHub-Api-Version: 2022-11-28",
-            "User-Agent: ProjectsMonitor/1.0"
-        ];
-
-        $response = $this->request->get($url, $headers);
-
-        if ($response->statusCode != 200) {
-            throw new Exception("Error: {$response->body}");
-        }
-
-        $data = json_decode($response->body);
-        return $data->total_count;
+        return $this->getRequest($users);
     }
 }

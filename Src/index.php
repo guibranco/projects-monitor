@@ -43,8 +43,16 @@ $config = new Configuration();
       return JSON.parse(xhr.responseText);
     }
 
+    function loadGitHub() {
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", "api/v1/github", false);
+      xhr.send();
+      return JSON.parse(xhr.responseText);
+    }
+
     function drawChart() {
       setTimeout(showChartsAndFeed, 1000);
+      setTimeout(showGitHub, 1000);
       setTimeout(showQueues, 1000);
       setTimeout(showMessages, 1000);
       setTimeout(drawChart, 30000);
@@ -114,15 +122,55 @@ $config = new Configuration();
       pieChart1.draw(dataEvents, optionsEvents);
       var feed = new google.visualization.Table(document.getElementById('feed'));
       feed.draw(dataFeed, optionsFeed);
-      var guageChart1 = new google.visualization.Gauge(document.getElementById('guage_chart_1'));
-      guageChart1.draw(dataTotal, optionsTotal);
-      var guageChart2 = new google.visualization.Gauge(document.getElementById('guage_chart_2'));
-      guageChart2.draw(dataFailed, optionsFailed);
+      var gaugeChart1 = new google.visualization.Gauge(document.getElementById('gauge_chart_1'));
+      gaugeChart1.draw(dataTotal, optionsTotal);
+      var gaugeChart2 = new google.visualization.Gauge(document.getElementById('gauge_chart_2'));
+      gaugeChart2.draw(dataFailed, optionsFailed);
+    }
+
+    function showGitHub() {
+      var response = loadGitHub();
+      var dataIssues = google.visualization.arrayToDataTable([["Hits", "Total"], ["Issues", response["issues"]]]);
+      var dataPullRequests = google.visualization.arrayToDataTable(
+        [
+          ["Hits", "Total"],
+          ["Pull Requests", response["pull_requests"]]
+        ]
+      );
+
+      var optionsIssues = {
+        legend: { position: 'none' },
+        showRowNumber: true,
+        width: '100%',
+        height: '100%',
+        min: 0,
+        max: 1000,
+        greenFrom: 0, greenTo: 250,
+        yellowFrom: 250, yellowTo: 500,
+        redFrom: 500, redTo: 1000
+      };
+
+      var optionsPullRequests = {
+        legend: { position: 'none' },
+        showRowNumber: true,
+        width: '100%',
+        height: '100%',
+        min: 0,
+        max: 1000,
+        greenFrom: 0, greenTo: 250,
+        yellowFrom: 250, yellowTo: 500,
+        redFrom: 500, redTo: 1000
+      };
+
+      var gaugeChart5 = new google.visualization.Gauge(document.getElementById('gauge_chart_5'));
+      gaugeChart5.draw(dataIssues, optionsIssues);
+      var gaugeChart6 = new google.visualization.Gauge(document.getElementById('gauge_chart_6'));
+      gaugeChart6.draw(dataPullRequests, optionsPullRequests);
     }
 
     function showQueues() {
       var response = loadQueueStats();
-      var dataTotal = google.visualization.arrayToDataTable([["Items", "Total"], ["Messages", response["total"]]]);
+      var dataTotal = google.visualization.arrayToDataTable([["Items", "Total"], ["RabbitMQ", response["total"]]]);
       var dataQueues = google.visualization.arrayToDataTable(response["queues"]);
 
       var optionsTotal = {
@@ -138,7 +186,7 @@ $config = new Configuration();
       };
 
       var optionsQueues = {
-        title: 'Messages',
+        title: 'Errors',
         legend: { position: 'none' },
         showRowNumber: true,
         width: '100%',
@@ -147,18 +195,18 @@ $config = new Configuration();
 
       var queues = new google.visualization.Table(document.getElementById('queues'));
       queues.draw(dataQueues, optionsQueues);
-      var guageChart4 = new google.visualization.Gauge(document.getElementById('guage_chart_4'));
-      guageChart4.draw(dataTotal, optionsTotal);
+      var gaugeChart4 = new google.visualization.Gauge(document.getElementById('gauge_chart_4'));
+      gaugeChart4.draw(dataTotal, optionsTotal);
     }
 
     function showMessages() {
       var response = loadMessages();
       var dataMessages = google.visualization.arrayToDataTable(response["messages"]);
-      var dataTotal = google.visualization.arrayToDataTable([["Items", "Total"], ["Messages", response["total"]]]);
+      var dataTotal = google.visualization.arrayToDataTable([["Items", "Total"], ["Errors", response["total"]]]);
       var dataByApplications = google.visualization.arrayToDataTable(response["byApplications"]);
 
       var optionsMessages = {
-        title: 'Messages',
+        title: 'Errors',
         legend: { position: 'none' },
         showRowNumber: true,
         width: '100%',
@@ -184,8 +232,8 @@ $config = new Configuration();
 
       var messages = new google.visualization.Table(document.getElementById('messages'));
       messages.draw(dataMessages, optionsMessages);
-      var guageChart3 = new google.visualization.Gauge(document.getElementById('guage_chart_3'));
-      guageChart3.draw(dataTotal, optionsTotal);
+      var gaugeChart3 = new google.visualization.Gauge(document.getElementById('gauge_chart_3'));
+      gaugeChart3.draw(dataTotal, optionsTotal);
       var pieChart2 = new google.visualization.PieChart(document.getElementById('pie_chart_2'));
       pieChart2.draw(dataByApplications, optionsByApplications);
     }
@@ -197,10 +245,12 @@ $config = new Configuration();
   <img id="gh_stats" alt="" src="" />
   <img id="gh_streak" alt="" src="" />
   <div style="clear:both;"></div>
-  <div id="guage_chart_1" style="width: 20%; height: 300px; float: left;background-color: white;"></div>
-  <div id="guage_chart_2" style="width: 20%; height: 300px; float: left;background-color: white;"></div>
-  <div id="guage_chart_3" style="width: 20%; height: 300px; float: left;background-color: white;"></div>
-  <div id="guage_chart_4" style="width: 20%; height: 300px; float: left;background-color: white;"></div>
+  <div id="gauge_chart_1" style="width: 15%; height: 300px; float: left;background-color: white;"></div>
+  <div id="gauge_chart_2" style="width: 15%; height: 300px; float: left;background-color: white;"></div>
+  <div id="gauge_chart_3" style="width: 15%; height: 300px; float: left;background-color: white;"></div>
+  <div id="gauge_chart_4" style="width: 15%; height: 300px; float: left;background-color: white;"></div>
+  <div id="gauge_chart_5" style="width: 15%; height: 300px; float: left;background-color: white;"></div>
+  <div id="gauge_chart_6" style="width: 15%; height: 300px; float: left;background-color: white;"></div>
   <div style="clear:both;"></div>
   <div id="pie_chart_1" style="width: 30%; height: 300px; float: left;"></div>
   <div id="pie_chart_2" style="width: 30%; height: 300px; float: left;"></div>

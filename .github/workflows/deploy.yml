@@ -63,6 +63,15 @@ jobs:
           cd secrets
           echo "Deny from all" >> .htaccess
 
+      - name: Create GitHub secrets file
+        if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
+        run: |
+          cd Src
+          mkdir -p secrets
+          cd secrets
+          echo "<?php" >> gitHub.secrets.php
+          echo "\$gitHubToken = \"${{ secrets.GH_TOKEN }}\";" >> gitHub.secrets.php
+
       - name: Create MySQL secrets file
         if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
         run: |

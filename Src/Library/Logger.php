@@ -14,18 +14,22 @@ class Logger
         $this->connection = (new Database())->getConnection();
     }
 
-    public function saveMessage($applicationId)
+    private function getInsert()
     {
-        $data = (new Configuration())->getRequestData();
-
         $sql = "INSERT INTO messages (`application_id`, `class`, `function`, `file`,";
         $sql .= "`line`, `object`, `type`, `args`, `message`, `details`) ";
         $sql .= "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
+        return $sql;
+    }
+
+    public function saveMessage($applicationId)
+    {
+        $data = (new Configuration())->getRequestData();
+        $sql = $this->getInsert();
         $stmt = $this->connection->prepare($sql);
 
         $appId = $applicationId;
-
         $class = isset($data["class"]) ? $data["class"] : "none";
         $function = isset($data["function"]) ? $data["function"] : "none";
         $file = isset($data["file"]) ? $data["file"] : "none";
@@ -36,7 +40,19 @@ class Logger
         $message = isset($data["message"]) ? $data["message"] : "none";
         $details = isset($data["details"]) ? $data["details"] : "none";
 
-        $stmt->bind_param("isssisssss", $appId, $class, $function, $file, $line, $object, $type, $args, $message, $details);
+        $stmt->bind_param(
+            "isssisssss",
+            $appId,
+            $class,
+            $function,
+            $file,
+            $line,
+            $object,
+            $type,
+            $args,
+            $message,
+            $details
+        );
 
         $result = $stmt->execute();
         $stmt->close();
@@ -46,6 +62,7 @@ class Logger
 
     public function getTotal()
     {
+        $total = 0;
         $sql = "SELECT COUNT(1) as total FROM messages;";
         $stmt = $this->connection->prepare($sql);
         $stmt->execute();
@@ -58,6 +75,8 @@ class Logger
 
     public function getTotalByApplications()
     {
+        $name = "";
+        $total = 0;
         $sql = "SELECT a.name, COUNT(1) as total FROM messages as m ";
         $sql .= "INNER JOIN applications as a ON m.application_id = a.id ";
         $sql .= "GROUP BY m.application_id;";

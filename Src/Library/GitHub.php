@@ -26,11 +26,11 @@ class GitHub
         $this->request = new Request();
     }
 
-    private function getRequest($users)
+    private function getRequest($users, $type)
     {
         $url = self::GITHUB_API_URL .
             "issues?q=" .
-            urlencode("is:open is:issue archived:false " .
+            urlencode("is:open is:" . $type . " archived:false " .
                 implode(" ", array_map(function ($user) {
                     return "user:{$user}";
                 }, $users)));
@@ -61,7 +61,7 @@ class GitHub
             "InovacaoMediaBrasil",
         );
 
-        return $this->getRequest($users);
+        return $this->getRequest($users, "issue");
     }
 
     public function getPullRequests()
@@ -84,6 +84,6 @@ class GitHub
             "developersRJ"
         );
 
-        return $this->getRequest($users);
+        return $this->getRequest($users, "pr");
     }
 }

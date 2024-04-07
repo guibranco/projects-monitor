@@ -114,8 +114,7 @@ class Logger
 
     private function getQuery()
     {
-        $sql = "SELECT m.id, m.application_id, a.name, m.class, m.function, m.file, m.line, ";
-        $sql .= "m.object, m.type, m.args, m.message, m.details, m.created_at ";
+        $sql = "SELECT m.id, a.name, m.message, m.created_at ";
         $sql .= "FROM messages as m INNER JOIN applications as a ON m.application_id = a.id ";
         $sql .= "ORDER BY m.id DESC LIMIT 0, ?;";
         return $sql;

@@ -97,17 +97,8 @@ class Logger
     {
         return array(
             "Id",
-            "ApplicationId",
-            "ApplicationName",
-            "Class",
-            "Function",
-            "File",
-            "Line",
-            "Object",
-            "Type",
-            "Args",
-            "Message",
-            "Details",
+            "ApplicationName",            
+            "Message",            
             "CreatedAt"
         );
     }

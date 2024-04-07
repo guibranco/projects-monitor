@@ -97,8 +97,8 @@ class Logger
     {
         return array(
             "Id",
-            "ApplicationName",            
-            "Message",            
+            "ApplicationName",
+            "Message",
             "CreatedAt"
         );
     }

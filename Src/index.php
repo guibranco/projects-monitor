@@ -21,10 +21,28 @@ $config = new Configuration();
   <script type="text/javascript">
     google.charts.load('current', { 'packages': ['corechart', 'table', 'gauge'] });
     google.charts.setOnLoadCallback(drawChart);
+    var responses = [];
+    function load(url, callback){
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", url, true);
+      xhr.onreadystatechange = function () {
+        if(this.status >= 200 && this.status < 300) {
+            callback(this.responseText);
+        }
+      };
+      xhr.send();
+    }
 
+    function loadAll(){
+      load("https://guilhermebranco.com.br/webhooks/api.php", function (data) {});
+      load("api/v1/messages", function (data) {});
+      load("api/v1/queues", function (data) {});
+      load("api/v1/github", function (data) {});
+    }
+    
     function loadData() {
       var xhr = new XMLHttpRequest();
-      xhr.open("GET", "https://guilhermebranco.com.br/webhooks/api.php", false);
+      xhr.open("GET","https://guilhermebranco.com.br/webhooks/api.php", false);
       xhr.send();
       return JSON.parse(xhr.responseText);
     }
@@ -51,10 +69,10 @@ $config = new Configuration();
     }
 
     function drawChart() {
-      setTimeout(showChartsAndFeed, 1000);
-      setTimeout(showGitHub, 1000);
-      setTimeout(showQueues, 1000);
-      setTimeout(showMessages, 1000);
+      showChartsAndFeed();
+      showGitHub();
+      showQueues();
+      showMessages();
       setTimeout(drawChart, 30000);
     }
 

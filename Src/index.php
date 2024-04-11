@@ -21,63 +21,30 @@ $config = new Configuration();
   <script type="text/javascript">
     google.charts.load('current', { 'packages': ['corechart', 'table', 'gauge'] });
     google.charts.setOnLoadCallback(drawChart);
-    var responses = [];
-    function load(url, callback){
+    function load(url, callback) {
       var xhr = new XMLHttpRequest();
       xhr.open("GET", url, true);
       xhr.onreadystatechange = function () {
-        if(this.status >= 200 && this.status < 300) {
-            callback(this.responseText);
+        if (this.status >= 200 && this.status < 300) {
+          callback(this.responseText);
         }
       };
       xhr.send();
     }
 
-    function loadAll(){
-      load("https://guilhermebranco.com.br/webhooks/api.php", function (data) {});
-      load("api/v1/messages", function (data) {});
-      load("api/v1/queues", function (data) {});
-      load("api/v1/github", function (data) {});
-    }
-    
-    function loadData() {
-      var xhr = new XMLHttpRequest();
-      xhr.open("GET","https://guilhermebranco.com.br/webhooks/api.php", false);
-      xhr.send();
-      return JSON.parse(xhr.responseText);
-    }
-
-    function loadMessages() {
-      var xhr = new XMLHttpRequest();
-      xhr.open("GET", "api/v1/messages", false);
-      xhr.send();
-      return JSON.parse(xhr.responseText);
-    }
-
-    function loadQueueStats() {
-      var xhr = new XMLHttpRequest();
-      xhr.open("GET", "api/v1/queues", false);
-      xhr.send();
-      return JSON.parse(xhr.responseText);
-    }
-
-    function loadGitHub() {
-      var xhr = new XMLHttpRequest();
-      xhr.open("GET", "api/v1/github", false);
-      xhr.send();
-      return JSON.parse(xhr.responseText);
+    function loadAll() {
+      load("https://guilhermebranco.com.br/webhooks/api.php", showWebhook);
+      load("api/v1/messages", showMessages);
+      load("api/v1/queues", showQueues);
+      load("api/v1/github", showGitHub);
     }
 
     function drawChart() {
-      showChartsAndFeed();
-      showGitHub();
-      showQueues();
-      showMessages();
+      loadAll();
       setTimeout(drawChart, 30000);
     }
 
-    function showChartsAndFeed() {
-      var response = loadData();
+    function showWebhook(response) {
       var dataWebhooks = google.visualization.arrayToDataTable(response["webhooks"]);
       var dataEvents = google.visualization.arrayToDataTable(response["events"]);
       var dataFeed = google.visualization.arrayToDataTable(response["feed"]);
@@ -146,8 +113,75 @@ $config = new Configuration();
       gaugeChart2.draw(dataFailed, optionsFailed);
     }
 
-    function showGitHub() {
-      var response = loadGitHub();
+    function showMessages(response) {
+      var dataMessages = google.visualization.arrayToDataTable(response["messages"]);
+      var dataTotal = google.visualization.arrayToDataTable([["Items", "Total"], ["Errors", response["total"]]]);
+      var dataByApplications = google.visualization.arrayToDataTable(response["byApplications"]);
+
+      var optionsMessages = {
+        title: 'Errors',
+        legend: { position: 'none' },
+        showRowNumber: true,
+        width: '100%',
+        height: '100%'
+      };
+
+      var optionsTotal = {
+        legend: { position: 'none' },
+        showRowNumber: true,
+        width: '100%',
+        height: '100%',
+        min: 0,
+        max: 1000,
+        greenFrom: 0, greenTo: 250,
+        yellowFrom: 250, yellowTo: 500,
+        redFrom: 500, redTo: 1000
+      };
+
+      var optionsByApplications = {
+        title: 'Messages by applications',
+        legend: { position: 'right' }
+      };
+
+      var messages = new google.visualization.Table(document.getElementById('messages'));
+      messages.draw(dataMessages, optionsMessages);
+      var gaugeChart3 = new google.visualization.Gauge(document.getElementById('gauge_chart_3'));
+      gaugeChart3.draw(dataTotal, optionsTotal);
+      var pieChart2 = new google.visualization.PieChart(document.getElementById('pie_chart_2'));
+      pieChart2.draw(dataByApplications, optionsByApplications);
+    }
+
+    function showQueues(response) {
+      var dataTotal = google.visualization.arrayToDataTable([["Items", "Total"], ["RabbitMQ", response["total"]]]);
+      var dataQueues = google.visualization.arrayToDataTable(response["queues"]);
+
+      var optionsTotal = {
+        legend: { position: 'none' },
+        showRowNumber: true,
+        width: '100%',
+        height: '100%',
+        min: 0,
+        max: 1000,
+        greenFrom: 0, greenTo: 250,
+        yellowFrom: 250, yellowTo: 500,
+        redFrom: 500, redTo: 1000
+      };
+
+      var optionsQueues = {
+        title: 'Errors',
+        legend: { position: 'none' },
+        showRowNumber: true,
+        width: '100%',
+        height: '100%'
+      };
+
+      var queues = new google.visualization.Table(document.getElementById('queues'));
+      queues.draw(dataQueues, optionsQueues);
+      var gaugeChart4 = new google.visualization.Gauge(document.getElementById('gauge_chart_4'));
+      gaugeChart4.draw(dataTotal, optionsTotal);
+    }
+
+    function showGitHub(response) {
       var dataIssues = google.visualization.arrayToDataTable([["Hits", "Total"], ["Issues", response["issues"]]]);
       var dataPullRequests = google.visualization.arrayToDataTable(
         [
@@ -184,76 +218,6 @@ $config = new Configuration();
       gaugeChart5.draw(dataIssues, optionsIssues);
       var gaugeChart6 = new google.visualization.Gauge(document.getElementById('gauge_chart_6'));
       gaugeChart6.draw(dataPullRequests, optionsPullRequests);
-    }
-
-    function showQueues() {
-      var response = loadQueueStats();
-      var dataTotal = google.visualization.arrayToDataTable([["Items", "Total"], ["RabbitMQ", response["total"]]]);
-      var dataQueues = google.visualization.arrayToDataTable(response["queues"]);
-
-      var optionsTotal = {
-        legend: { position: 'none' },
-        showRowNumber: true,
-        width: '100%',
-        height: '100%',
-        min: 0,
-        max: 1000,
-        greenFrom: 0, greenTo: 250,
-        yellowFrom: 250, yellowTo: 500,
-        redFrom: 500, redTo: 1000
-      };
-
-      var optionsQueues = {
-        title: 'Errors',
-        legend: { position: 'none' },
-        showRowNumber: true,
-        width: '100%',
-        height: '100%'
-      };
-
-      var queues = new google.visualization.Table(document.getElementById('queues'));
-      queues.draw(dataQueues, optionsQueues);
-      var gaugeChart4 = new google.visualization.Gauge(document.getElementById('gauge_chart_4'));
-      gaugeChart4.draw(dataTotal, optionsTotal);
-    }
-
-    function showMessages() {
-      var response = loadMessages();
-      var dataMessages = google.visualization.arrayToDataTable(response["messages"]);
-      var dataTotal = google.visualization.arrayToDataTable([["Items", "Total"], ["Errors", response["total"]]]);
-      var dataByApplications = google.visualization.arrayToDataTable(response["byApplications"]);
-
-      var optionsMessages = {
-        title: 'Errors',
-        legend: { position: 'none' },
-        showRowNumber: true,
-        width: '100%',
-        height: '100%'
-      };
-
-      var optionsTotal = {
-        legend: { position: 'none' },
-        showRowNumber: true,
-        width: '100%',
-        height: '100%',
-        min: 0,
-        max: 1000,
-        greenFrom: 0, greenTo: 250,
-        yellowFrom: 250, yellowTo: 500,
-        redFrom: 500, redTo: 1000
-      };
-
-      var optionsByApplications = {
-        title: 'Messages by applications',
-        legend: { position: 'right' }
-      };
-
-      var messages = new google.visualization.Table(document.getElementById('messages'));
-      messages.draw(dataMessages, optionsMessages);
-      var gaugeChart3 = new google.visualization.Gauge(document.getElementById('gauge_chart_3'));
-      gaugeChart3.draw(dataTotal, optionsTotal);
-      var pieChart2 = new google.visualization.PieChart(document.getElementById('pie_chart_2'));
-      pieChart2.draw(dataByApplications, optionsByApplications);
     }
   </script>
 </head>

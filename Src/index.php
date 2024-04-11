@@ -25,11 +25,20 @@ $config = new Configuration();
       var xhr = new XMLHttpRequest();
       xhr.open("GET", url, true);
       xhr.onreadystatechange = function () {
-        if (this.status >= 200 && this.status < 300) {
-          callback(this.responseText);
+        if (this.readyState === 4 && this.status === 200) {
+          callback(JSON.parse(this.responseText));
         }
       };
       xhr.send();
+    }
+
+    var showPreset = true;
+
+    function preset() {
+      showWebhook(JSON.parse('{"events":[["Event","Hits"]],"failed":0,"feed":[["Sequence","Date","Event","Action","Repository"]],"repositories":[["Repository","Hits"]],"total":0,"webhooks":[["Date","Hits"], ["01/01", 0]]}'));
+      showMessages(JSON.parse('{"total":0,"byApplications":[["Application","Messages"]],"messages":[["Id","Application","Message","Created At"]]}'));
+      showQueues(JSON.parse('{"queues":[["Server","Queue","Messages"]],"total":0}'));
+      showGitHub(JSON.parse('{"issues":0,"pull_requests":0}'));
     }
 
     function loadAll() {
@@ -40,6 +49,10 @@ $config = new Configuration();
     }
 
     function drawChart() {
+      if (showPreset) {
+        preset();
+        showPreset = false;
+      }
       loadAll();
       setTimeout(drawChart, 30000);
     }

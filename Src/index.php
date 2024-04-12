@@ -61,8 +61,8 @@ $config = new Configuration();
       var dataWebhooks = google.visualization.arrayToDataTable(response["webhooks"]);
       var dataEvents = google.visualization.arrayToDataTable(response["events"]);
       var dataFeed = google.visualization.arrayToDataTable(response["feed"]);
-      var dataTotal = google.visualization.arrayToDataTable([["Hits", "Total"], ["Webhooks", response["total"]]]);
-      var dataFailed = google.visualization.arrayToDataTable([["Hits", "Failed"], ["Failed", response["failed"]]]);
+      var dataTotal = google.visualization.arrayToDataTable([["Hits", "Total"], ["GH WH", response["total"]]]);
+      var dataFailed = google.visualization.arrayToDataTable([["Hits", "Failed"], ["WH Failed", response["failed"]]]);
 
       var optionsWebhooks = {
         title: 'GitHub webhooks by date',
@@ -128,7 +128,7 @@ $config = new Configuration();
 
     function showMessages(response) {
       var dataMessages = google.visualization.arrayToDataTable(response["messages"]);
-      var dataTotal = google.visualization.arrayToDataTable([["Items", "Total"], ["Errors", response["total"]]]);
+      var dataTotal = google.visualization.arrayToDataTable([["Items", "Total"], ["PM Errors", response["total"]]]);
       var dataByApplications = google.visualization.arrayToDataTable(response["byApplications"]);
 
       var optionsMessages = {
@@ -195,11 +195,11 @@ $config = new Configuration();
     }
 
     function showGitHub(response) {
-      var dataIssues = google.visualization.arrayToDataTable([["Hits", "Total"], ["Issues", response["issues"]]]);
+      var dataIssues = google.visualization.arrayToDataTable([["Hits", "Total"], ["GH Issues", response["issues"]]]);
       var dataPullRequests = google.visualization.arrayToDataTable(
         [
           ["Hits", "Total"],
-          ["Pull Requests", response["pull_requests"]]
+          ["GH PR", response["pull_requests"]]
         ]
       );
 

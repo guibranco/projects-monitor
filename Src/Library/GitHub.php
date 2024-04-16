@@ -44,7 +44,7 @@ class GitHub
         $response = $this->request->get($url, $headers);
 
         if ($response->statusCode != 200) {
-            throw new Exception("Error: {$response->body}");
+            throw new \Exception("Error: {$response->body}");
         }
 
         $data = json_decode($response->body);

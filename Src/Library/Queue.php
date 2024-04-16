@@ -51,6 +51,9 @@ class Queue
             $headers = array("Authorization: Basic " . base64_encode($server["user"] . ":" . $server["password"]));
             $url = "https://" . $server["host"] . "/api/queues/" . $server["vhost"] . "/";
             $response = $this->request->get($url, $headers);
+            if ($response->statusCode !== 200) {
+                break;
+            }
             $node = json_decode($response->body, true);
             foreach ($node as $queue) {
                 $item = array($server["host"], $queue["name"], $queue["messages"]);

@@ -16,16 +16,18 @@ class Logger
 
     private function getInsert()
     {
-        $sql = "INSERT INTO messages (`application_id`, `class`, `function`, `file`,";
-        $sql .= "`line`, `object`, `type`, `args`, `message`, `details`) ";
-        $sql .= "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO messages (`application_id`, `class`, `function`, `file`, `line`,";
+        $sql .= "`object`, `type`, `args`, `message`, `details`, `correlation_id`, `user_agent`) ";
+        $sql .= "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         return $sql;
     }
 
     public function saveMessage($applicationId)
     {
-        $data = (new Configuration())->getRequestData();
+        $config = new Configuration();
+        $headers = $config->getRequestHeaders();
+        $data = $config->getRequestData();
         $sql = $this->getInsert();
         $stmt = $this->connection->prepare($sql);
 
@@ -39,9 +41,11 @@ class Logger
         $args = isset($data["args"]) ? $data["args"] : "none";
         $message = isset($data["message"]) ? $data["message"] : "none";
         $details = isset($data["details"]) ? $data["details"] : "none";
+        $correlationId = isset($headers["X-Correlation-Id"]) ? $headers["X-Correlation-Id"] : "none";
+        $userAgent = isset($headers["User-Agent"]) ? $headers["User-Agent"] : "none";
 
         $stmt->bind_param(
-            "isssisssss",
+            "isssisssssss",
             $appId,
             $class,
             $function,
@@ -51,7 +55,9 @@ class Logger
             $type,
             $args,
             $message,
-            $details
+            $details,
+            $correlationId,
+            $userAgent
         );
 
         $result = $stmt->execute();
@@ -105,7 +111,7 @@ class Logger
 
     private function getQuery()
     {
-        $sql = "SELECT m.id, a.name, m.message, m.created_at ";
+        $sql = "SELECT m.id, a.name, m.message, m.correlation_id, m.user_agent, m.created_at ";
         $sql .= "FROM messages as m INNER JOIN applications as a ON m.application_id = a.id ";
         $sql .= "ORDER BY m.id DESC LIMIT 0, ?;";
         return $sql;
@@ -122,6 +128,23 @@ class Logger
         while ($row = $result->fetch_array(MYSQLI_NUM)) {
             $data[] = array_values($row);
         }
+        $stmt->close();
+
+        return $data;
+    }
+
+    public function getMessage($messageId)
+    {
+        $sql = "SELECT m.id, a.name, m.class, m.function, m.file, m.line, m.object, ";
+        $sql .= "m.type, m.args, m.message, m.details, m.correlation_id, m.user_agent, m.created_at ";
+        $sql .= "FROM messages as m INNER JOIN applications as a ON m.application_id = a.id ";
+        $sql .= "WHERE m.id = ?;";
+        $stmt = $this->connection->prepare($sql);
+        $stmt->bind_param("i", $messageId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_array(MYSQLI_NUM);
+        $data = array_values($row);
         $stmt->close();
 
         return $data;

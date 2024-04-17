@@ -142,42 +142,11 @@ class Logger
         $stmt = $this->connection->prepare($sql);
         $stmt->bind_param("i", $messageId);
         $stmt->execute();
-        $stmt->bind_result(
-            $id,
-            $application,
-            $class,
-            $function,
-            $file,
-            $line,
-            $object,
-            $type,
-            $args,
-            $message,
-            $details,
-            $correlation_id,
-            $user_agent,
-            $created_at
-        );
-        $stmt->fetch();
-        $data = array(
-            "id" => $id,
-            "application" => $application,
-            "class" => $class,
-            "function" => $function,
-            "file" => $file,
-            "line" => $line,
-            "object" => $object,
-            "type" => $type,
-            "args" => $args,
-            "message" => $message,
-            "details" => $details,
-            "correlation_id" => $correlation_id,
-            "user_agent" => $user_agent,
-            "created_at" => $created_at
-        );
+        $result = $stmt->get_result();
+        $row = $result->fetch_array(MYSQLI_NUM);
+        $data = array_values($row);
         $stmt->close();
 
         return $data;
-
     }
 }

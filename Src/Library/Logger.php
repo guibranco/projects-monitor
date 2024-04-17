@@ -133,7 +133,7 @@ class Logger
         return $data;
     }
 
-    public function showMessage($messageId)
+    public function getMessage($messageId)
     {
         $sql = "SELECT m.id, a.name, m.class, m.function, m.file, m.line, m.object, ";
         $sql .= "m.type, m.args, m.message, m.details, m.correlation_id, m.user_agent, m.created_at ";

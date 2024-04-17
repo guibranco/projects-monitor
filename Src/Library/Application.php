@@ -43,7 +43,7 @@ class Application
         $result = $stmt->get_result();
         $row = $result->fetch_array(MYSQLI_ASSOC);
 
-        if($row == null) {
+        if ($row == null) {
             http_response_code(403);
             return false;
         }
@@ -52,5 +52,17 @@ class Application
 
         $stmt->close();
         return true;
+    }
+
+    public function authorize()
+    {
+        $headers = $this->config->getRequestHeaders();
+
+        if (!isset($headers["Authorization"])) {
+            http_response_code(401);
+            return false;
+        }
+
+        return false;
     }
 }

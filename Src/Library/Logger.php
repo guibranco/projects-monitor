@@ -45,7 +45,7 @@ class Logger
         $userAgent = isset($headers["User-Agent"]) ? $headers["User-Agent"] : "none";
 
         $stmt->bind_param(
-            "isssisssss",
+            "isssisssssss",
             $appId,
             $class,
             $function,

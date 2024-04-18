@@ -105,6 +105,8 @@ class Logger
             "Id",
             "Application",
             "Message",
+            "Correlation Id",
+            "User Agent",
             "Created At"
         );
     }

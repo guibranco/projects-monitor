@@ -53,13 +53,16 @@ class GitHub
 
     private function mapItems($items)
     {
+        if (count($items) == 0) {
+            return array();
+        }
 
         $result = array();
 
         $result[] = array("Title", "User");
 
         foreach ($items as $item) {
-            $result[] = array("<a href='" . $item->html_url . "' target='_blank'>" . $item->title . "</a>","<a href='" . $item->user->html_url . "' target='_blank'>" . $item->user->login . "</a>");
+            $result[] = array("<a href='" . $item->html_url . "' target='_blank'>" . $item->title . "</a>", "<a href='" . $item->user->html_url . "' target='_blank'>" . $item->user->login . "</a>");
         }
 
         return $result;

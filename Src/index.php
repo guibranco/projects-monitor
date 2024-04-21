@@ -37,10 +37,12 @@ $config = new Configuration();
   <div id="pie_chart_2" style="width: 30%; height: 300px; float: left;"></div>
   <div id="queues" style="width: 30%; height: 300px; float: left;background-color: white;"></div>
   <div style="clear:both;"></div>
-  <div id="pull_requests" style="width: 50%; float: left;background-color: white;"></div>
-  <div id="issues" style="width: 50%; float: left;background-color: white;"></div>  
-  <div id="messages" style="width: 50%; float: left;background-color: white;"></div>
+  <div style="width: 50%; float: left;background-color: white;">
+    <div id="pull_requests"></div>
+    <div id="issues"></div>
+  </div>
   <div id="feed" style="width: 50%; float: left;background-color: white;"></div>
+  <div id="messages" style="width: 50%; float: left;background-color: white;"></div>
   <div style="clear:both;"></div>
 </body>
 <script>

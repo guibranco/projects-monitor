@@ -247,7 +247,7 @@ function showGitHub(response) {
     response["pull_requests"]["latest"]
   );
   const dataBugsTable = google.visualization.arrayToDataTable(
-    response["issues"]["bugs"]
+    response["issues"]["bug"]
   );
   const dataTriageTable = google.visualization.arrayToDataTable(
     response["issues"]["triage"]

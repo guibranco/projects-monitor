@@ -17,7 +17,7 @@ class GitHub
         global $gitHubToken;
 
         if (!file_exists(__DIR__ . "/../secrets/gitHub.secrets.php")) {
-            throw new Exception("File not found: gitHub.secrets.php");
+            throw new GitHubException("File not found: gitHub.secrets.php");
         }
 
         require_once __DIR__ . "/../secrets/gitHub.secrets.php";
@@ -44,12 +44,25 @@ class GitHub
         $response = $this->request->get($url, $headers);
 
         if ($response->statusCode != 200) {
-            throw new \Exception("Error: {$response->body}");
+            throw new GitHubException("Error: {$response->body}");
         }
 
-        $data = json_decode($response->body);
-        return $data->total_count;
 
+        return json_decode($response->body);
+    }
+
+    private function mapItems($items)
+    {
+
+        $result = array();
+
+        $result[] = array("Title", "User");
+
+        foreach ($items as $item) {
+            $result[] = array("<a href='" . $item->html_url . "' target='_blank'>" . $item->title . "</a>","<a href='" . $item->user->html_url . "' target='_blank'>" . $item->user->login . "</a>");
+        }
+
+        return $result;
     }
 
     public function getIssues()
@@ -61,7 +74,12 @@ class GitHub
             "InovacaoMediaBrasil",
         );
 
-        return $this->getRequest($users, "issue");
+        $data = array();
+        $result = $this->getRequest($users, "issue");
+        $data["total_count"] = $result->total_count;
+        $data["latest"] = $this->mapItems($result->items);
+
+        return $data;
     }
 
     public function getPullRequests()
@@ -84,6 +102,11 @@ class GitHub
             "developersRJ"
         );
 
-        return $this->getRequest($users, "pr");
+        $data = array();
+        $result = $this->getRequest($users, "pr");
+        $data["total_count"] = $result->total_count;
+        $data["latest"] = $this->mapItems($result->items);
+
+        return $data;
     }
 }

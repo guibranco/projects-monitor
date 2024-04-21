@@ -40,6 +40,9 @@ $config = new Configuration();
   <div id="feed" style="width: 50%; float: left;background-color: white;"></div>
   <div style="width: 50%; float: left;background-color: white;">
     <div id="pull_requests"></div>
+    <div id="bug"></div>
+    <div id="triage"></div>
+    <div id="wip"></div>
     <div id="issues"></div>
   </div>
   <div style="clear:both;"></div>

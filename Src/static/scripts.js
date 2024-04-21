@@ -27,7 +27,7 @@ function preset() {
   );
   showGitHub(
     JSON.parse(
-      '{"issues":{"total_issues":0, "latest":[]},"pull_requests":{"total_issues":0, "latest":[]}}'
+      '{"issues":{"total_issues":0, "latest":[], "bug":[], "triage":[], "wip":[]},"pull_requests":{"total_issues":0, "latest":[]}}'
     )
   );
 }
@@ -243,11 +243,20 @@ function showGitHub(response) {
     ["Hits", "Total"],
     ["GH PR", response["pull_requests"]["total_count"]],
   ]);
-  const dataIssuesTable = google.visualization.arrayToDataTable(
-    response["issues"]["latest"]
-  );
   const dataPullRequestsTable = google.visualization.arrayToDataTable(
     response["pull_requests"]["latest"]
+  );
+  const dataBugsTable = google.visualization.arrayToDataTable(
+    response["issues"]["bugs"]
+  );
+  const dataTriageTable = google.visualization.arrayToDataTable(
+    response["issues"]["triage"]
+  );
+  const dataWipTable = google.visualization.arrayToDataTable(
+    response["issues"]["wip"]
+  );
+  const dataIssuesTable = google.visualization.arrayToDataTable(
+    response["issues"]["latest"]
   );
 
   const gaugueOptions = {
@@ -282,12 +291,24 @@ function showGitHub(response) {
   );
   gaugeChart6.draw(dataPullRequests, gaugueOptions);
 
-  const issues = new google.visualization.Table(
-    document.getElementById("issues")
-  );
-  issues.draw(dataIssuesTable, tableOptions);
   const pullRequests = new google.visualization.Table(
     document.getElementById("pull_requests")
   );
   pullRequests.draw(dataPullRequestsTable, tableOptions);
+
+  const bug = new google.visualization.Table(document.getElementById("bug"));
+  bug.draw(dataBugsTable, tableOptions);
+
+  const triage = new google.visualization.Table(
+    document.getElementById("triage")
+  );
+  triage.draw(dataTriageTable, tableOptions);
+
+  const wip = new google.visualization.Table(document.getElementById("wip"));
+  wip.draw(dataWipTable, tableOptions);
+
+  const issues = new google.visualization.Table(
+    document.getElementById("issues")
+  );
+  issues.draw(dataIssuesTable, tableOptions);
 }

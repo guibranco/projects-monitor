@@ -60,10 +60,15 @@ class GitHub
 
         $result = array();
 
-        $result[] = array("Title", "User");
+        $result[] = array("Title", "Repositry", "User");
 
         foreach ($items as $item) {
-            $result[] = array("<a href='" . $item->html_url . "' target='_blank'>" . $item->title . "</a>", "<a href='" . $item->user->html_url . "' target='_blank'>" . $item->user->login . "</a>");
+            $repositoryName = str_replace("https://api.github.com/repos/", "", $item->repository_url);
+            $result[] = array(
+                "<a href='" . $item->html_url . "' target='_blank'>" . $item->title . "</a>",
+                "<a href='" . $item->repository_url . "' target='_blank'>" . $repositoryName . "</a>",
+                "<a href='" . $item->user->html_url . "' target='_blank'>" . $item->user->login . "</a>"
+            );
         }
 
         return $result;

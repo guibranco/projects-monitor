@@ -66,7 +66,7 @@ class GitHub
             $repositoryName = str_replace("https://api.github.com/repos/", "", $item->repository_url);
             $result[] = array(
                 "<a href='" . $item->html_url . "' target='_blank'>" . $item->title . "</a>",
-                "<a href='" . $item->repository_url . "' target='_blank'>" . $repositoryName . "</a>",
+                "<a href='https://github.com/" . $repositoryName . "' target='_blank'>" . $repositoryName . "</a>",
                 "<a href='" . $item->user->html_url . "' target='_blank'>" . $item->user->login . "</a>"
             );
         }

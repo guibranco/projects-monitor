@@ -15,6 +15,6 @@
         }
     ],
     "require": {
-        "guibranco/pancake": "^0.6.8"
+        "guibranco/pancake": "^0.6.19"
     }
 }

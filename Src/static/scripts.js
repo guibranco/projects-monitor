@@ -83,12 +83,12 @@ function showWebhook(response) {
     legend: { position: "right" },
   };
 
-  const optionsFeed = {
-    title: "GitHub feed",
+  const tableOptions = {
     legend: { position: "none" },
     showRowNumber: true,
     width: "100%",
     height: "100%",
+    allowHtml: true,
   };
 
   const optionsTotal = {
@@ -130,7 +130,7 @@ function showWebhook(response) {
   );
   pieChart1.draw(dataEvents, optionsEvents);
   const feed = new google.visualization.Table(document.getElementById("feed"));
-  feed.draw(dataFeed, optionsFeed);
+  feed.draw(dataFeed, tableOptions);
   const gaugeChart1 = new google.visualization.Gauge(
     document.getElementById("gauge_chart_1")
   );

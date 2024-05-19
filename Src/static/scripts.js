@@ -1,3 +1,11 @@
+const tableOptions = {
+  legend: { position: "none" },
+  allowHtml: true,
+  showRowNumber: true,
+  width: "100%",
+  height: "100%",
+};
+
 google.charts.load("current", { packages: ["corechart", "table", "gauge"] });
 google.charts.setOnLoadCallback(drawChart);
 function load(url, callback) {
@@ -38,9 +46,11 @@ function loadAll() {
   load("api/v1/queues", showQueues);
   load("api/v1/github", showGitHub);
   load("api/v1/healthchecksio", showHealthChecksIo);
+  load("api/v1/uptimerobot", showUpTimeRobot);
 }
 
 let showPreset = true;
+
 function drawChart() {
   if (showPreset) {
     preset();
@@ -81,14 +91,6 @@ function showWebhook(response) {
   const optionsEvents = {
     title: "GitHub events by type",
     legend: { position: "right" },
-  };
-
-  const tableOptions = {
-    legend: { position: "none" },
-    showRowNumber: true,
-    width: "100%",
-    height: "100%",
-    allowHtml: true,
   };
 
   const optionsTotal = {
@@ -153,14 +155,6 @@ function showMessages(response) {
     response["byApplications"]
   );
 
-  const optionsMessages = {
-    title: "Errors",
-    legend: { position: "none" },
-    showRowNumber: true,
-    width: "100%",
-    height: "100%",
-  };
-
   const optionsTotal = {
     legend: { position: "none" },
     showRowNumber: true,
@@ -184,7 +178,7 @@ function showMessages(response) {
   const messages = new google.visualization.Table(
     document.getElementById("messages")
   );
-  messages.draw(dataMessages, optionsMessages);
+  messages.draw(dataMessages, tableOptions);
   const gaugeChart3 = new google.visualization.Gauge(
     document.getElementById("gauge_chart_3")
   );
@@ -217,18 +211,10 @@ function showQueues(response) {
     redTo: 1000,
   };
 
-  const optionsQueues = {
-    title: "Errors",
-    legend: { position: "none" },
-    showRowNumber: true,
-    width: "100%",
-    height: "100%",
-  };
-
   const queues = new google.visualization.Table(
     document.getElementById("queues")
   );
-  queues.draw(dataQueues, optionsQueues);
+  queues.draw(dataQueues, tableOptions);
   const gaugeChart4 = new google.visualization.Gauge(
     document.getElementById("gauge_chart_4")
   );
@@ -275,14 +261,6 @@ function showGitHub(response) {
     redTo: 1000,
   };
 
-  const tableOptions = {
-    legend: { position: "none" },
-    showRowNumber: true,
-    width: "100%",
-    height: "100%",
-    allowHtml: true,
-  };
-
   const gaugeChart5 = new google.visualization.Gauge(
     document.getElementById("gauge_chart_5")
   );
@@ -318,16 +296,18 @@ function showHealthChecksIo(response) {
   const dataHealthChecksIo = google.visualization.arrayToDataTable(
     response["checks"]
   );
-  const optionsHealthChecksIo = {
-    title: "HealthChecks.io",
-    legend: { position: "none" },
-    showRowNumber: true,
-    width: "100%",
-    height: "100%",
-  };
-
   const healthChecksIo = new google.visualization.Table(
     document.getElementById("healthchecksio")
   );
-  healthChecksIo.draw(dataHealthChecksIo, optionsHealthChecksIo);
+  healthChecksIo.draw(dataHealthChecksIo, tableOptions);
+}
+
+function showUpTimeRobot(response) {
+  const dataUpTimeRobot = google.visualization.arrayToDataTable(
+    response["monitors"]
+  );
+  const upTimeRobot = new google.visualization.Table(
+    document.getElementById("uptimerobot")
+  );
+  upTimeRobot.draw(dataUpTimeRobot, tableOptions);
 }

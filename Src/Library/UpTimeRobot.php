@@ -1,0 +1,86 @@
+<?php
+
+namespace GuiBranco\ProjectsMonitor\Library;
+
+use GuiBranco\Pancake\Request;
+
+class UpTimeRobot
+{
+    private const API_URL = "https://api.uptimerobot.com/v2/";
+
+    private $token;
+
+    private $request;
+
+    public function __construct()
+    {
+        global $upTimeRobotToken;
+
+        if (!file_exists(__DIR__ . "/../secrets/upTimeRobot.secrets.php")) {
+            throw new UpTimeRobotException("File not found: upTimeRobot.secrets.php");
+        }
+
+        require_once __DIR__ . "/../secrets/upTimeRobot.secrets.php";
+
+        $this->token = $upTimeRobotToken;
+        $this->request = new Request();
+    }
+
+    private function doRequest()
+    {
+        $url = self::API_URL . "getMonitors";
+        $headers = [
+            "Content-Type: application/x-www-form-urlencoded",
+            "Accept: application/json",
+            "Cache-Control: no-cache",
+            "User-Agent: ProjectsMonitor/1.0"
+        ];
+
+        $data = http_build_query([
+            "api_key" => $this->token,
+            "format" => "json",
+            "logs" => 1
+        ]);
+
+        $response = $this->request->post($url, $data, $headers);
+
+        if ($response->statusCode != 200) {
+            throw new UpTimeRobotException("Error: {$response->body}");
+        }
+
+        return json_decode($response->body);
+    }
+
+    private function mapStatus($status)
+    {
+        return match ($status) {
+            0 => "⏸",
+            1 => "🆕",
+            2 => "✅",
+            8 => "⚠️",
+            9 => "❌"
+        };
+    }
+
+    public function getMonitors()
+    {
+        $monitors = array();
+        $response = $this->doRequest();
+
+        foreach ($response->monitors as $monitor) {
+            $log = $monitor->logs[0];
+            $monitors[] = array(
+                $monitor->friendly_name,
+                $this->mapStatus($monitor->status),
+                date("H:i:s d/m/Y", $log->datetime),
+                $log->reason->code . " - " . $log->reason->detail
+            );
+        }
+
+        sort($monitors, SORT_ASC);
+
+        array_unshift($monitors, array("Name", "Status", "Last change", "Details"));
+
+        return $monitors;
+    }
+}

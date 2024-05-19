@@ -70,7 +70,7 @@ jobs:
           mkdir -p secrets
           cd secrets
           echo "<?php" >> gitHub.secrets.php
-          echo "\$gitHubToken = \"${{ secrets.GH_TOKEN }}\";" >> gitHub.secrets.
+          echo "\$gitHubToken = \"${{ secrets.GH_TOKEN }}\";" >> gitHub.secrets.php
           
       - name: Create HealthCheck secrets file
         if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'

@@ -44,22 +44,15 @@ class HealthChecksIo
         return json_decode($response->body);
     }
 
-    private function mapStatus($status)
-    {
-        switch ($status) {
-            case "up":
-                return "✅";
-            case "down":
-                return "❌";
-            case "paused":
-                return "⏸";
-            case "new":
-                return "🆕";
-            case "grace":
-                return "⏳";
-            default:
-                return "❓";
-        }
+    private function mapStatus($status){
+        return match ($status) {
+            "up" => "✅",
+            "down" => "❌",
+            "paused" => "⏸",
+            "new" => "🆕",
+            "grace" => "⏳",
+            default => "❓",
+        };
     }
 
     public function getChecks()

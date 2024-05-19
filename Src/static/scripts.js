@@ -37,6 +37,7 @@ function loadAll() {
   load("api/v1/messages", showMessages);
   load("api/v1/queues", showQueues);
   load("api/v1/github", showGitHub);
+  load("api/v1/healthchecksio", showHealthChecksIo);
 }
 
 let showPreset = true;
@@ -311,4 +312,22 @@ function showGitHub(response) {
     document.getElementById("issues")
   );
   issues.draw(dataIssuesTable, tableOptions);
+}
+
+function showHealthChecksIo(response) {
+  const dataHealthChecksIo = google.visualization.arrayToDataTable(
+    response["checks"]
+  );
+  const optionsHealthChecksIo = {
+    title: "HealthChecks.io",
+    legend: { position: "none" },
+    showRowNumber: true,
+    width: "100%",
+    height: "100%",
+  };
+
+  const healthChecksIo = new google.visualization.Table(
+    document.getElementById("healthchecksio")
+  );
+  healthChecksIo.draw(dataHealthChecksIo, optionsHealthChecksIo);
 }

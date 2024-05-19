@@ -70,7 +70,18 @@ jobs:
           mkdir -p secrets
           cd secrets
           echo "<?php" >> gitHub.secrets.php
-          echo "\$gitHubToken = \"${{ secrets.GH_TOKEN }}\";" >> gitHub.secrets.php
+          echo "\$gitHubToken = \"${{ secrets.GH_TOKEN }}\";" >> gitHub.secrets.
+          
+      - name: Create HealthCheck secrets file
+        if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
+        run: |
+          cd Src
+          mkdir -p secrets
+          cd secrets
+          echo "<?php" >> healthChecksIo.secrets.php
+          echo "\$healthChecksIoReadKeys[] = \"${{ secrets.HEALTHCHECKSIO_RK1 }}\";" >> healthChecksIo.secrets.php
+          echo "\$healthChecksIoReadKeys[] = \"${{ secrets.HEALTHCHECKSIO_RK2 }}\";" >> healthChecksIo.secrets.php
+          echo "\$healthChecksIoReadKeys[] = \"${{ secrets.HEALTHCHECKSIO_RK3 }}\";" >> healthChecksIo.secrets.php
 
       - name: Create MySQL secrets file
         if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'

@@ -4,6 +4,7 @@ RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME} !-f
 
 RewriteRule ^github$ github.php [NC,L]
+rEWRITErULE ^healthchecksio$ healthchecksio.php [NC,L]
 RewriteRule ^log-message$ log-message.php [NC,L]
 RewriteRule ^messages$ messages.php [NC,L]
 RewriteRule ^queues$ queues.php [NC,L]

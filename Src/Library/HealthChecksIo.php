@@ -44,7 +44,8 @@ class HealthChecksIo
         return json_decode($response->body);
     }
 
-    private function mapStatus($status){
+    private function mapStatus($status)
+    {
         switch ($status) {
             case "up":
                 return "✅";

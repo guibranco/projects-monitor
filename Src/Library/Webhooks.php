@@ -10,7 +10,7 @@ class Webhooks
 
     private $request;
 
-    public function __construct() 
+    public function __construct()
     {
         $this->request = new Request();
     }

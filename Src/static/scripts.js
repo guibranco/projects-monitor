@@ -66,6 +66,7 @@ function showWebhook(response) {
   );
   const dataEvents = google.visualization.arrayToDataTable(response["events"]);
   const dataFeed = google.visualization.arrayToDataTable(response["feed"]);
+  const dataRepositories = google.visualization.arrayToDataTable(response["repositories"]);
   const dataTotal = google.visualization.arrayToDataTable([
     ["Hits", "Total"],
     ["GH WH", response["total"]],
@@ -131,6 +132,8 @@ function showWebhook(response) {
     document.getElementById("pie_chart_1")
   );
   pieChart1.draw(dataEvents, optionsEvents);
+  const repositories = new google.visualization.Table(document.getElementById("repositories"));
+  repositories.draw(dataRepositories, tableOptions);
   const feed = new google.visualization.Table(document.getElementById("feed"));
   feed.draw(dataFeed, tableOptions);
   const gaugeChart1 = new google.visualization.Gauge(

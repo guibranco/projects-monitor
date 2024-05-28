@@ -27,7 +27,7 @@ class Webhooks
         $response = $this->request->get(API_URL, $headers);
 
         if ($response->statusCode != 200) {
-            throw new WehooksException("Error: {$response->body}");
+            throw new WebhooksException("Error: {$response->body}");
         }
 
         return json_decode($response->body);

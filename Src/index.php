@@ -37,7 +37,7 @@ $config = new Configuration();
   <div id="pie_chart_2" style="width: 30%; height: 300px; float: left;"></div>
   <div id="queues" style="width: 30%; height: 300px; float: left;background-color: white;"></div>
   <div style="clear:both;"></div>
-  <div id="repositories" style="width: 30%; height: 300px; float: left;background-color: white;"></div>
+  <div id="repositories" style="width: 40%; height: 500px; float: left;background-color: white;"></div>
   <div style="clear:both;"></div>
   <div id="feed" style="width: 50%; float: left;background-color: white;"></div>
   <div style="width: 50%; float: left;background-color: white;">

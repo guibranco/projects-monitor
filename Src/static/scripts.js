@@ -41,12 +41,12 @@ function preset() {
 }
 
 function loadAll() {
-  load("https://guilhermebranco.com.br/webhooks/api.php", showWebhook);
-  load("api/v1/messages", showMessages);
-  load("api/v1/queues", showQueues);
   load("api/v1/github", showGitHub);
   load("api/v1/healthchecksio", showHealthChecksIo);
+  load("api/v1/messages", showMessages);
+  load("api/v1/queues", showQueues);
   load("api/v1/uptimerobot", showUpTimeRobot);
+  load("api/v1/webhooks", showWebhook);
 }
 
 let showPreset = true;

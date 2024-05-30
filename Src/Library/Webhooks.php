@@ -27,7 +27,7 @@ class Webhooks
         $response = $this->request->get(self::API_URL, $headers);
 
         if ($response->statusCode != 200) {
-            throw new WebhooksException("Error: {$response->body}");
+            throw new SecretsFileNotFoundException("Error: {$response->body}");
         }
 
         return json_decode($response->body);

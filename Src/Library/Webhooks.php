@@ -19,7 +19,7 @@ class Webhooks
         if (!file_exists(__DIR__ . "/../secrets/webhooks.secrets.php")) {
             throw new WebhooksException("File not found: webhooks.secrets.php");
         }
-        
+
         require_once __DIR__ . "/../secrets/webhooks.secrets.php";
 
         $this->token = $webhooksApiToken;

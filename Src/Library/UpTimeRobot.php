@@ -17,7 +17,7 @@ class UpTimeRobot
         global $upTimeRobotToken;
 
         if (!file_exists(__DIR__ . "/../secrets/upTimeRobot.secrets.php")) {
-            throw new UpTimeRobotException("File not found: upTimeRobot.secrets.php");
+            throw new SecretsFileNotFoundException("File not found: upTimeRobot.secrets.php");
         }
 
         require_once __DIR__ . "/../secrets/upTimeRobot.secrets.php";
@@ -45,7 +45,7 @@ class UpTimeRobot
         $response = $this->request->post($url, $data, $headers);
 
         if ($response->statusCode != 200) {
-            throw new UpTimeRobotException("Error: {$response->body}");
+            throw new RequestException("Code; {$response->statusCode} - Error: {$response->body}");
         }
 
         return json_decode($response->body);

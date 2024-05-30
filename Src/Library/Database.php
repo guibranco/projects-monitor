@@ -32,7 +32,7 @@ class Database
         $this->database = $mySqlDatabase;
 
         if (empty($this->host) || empty($this->user) || empty($this->password) || empty($this->database)) {
-            throw new \Exception("Invalid mySql.secrets.php");
+            throw new SecretsFileNotFoundException("Invalid mySql.secrets.php");
         }
 
         $this->connect();
@@ -42,7 +42,7 @@ class Database
     {
         $this->connection = new \mysqli($this->host, $this->user, $this->password, $this->database);
         if ($this->connection->connect_error) {
-            throw new \Exception("Connection failed: " . $this->connection->connect_error);
+            throw new RequestException("Connection failed: " . $this->connection->connect_error);
         }
 
         $this->connection->set_charset("utf8mb4");

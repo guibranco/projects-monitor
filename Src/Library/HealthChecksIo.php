@@ -68,7 +68,7 @@ class HealthChecksIo
                 $checks[] = array(
                     $check->name,
                     $this->mapStatus($check->status),
-                    date("H:i:s d/m/Y", strtotime($check->last_ping)),
+                    date("H:i:s d/m/Y", $check->last_ping == null ? time() : strtotime($check->last_ping)),
                     date("H:i:s d/m/Y", $check->next_ping == null ? time() : strtotime($check->next_ping))
                 );
             }

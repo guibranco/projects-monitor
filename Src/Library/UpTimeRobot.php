@@ -33,7 +33,7 @@ class UpTimeRobot
             "Content-Type: application/x-www-form-urlencoded",
             "Accept: application/json",
             "Cache-Control: no-cache",
-            "User-Agent: ProjectsMonitor/1.0"
+            "User-Agent: ProjectsMonitor/1.0 (+https://github.com/guibranco/projects-monitor)"
         ];
 
         $data = http_build_query([

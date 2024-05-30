@@ -118,6 +118,15 @@ jobs:
           cd secrets
           echo "<?php" >> upTimeRobot.secrets.php
           echo "\$upTimeRobotToken = \"${{ secrets.UPTIMEROBOT_TOKEN }}\";" >> upTimeRobot.secrets.php
+
+      - name: Create Webhook secrets file
+        if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
+        run: |
+          cd Src
+          mkdir -p secrets
+          cd secrets
+          echo "<?php" >> webhook.secrets.php
+          echo "\$webhookApiToken = \"${{ secrets.WEBHOOK_API_TOKEN }}\";" >> webhook.secrets.php
       
       - name: Upload files
         if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'

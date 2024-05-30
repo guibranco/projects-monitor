@@ -17,7 +17,7 @@ class Webhooks
         global $webhooksApiToken;
 
         if (!file_exists(__DIR__ . "/../secrets/webhooks.secrets.php")) {
-            throw new WebhooksException("File not found: webhooks.secrets.php");
+            throw new SecretsFileNotFoundException("File not found: webhooks.secrets.php");
         }
 
         require_once __DIR__ . "/../secrets/webhooks.secrets.php";
@@ -38,7 +38,7 @@ class Webhooks
         $response = $this->request->get(self::API_URL, $headers);
 
         if ($response->statusCode != 200) {
-            throw new WebhooksException("Error: {$response->body}");
+            throw new RequestException("Code; {$response->statusCode} - Error: {$response->body}");
         }
 
         return json_decode($response->body);

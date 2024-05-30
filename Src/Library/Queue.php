@@ -3,7 +3,6 @@
 namespace GuiBranco\ProjectsMonitor\Library;
 
 use GuiBranco\Pancake\Request;
-use Exception;
 
 class Queue
 {
@@ -16,7 +15,7 @@ class Queue
         global $rabbitMqConnectionStrings;
 
         if (!file_exists(__DIR__ . "/../secrets/rabbitMq.secrets.php")) {
-            throw new Exception("File not found: rabbitMq.secrets.php");
+            throw new SecretsFileNotFoundException("File not found: rabbitMq.secrets.php");
         }
 
         require_once __DIR__ . "/../secrets/rabbitMq.secrets.php";

@@ -1,4 +1,4 @@
-FROM php:8.3-rc-apache
+FROM php:fpm
 
 RUN a2enmod rewrite \
     && apt-get clean \

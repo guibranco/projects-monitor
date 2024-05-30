@@ -39,7 +39,7 @@ class GitHub
             "Authorization: token {$this->token}",
             "Accept: application/vnd.github.v3+json",
             "X-GitHub-Api-Version: 2022-11-28",
-            "User-Agent: ProjectsMonitor/1.0"
+            "User-Agent: ProjectsMonitor/1.0 (+https://github.com/guibranco/projects-monitor)"
         ];
 
         $response = $this->request->get($url, $headers);

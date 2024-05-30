@@ -17,7 +17,7 @@ class GitHub
         global $gitHubToken;
 
         if (!file_exists(__DIR__ . "/../secrets/gitHub.secrets.php")) {
-            throw new GitHubException("File not found: gitHub.secrets.php");
+            throw new SecretsFileNotFoundException("File not found: gitHub.secrets.php");
         }
 
         require_once __DIR__ . "/../secrets/gitHub.secrets.php";
@@ -45,9 +45,8 @@ class GitHub
         $response = $this->request->get($url, $headers);
 
         if ($response->statusCode != 200) {
-            throw new GitHubException("Error: {$response->body}");
+            throw new RequestException("Code; {$response->statusCode} - Error: {$response->body}");
         }
-
 
         return json_decode($response->body);
     }

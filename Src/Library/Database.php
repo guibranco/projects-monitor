@@ -21,7 +21,7 @@ class Database
         global $mySqlHost, $mySqlUser, $mySqlPassword, $mySqlDatabase;
 
         if (!file_exists(__DIR__ . "/../secrets/mySql.secrets.php")) {
-            throw new \Exception("File not found: mySql.secrets.php");
+            throw new SecretsFileNotFoundException("File not found: mySql.secrets.php");
         }
 
         require_once __DIR__ . "/../secrets/mySql.secrets.php";

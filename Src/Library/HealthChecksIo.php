@@ -17,7 +17,7 @@ class HealthChecksIo
         global $healthChecksIoReadKeys;
 
         if (!file_exists(__DIR__ . "/../secrets/healthChecksIo.secrets.php")) {
-            throw new HealthChecksIoException("File not found: healthChecksIo.secrets.php");
+            throw new SecretsFileNotFoundException("File not found: healthChecksIo.secrets.php");
         }
 
         require_once __DIR__ . "/../secrets/healthChecksIo.secrets.php";
@@ -38,7 +38,7 @@ class HealthChecksIo
         $response = $this->request->get($url, $headers);
 
         if ($response->statusCode != 200) {
-            throw new HealthChecksIoException("Error: {$response->body}");
+            throw new RequestException("Code; {$response->statusCode} - Error: {$response->body}");
         }
 
         return json_decode($response->body);

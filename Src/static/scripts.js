@@ -82,7 +82,7 @@ function showGitHub(response) {
   ]);
   const dataPullRequests = google.visualization.arrayToDataTable([
     ["Hits", "Total"],
-    ["GH PR", response["pull_requests"]["total_count"]],
+    ["GH PRs", response["pull_requests"]["total_count"]],
   ]);
   const dataPullRequestsTable = google.visualization.arrayToDataTable(
     response["pull_requests"]["latest"]

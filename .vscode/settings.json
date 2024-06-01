@@ -4,10 +4,17 @@
         "projectKey": "guibranco_projects-monitor"
     },
     "cSpell.words": [
+        "apiversion",
         "Cond",
         "corechart",
+        "cpanel",
+        "cpanelresult",
+        "Fileman",
         "guibranco",
         "healthchecksio",
+        "humansize",
+        "jsonapi",
+        "statfiles",
         "uptimerobot"
     ]
 }

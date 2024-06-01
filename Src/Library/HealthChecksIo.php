@@ -38,7 +38,7 @@ class HealthChecksIo
         $response = $this->request->get($url, $headers);
 
         if ($response->statusCode != 200) {
-            throw new RequestException("Code; {$response->statusCode} - Error: {$response->body}");
+            throw new RequestException("Code: {$response->statusCode} - Error: {$response->body}");
         }
 
         return json_decode($response->body);

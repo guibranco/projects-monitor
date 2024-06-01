@@ -62,6 +62,17 @@ jobs:
           cd secrets
           echo "Deny from all" >> .htaccess
 
+      - name: Create CPanel secrets file
+        if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
+        run: |
+          cd Src
+          mkdir -p secrets
+          cd secrets
+          echo "<?php" >> cPanel.secrets.php
+          echo "\$cPanelApiToken  = \"${{ secrets.CPANEL_API_TOKEN }}\";" >> cPanel.secrets.php
+          echo "\$cPanelBaseUrl   = \"${{ secrets.CPANEL_BASE_URL }}\";" >> cPanel.secrets.php
+          echo "\$cPanelUsername  = \"${{ secrets.CPANEL_USERNAME }}\";" >> cPanel.secrets.php
+
       - name: Create GitHub secrets file
         if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
         run: |
@@ -70,7 +81,7 @@ jobs:
           cd secrets
           echo "<?php" >> gitHub.secrets.php
           echo "\$gitHubToken = \"${{ secrets.GH_TOKEN }}\";" >> gitHub.secrets.php
-          
+
       - name: Create HealthCheck secrets file
         if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
         run: |
@@ -93,7 +104,7 @@ jobs:
           echo "\$mySqlUser     = \"${{ secrets.MYSQL_USER }}\";" >> mySql.secrets.php
           echo "\$mySqlPassword = \"${{ secrets.MYSQL_PASSWORD }}\";" >> mySql.secrets.php
           echo "\$mySqlDatabase = \"${{ secrets.MYSQL_DATABASE }}\";" >> mySql.secrets.php
-      
+
       - name: Create RabbitMQ secrets file
         if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
         run: |
@@ -126,7 +137,7 @@ jobs:
           cd secrets
           echo "<?php" >> webhooks.secrets.php
           echo "\$webhooksApiToken = \"${{ secrets.WEBHOOKS_API_TOKEN }}\";" >> webhooks.secrets.php
-      
+
       - name: Upload files
         if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
         uses: sebastianpopp/ftp-action@releases/v2
@@ -164,7 +175,7 @@ jobs:
           echo "${{ secrets.WIREGUARD_CONFIG }}" > wg0.conf
           sudo chmod 600 wg0.conf
           sudo wg-quick up ./wg0.conf
-        
+
       - name: Check if schema version table exists
         id: new_installation
         if: steps.changes.outputs.sql == 'true' || github.event_name == 'workflow_dispatch'

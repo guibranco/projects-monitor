@@ -62,11 +62,17 @@ function drawChart() {
 }
 
 function showCPanel(response) {
-  const dataCPanel = google.visualization.arrayToDataTable(response["errors"]);
-  const cPanel = new google.visualization.Table(
-    document.getElementById("errors")
+  const dataLogFiles = google.visualization.arrayToDataTable(response["errorLogFiles"]);
+  const dataLogMessages = google.visualization.arrayToDataTable(response["errorLogMessages"]);
+
+  const logFiles = new google.visualization.Table(
+    document.getElementById("errorLogFiles")
   );
-  cPanel.draw(dataCPanel, tableOptions);
+  logFiles.draw(dataLogFiles, tableOptions);
+  const logMessages = new google.visualization.Table(
+    document.getElementById("errorLogMessages")
+  );
+  logMessages.draw(dataLogMessages, tableOptions);
 }
 
 function showGitHub(response) {

@@ -41,6 +41,7 @@ function preset() {
 }
 
 function loadAll() {
+  load("api/v1/cpanel", showCPanel);
   load("api/v1/github", showGitHub);
   load("api/v1/healthchecksio", showHealthChecksIo);
   load("api/v1/messages", showMessages);
@@ -60,168 +61,12 @@ function drawChart() {
   setTimeout(drawChart, 30000);
 }
 
-function showWebhook(response) {
-  const dataWebhooks = google.visualization.arrayToDataTable(
-    response["webhooks"]
+function showCPanel(response) {
+  const dataCPanel = google.visualization.arrayToDataTable(response["errors"]);
+  const cPanel = new google.visualization.Table(
+    document.getElementById("errors")
   );
-  const dataEvents = google.visualization.arrayToDataTable(response["events"]);
-  const dataFeed = google.visualization.arrayToDataTable(response["feed"]);
-  const dataRepositories = google.visualization.arrayToDataTable(response["repositories"]);
-  const dataTotal = google.visualization.arrayToDataTable([
-    ["Hits", "Total"],
-    ["GH WH", response["total"]],
-  ]);
-  const dataFailed = google.visualization.arrayToDataTable([
-    ["Hits", "Failed"],
-    ["WH Failed", response["failed"]],
-  ]);
-
-  const optionsWebhooks = {
-    title: "GitHub webhooks by date",
-    legend: { position: "none" },
-    colors: ["#0c5922"],
-    pointSize: 7,
-    hAxis: {
-      title: "Webhooks",
-      textStyle: {
-        fontSize: 10,
-      },
-    },
-  };
-
-  const optionsEvents = {
-    title: "GitHub events by type",
-    legend: { position: "right" },
-  };
-
-  const optionsTotal = {
-    legend: { position: "none" },
-    showRowNumber: true,
-    width: "100%",
-    height: "100%",
-    min: 0,
-    max: 120000,
-    greenFrom: 0,
-    greenTo: 40000,
-    yellowFrom: 40000,
-    yellowTo: 80000,
-    redFrom: 80000,
-    redTo: 120000,
-  };
-
-  const optionsFailed = {
-    legend: { position: "none" },
-    showRowNumber: true,
-    width: "100%",
-    height: "100%",
-    min: 0,
-    max: 1000,
-    greenFrom: 0,
-    greenTo: 50,
-    yellowFrom: 50,
-    yellowTo: 100,
-    redFrom: 100,
-    redTo: 1000,
-  };
-
-  const lineChart = new google.visualization.LineChart(
-    document.getElementById("line_chart")
-  );
-  lineChart.draw(dataWebhooks, optionsWebhooks);
-  const pieChart1 = new google.visualization.PieChart(
-    document.getElementById("pie_chart_1")
-  );
-  pieChart1.draw(dataEvents, optionsEvents);
-  const repositories = new google.visualization.Table(document.getElementById("repositories"));
-  repositories.draw(dataRepositories, tableOptions);
-  const feed = new google.visualization.Table(document.getElementById("feed"));
-  feed.draw(dataFeed, tableOptions);
-  const gaugeChart1 = new google.visualization.Gauge(
-    document.getElementById("gauge_chart_1")
-  );
-  gaugeChart1.draw(dataTotal, optionsTotal);
-  const gaugeChart2 = new google.visualization.Gauge(
-    document.getElementById("gauge_chart_2")
-  );
-  gaugeChart2.draw(dataFailed, optionsFailed);
-}
-
-function showMessages(response) {
-  const dataMessages = google.visualization.arrayToDataTable(
-    response["messages"]
-  );
-  const dataTotal = google.visualization.arrayToDataTable([
-    ["Items", "Total"],
-    ["PM Errors", response["total"]],
-  ]);
-  const dataByApplications = google.visualization.arrayToDataTable(
-    response["byApplications"]
-  );
-
-  const optionsTotal = {
-    legend: { position: "none" },
-    showRowNumber: true,
-    width: "100%",
-    height: "100%",
-    min: 0,
-    max: 1000,
-    greenFrom: 0,
-    greenTo: 250,
-    yellowFrom: 250,
-    yellowTo: 500,
-    redFrom: 500,
-    redTo: 1000,
-  };
-
-  const optionsByApplications = {
-    title: "Messages by applications",
-    legend: { position: "right" },
-  };
-
-  const messages = new google.visualization.Table(
-    document.getElementById("messages")
-  );
-  messages.draw(dataMessages, tableOptions);
-  const gaugeChart3 = new google.visualization.Gauge(
-    document.getElementById("gauge_chart_3")
-  );
-  gaugeChart3.draw(dataTotal, optionsTotal);
-  const pieChart2 = new google.visualization.PieChart(
-    document.getElementById("pie_chart_2")
-  );
-  pieChart2.draw(dataByApplications, optionsByApplications);
-}
-
-function showQueues(response) {
-  const dataTotal = google.visualization.arrayToDataTable([
-    ["Items", "Total"],
-    ["RabbitMQ", response["total"]],
-  ]);
-  const dataQueues = google.visualization.arrayToDataTable(response["queues"]);
-
-  const optionsTotal = {
-    legend: { position: "none" },
-    showRowNumber: true,
-    width: "100%",
-    height: "100%",
-    min: 0,
-    max: 1000,
-    greenFrom: 0,
-    greenTo: 250,
-    yellowFrom: 250,
-    yellowTo: 500,
-    redFrom: 500,
-    redTo: 1000,
-  };
-
-  const queues = new google.visualization.Table(
-    document.getElementById("queues")
-  );
-  queues.draw(dataQueues, tableOptions);
-  const gaugeChart4 = new google.visualization.Gauge(
-    document.getElementById("gauge_chart_4")
-  );
-  gaugeChart4.draw(dataTotal, optionsTotal);
+  cPanel.draw(dataCPanel, tableOptions);
 }
 
 function showGitHub(response) {
@@ -305,6 +150,84 @@ function showHealthChecksIo(response) {
   healthChecksIo.draw(dataHealthChecksIo, tableOptions);
 }
 
+function showMessages(response) {
+  const dataMessages = google.visualization.arrayToDataTable(
+    response["messages"]
+  );
+  const dataTotal = google.visualization.arrayToDataTable([
+    ["Items", "Total"],
+    ["PM Errors", response["total"]],
+  ]);
+  const dataByApplications = google.visualization.arrayToDataTable(
+    response["byApplications"]
+  );
+
+  const optionsTotal = {
+    legend: { position: "none" },
+    showRowNumber: true,
+    width: "100%",
+    height: "100%",
+    min: 0,
+    max: 1000,
+    greenFrom: 0,
+    greenTo: 250,
+    yellowFrom: 250,
+    yellowTo: 500,
+    redFrom: 500,
+    redTo: 1000,
+  };
+
+  const optionsByApplications = {
+    title: "Messages by applications",
+    legend: { position: "right" },
+  };
+
+  const messages = new google.visualization.Table(
+    document.getElementById("messages")
+  );
+  messages.draw(dataMessages, tableOptions);
+  const gaugeChart3 = new google.visualization.Gauge(
+    document.getElementById("gauge_chart_3")
+  );
+  gaugeChart3.draw(dataTotal, optionsTotal);
+  const pieChart2 = new google.visualization.PieChart(
+    document.getElementById("pie_chart_2")
+  );
+  pieChart2.draw(dataByApplications, optionsByApplications);
+}
+
+function showQueues(response) {
+  const dataTotal = google.visualization.arrayToDataTable([
+    ["Items", "Total"],
+    ["RabbitMQ", response["total"]],
+  ]);
+  const dataQueues = google.visualization.arrayToDataTable(response["queues"]);
+
+  const optionsTotal = {
+    legend: { position: "none" },
+    showRowNumber: true,
+    width: "100%",
+    height: "100%",
+    min: 0,
+    max: 1000,
+    greenFrom: 0,
+    greenTo: 250,
+    yellowFrom: 250,
+    yellowTo: 500,
+    redFrom: 500,
+    redTo: 1000,
+  };
+
+  const queues = new google.visualization.Table(
+    document.getElementById("queues")
+  );
+  queues.draw(dataQueues, tableOptions);
+  const gaugeChart4 = new google.visualization.Gauge(
+    document.getElementById("gauge_chart_4")
+  );
+  gaugeChart4.draw(dataTotal, optionsTotal);
+}
+
 function showUpTimeRobot(response) {
   const dataUpTimeRobot = google.visualization.arrayToDataTable(
     response["monitors"]
@@ -313,4 +236,94 @@ function showUpTimeRobot(response) {
     document.getElementById("uptimerobot")
   );
   upTimeRobot.draw(dataUpTimeRobot, tableOptions);
+}
+
+function showWebhook(response) {
+  const dataWebhooks = google.visualization.arrayToDataTable(
+    response["webhooks"]
+  );
+  const dataEvents = google.visualization.arrayToDataTable(response["events"]);
+  const dataFeed = google.visualization.arrayToDataTable(response["feed"]);
+  const dataRepositories = google.visualization.arrayToDataTable(
+    response["repositories"]
+  );
+  const dataTotal = google.visualization.arrayToDataTable([
+    ["Hits", "Total"],
+    ["GH WH", response["total"]],
+  ]);
+  const dataFailed = google.visualization.arrayToDataTable([
+    ["Hits", "Failed"],
+    ["WH Failed", response["failed"]],
+  ]);
+
+  const optionsWebhooks = {
+    title: "GitHub webhooks by date",
+    legend: { position: "none" },
+    colors: ["#0c5922"],
+    pointSize: 7,
+    hAxis: {
+      title: "Webhooks",
+      textStyle: {
+        fontSize: 10,
+      },
+    },
+  };
+
+  const optionsEvents = {
+    title: "GitHub events by type",
+    legend: { position: "right" },
+  };
+
+  const optionsTotal = {
+    legend: { position: "none" },
+    showRowNumber: true,
+    width: "100%",
+    height: "100%",
+    min: 0,
+    max: 120000,
+    greenFrom: 0,
+    greenTo: 40000,
+    yellowFrom: 40000,
+    yellowTo: 80000,
+    redFrom: 80000,
+    redTo: 120000,
+  };
+
+  const optionsFailed = {
+    legend: { position: "none" },
+    showRowNumber: true,
+    width: "100%",
+    height: "100%",
+    min: 0,
+    max: 1000,
+    greenFrom: 0,
+    greenTo: 50,
+    yellowFrom: 50,
+    yellowTo: 100,
+    redFrom: 100,
+    redTo: 1000,
+  };
+
+  const lineChart = new google.visualization.LineChart(
+    document.getElementById("line_chart")
+  );
+  lineChart.draw(dataWebhooks, optionsWebhooks);
+  const pieChart1 = new google.visualization.PieChart(
+    document.getElementById("pie_chart_1")
+  );
+  pieChart1.draw(dataEvents, optionsEvents);
+  const repositories = new google.visualization.Table(
+    document.getElementById("repositories")
+  );
+  repositories.draw(dataRepositories, tableOptions);
+  const feed = new google.visualization.Table(document.getElementById("feed"));
+  feed.draw(dataFeed, tableOptions);
+  const gaugeChart1 = new google.visualization.Gauge(
+    document.getElementById("gauge_chart_1")
+  );
+  gaugeChart1.draw(dataTotal, optionsTotal);
+  const gaugeChart2 = new google.visualization.Gauge(
+    document.getElementById("gauge_chart_2")
+  );
+  gaugeChart2.draw(dataFailed, optionsFailed);
 }

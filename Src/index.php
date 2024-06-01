@@ -18,7 +18,7 @@ $config = new Configuration();
     }
   </style>
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-  <script type="text/javascript" src="static/scripts.js?20240601041500"></script>
+  <script type="text/javascript" src="static/scripts.js?20240601151000"></script>
 </head>
 
 <body>
@@ -38,7 +38,8 @@ $config = new Configuration();
   <div id="queues" style="width: 30%; height: 300px; float: left;background-color: white;"></div>
   <div style="clear:both;"></div>
   <div id="repositories" style="width: 40%; height: 500px; float: left;background-color: white;"></div>
-  <div id="errors" style="width: 30%; height: 300px; float: left;background-color: white;"></div>
+  <div id="errorLogFiles" style="width: 30%; height: 300px; float: left;background-color: white;"></div>
+  <div id="errorLogMessages" style="width: 30%; height: 300px; float: left;background-color: white;"></div>
   <div style="clear:both;"></div>
   <div id="feed" style="width: 50%; float: left;background-color: white;"></div>
   <div style="width: 50%; float: left;background-color: white;">

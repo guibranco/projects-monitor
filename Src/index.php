@@ -18,7 +18,7 @@ $config = new Configuration();
     }
   </style>
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-  <script type="text/javascript" src="static/scripts.js?20240601151000"></script>
+  <script type="text/javascript" src="static/scripts.js?20240604112500"></script>
 </head>
 
 <body>

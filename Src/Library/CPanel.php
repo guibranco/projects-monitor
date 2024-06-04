@@ -166,7 +166,7 @@ class CPanel
             if (!isset($line->command) || $line->command == null) {
                 continue;
             }
-            $command = str_replace("/home/zerocool", "", str_replace("/usr/local/bin/", "", $line->command));
+            $command = str_replace("/home/zerocool/", "", str_replace("/usr/local/bin/", "", $line->command));
             $time = $line->minute . " " . $line->hour . " " . $line->day . " " . $line->month . " " . $line->weekday;
             $result[] = array($command, $time);
         }

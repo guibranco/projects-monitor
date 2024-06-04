@@ -163,7 +163,10 @@ class CPanel
         $response = $this->getRequest("json-api", "cpanel", $parameters);
         $lines = $response->cpanelresult->data;
         foreach ($lines as $line) {
-            $command = $line->command;
+            if (!isset($line->command) || $line->command == null) {
+                continue;
+            }
+            $command = str_replace("/home/zerocool", "", str_replace("/usr/local/bin/", "", $line->command));
             $time = $line->minute . " " . $line->hour . " " . $line->day . " " . $line->month . " " . $line->weekday;
             $result[] = array($command, $time);
         }

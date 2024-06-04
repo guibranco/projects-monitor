@@ -52,6 +52,7 @@ $config = new Configuration();
     <div id="issues"></div>
     <div id="healthchecksio"></div>
     <div id="uptimerobot"></div>
+    <div id="cronjobs"></div>
   </div>
   <div style="clear:both;"></div>
   <div id="messages" style="width: 100%; float: left;background-color: white;"></div>

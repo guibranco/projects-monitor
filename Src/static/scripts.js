@@ -64,6 +64,7 @@ function drawChart() {
 function showCPanel(response) {
   const dataLogFiles = google.visualization.arrayToDataTable(response["errorLogFiles"]);
   const dataLogMessages = google.visualization.arrayToDataTable(response["errorLogMessages"]);
+  const dataCronjobs = google.visualization.arrayToDataTable(response["cronjobs"]);
 
   const logFiles = new google.visualization.Table(
     document.getElementById("errorLogFiles")
@@ -73,6 +74,10 @@ function showCPanel(response) {
     document.getElementById("errorLogMessages")
   );
   logMessages.draw(dataLogMessages, tableOptions);
+  const cronjobs = new google.visualization.Table(
+    document.getElementById("cronjobs")
+  );
+  cronjobs.draw(dataCronojobs, tableOptions);
 }
 
 function showGitHub(response) {

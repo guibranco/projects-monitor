@@ -151,4 +151,27 @@ class CPanel
 
         return $result;
     }
+
+    public function getCrons()
+    {
+        $result = array();
+        $parameters = array(
+            "cpanel_jsonapi_module" => "Cron",
+            "cpanel_jsonapi_func" => "listcron",
+            "cpanel_jsonapi_apiversion" => "2"
+        );
+        $response = $this->getRequest("json-api", "cpanel", $parameters);
+        $lines = $response->cpanelresult->data;
+        foreach ($lines as $line) {
+            $command = $line->command;
+            $time = $line->minute . " " . $line->hour . " " . $line->day . " " . $line->month . " " . $line->weekday;
+            $result[] = array($command, $time);
+        }
+
+        sort($result, SORT_ASC);
+
+        array_unshift($result, array("Command", "Expression"));
+
+        return $result;
+    }
 }

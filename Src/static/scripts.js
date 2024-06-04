@@ -77,7 +77,7 @@ function showCPanel(response) {
   const cronjobs = new google.visualization.Table(
     document.getElementById("cronjobs")
   );
-  cronjobs.draw(dataCronojobs, tableOptions);
+  cronjobs.draw(dataCronjobs, tableOptions);
 }
 
 function showGitHub(response) {

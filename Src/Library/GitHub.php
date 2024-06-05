@@ -140,7 +140,7 @@ class GitHub
             throw new RequestException("Code: {$response->statusCode} - Error: {$response->body}");
         }
 
-        $body json_decode($response->body);
+        $body = json_decode($response->body);
 
         $data = array();
         $data["created"] = $body->created_at;

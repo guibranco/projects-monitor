@@ -125,11 +125,18 @@ function showGitHub(response) {
     response["issues"]["latest"]
   );
 
-  const latestRelease = response["latestRelease"];
-  document.getElementById("latest_release").innerHTML = 
-    "<b>Date:</b> " + latestRelease["published"] + "<br />" +
-    "<b>Version:</b> " + latestRelease["title"] + "<br /> <br />" +
-    "<b>Release Notes:</b> " + latestRelease["description"];
+  if (typeof response["latestRelease"] !== "undefined") {
+    const latestRelease = response["latestRelease"];
+    document.getElementById("latest_release").innerHTML =
+      "<b>Date:</b> " +
+      latestRelease["published"] +
+      "<br />" +
+      "<b>Version:</b> " +
+      latestRelease["title"] +
+      "<br /> <br />" +
+      "<b>Release Notes:</b> " +
+      latestRelease["description"];
+  }
 
   const gaugueOptions = {
     legend: { position: "none" },

@@ -126,7 +126,7 @@ class GitHub
 
     public function getLatestReleaseOfBancosBrasileiros()
     {
-        $url = self::GITHUB_API_URL . "repos/guibranco/bancosbrasilerios/releases/latest";
+        $url = self::GITHUB_API_URL . "repos/guibranco/bancosbrasileiros/releases/latest";
         $headers = [
             "Authorization: token {$this->token}",
             "Accept: application/vnd.github.v3+json",

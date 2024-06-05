@@ -6,7 +6,7 @@ use GuiBranco\Pancake\Request;
 
 class GitHub
 {
-    private const GITHUB_API_URL = "https://api.github.com/search/";
+    private const GITHUB_API_URL = "https://api.github.com/";
 
     private $token;
 
@@ -29,7 +29,7 @@ class GitHub
     private function getRequest($users, $type, $label = null)
     {
         $url = self::GITHUB_API_URL .
-            "issues?q=" .
+            "search/issues?q=" .
             urlencode("is:open is:" . $type . " archived:false " .
                 ($label == null ? "" : "label:{$label} ") .
                 implode(" ", array_map(function ($user) {
@@ -121,6 +121,33 @@ class GitHub
         $data["total_count"] = $result->total_count;
         $data["latest"] = $this->mapItems($result->items);
 
+        return $data;
+    }
+
+    public function getLatestReleaseOfBancosBrasileiros()
+    {
+        $url = self::GITHUB_API_URL . "repos/guibranco/bancosbrasilerios/releases/latest";
+        $headers = [
+            "Authorization: token {$this->token}",
+            "Accept: application/vnd.github.v3+json",
+            "X-GitHub-Api-Version: 2022-11-28",
+            "User-Agent: ProjectsMonitor/1.0 (+https://github.com/guibranco/projects-monitor)"
+        ];
+
+        $response = $this->request->get($url, $headers);
+
+        if ($response->statusCode != 200) {
+            throw new RequestException("Code: {$response->statusCode} - Error: {$response->body}");
+        }
+
+        $body json_decode($response->body);
+
+        $data = array();
+        $data["created"] = $body->created_at;
+        $data["published"] = $body->published_at;
+        $data["title"] = $body->name;
+        $data["description"] = $body->description; // TODO: use https://github.com/fastvolt/markdown to parse the markdown!
+    
         return $data;
     }
 }

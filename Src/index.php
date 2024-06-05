@@ -45,6 +45,7 @@ $config = new Configuration();
   <div style="clear:both;"></div>
   <div id="feed" style="width: 50%; float: left;background-color: white;"></div>
   <div style="width: 50%; float: left;background-color: white;">
+    <div id="latest_release"></div>
     <div id="pull_requests"></div>
     <div id="bug"></div>
     <div id="triage"></div>

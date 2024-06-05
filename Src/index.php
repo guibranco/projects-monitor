@@ -18,7 +18,7 @@ $config = new Configuration();
     }
   </style>
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-  <script type="text/javascript" src="static/scripts.js?20240604112500"></script>
+  <script type="text/javascript" src="static/scripts.js?20240605212000"></script>
 </head>
 
 <body>
@@ -58,16 +58,5 @@ $config = new Configuration();
   <div id="messages" style="width: 100%; float: left;background-color: white;"></div>
   <div style="clear:both;"></div>
 </body>
-<script>
-  var ghStats = document.getElementById("gh_stats");
-  ghStats.src = "https://github-readme-stats-guibranco.vercel.app/api" +
-    "?username=guibranco&line_height=28&card_width=490&hide_title=true&hide_border=true" +
-    "&show_icons=true&theme=chartreuse-dark&icon_color=7FFF00&include_all_commits=true" +
-    "&count_private=true&show=reviews,discussions_started&count_private=true";
-
-  var ghStreak = document.getElementById("gh_streak");
-  ghStreak.src = "https://github-readme-streak-stats-guibranco.vercel.app/" +
-    "?user=guibranco&theme=github-green-purple&fire=FF6600";
-</script>
 
 </html>

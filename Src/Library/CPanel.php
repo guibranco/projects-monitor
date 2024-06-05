@@ -119,12 +119,12 @@ class CPanel
 
         foreach ($items as $item) {
             $stats = $this->loadStats($item->file);
-            $result[] = array(str_replace("/home/{$this->username}/", "", $stats["dirname"]), $stats["humansize"], $stats["mtime"], $stats["ctime"]);
+            $result[] = array(str_replace("/home/{$this->username}/", "", $stats["dirname"]), $stats["humansize"], $stats["mtime"]);
         }
 
         sort($result, SORT_ASC);
 
-        array_unshift($result, array("Directory", "Size", "Creation time", "Modification time"));
+        array_unshift($result, array("Directory", "Size", "Creation time"));
 
         return $result;
     }
@@ -138,17 +138,16 @@ class CPanel
             $content = $this->loadContent($item->file);
             preg_match_all(CPanel::REGEX_PATTERN, $content["contents"], $matches);
             foreach ($matches["error"] as $index => $match) {
+                $date = $matches["date"][$index];
                 $dir = str_replace("/home/{$this->username}/", "", $content["dirname"]);
                 $file = str_replace("/home/{$this->username}/", "", $matches["file"][$index]);
-                $lineItem = array($matches["date"][$index], $dir, $match, $file, $matches["line"][$index]);
-                $result[] = $lineItem;
+                $line = $matches["line"][$index];
+                $result[] = array($date, $dir, $match, $file, $line);
             }
         }
 
         sort($result, SORT_ASC);
-
         array_unshift($result, array("Date", "Error Log", "Error", "File", "Line"));
-
         return $result;
     }
 

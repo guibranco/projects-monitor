@@ -126,7 +126,10 @@ function showGitHub(response) {
   );
 
   const latestRelease = response["latestRelease"];
-  document.getElementById("latest_release").innerHTML = latestRelease;
+  document.getElementById("latest_release").innerHTML = 
+    "<b>Date:</b> " + latestRelease["published_at"] + "<br />" +
+    "<b>Version:</b> " + latestRelease["title"] + "<br /> <br />" +
+    "<b>Release Notes:</b> latestRelease["description"]>";
 
   const gaugueOptions = {
     legend: { position: "none" },

@@ -3,6 +3,7 @@
 namespace GuiBranco\ProjectsMonitor\Library;
 
 use GuiBranco\Pancake\Request;
+use FastVolt\Helper\Markdown;
 
 class GitHub
 {
@@ -140,13 +141,16 @@ class GitHub
             throw new RequestException("Code: {$response->statusCode} - Error: {$response->body}");
         }
 
+        $mkd = Markdown::new();
+
         $body = json_decode($response->body);
 
+        $mkd->setContent($body->body);
         $data = array();
         $data["created"] = $body->created_at;
         $data["published"] = $body->published_at;
         $data["title"] = $body->name;
-        $data["description"] = $body->body; // TODO: use https://github.com/fastvolt/markdown to parse the markdown!
+        $data["description"] = $mkd->toHtml();
 
         return $data;
     }

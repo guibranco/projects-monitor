@@ -138,7 +138,7 @@ class CPanel
             $content = $this->loadContent($item->file);
             preg_match_all(CPanel::REGEX_PATTERN, $content["contents"], $matches);
             foreach ($matches["error"] as $index => $match) {
-                $date = $matches["date"][$index];
+                $date = date("H:i:s d/m/Y", strtotime($matches["date"][$index]));
                 $dir = str_replace("/home/{$this->username}/", "", $content["dirname"]);
                 $file = str_replace("/home/{$this->username}/", "", $matches["file"][$index]);
                 $line = $matches["line"][$index];

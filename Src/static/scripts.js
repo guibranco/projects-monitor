@@ -6,6 +6,20 @@ const tableOptions = {
   height: "100%",
 };
 
+window.addEventListener("load", init);
+
+function init() {
+  document.getElementById("gh_stats").src =
+    "https://github-readme-stats-guibranco.vercel.app/api" +
+    "?username=guibranco&line_height=28&card_width=490&hide_title=true&hide_border=true" +
+    "&show_icons=true&theme=chartreuse-dark&icon_color=7FFF00&include_all_commits=true" +
+    "&count_private=true&show=reviews,discussions_started&count_private=true";
+
+  document.getElementById("gh_streak").src =
+    "https://github-readme-streak-stats-guibranco.vercel.app/" +
+    "?user=guibranco&theme=github-green-purple&fire=FF6600";
+}
+
 google.charts.load("current", { packages: ["corechart", "table", "gauge"] });
 google.charts.setOnLoadCallback(drawChart);
 function load(url, callback) {
@@ -62,9 +76,15 @@ function drawChart() {
 }
 
 function showCPanel(response) {
-  const dataLogFiles = google.visualization.arrayToDataTable(response["errorLogFiles"]);
-  const dataLogMessages = google.visualization.arrayToDataTable(response["errorLogMessages"]);
-  const dataCronjobs = google.visualization.arrayToDataTable(response["cronjobs"]);
+  const dataLogFiles = google.visualization.arrayToDataTable(
+    response["errorLogFiles"]
+  );
+  const dataLogMessages = google.visualization.arrayToDataTable(
+    response["errorLogMessages"]
+  );
+  const dataCronjobs = google.visualization.arrayToDataTable(
+    response["cronjobs"]
+  );
 
   const logFiles = new google.visualization.Table(
     document.getElementById("errorLogFiles")
@@ -104,6 +124,9 @@ function showGitHub(response) {
   const dataIssuesTable = google.visualization.arrayToDataTable(
     response["issues"]["latest"]
   );
+
+  const latestRelease = response["latestRelease"];
+  document.getElementById("latest_release").innerHTML = latestRelease;
 
   const gaugueOptions = {
     legend: { position: "none" },

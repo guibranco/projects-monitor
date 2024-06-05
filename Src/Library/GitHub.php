@@ -147,7 +147,7 @@ class GitHub
         $data["published"] = $body->published_at;
         $data["title"] = $body->name;
         $data["description"] = $body->description; // TODO: use https://github.com/fastvolt/markdown to parse the markdown!
-    
+
         return $data;
     }
 }

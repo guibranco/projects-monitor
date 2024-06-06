@@ -34,9 +34,9 @@ function load(url, callback) {
 }
 
 function preset() {
-  showWebhook(
+  showGitHub(
     JSON.parse(
-      '{"events":[["Event","Hits"]],"failed":0,"feed":[["Sequence","Date","Event","Action","Repository"]],"repositories":[["Repository","Hits"]],"total":0,"webhooks":[["Date","Hits"], ["01/01", 0]]}'
+      '{"issues":{"total_issues":0, "latest":[], "bug":[], "triage":[], "wip":[]},"pull_requests":{"total_issues":0, "latest":[]}}'
     )
   );
   showMessages(
@@ -47,9 +47,9 @@ function preset() {
   showQueues(
     JSON.parse('{"queues":[["Server","Queue","Messages"]],"total":0}')
   );
-  showGitHub(
+  showWebhook(
     JSON.parse(
-      '{"issues":{"total_issues":0, "latest":[], "bug":[], "triage":[], "wip":[]},"pull_requests":{"total_issues":0, "latest":[]}}'
+      '{"events":[["Event","Hits"]],"failed":0,"feed":[["Sequence","Date","Event","Action","Repository"]],"repositories":[["Repository","Hits"]],"total":0,"webhooks":[["Date","Hits"], ["01/01", 0]]},"workflowRuns":[["None"]]'
     )
   );
 }

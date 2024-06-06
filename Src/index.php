@@ -18,7 +18,7 @@ $config = new Configuration();
     }
   </style>
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-  <script type="text/javascript" src="static/scripts.js?20240605212000"></script>
+  <script type="text/javascript" src="static/scripts.js?20240606020300"></script>
 </head>
 
 <body>
@@ -45,6 +45,7 @@ $config = new Configuration();
   <div style="clear:both;"></div>
   <div id="feed" style="width: 50%; float: left;background-color: white;"></div>
   <div style="width: 50%; float: left;background-color: white;">
+    <div id="workflow_runs"></div>
     <div id="latest_release"></div>
     <div id="pull_requests"></div>
     <div id="bug"></div>

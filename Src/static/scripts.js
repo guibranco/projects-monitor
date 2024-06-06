@@ -291,6 +291,9 @@ function showWebhook(response) {
   const dataRepositories = google.visualization.arrayToDataTable(
     response["repositories"]
   );
+  const dataWorkflowRuns = google.visualization.arrayToDataTable(
+    response["workflowRuns"]
+  );
   const dataTotal = google.visualization.arrayToDataTable([
     ["Hits", "Total"],
     ["GH WH", response["total"]],
@@ -360,6 +363,10 @@ function showWebhook(response) {
     document.getElementById("repositories")
   );
   repositories.draw(dataRepositories, tableOptions);
+  const workflowRuns = new google.visualization.Table(
+    document.getElementById("workflow_runs")
+  );
+  workflowRuns.draw(dataWorkflowRuns, tableOptions);
   const feed = new google.visualization.Table(document.getElementById("feed"));
   feed.draw(dataFeed, tableOptions);
   const gaugeChart1 = new google.visualization.Gauge(

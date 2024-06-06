@@ -49,7 +49,7 @@ function preset() {
   );
   showWebhook(
     JSON.parse(
-      '{"events":[["Event","Hits"]],"failed":0,"feed":[["Sequence","Date","Event","Action","Repository"]],"repositories":[["Repository","Hits"]],"total":0,"webhooks":[["Date","Hits"], ["01/01", 0]]},"workflowRuns":[["None"]]'
+      '{"events":[["Event","Hits"]],"failed":0,"feed":[["Sequence","Date","Event","Action","Repository"]],"repositories":[["Repository","Hits"]],"total":0,"webhooks":[["Date","Hits"], ["01/01", 0]],"workflowRuns":[["None"]]}'
     )
   );
 }

@@ -4,6 +4,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+concurrency:
+  group: build-deploy
+
 jobs:
   build:
     permissions: write-all

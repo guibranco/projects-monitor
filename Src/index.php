@@ -45,13 +45,13 @@ $config = new Configuration();
     <div id="pie_chart_2" style="width: 100%; height: 300px;"></div>
   </div>
   <div id="queues" style="width: 30%; height: 600px; float: left;background-color: white;"></div>
-  <div id="latest_release" style="width: 30%; height: 300px; float: left;background-color: white;"></div>
-  <div style="clear:both;"></div>
-  <div id="repositories" style="width: 50%; height: 500px; float: left;background-color: white;"></div>
-  <div style="width: 50%; height: 500px; float: left;background-color: white;">
+  <div style="width: 40%; height: 400px; float: left; background-color: white;">
+    <div id="latest_release" style="width: 100%; height: 300px;"></div>
     <div id="errorLogFiles" style="width: 100%; height: 100px"></div>
-    <div id="errorLogMessages" style="width: 100%; height: 400px"></div>
   </div>
+  <div style="clear:both;"></div>
+  <div id="repositories" style="width: 50%; height: 500px; float: left;background-color: white;"></div>    
+  <div id="errorLogMessages" style="width: 50%; height: 500px; float: left;background-color: white;"></div>
   <div style="clear:both;"></div>
   <div id="feed" style="width: 50%; float: left;background-color: white;"></div>
   <div style="width: 50%; float: left;background-color: white;">

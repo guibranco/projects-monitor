@@ -36,7 +36,7 @@ function load(url, callback) {
 function preset() {
   showGitHub(
     JSON.parse(
-      '{"issues":{"total_issues":0, "latest":[], "bug":[], "triage":[], "wip":[]},"pull_requests":{"total_issues":0, "latest":[]}}'
+      '{"issues":{"total_count":0, "latest":[], "bug":[], "triage":[], "wip":[]},"pull_requests":{"total_count":0, "latest":[]}}'
     )
   );
   showMessages(

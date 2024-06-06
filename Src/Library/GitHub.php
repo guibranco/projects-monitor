@@ -147,8 +147,8 @@ class GitHub
 
         $mkd->setContent($body->body);
         $data = array();
-        $data["created"] = $body->created_at;
-        $data["published"] = $body->published_at;
+        $data["created"] = date("H:i:s d/m/Y", strtotime($body->created_at));
+        $data["published"] = date("H:i:s d/m/Y", strtotime($body->published_at));
         $data["title"] = $body->name;
         $data["description"] = $mkd->toHtml();
 

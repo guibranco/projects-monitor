@@ -64,9 +64,9 @@ class GitHub
 
         foreach ($items as $item) {
             $repositoryName = str_replace("https://api.github.com/repos/", "", $item->repository_url);
-            $labels = array_map(function ($label) {
+            $labels = implode(" ", array_map(function ($label) {
                 return "<span style='background-color: #" . $label->color . "; color: #" . (Color::luminance($label->color) > 0.5 ? "000" : "fff") . "; padding: 2px; border-radius: 5px;'>" . $label->name . "</span>";
-            }, $item->labels);
+            }, $item->labels));
             $result[] = array(
                 "<a href='" . $item->html_url . "' target='_blank'>[#" . $item->number . "] " . $item->title . " " . $labels . "</a>",
                 "<a href='https://github.com/" . $repositoryName . "' target='_blank'><img alt='login' src='https://img.shields.io/badge/" . str_replace("-", "--", $repositoryName) . "-black?style=flat&logo=github' /></a>",

@@ -65,7 +65,7 @@ class GitHub
         foreach ($items as $item) {
             $repositoryName = str_replace("https://api.github.com/repos/", "", $item->repository_url);
             $labels = array_map(function ($label) {
-                return "<span style='background-color: #" . $label->color . "; color: #" . (luminance($label->color) > 0.5 ? "000" : "fff") . "; padding: 2px; border-radius: 5px;'>" . $label->name . "</span>";
+                return "<span style='background-color: #" . $label->color . "; color: #" . (Color::luminance($label->color) > 0.5 ? "000" : "fff") . "; padding: 2px; border-radius: 5px;'>" . $label->name . "</span>";
             }, $item->labels);
             $result[] = array(
                 "<a href='" . $item->html_url . "' target='_blank'>[#" . $item->number . "] " . $item->title . " " . $labels . "</a>",

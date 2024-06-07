@@ -122,8 +122,11 @@ class CPanel
             $result[] = array(str_replace("/home/{$this->username}/", "", $stats["dirname"]), $stats["humansize"], $stats["mtime"]);
         }
 
-        sort($result, SORT_ASC);
+        if (count($result) === 0) {
+            return $result;
+        }
 
+        sort($result, SORT_ASC);
         array_unshift($result, array("Directory", "Size", "Creation time"));
 
         return $result;
@@ -144,6 +147,10 @@ class CPanel
                 $line = $matches["line"][$index];
                 $result[] = array($date, $dir, $match, $file, $line);
             }
+        }
+
+        if (count($result) === 0) {
+            return $result;
         }
 
         sort($result, SORT_ASC);

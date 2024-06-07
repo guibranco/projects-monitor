@@ -24,7 +24,7 @@ $config = new Configuration();
     }
   </style>
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-  <script type="text/javascript" src="static/scripts.js?20240606020300"></script>
+  <script type="text/javascript" src="static/scripts.js?<?php echo filemtime("static/scripts.js"); ?>"></script>
 </head>
 
 <body>

@@ -78,6 +78,9 @@ class CPanel
         );
         $response = $this->getRequest("json-api", "cpanel", $parameters);
         $stats = $response->cpanelresult->data;
+        if (!isset($stats[0])) {
+            throw new RequestException("Unable to get stats for file: " . $fullPath);
+        }
         $ctime = date("H:i:s d/m/Y", $stats[0]->ctime);
         $mtime = date("H:i:s d/m/Y", $stats[0]->mtime);
         return array(

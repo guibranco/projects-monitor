@@ -176,7 +176,7 @@ jobs:
           sudo chmod 600 wg0.conf
           sudo wg-quick up ./wg0.conf
 
-      - name: Check if schema version table exists
+      - name: Check if the schema version table exists
         id: new_installation
         if: steps.changes.outputs.sql == 'true' || github.event_name == 'workflow_dispatch'
         env:
@@ -197,9 +197,38 @@ jobs:
         shell: bash
         run: sudo wg-quick down ./wg0.conf
 
+  automated-api-tests:
+    name: Automated API tests (Postman)
+    runs-on: ubuntu-latest
+    needs: [deploy, database_migrations]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check changes
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            any:
+              - "Sql/**"
+              - "Src/**"
+              - "Tools/**"
+      - name: Install Postman CLI
+        run: |
+          curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh
+      - name: Login to Postman CLI
+        run: postman login --with-api-key ${{ secrets.POSTMAN_API_KEY }}
+
+      - name: Run API tests
+        run: |
+          postman collection run 23511-01109172-13a0-4cdb-bd0c-18a71d624a48 -e 23511-95105c79-d4eb-4388-9ff9-eb5dee83fdcf
+  
   create_release:
     name: Create release
-    needs: [deploy, database_migrations]
+    needs: [deploy, database_migrations, automated-api-tests]
     env:
       SEMVER: ${{ needs.deploy.outputs.semVer }}
     runs-on: ubuntu-latest

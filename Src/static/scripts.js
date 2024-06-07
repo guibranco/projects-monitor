@@ -34,6 +34,11 @@ function load(url, callback) {
 }
 
 function preset() {
+  showCPanel(
+    JSON.parse(
+      '{"errorLogFiles":[],"errorLogMessages":[],"totalLogMessages":0,"cronjobs":[]}'
+    )
+  );
   showGitHub(
     JSON.parse(
       '{"issues":{"total_count":0, "latest":[], "bug":[], "triage":[], "wip":[]},"pull_requests":{"total_count":0, "latest":[]}}'
@@ -85,7 +90,31 @@ function showCPanel(response) {
   const dataCronjobs = google.visualization.arrayToDataTable(
     response["cronjobs"]
   );
+  const totalLogMessages = google.visualization.arrayToDataTable([
+    ["Hits", "Total"],
+    ["Log messages", response["totalLogMessages"]],
+  ]);
 
+  const gaugueOptions = {
+    legend: { position: "none" },
+    showRowNumber: true,
+    width: "100%",
+    height: "100%",
+    min: 0,
+    max: 500,
+    greenFrom: 0,
+    greenTo: 10,
+    yellowFrom: 10,
+    yellowTo: 200,
+    redFrom: 200,
+    redTo: 500,
+  };
+
+  const gaugeChart7 = new google.visualization.Gauge(
+    document.getElementById("gauge_chart_7")
+  );
+  gaugeChart7.draw(totalLogMessages, gaugueOptions);
+  
   const logFiles = new google.visualization.Table(
     document.getElementById("errorLogFiles")
   );

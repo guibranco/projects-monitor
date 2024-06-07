@@ -157,11 +157,15 @@ function showGitHub(response) {
   if (typeof response["latestRelease"] !== "undefined") {
     const latestRelease = response["latestRelease"];
     document.getElementById("latest_release").innerHTML =
-      "<b>Date:</b> " +
-      latestRelease["published"] +
+      "<b>Date:</b> " + latestRelease["published"] +
       " | " +
-      "<b>Version:</b> " +
-      latestRelease["title"] +
+      "<b>Version:</b> " +  "<a href='" + latestRelease["release_url"] + "'>" + latestRelease["title"] + "</a>" +
+      " | " +
+      "<a href='https://github.com/" + latestRelease["repository"] + "' target='_blank'>" +
+      "<img alt='Static Badge' src='https://img.shields.io/badge/" + latestRelease["repository"] + "-black?style=flat&amp;logo=github"'></a>" +
+      " | " +
+      "<a href='https://github.com/" + latestRelease["author"] + "' target='_blank'>" +
+      "<img alt='author' src='https://img.shields.io/badge/" + latestRelease["author"] + "-black?style=social&amp;logo=github'></a>" +
       " | " +
       "<b>Release Notes:</b> " +
       latestRelease["description"];

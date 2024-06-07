@@ -162,7 +162,7 @@ function showGitHub(response) {
       "<b>Version:</b> " +  "<a href='" + latestRelease["release_url"] + "'>" + latestRelease["title"] + "</a>" +
       " | " +
       "<a href='https://github.com/" + latestRelease["repository"] + "' target='_blank'>" +
-      "<img alt='Static Badge' src='https://img.shields.io/badge/" + latestRelease["repository"] + "-black?style=flat&amp;logo=github"'></a>" +
+      "<img alt='Static Badge' src='https://img.shields.io/badge/" + latestRelease["repository"] + "-black?style=flat&amp;logo=github'></a>" +
       " | " +
       "<a href='https://github.com/" + latestRelease["author"] + "' target='_blank'>" +
       "<img alt='author' src='https://img.shields.io/badge/" + latestRelease["author"] + "-black?style=social&amp;logo=github'></a>" +

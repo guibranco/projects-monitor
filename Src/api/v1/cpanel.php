@@ -6,7 +6,9 @@ use GuiBranco\ProjectsMonitor\Library\CPanel;
 
 $cPanel = new CPanel();
 $data["errorLogFiles"] = $cPanel->getErrorLogFiles();
-$data["errorLogMessages"] = $cPanel->getErrorLogMessages();
+$logMessages = $cPanel->getErrorLogMessages();
+$data["errorLogMessages"] = $logMessages;
+$data["totalLogMessages"] = count($logMessages) > 1 ? count($logMessages) - 1 : 0;
 $data["cronjobs"] = $cPanel->getCrons();
 
 header("Content-Type: application/json; charset=UTF-8");

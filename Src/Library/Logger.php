@@ -127,6 +127,8 @@ class Logger
         $stmt->store_result();
         $data = array();
         if ($stmt->num_rows === 0) {
+            $stmt2->free_result();
+            $stmt->close();
             return $data;
         }
         $data[] = $this->getFieldList();
@@ -134,6 +136,7 @@ class Logger
         while ($row = $result->fetch_array(MYSQLI_NUM)) {
             $data[] = array_values($row);
         }
+        $stmt2->free_result();
         $stmt->close();
 
         return $data;

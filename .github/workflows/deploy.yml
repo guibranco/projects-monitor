@@ -228,7 +228,7 @@ jobs:
   
   create_release:
     name: Create release
-    needs: [deploy, database_migrations]
+    needs: [deploy, database_migrations, automated-api-tests]
     env:
       SEMVER: ${{ needs.deploy.outputs.semVer }}
     runs-on: ubuntu-latest

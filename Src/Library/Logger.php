@@ -124,19 +124,15 @@ class Logger
         $stmt = $this->connection->prepare($this->getQuery());
         $stmt->bind_param("i", $quantity);
         $stmt->execute();
-        $stmt->store_result();
         $data = array();
-        if ($stmt->num_rows === 0) {
-            $stmt2->free_result();
-            $stmt->close();
-            return $data;
-        }
         $data[] = $this->getFieldList();
         $result = $stmt->get_result();
+        if ($result->num_rows === 0) {
+            return array();
+        }
         while ($row = $result->fetch_array(MYSQLI_NUM)) {
             $data[] = array_values($row);
         }
-        $stmt2->free_result();
         $stmt->close();
 
         return $data;

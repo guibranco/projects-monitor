@@ -83,6 +83,16 @@ jobs:
           chmod +x Tools/db-check.sh
           Tools/db-check.sh "localhost" "test" "test"
 
+      - name: Install Postman CLI
+        run: |
+          curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh
+
+      - name: Login to Postman CLI
+        run: postman login --with-api-key ${{ secrets.POSTMAN_API_KEY }}
+
+      - name: Run API tests
+        run: postman collection run 23511-01109172-13a0-4cdb-bd0c-18a71d624a48 -e 23511-f4e75c62-db3e-460b-b7ac-907e4e48f9b0
+      
       - name: Populate database
         env:
           MYSQL_PWD: test
@@ -118,7 +128,7 @@ jobs:
               
             </details>
 
-      - name: Update PR with comment (request tests - successed)
+      - name: Update PR with comment (request tests - succeeded)
         if: success()
         uses: mshick/add-pr-comment@v2
         with:
@@ -149,7 +159,7 @@ jobs:
             :x: The database integrity check failed.
             ${{ steps.db_integrity.outputs.log }}
 
-      - name: Update PR with comment (database integrity - successed)
+      - name: Update PR with comment (database integrity - succeeded)
         if: success()
         uses: mshick/add-pr-comment@v2
         with:
@@ -218,7 +228,7 @@ jobs:
           message: |
             :game_die: **Database migration summary**
 
-            :white_check_mark: All migrations have been already applied to the database.
+            :white_check_mark: All migrations have already been applied to the database.
 
       - name: Smoke tests on API
         id: smoke_tests
@@ -242,7 +252,7 @@ jobs:
               
             ```
 
-      - name: Update PR with comment (smoke tests - successed)
+      - name: Update PR with comment (smoke tests - succeeded)
         if: steps.smoke_tests.outputs.error != 'true'
         uses: mshick/add-pr-comment@v2
         with:

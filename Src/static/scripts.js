@@ -92,7 +92,7 @@ function showCPanel(response) {
   );
   const totalLogMessages = google.visualization.arrayToDataTable([
     ["Hits", "Total"],
-    ["Log messages", response["totalLogMessages"]],
+    ["Log errors", response["totalLogMessages"]],
   ]);
 
   const gaugueOptions = {

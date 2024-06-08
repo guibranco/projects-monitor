@@ -28,9 +28,11 @@ $config = new Configuration();
 </head>
 
 <body>
-  <div id="line_chart" style="width: 73%; height: 450px; float: left;"></div>
-  <img id="gh_stats" alt="" src="" />
-  <img id="gh_streak" alt="" src="" />
+  <div id="line_chart" style="width: 50%; height: 400px; float: left;"></div>
+  <div style="width: 50%; float: left;">
+    <img id="gh_stats" alt="GH Stats" src="" />
+    <img id="gh_streak" alt="GH Streak" src="" />
+  </div>
   <div style="clear:both;"></div>
   <div id="gauge_chart_1" class="gauge"></div>
   <div id="gauge_chart_2" class="gauge"></div>
@@ -39,6 +41,7 @@ $config = new Configuration();
   <div id="gauge_chart_5" class="gauge"></div>
   <div id="gauge_chart_6" class="gauge"></div>
   <div id="gauge_chart_7" class="gauge"></div>
+  <div id="gauge_chart_8" class="gauge"></div>
   <div style="clear:both;"></div>
   <div style="width: 30%; height: 600px; float: left;">
     <div id="pie_chart_1" style="width: 100%; height: 300px;"></div>

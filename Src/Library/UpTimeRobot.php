@@ -80,7 +80,7 @@ class UpTimeRobot
 
         foreach ($response->monitors as $monitor) {
             $log = $monitor->logs[0];
-            $img = 
+            $img =
                 "<img alt='" . $monitor->friendly_name . "' src='https://img.shields.io/badge/" . $this->mapStatus($monitor->status) .
                 "-" . str_replace("-", "--", $monitor->friendly_name) . "-" . $this->mapColor($monitor->status) .
                 "?style=for-the-badge&labelColor=white' />";

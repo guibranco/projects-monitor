@@ -41,20 +41,22 @@ function preset() {
   );
   showGitHub(
     JSON.parse(
-      '{"issues":{"total_count":0, "latest":[], "bug":[], "triage":[], "wip":[]},"pull_requests":{"total_count":0, "latest":[]}}'
+      '{"issues":{"total_count":0,"latest":[],"bug":[],"triage":[],"wip":[]},"pull_requests":{"total_count":0,"latest":[]}}'
     )
   );
   showMessages(
     JSON.parse(
-      '{"total":0,"byApplications":[["Application","Messages"]],"messages":[["Id","Application","Message","Created At"]]}'
+      '{"total":0,"byApplications":[["Applications","Hits"]],"messages":[]}'
     )
   );
   showQueues(
-    JSON.parse('{"queues":[["Server","Queue","Messages"]],"total":0}')
+    JSON.parse(
+      '{"queues":[],"total":0}'
+    )
   );
   showWebhook(
     JSON.parse(
-      '{"events":[["Event","Hits"]],"failed":0,"feed":[["Sequence","Date","Event","Action","Repository"]],"repositories":[["Repository","Hits"]],"total":0,"webhooks":[["Date","Hits"], ["01/01", 0]],"workflow_runs":[["None"]]}'
+      '{"events":[["Event","Hits"]],"failed":0,"feed":[],"repositories":[],"total":0,"webhooks":[["Date","Hits"], ["01/01", 0]],"workflow_runs":[],"total_workflow_runs":0}'
     )
   );
 }
@@ -335,6 +337,10 @@ function showWebhook(response) {
     ["Hits", "Failed"],
     ["WH Failed", response["failed"]],
   ]);
+  const dataTotalWorkflowRuns = google.visualization.arrayToDataTable([
+    ["Hits", "GH WRs"],
+    ["GH WRs", response["total_workflow_runs"]],
+  ]);
 
   const optionsWebhooks = {
     title: "GitHub webhooks by date",
@@ -384,6 +390,21 @@ function showWebhook(response) {
     redTo: 1000,
   };
 
+  const optionsTotalWorkflowRuns = {
+    legend: { position: "none" },
+    showRowNumber: true,
+    width: "100%",
+    height: "100%",
+    min: 0,
+    max: 1000,
+    greenFrom: 0,
+    greenTo: 50,
+    yellowFrom: 50,
+    yellowTo: 100,
+    redFrom: 100,
+    redTo: 1000,
+  };
+
   const lineChart = new google.visualization.LineChart(
     document.getElementById("line_chart")
   );
@@ -410,4 +431,8 @@ function showWebhook(response) {
     document.getElementById("gauge_chart_2")
   );
   gaugeChart2.draw(dataFailed, optionsFailed);
+  const gaugeChart8 = new google.visualization.Gauge(
+    document.getElementById("gauge_chart_8")
+  );
+  gaugeChart8.draw(dataTotalWorkflowRuns, optionsTotalWorkflowRuns);
 }

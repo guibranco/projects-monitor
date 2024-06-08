@@ -62,6 +62,17 @@ class UpTimeRobot
         };
     }
 
+    private function mapColor($status)
+    {
+        return match ($status) {
+            0 => "gray",
+            1 => "blue",
+            2 => "green",
+            8 => "⚠yellow",
+            9 => "red"
+        };
+    }
+
     public function getMonitors()
     {
         $monitors = array();
@@ -69,9 +80,12 @@ class UpTimeRobot
 
         foreach ($response->monitors as $monitor) {
             $log = $monitor->logs[0];
+            $img = 
+                "<img alt='" . $monitor->friendly_name . "' src='https://img.shields.io/badge/" . $this->mapStatus($monitor->status) .
+                "-" . str_replace("-", "--", $monitor->friendly_name) . "-" . $this->mapColor($monitor->status) .
+                "?style=for-the-badge&labelColor=white' />";
             $monitors[] = array(
-                $monitor->friendly_name,
-                $this->mapStatus($monitor->status),
+                $img,
                 date("H:i:s d/m/Y", $log->datetime),
                 $log->reason->code . " - " . $log->reason->detail
             );

@@ -32,13 +32,13 @@ $config = new Configuration();
   <div style="clear:both;"></div>
   <div style="width: 50%; float: left;">
     <div id="gauge_chart_1" class="gauge"></div>
-    <div id="gauge_chart_2" class="gauge"></div>
-    <div id="gauge_chart_3" class="gauge"></div>
-    <div id="gauge_chart_4" class="gauge"></div>
     <div id="gauge_chart_5" class="gauge"></div>
     <div id="gauge_chart_6" class="gauge"></div>
-    <div id="gauge_chart_7" class="gauge"></div>
     <div id="gauge_chart_8" class="gauge"></div>
+    <div id="gauge_chart_2" class="gauge"></div>
+    <div id="gauge_chart_4" class="gauge"></div>
+    <div id="gauge_chart_3" class="gauge"></div>    
+    <div id="gauge_chart_7" class="gauge"></div>
   </div>
   <div style="width: 50%; float: left;">
     <img id="gh_stats" style="width: 465px; float: left;" alt="GH Stats" src="" />
@@ -58,7 +58,11 @@ $config = new Configuration();
   <div id="repositories" style="width: 50%; height: 500px; float: left;background-color: white;"></div>    
   <div id="errorLogMessages" style="width: 50%; height: 500px; float: left;background-color: white;"></div>
   <div style="clear:both;"></div>
-  <div id="feed" style="width: 50%; float: left;background-color: white;"></div>
+  <div style="width: 50%; float: left;background-color: white;">
+    <div id="feed"></div>
+    <div id="cronjobs"></div>
+    <div id="uptimerobot"></div>
+  </div>
   <div style="width: 50%; float: left;background-color: white;">
     <div id="workflow_runs"></div>    
     <div id="pull_requests"></div>
@@ -66,9 +70,7 @@ $config = new Configuration();
     <div id="triage"></div>
     <div id="wip"></div>
     <div id="issues"></div>
-    <div id="healthchecksio"></div>
-    <div id="uptimerobot"></div>
-    <div id="cronjobs"></div>
+    <div id="healthchecksio"></div>    
   </div>
   <div style="clear:both;"></div>
   <div id="messages" style="width: 100%; float: left;background-color: white;"></div>

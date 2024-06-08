@@ -60,7 +60,7 @@ class GitHub
 
         $result = array();
 
-        $result[] = array("Title", "Labels", "Repository", "User");
+        $result[] = array("Title", "Repository", "User");
 
         foreach ($items as $item) {
             $repositoryName = str_replace("https://api.github.com/repos/", "", $item->repository_url);
@@ -68,8 +68,7 @@ class GitHub
                 return "<span style='background-color: #" . $label->color . ";color: #" . (Color::luminance($label->color) > 120 ? "000" : "fff") . ";padding: 0 7px;border-radius: 24px;border: 1px solid #000;line-height: 21px;text-wrap:nowrap;'>" . $label->name . "</span>";
             }, $item->labels));
             $result[] = array(
-                "<a href='" . $item->html_url . "' target='_blank'>[#" . $item->number . "] " . $item->title . "</a>",
-                "<a href='" . $item->html_url . "' target='_blank'>" . $labels . "</a>",
+                "<a href='" . $item->html_url . "' target='_blank'>[#" . $item->number . "] " . $item->title . "<br />" . $labels . "</a>",
                 "<a href='https://github.com/" . $repositoryName . "' target='_blank'><img alt='login' src='https://img.shields.io/badge/" . str_replace("-", "--", $repositoryName) . "-black?style=flat&logo=github' /></a>",
                 "<a href='" . $item->user->html_url . "' target='_blank'><img alt='login' src='https://img.shields.io/badge/" . str_replace("-", "--", $item->user->login) . "-black?style=social&logo=github' /></a>"
             );

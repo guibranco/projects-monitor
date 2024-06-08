@@ -56,6 +56,18 @@ class HealthChecksIo
         };
     }
 
+    private function mapColor($status)
+    {
+        return match ($status) {
+            "up" => "green",
+            "down" => "red",
+            "paused" => "gray",
+            "new" => "blue",
+            "grace" => "yellow",
+            default => "orange",
+        };
+    }
+
     public function getChecks()
     {
         $checks = array();
@@ -65,9 +77,13 @@ class HealthChecksIo
 
             foreach ($response->checks as $check) {
 
+                $img =
+                    "<img alt='" . $check->name . "' src='https://img.shields.io/badge/" . $this->mapStatus($check->status) .
+                    "-" . str_replace("-", "--", $check->name) . "-" . $this->mapColor($check->status) .
+                    "?style=for-the-badge&labelColor=white' />";
+
                 $checks[] = array(
-                    $check->name,
-                    $this->mapStatus($check->status),
+                    $img,
                     date("H:i:s d/m/Y", $check->last_ping == null ? time() : strtotime($check->last_ping)),
                     date("H:i:s d/m/Y", $check->next_ping == null ? time() : strtotime($check->next_ping))
                 );
@@ -76,7 +92,7 @@ class HealthChecksIo
 
         sort($checks, SORT_ASC);
 
-        array_unshift($checks, array("Name", "Status", "Last Ping", "Next Ping"));
+        array_unshift($checks, array("Check", "Last Ping", "Next Ping"));
 
         return $checks;
     }

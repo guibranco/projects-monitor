@@ -77,13 +77,13 @@ class HealthChecksIo
 
             foreach ($response->checks as $check) {
 
-                $img = 
+                $img =
                     "<img alt='" . $check->name . "' src='https://img.shields.io/badge/" . $this->mapStatus($check->status) .
-                    "-" . str_replace("-","--", $check->name) . "-" . $this->mapColor($check->status) .
+                    "-" . str_replace("-", "--", $check->name) . "-" . $this->mapColor($check->status) .
                     "?style=for-the-badge&labelColor=white' />";
 
                 $checks[] = array(
-                    $img,                    
+                    $img,
                     date("H:i:s d/m/Y", $check->last_ping == null ? time() : strtotime($check->last_ping)),
                     date("H:i:s d/m/Y", $check->next_ping == null ? time() : strtotime($check->next_ping))
                 );

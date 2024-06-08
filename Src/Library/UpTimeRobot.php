@@ -93,7 +93,7 @@ class UpTimeRobot
 
         sort($monitors, SORT_ASC);
 
-        array_unshift($monitors, array("Name", "Status", "Last change", "Details"));
+        array_unshift($monitors, array("Monitor", "Last change", "Details"));
 
         return $monitors;
     }

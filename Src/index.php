@@ -17,7 +17,7 @@ $config = new Configuration();
       background: rgb(13, 17, 23)
     }
     .gauge {
-      width: 10%;
+      width: 20%;
       height: 200px;
       float: left;
       background-color: white;

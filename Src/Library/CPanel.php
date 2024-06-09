@@ -156,7 +156,7 @@ class CPanel
             return $result;
         }
 
-        sort($result, SORT_ASC);
+        ksort($result, SORT_ASC);
         array_unshift($result, array("Date", "Error Log", "Error", "File", "Line"));
         return $result;
     }
@@ -181,9 +181,7 @@ class CPanel
         }
 
         sort($result, SORT_ASC);
-
         array_unshift($result, array("Command", "Expression"));
-
         return $result;
     }
 }

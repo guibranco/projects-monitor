@@ -9,9 +9,9 @@ class GitHub
 {
     private const GITHUB_API_URL = "https://api.github.com/";
 
-    private $token;
-
     private $request;
+
+    private $headers;
 
     public function __construct()
     {
@@ -23,8 +23,14 @@ class GitHub
 
         require_once __DIR__ . "/../secrets/gitHub.secrets.php";
 
-        $this->token = $gitHubToken;
         $this->request = new Request();
+
+        $this->headers = [
+            "Authorization: token {$gitHubToken}",
+            "Accept: application/vnd.github.v3+json",
+            "X-GitHub-Api-Version: 2022-11-28",
+            "User-Agent: ProjectsMonitor/1.0 (+https://github.com/guibranco/projects-monitor)"
+        ];
     }
 
     private function getRequest($users, $type, $label = null)
@@ -36,14 +42,7 @@ class GitHub
                 implode(" ", array_map(function ($user) {
                     return "user:{$user}";
                 }, $users)));
-        $headers = [
-            "Authorization: token {$this->token}",
-            "Accept: application/vnd.github.v3+json",
-            "X-GitHub-Api-Version: 2022-11-28",
-            "User-Agent: ProjectsMonitor/1.0 (+https://github.com/guibranco/projects-monitor)"
-        ];
-
-        $response = $this->request->get($url, $headers);
+        $response = $this->request->get($url, $this->headers);
 
         if ($response->statusCode != 200) {
             throw new RequestException("Code: {$response->statusCode} - Error: {$response->body}");
@@ -136,14 +135,7 @@ class GitHub
     {
         $repository = "guibranco/bancosbrasileiros";
         $url = self::GITHUB_API_URL . "repos/" . $repository . "/releases/latest";
-        $headers = [
-            "Authorization: token {$this->token}",
-            "Accept: application/vnd.github.v3+json",
-            "X-GitHub-Api-Version: 2022-11-28",
-            "User-Agent: ProjectsMonitor/1.0 (+https://github.com/guibranco/projects-monitor)"
-        ];
-
-        $response = $this->request->get($url, $headers);
+        $response = $this->request->get($url, $this->headers);
 
         if ($response->statusCode != 200) {
             throw new RequestException("Code: {$response->statusCode} - Error: {$response->body}");
@@ -164,5 +156,46 @@ class GitHub
         $data["author"] = $body->author->login;
 
         return $data;
+    }
+
+    private function getBilling($type, $items)
+    {
+        $data = array();
+
+        foreach ($items as $item) {
+            $urlActions = self::GITHUB_API_URL . "{$type}/{$item}/settings/billing/actions";
+            $responseActions = $this->request->get($urlActions, $this->headers);
+            if ($responseActions->statusCode != 200) {
+                throw new RequestException("Code: {$responseActions->statusCode} - Error: {$responseActions->body}");
+            }
+            $contentActions = json_decode($responseActions->body);
+            $data[$item] = array();
+            $data[$item]["total_minutes_used"] = $contentActions->total_minutes_used;
+            $data[$item]["total_paid_minutes_used"] = $contentActions->total_paid_minutes_used;
+            $data[$item]["included_minutes"] = $contentActions->included_minutes;
+
+            $urlStorage = self::GITHUB_API_URL . "{$type}/{$item}/settings/billing/shared-storage";
+            $responseStorage = $this->request->get($urlStorage, $this->headers);
+            if ($responseStorage->statusCode != 200) {
+                throw new RequestException("Code: {$responseStorage->statusCode} - Error: {$responseStorage->body}");
+            }
+            $contentStorage = json_decode($responseStorage->body);
+            $data[$item]["days_left_in_billing_cycle"] = $contentStorage->days_left_in_billing_cycle;
+        }
+
+        return $data;
+    }
+
+    public function getAccountUsage()
+    {
+        $orgs = array("ApiBR", "GuilhermeStracini", "InovacaoMediaBrasil");
+
+        $resultUsers = $this->getBilling("user", ["guibranco"]);
+        $resultOrgs = $this->getBilling("orgs", $orgs);
+
+        $result = array_merge($resultUsers, $resultOrgs);
+        ksort($result);
+
+        return array_values($result);
     }
 }

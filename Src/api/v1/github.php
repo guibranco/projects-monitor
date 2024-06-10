@@ -8,6 +8,7 @@ $github = new GitHub();
 $data["issues"] = $github->getIssues();
 $data["pull_requests"] = $github->getPullRequests();
 $data["latestRelease"] = $github->getLatestReleaseOfBancosBrasileiros();
+$data["accounts_usage"] = $github->getAccountUsage();
 
 header("Content-Type: application/json; charset=UTF-8");
 echo json_encode($data);

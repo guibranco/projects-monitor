@@ -155,10 +155,15 @@ function showGitHub(response) {
   const dataIssuesTable = google.visualization.arrayToDataTable(
     response["issues"]["latest"]
   );
+  const dataAccountsUsage = google.visualization.arrayToDataTable(
+    response["accountsUsage"]
+  );
 
   if (typeof response["latestRelease"] !== "undefined") {
     const latestRelease = response["latestRelease"];
-    document.getElementById("latest_release").innerHTML =
+    document.getElementById("latest_release").innerHTML =      
+      "<b>Release Notes:</b> " +
+      latestRelease["description"] +
       "<b>Date:</b> " + latestRelease["published"] +
       " | " +
       "<b>Version:</b> " +  "<a href='" + latestRelease["release_url"] + "'>" + latestRelease["title"] + "</a>" +
@@ -167,10 +172,7 @@ function showGitHub(response) {
       "<img alt='Static Badge' src='https://img.shields.io/badge/" + latestRelease["repository"] + "-black?style=flat&amp;logo=github'></a>" +
       " | " +
       "<a href='https://github.com/" + latestRelease["author"] + "' target='_blank'>" +
-      "<img alt='author' src='https://img.shields.io/badge/" + latestRelease["author"] + "-black?style=social&amp;logo=github'></a>" +
-      " | " +
-      "<b>Release Notes:</b> " +
-      latestRelease["description"];
+      "<img alt='author' src='https://img.shields.io/badge/" + latestRelease["author"] + "-black?style=social&amp;logo=github'></a>";
   }
 
   const gaugueOptions = {
@@ -217,6 +219,10 @@ function showGitHub(response) {
     document.getElementById("issues")
   );
   issues.draw(dataIssuesTable, tableOptions);
+  const accountsUsage = new google.visualization.Table(
+    document.getElementById("accounts_usage")
+  );
+  accountsUsage.draw(dataAccountsUsage, tableOptions);
 }
 
 function showHealthChecksIo(response) {

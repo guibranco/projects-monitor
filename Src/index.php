@@ -22,6 +22,15 @@ $config = new Configuration();
       float: left;
       background-color: white;
     }
+    code {
+      background-color: #000000;
+      color: #FFFFFF;
+      padding: 0 7px;
+      border-radius: 24px;
+      border: 1px solid #000;
+      line-height: 21px;
+      text-wrap: nowrap;
+    }
   </style>
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <script type="text/javascript" src="static/scripts.js?<?php echo filemtime("static/scripts.js"); ?>"></script>

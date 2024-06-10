@@ -170,8 +170,8 @@ class GitHub
             }
             $contentActions = json_decode($responseActions->body);
             $data[$item] = array();
+            $data[$item]["account"] = $item;
             $data[$item]["total_minutes_used"] = $contentActions->total_minutes_used;
-            $data[$item]["total_paid_minutes_used"] = $contentActions->total_paid_minutes_used;
             $data[$item]["included_minutes"] = $contentActions->included_minutes;
 
             $urlStorage = self::GITHUB_API_URL . "{$type}/{$item}/settings/billing/shared-storage";
@@ -190,12 +190,15 @@ class GitHub
     {
         $orgs = array("ApiBR", "GuilhermeStracini", "InovacaoMediaBrasil");
 
-        $resultUsers = $this->getBilling("user", ["guibranco"]);
+        $resultUsers = $this->getBilling("users", ["guibranco"]);
         $resultOrgs = $this->getBilling("orgs", $orgs);
 
         $result = array_merge($resultUsers, $resultOrgs);
         ksort($result);
 
-        return array_values($result);
+        $values = array_values($result);
+        array_unshift($values, array("Account", "Total Minutes Used", "Included Minutes", "Days Left In Billing Cycle"));
+
+        return $values;
     }
 }

@@ -177,7 +177,34 @@ class GitHub
             }
             $contentStorage = json_decode($responseStorage->body);
 
-            $data[] = array($item, $contentActions->total_minutes_used, $contentActions->included_minutes, $contentStorage->days_left_in_billing_cycle);
+            $used = $contentActions->total_minutes_used;
+            $included = $contentActions->included_minutes;
+            $percentage = ($used * 100) / $included;
+            $days = $contentStorage->days_left_in_billing_cycle;
+            $colorActions = "green";
+            if ($percentage >= 50) {
+                $colorActions = "yellow";
+            } else if ($percentage >= 75) {
+                $colorActions = "orange";
+            } else if ($percentage >= 90) {
+                $colorActions = "red";
+            }
+
+            $colorDays = "green";
+            if ($days >= 5) {
+                $colorDays = "yellow";
+            } else if ($days >= 15) {
+                $colorDays = "orange";
+            } else if ($days >= 20) {
+                $colorDays = "red";
+            }
+
+            $accountLink = "<a href='https://github.com/" . $item . "/settings' target='_blank'><img alt='login' src='https://img.shields.io/badge/" . str_replace("-", "--", $item) . "-black?style=social&logo=github' /></a>"
+            $actionsImage = "<img alt='Actions used' src='https://img.shields.io/badge/" . $percentage . "%-" . $used . "/" . $included . "_minutes-" . $colorActions . "?style=for-the-badge&labelColor=black' />";
+            $daysImage = "<img alt='Actions used' src='https://img.shields.io/badge/" . $days . "%-Days_remaining-" . $colorDays . "?style=for-the-badge&labelColor=black' />";
+            
+
+            $data[] = array($accountLink, $actionsImage, $daysImage);
         }
 
         return $data;
@@ -187,12 +214,12 @@ class GitHub
     {
         $orgs = array("ApiBR", "GuilhermeStracini", "InovacaoMediaBrasil");
 
-        $resultUsers = $this->getBilling("users", ["guibranco"]);
+        $resultUsers = $this->getBilling("users", ["GuiBranco"]);
         $resultOrgs = $this->getBilling("orgs", $orgs);
 
         $result = array_merge($resultUsers, $resultOrgs);
         sort($result);
-        array_unshift($result, array("Account", "Total Minutes Used", "Included Minutes", "Days Left In Billing Cycle"));
+        array_unshift($result, array("Account", "Actions usage/quota", "Days Left In Billing Cycle"));
         return $result;
     }
 }

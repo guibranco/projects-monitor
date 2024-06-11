@@ -55,7 +55,7 @@ class Ip2WhoIs
             $createDate = date("d/m/Y", strtotime($response->create_date));
             $expireDate = date("d/m/Y", strtotime($response->expire_date));
             $status = preg_replace($pattern, '', $response->status);
-            $nameservers = implode(", ", $response->nameservers);
+            $nameservers = implode(" ", $response->nameservers);
             $data[] = array("<a href='https://$domain' target='_blank'>$domain</a>", $createDate, $expireDate, $response->domain_age, $status, $nameservers);
         }
 

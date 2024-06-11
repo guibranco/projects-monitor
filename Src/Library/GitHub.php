@@ -199,7 +199,7 @@ class GitHub
                 $colorDays = "red";
             }
 
-            $accountLink = "<a href='https://github.com/" . $item . "/settings' target='_blank'><img alt='login' src='https://img.shields.io/badge/" . str_replace("-", "--", $item) . "-black?style=social&logo=github' /></a>"
+            $accountLink = "<a href='https://github.com/" . $item . "/settings' target='_blank'><img alt='login' src='https://img.shields.io/badge/" . str_replace("-", "--", $item) . "-black?style=social&logo=github' /></a>";
             $actionsImage = "<img alt='Actions used' src='https://img.shields.io/badge/" . $percentage . "%-" . $used . "/" . $included . "_minutes-" . $colorActions . "?style=for-the-badge&labelColor=black' />";
             $daysImage = "<img alt='Actions used' src='https://img.shields.io/badge/" . $days . "%-Days_remaining-" . $colorDays . "?style=for-the-badge&labelColor=black' />";
             

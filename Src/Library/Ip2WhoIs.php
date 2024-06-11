@@ -49,8 +49,6 @@ class Ip2WhoIs
         ];
         $pattern = '/https?:\/\/[^\s]+/';
 
-
-
         $data = array();
         foreach ($domains as $domain) {
             $response = $this->getWhoIs($domain);

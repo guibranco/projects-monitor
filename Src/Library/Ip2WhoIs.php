@@ -52,15 +52,27 @@ class Ip2WhoIs
         $data = array();
         foreach ($domains as $domain) {
             $response = $this->getWhoIs($domain);
-            $createDate = date("d/m/Y", strtotime($response->create_date));
-            $expireDate = date("d/m/Y", strtotime($response->expire_date));
+            $createdTime = strtotime($response->create_date);
+            $expireTime = strtotime($response->expire_date);
+            $createdDate = date("d/m/Y", $createdTime);
+            $expireDate = date("d/m/Y", $expireTime);
+            $expireDays = round(($expireTime - time()) / (60 * 60 * 24));
+            $color = "green";
+            if ($expireDays < 10) {
+                $color = "red";
+            } elseif ($expireDays < 30) {
+                $color = "orange";
+            } elseif ($expireDays < 90) {
+                $color = "yellow";
+            }
+            $expireImg = "<img alt='Expire date' src='https://img.shields.io/badge/" . ($expireDays >= 0 ? $expireDays : "-$expireDays") . "_days-" . str_replace("/", "%2F", $expireDate) . "-" . $color . "?style=for-the-badge&labelColor=black' />";
             $status = preg_replace($pattern, '', $response->status);
             $nameservers = implode(" ", $response->nameservers);
-            $data[] = array("<a href='https://$domain' target='_blank'>$domain</a>", $createDate, $expireDate, $response->domain_age, $status, $nameservers);
+            $data[] = array("<a href='https://$domain' target='_blank'>$domain</a>", $createdDate, $expireImg, $response->domain_age, $status, $nameservers);
         }
 
         sort($data);
-        array_unshift($data, array("Domain", "Create Date", "Expire Date", "Domain Age", "Status", "Nameservers"));
+        array_unshift($data, array("Domain", "Created Date", "Expire Date", "Domain Age", "Status", "Nameservers"));
         return $data;
     }
 }

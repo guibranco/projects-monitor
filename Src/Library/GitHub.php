@@ -182,25 +182,25 @@ class GitHub
             $percentage = ($used * 100) / $included;
             $days = $contentStorage->days_left_in_billing_cycle;
             $colorActions = "green";
-            if ($percentage >= 50) {
-                $colorActions = "yellow";
+            if ($percentage >= 90) {
+                $colorActions = "red";
             } elseif ($percentage >= 75) {
                 $colorActions = "orange";
-            } elseif ($percentage >= 90) {
-                $colorActions = "red";
+            } elseif ($percentage >= 50) {
+                $colorActions = "yellow";
             }
 
             $colorDays = "green";
-            if ($days >= 5) {
-                $colorDays = "yellow";
+            if ($days >= 20) {
+                $colorDays = "red";
             } elseif ($days >= 15) {
                 $colorDays = "orange";
-            } elseif ($days >= 20) {
-                $colorDays = "red";
+            } elseif ($days >= 5) {
+                $colorDays = "yellow";
             }
 
             $accountLink = "<a href='https://github.com/" . $item . "/settings' target='_blank'><img alt='login' src='https://img.shields.io/badge/" . str_replace("-", "--", $item) . "-black?style=social&logo=github' /></a>";
-            $actionsImage = "<img alt='Actions used' src='https://img.shields.io/badge/" . $percentage . "%25-" . $used . "%2F" . $included . "_minutes-" . $colorActions . "?style=for-the-badge&labelColor=black' />";
+            $actionsImage = "<img alt='Actions used' src='https://img.shields.io/badge/" . number_format($percentage, 2, '.', '') . "%25-" . $used . "%2F" . $included . "_minutes-" . $colorActions . "?style=for-the-badge&labelColor=black' />";
             $daysImage = "<img alt='Actions used' src='https://img.shields.io/badge/" . $days . "-Days_remaining-" . $colorDays . "?style=for-the-badge&labelColor=black' />";
 
 

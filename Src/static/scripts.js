@@ -63,6 +63,7 @@ function preset() {
 
 function loadAll() {
   load("api/v1/cpanel", showCPanel);
+  load("api/v1/domains", showDomains);
   load("api/v1/github", showGitHub);
   load("api/v1/healthchecksio", showHealthChecksIo);
   load("api/v1/messages", showMessages);
@@ -97,7 +98,7 @@ function showCPanel(response) {
     ["Log errors", response["totalLogMessages"]],
   ]);
 
-  const gaugueOptions = {
+  const gaugeOptions = {
     legend: { position: "none" },
     showRowNumber: true,
     width: "100%",
@@ -115,7 +116,7 @@ function showCPanel(response) {
   const gaugeChart7 = new google.visualization.Gauge(
     document.getElementById("gauge_chart_7")
   );
-  gaugeChart7.draw(totalLogMessages, gaugueOptions);
+  gaugeChart7.draw(totalLogMessages, gaugeOptions);
   
   const logFiles = new google.visualization.Table(
     document.getElementById("errorLogFiles")
@@ -129,6 +130,14 @@ function showCPanel(response) {
     document.getElementById("cronjobs")
   );
   cronjobs.draw(dataCronjobs, tableOptions);
+}
+
+function showDomains(response) {
+  const dataDomains = google.visualization.arrayToDataTable(response["domains"]);
+  const domains = new google.visualization.Table(
+    document.getElementById("domains")
+  );
+  domains.draw(dataDomains, tableOptions);
 }
 
 function showGitHub(response) {
@@ -175,7 +184,7 @@ function showGitHub(response) {
       "<img alt='author' src='https://img.shields.io/badge/" + latestRelease["author"] + "-black?style=social&amp;logo=github'></a>";
   }
 
-  const gaugueOptions = {
+  const gaugeOptions = {
     legend: { position: "none" },
     showRowNumber: true,
     width: "100%",
@@ -193,11 +202,11 @@ function showGitHub(response) {
   const gaugeChart5 = new google.visualization.Gauge(
     document.getElementById("gauge_chart_5")
   );
-  gaugeChart5.draw(dataIssues, gaugueOptions);
+  gaugeChart5.draw(dataIssues, gaugeOptions);
   const gaugeChart6 = new google.visualization.Gauge(
     document.getElementById("gauge_chart_6")
   );
-  gaugeChart6.draw(dataPullRequests, gaugueOptions);
+  gaugeChart6.draw(dataPullRequests, gaugeOptions);
 
   const pullRequests = new google.visualization.Table(
     document.getElementById("pull_requests")

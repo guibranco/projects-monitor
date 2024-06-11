@@ -73,6 +73,7 @@ $config = new Configuration();
   <div style="width: 50%; float: left;background-color: white;">
     <div id="feed"></div>
     <div id="healthchecksio"></div>
+    <div id="uptimerobot"></div>
   </div>
   <div style="width: 50%; float: left;background-color: white;">
     <div id="workflow_runs"></div>
@@ -81,8 +82,7 @@ $config = new Configuration();
     <div id="triage"></div>
     <div id="wip"></div>
     <div id="issues"></div>
-    <div id="cronjobs"></div>
-    <div id="uptimerobot"></div>
+    <div id="cronjobs"></div>    
   </div>
   <div style="clear:both;"></div>
   <div id="messages" style="width: 100%; float: left;background-color: white;"></div>

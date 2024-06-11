@@ -169,18 +169,15 @@ class GitHub
                 throw new RequestException("Code: {$responseActions->statusCode} - Error: {$responseActions->body}");
             }
             $contentActions = json_decode($responseActions->body);
-            $data[$item] = array();
-            $data[$item]["account"] = $item;
-            $data[$item]["total_minutes_used"] = $contentActions->total_minutes_used;
-            $data[$item]["included_minutes"] = $contentActions->included_minutes;
-
+            
             $urlStorage = self::GITHUB_API_URL . "{$type}/{$item}/settings/billing/shared-storage";
             $responseStorage = $this->request->get($urlStorage, $this->headers);
             if ($responseStorage->statusCode != 200) {
                 throw new RequestException("Code: {$responseStorage->statusCode} - Error: {$responseStorage->body}");
             }
             $contentStorage = json_decode($responseStorage->body);
-            $data[$item]["days_left_in_billing_cycle"] = $contentStorage->days_left_in_billing_cycle;
+
+            $data[] = array($item, $contentActions->total_minutes_used, $contentActions->included_minutes, $contentStorage->days_left_in_billing_cycle);
         }
 
         return $data;
@@ -194,11 +191,8 @@ class GitHub
         $resultOrgs = $this->getBilling("orgs", $orgs);
 
         $result = array_merge($resultUsers, $resultOrgs);
-        ksort($result);
-
-        $values = array_values($result);
-        array_unshift($values, array("Account", "Total Minutes Used", "Included Minutes", "Days Left In Billing Cycle"));
-
-        return $values;
+        sort($result);
+        array_unshift($result, array("Account", "Total Minutes Used", "Included Minutes", "Days Left In Billing Cycle"));
+        return $result;
     }
 }

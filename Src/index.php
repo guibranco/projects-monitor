@@ -74,6 +74,7 @@ $config = new Configuration();
     <div id="feed"></div>
     <div id="healthchecksio"></div>
     <div id="uptimerobot"></div>
+    <div id="domains"></div>
   </div>
   <div style="width: 50%; float: left; background-color: white;">
     <div id="workflow_runs"></div>

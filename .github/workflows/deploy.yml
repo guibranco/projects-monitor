@@ -93,6 +93,19 @@ jobs:
           echo "\$healthChecksIoReadKeys[] = \"${{ secrets.HEALTHCHECKSIO_RK2 }}\";" >> healthChecksIo.secrets.php
           echo "\$healthChecksIoReadKeys[] = \"${{ secrets.HEALTHCHECKSIO_RK3 }}\";" >> healthChecksIo.secrets.php
 
+      - name: Create Ip2WhoIs secrets file
+        if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
+        run: |
+          cd Src
+          mkdir -p secrets
+          cd secrets
+          echo "<?php" >> Ip2WhoIs.secrets.php
+          echo "namespace GuiBranco\ProjectsMonitor\secrets;" >> Ip2WhoIs.secrets.php
+          echo "class Ip2WhoIsSecrets" >> Ip2WhoIs.secrets.php
+          echo "{" >> Ip2WhoIs.secrets.php
+          echo "\tpublic static \$ApiKey = \"${{ secrets.IP2WHOIS_API_KEY }}\";" >> Ip2WhoIs.secrets.php
+          echo "}" >> Ip2WhoIs.secrets.php
+
       - name: Create MySQL secrets file
         if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
         run: |

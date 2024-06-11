@@ -4,6 +4,7 @@ RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME} !-f
 
 RewriteRule ^cpanel$ cpanel.php [NC,L]
+RewriteRule ^domains$ domains.php [NC,L]
 RewriteRule ^github$ github.php [NC,L]
 RewriteRule ^healthchecksio$ healthchecksio.php [NC,L]
 RewriteRule ^log-message$ log-message.php [NC,L]

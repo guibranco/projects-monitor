@@ -4,6 +4,7 @@
         "projectKey": "guibranco_projects-monitor"
     },
     "cSpell.words": [
+        "apibr",
         "apiversion",
         "Bancos",
         "bancosbrasileiros",
@@ -13,6 +14,7 @@
         "cpanel",
         "cpanelresult",
         "Fileman",
+        "gstraccini",
         "guibranco",
         "Guilherme",
         "healthchecksio",
@@ -20,8 +22,10 @@
         "Inovacao",
         "jsonapi",
         "statfiles",
+        "straccini",
         "Stracini",
         "uptimerobot",
-        "viewfile"
+        "viewfile",
+        "zerocool"
     ]
 }

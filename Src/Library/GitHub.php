@@ -184,25 +184,25 @@ class GitHub
             $colorActions = "green";
             if ($percentage >= 50) {
                 $colorActions = "yellow";
-            } else if ($percentage >= 75) {
+            } elseif ($percentage >= 75) {
                 $colorActions = "orange";
-            } else if ($percentage >= 90) {
+            } elseif ($percentage >= 90) {
                 $colorActions = "red";
             }
 
             $colorDays = "green";
             if ($days >= 5) {
                 $colorDays = "yellow";
-            } else if ($days >= 15) {
+            } elseif ($days >= 15) {
                 $colorDays = "orange";
-            } else if ($days >= 20) {
+            } elseif ($days >= 20) {
                 $colorDays = "red";
             }
 
             $accountLink = "<a href='https://github.com/" . $item . "/settings' target='_blank'><img alt='login' src='https://img.shields.io/badge/" . str_replace("-", "--", $item) . "-black?style=social&logo=github' /></a>";
             $actionsImage = "<img alt='Actions used' src='https://img.shields.io/badge/" . $percentage . "%-" . $used . "/" . $included . "_minutes-" . $colorActions . "?style=for-the-badge&labelColor=black' />";
             $daysImage = "<img alt='Actions used' src='https://img.shields.io/badge/" . $days . "%-Days_remaining-" . $colorDays . "?style=for-the-badge&labelColor=black' />";
-            
+
 
             $data[] = array($accountLink, $actionsImage, $daysImage);
         }

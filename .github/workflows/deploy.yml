@@ -103,7 +103,7 @@ jobs:
           echo "namespace GuiBranco\ProjectsMonitor\secrets;" >> Ip2WhoIsSecrets.php
           echo "class Ip2WhoIsSecrets" >> Ip2WhoIsSecrets.php
           echo "{" >> Ip2WhoIsSecrets.php
-          echo "\tpublic static \$ApiKey = \"${{ secrets.IP2WHOIS_API_KEY }}\";" >> Ip2WhoIsSecrets.php
+          echo "    public static \$ApiKey = \"${{ secrets.IP2WHOIS_API_KEY }}\";" >> Ip2WhoIsSecrets.php
           echo "}" >> Ip2WhoIsSecrets.php
 
       - name: Create MySQL secrets file

@@ -71,11 +71,26 @@ class Ip2WhoIs
             $expireImg = "<img alt='Expire date' src='https://img.shields.io/badge/" . $expireDaysString . "_days-" . str_replace("/", "%2F", $expireDate) . "-" . $color . "?style=for-the-badge&labelColor=black' />";
             $status = preg_replace($pattern, '', $response->status);
             $nameservers = implode(" ", $response->nameservers);
-            $data[] = [$link, $createdDate, $expireImg, $response->domain_age, $status, $nameservers];
+            $data[] = [
+                $link,
+                $createdDate,
+                $expireImg,
+                $response->domain_age,
+                $status,
+                $nameservers
+            ];
         }
 
+        $columns = [
+            "Domain",
+            "Created Date",
+            "Expire Date",
+            "Domain Age",
+            "Status",
+            "Nameservers"
+        ];
         sort($data);
-        array_unshift($data, ["Domain", "Created Date", "Expire Date", "Domain Age", "Status", "Nameservers"]);
+        array_unshift($data, $columns);
         return $data;
     }
 }

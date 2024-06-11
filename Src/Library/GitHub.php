@@ -169,7 +169,7 @@ class GitHub
                 throw new RequestException("Code: {$responseActions->statusCode} - Error: {$responseActions->body}");
             }
             $contentActions = json_decode($responseActions->body);
-            
+
             $urlStorage = self::GITHUB_API_URL . "{$type}/{$item}/settings/billing/shared-storage";
             $responseStorage = $this->request->get($urlStorage, $this->headers);
             if ($responseStorage->statusCode != 200) {

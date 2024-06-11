@@ -166,14 +166,16 @@ class GitHub
             $urlActions = self::GITHUB_API_URL . "{$type}/{$item}/settings/billing/actions";
             $responseActions = $this->request->get($urlActions, $this->headers);
             if ($responseActions->statusCode != 200) {
-                throw new RequestException("Code: {$responseActions->statusCode} - Error: {$responseActions->body}");
+                $error = $responseActions->statusCode == -1 ? $responseActions->error : $responseActions->body;
+                throw new RequestException("Code: {$responseActions->statusCode} - Error: {$error}");
             }
             $contentActions = json_decode($responseActions->body);
 
             $urlStorage = self::GITHUB_API_URL . "{$type}/{$item}/settings/billing/shared-storage";
             $responseStorage = $this->request->get($urlStorage, $this->headers);
             if ($responseStorage->statusCode != 200) {
-                throw new RequestException("Code: {$responseStorage->statusCode} - Error: {$responseStorage->body}");
+                $error = $responseActions->statusCode == -1 ? $responseStorage->error : $responseStorage->body;
+                throw new RequestException("Code: {$responseStorage->statusCode} - Error: {$error}");
             }
             $contentStorage = json_decode($responseStorage->body);
 

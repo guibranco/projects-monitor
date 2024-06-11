@@ -68,7 +68,7 @@ class Ip2WhoIs
                 $color = "yellow";
             }
 
-            $expireImg = "<img alt='Expire date' src='https://img.shields.io/badge/" . $expireDaysString . "_days-" . str_replace("/", "%2F", $expireDate) . "-" . $color . "?style=for-the-badge&labelColor=black' />";
+            $expireImg = "<img alt='Expire date' src='https://img.shields.io/badge/" . str_replace("/", "%2F", $expireDate) . "-In_" . $expireDaysString . "_days-" . $color . "?style=for-the-badge&labelColor=black' />";
             $status = preg_replace($pattern, '', $response->status);
             $nameservers = implode(" ", $response->nameservers);
             $data[] = [

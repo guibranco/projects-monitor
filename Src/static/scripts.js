@@ -156,7 +156,7 @@ function showGitHub(response) {
     response["issues"]["latest"]
   );
   const dataAccountsUsage = google.visualization.arrayToDataTable(
-    response["accountsUsage"]
+    response["accounts_usage"]
   );
 
   if (typeof response["latestRelease"] !== "undefined") {

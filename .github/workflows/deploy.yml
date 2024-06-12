@@ -210,28 +210,30 @@ jobs:
         shell: bash
         run: sudo wg-quick down ./wg0.conf
 
-  # automated-api-tests:
-  #   name: Automated API tests (Postman)
-  #   runs-on: ubuntu-latest
-  #   needs: [deploy, database_migrations]
+  automated-api-tests:
+    name: Automated API tests (Postman)
+    runs-on: ubuntu-latest
+    needs: [deploy, database_migrations]
 
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 0
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-  #     - name: Check changes
-  #       uses: dorny/paths-filter@v3
-  #       id: changes
-  #       with:
-  #         filters: |
-  #           any:
-  #             - "Sql/**"
-  #             - "Src/**"
-  #             - "Tools/**"
+      - name: Check changes
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            any:
+              - "Sql/**"
+              - "Src/**"
+              - "Tools/**"
+  
   #     - name: Install Postman CLI
   #       run: |
   #         curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh
+  
   #     - name: Login to Postman CLI
   #       run: postman login --with-api-key ${{ secrets.POSTMAN_API_KEY }}
 

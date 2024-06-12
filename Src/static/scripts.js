@@ -56,7 +56,7 @@ function preset() {
   );
   showWebhook(
     JSON.parse(
-      '{"events":[["Event","Hits"]],"failed":0,"feed":[],"repositories":[],"total":0,"webhooks":[["Date","Hits"], ["01/01", 0]],"workflow_runs":[],"total_workflow_runs":0}'
+      '{"events":[["Event","Hits"]],"failed":0,"feed":[],"repositories":[],"total":0,"webhooks":[["Date","Hits"], ["01/01", 0]],"workflow_runs":[],"total_workflow_runs":0, "installations":0}'
     )
   );
 }
@@ -356,6 +356,10 @@ function showWebhook(response) {
     ["Hits", "GH WRs"],
     ["GH WRs", response["total_workflow_runs"]],
   ]);
+  const dataInstallations = google.visualization.arrayToDataTable([
+    ["Hits", "GH App"],
+    ["GH App", response["installations"]],
+  ]);
 
   const optionsWebhooks = {
     title: "GitHub webhooks by date",
@@ -420,6 +424,21 @@ function showWebhook(response) {
     redTo: 1000,
   };
 
+  const optionsInstallations = {
+    legend: { position: "none" },
+    showRowNumber: true,
+    width: "100%",
+    height: "100%",
+    min: 0,
+    max: 1000,
+    greenFrom: 0,
+    greenTo: 50,
+    yellowFrom: 50,
+    yellowTo: 100,
+    redFrom: 100,
+    redTo: 1000,
+  };
+
   const lineChart = new google.visualization.LineChart(
     document.getElementById("line_chart")
   );
@@ -450,4 +469,8 @@ function showWebhook(response) {
     document.getElementById("gauge_chart_8")
   );
   gaugeChart8.draw(dataTotalWorkflowRuns, optionsTotalWorkflowRuns);
+  const gaugeChart9 = new google.visualization.Gauge(
+    document.getElementById("gauge_chart_9")
+  );
+  gaugeChart9.draw(dataInstallations, optionsInstallations);
 }

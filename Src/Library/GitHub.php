@@ -33,14 +33,14 @@ class GitHub
         ];
     }
 
-    private function getRequest($users, $type, $label = null)
+    private function getRequest($users, $type, $label = null, $negate = false)
     {
         $url = self::GITHUB_API_URL .
             "search/issues?q=" .
             urlencode("is:open is:" . $type . " archived:false " .
                 ($label == null ? "" : "label:{$label} ") .
-                implode(" ", array_map(function ($user) {
-                    return "user:{$user}";
+                implode(" ", array_map(function ($user) use $negate {
+                    return ($negate ? "-" : "") ."user:{$user}";
                 }, $users)));
         $response = $this->request->get($url, $this->headers);
 
@@ -94,11 +94,13 @@ class GitHub
         $resultWip = $this->getRequest($users, "issue", "WIP");
         $resultBug = $this->getRequest($users, "issue", "bug");
         $resultTriage = $this->getRequest($users, "issue", "triage");
+        $resultAssigned = $this->getRequest("guibranco", "issue", null, true);
         $data["total_count"] = $result->total_count;
         $data["latest"] = $this->mapItems($result->items);
         $data["wip"] = $this->mapItems($resultWip->items);
         $data["bug"] = $this->mapItems($resultBug->items);
         $data["triage"] = $this->mapItems($resultTriage->items);
+        $data["assigned"] = $this->mapItems($resultAssigned->items);
 
         return $data;
     }

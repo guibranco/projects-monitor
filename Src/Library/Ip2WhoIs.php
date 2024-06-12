@@ -59,10 +59,10 @@ class Ip2WhoIs
                 $response = $this->getWhoIs($domain);
                 file_put_contents($cache, json_encode($response));
             }
-            
+
             $link = "<a href='https://whois.domaintools.com/$domain' target='_blank'>$domain</a>";
-            
-            $createdTime = strtotime($response->create_date);            
+
+            $createdTime = strtotime($response->create_date);
             $createdDate = date("d/m/Y", $createdTime);
             $createdDays = round((time() - $createdDate) / (60 * 60 * 24));
             $createdColor = "green";

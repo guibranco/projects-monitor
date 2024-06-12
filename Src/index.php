@@ -46,10 +46,12 @@ $config = new Configuration();
     <div id="gauge_chart_5" class="gauge"></div>
     <div id="gauge_chart_6" class="gauge"></div>
     <div id="gauge_chart_8" class="gauge"></div>
+    <div id="gauge_chart_9" class="gauge"></div>
     <div id="gauge_chart_2" class="gauge"></div>
     <div id="gauge_chart_4" class="gauge"></div>
     <div id="gauge_chart_3" class="gauge"></div>
     <div id="gauge_chart_7" class="gauge"></div>
+    <div id="gauge_chart_10" class="gauge"></div>
   </div>
   <div style="width: 50%; float: left;">
     <img id="gh_stats" style="width: 465px; float: left;" alt="GH Stats" src="" />

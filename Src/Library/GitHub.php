@@ -35,13 +35,27 @@ class GitHub
 
     private function getRequest($users, $type, $label = null, $negate = false)
     {
+
+        $labels = "";
+        if ($label !== null) {
+            $label = "label:{$label} ";
+        }
+        
+        $assignees = "";
+        if ($negate) {
+            $assignees = implode(" ", array_map(function ($user) {
+                return "assignee:{$user}";
+            }, $users))) . " ";
+        }
+
+        $usersLists = implode(" ", array_map(function ($user) use ($negate) {
+            return ($negate ? "-" : "") . "user:{$user}";
+        }, $users)) . " ";
+        
         $url = self::GITHUB_API_URL .
             "search/issues?q=" .
-            urlencode("is:open is:" . $type . " archived:false " .
-                ($label == null ? "" : "label:{$label} ") .
-                implode(" ", array_map(function ($user) use ($negate) {
-                    return ($negate ? "-" : "") . "user:{$user}";
-                }, $users)));
+            urlencode("is:open is:" . $type . " archived:false " . $labels . $assignees . $usersList);
+        
         $response = $this->request->get($url, $this->headers);
 
         if ($response->statusCode != 200) {

@@ -207,7 +207,7 @@ class GitHub
             $daysImage = "<img alt='Actions used' src='https://img.shields.io/badge/" . $days . "-Days_remaining-" . $colorDays . "?style=for-the-badge&labelColor=black' />";
 
 
-            $data[] = array($accountLink, $actionsImage, $daysImage);
+            $data[$item] = array($accountLink, $actionsImage, $daysImage);
         }
 
         return $data;
@@ -221,7 +221,8 @@ class GitHub
         $resultOrgs = $this->getBilling("orgs", $orgs);
 
         $result = array_merge($resultUsers, $resultOrgs);
-        sort($result);
+        ksort($result);
+        $result = array_values($result);
         array_unshift($result, array("Account", "Actions usage/quota", "Days Left In Billing Cycle"));
         return $result;
     }

@@ -81,9 +81,9 @@ $config = new Configuration();
   <div style="width: 50%; float: left; background-color: white;">
     <div id="workflow_runs"></div>
     <div id="pull_requests"></div>
-    <div id="bug"></div>
-    <div id="triage"></div>
     <div id="wip"></div>
+    <div id="triage"></div>
+    <div id="bug"></div>
     <div id="issues"></div>
     <div id="cronjobs"></div>    
   </div>

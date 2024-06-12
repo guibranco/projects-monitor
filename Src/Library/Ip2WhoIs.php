@@ -64,7 +64,7 @@ class Ip2WhoIs
 
             $createdTime = strtotime($response->create_date);
             $createdDate = date("d/m/Y", $createdTime);
-            $createdDays = round((time() - $createdDate) / (60 * 60 * 24));
+            $createdDays = round((time() - $createdTime) / (60 * 60 * 24));
             $createdColor = "green";
             if ($createdDays < 30) {
                 $createdColor = "red";

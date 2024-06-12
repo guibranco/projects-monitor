@@ -39,7 +39,7 @@ class GitHub
             "search/issues?q=" .
             urlencode("is:open is:" . $type . " archived:false " .
                 ($label == null ? "" : "label:{$label} ") .
-                implode(" ", array_map(function ($user) use $negate {
+                implode(" ", array_map(function ($user) use ($negate) {
                     return ($negate ? "-" : "") ."user:{$user}";
                 }, $users)));
         $response = $this->request->get($url, $this->headers);

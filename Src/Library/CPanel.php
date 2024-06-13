@@ -47,7 +47,8 @@ class CPanel
         $response = $this->request->get($url, $headers);
 
         if ($response->statusCode != 200) {
-            throw new RequestException("Code: {$response->statusCode} - Error: {$response->body}");
+            $error = $response->statusCode == -1 ? $response->error : $response->body;
+            throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
         }
 
         return json_decode($response->body);

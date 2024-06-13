@@ -40,8 +40,7 @@ class GitHub
             $label = "label:{$label} ";
         }
 
-        $usersLists = implode(" ", array_map(function ($user) { return "user:{$user}"; }, $users)) . " ";
-
+        $usersList = implode(" ", array_map(function ($user) { return "user:{$user}"; }, $users)) . " ";
         $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode("is:open is:" . $type . " archived:false " . $labels . $usersList);
         $response = $this->request->get($url, $this->headers);
 
@@ -55,7 +54,7 @@ class GitHub
     private function getassignedIssues($user, $users)
     {
         $assignee = "assignee:{$user}";
-        $usersLists = implode(" ", array_map(function ($user) { return "-user:{$user}"; }, $users)) . " ";
+        $usersList = implode(" ", array_map(function ($user) { return "-user:{$user}"; }, $users)) . " ";
         $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode("is:open is:issue archived:false " . $assignee . $usersList);
         $response = $this->request->get($url, $this->headers);
 

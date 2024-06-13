@@ -36,8 +36,8 @@ class GitHub
     private function getRequest($users, $type, $label = null)
     {
         $labels = "";
-        if ($label !== null) {
-            $label = "label:{$label} ";
+        if ($label != null) {
+            $labels = "label:{$label} ";
         }
 
         $usersList = implode(" ", array_map(function ($user) { return "user:{$user}"; }, $users)) . " ";

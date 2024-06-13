@@ -108,7 +108,7 @@ class GitHub
         $resultWip = $this->getRequest($users, "issue", "WIP");
         $resultBug = $this->getRequest($users, "issue", "bug");
         $resultTriage = $this->getRequest($users, "issue", "triage");
-        $resultAssigned = $this->getassignedIssues(array_slice($users, 0, 1)[0], array_slice($users, 1));
+        $resultAssigned = $this->getassignedIssues(array_slice($users, 0, 1)[0], $users);
         $data["total_count"] = $result->total_count;
         $data["latest"] = $this->mapItems($result->items);
         $data["wip"] = $this->mapItems($resultWip->items);

@@ -33,15 +33,20 @@ class GitHub
         ];
     }
 
-    private function getRequest($users, $type, $label = null)
+    private function getRequest($users, $type, $label = null, $labelsToRemove = null)
     {
         $labels = "";
-        if ($label != null) {
+        if ($label !== null) {
             $labels = "label:{$label} ";
         }
 
+        $labelsRemove = "";
+        if ($labelsToRemove !== null) {
+            $labelsRemove = implode(" ", array_map(function ($labelToRemove) { return "-label:{$labelToRemove}"; }, $labelsToRemove)) . " ";
+        }
+
         $usersList = implode(" ", array_map(function ($user) { return "user:{$user}"; }, $users)) . " ";
-        $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode("is:open is:" . $type . " archived:false " . $labels . $usersList);
+        $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode("is:open is:" . $type . " archived:false " . $labels . $labelsRemove . $usersList);
         $response = $this->request->get($url, $this->headers);
 
         if ($response->statusCode != 200) {
@@ -104,7 +109,7 @@ class GitHub
         );
 
         $data = array();
-        $result = $this->getRequest($users, "issue");
+        $result = $this->getRequest($users, "issue", null, ["WIP", "bug", "triage"]);
         $resultWip = $this->getRequest($users, "issue", "WIP");
         $resultBug = $this->getRequest($users, "issue", "bug");
         $resultTriage = $this->getRequest($users, "issue", "triage");

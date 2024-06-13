@@ -109,13 +109,15 @@ class GitHub
         );
 
         $data = array();
-        $result = $this->getRequest($users, "issue", null, ["WIP", "bug", "triage"]);
+        $result = $this->getRequest($users, "issue");
+        $resultOthers = $this->getRequest($users, "issue", null, ["WIP", "bug", "triage"]);
         $resultWip = $this->getRequest($users, "issue", "WIP");
         $resultBug = $this->getRequest($users, "issue", "bug");
         $resultTriage = $this->getRequest($users, "issue", "triage");
         $resultAssigned = $this->getassignedIssues(array_slice($users, 0, 1)[0], $users);
         $data["total_count"] = $result->total_count;
-        $data["latest"] = $this->mapItems($result->items);
+        $data["latest"] = $this->mapItems($resultOthers->items);
+        $data["others"] $data["latest"];
         $data["wip"] = $this->mapItems($resultWip->items);
         $data["bug"] = $this->mapItems($resultBug->items);
         $data["triage"] = $this->mapItems($resultTriage->items);

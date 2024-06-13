@@ -164,10 +164,10 @@ class GitHub
 
         $data = array();
         $result = $this->getRequest($users, "pr");
-        $resultAuthor = $this->getAuthoredPullRequests(array_slice($users, 0, 1)[0], $users);
+        $resultAuthored = $this->getAuthoredPullRequests(array_slice($users, 0, 1)[0], $users);
         $data["total_count"] = $result->total_count;
         $data["latest"] = $this->mapItems($result->items);
-        $data["author"] = $this->mapItems($resultAuthor->items);
+        $data["authored"] = $this->mapItems($resultAuthored->items);
 
         return $data;
     }

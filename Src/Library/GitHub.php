@@ -53,7 +53,7 @@ class GitHub
 
     private function getassignedIssues($user, $users)
     {
-        $assignee = "assignee:{$user}";
+        $assignee = "assignee:{$user} ";
         $usersList = implode(" ", array_map(function ($user) { return "-user:{$user}"; }, $users)) . " ";
         $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode("is:open is:issue archived:false " . $assignee . $usersList);
         $response = $this->request->get($url, $this->headers);

@@ -39,10 +39,10 @@ class GitHub
         if ($label !== null) {
             $label = "label:{$label} ";
         }
-        
+
         $usersLists = implode(" ", array_map(function ($user) { return "user:{$user}"; }, $users)) . " ";
-        
-        $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode("is:open is:" . $type . " archived:false " . $labels . $usersList);        
+
+        $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode("is:open is:" . $type . " archived:false " . $labels . $usersList);
         $response = $this->request->get($url, $this->headers);
 
         if ($response->statusCode != 200) {
@@ -52,11 +52,11 @@ class GitHub
         return json_decode($response->body);
     }
 
-    private function getassignedIssues($user, $users) 
+    private function getassignedIssues($user, $users)
     {
         $assignee = "assignee:{$user}";
         $usersLists = implode(" ", array_map(function ($user) { return "-user:{$user}"; }, $users)) . " ";
-        $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode("is:open is:issue archived:false " . $assignee . $usersList);        
+        $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode("is:open is:issue archived:false " . $assignee . $usersList);
         $response = $this->request->get($url, $this->headers);
 
         if ($response->statusCode != 200) {

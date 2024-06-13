@@ -41,7 +41,7 @@ function preset() {
   );
   showGitHub(
     JSON.parse(
-      '{"issues":{"total_count":0,"latest":[],"bug":[],"triage":[],"wip":[]},"pull_requests":{"total_count":0,"latest":[]},"accounts_usage":[]}'
+      '{"issues":{"total_count":0,"latest":[],"bug":[],"triage":[],"wip":[],"assigned":[]},"pull_requests":{"total_count":0,"latest":[]},"accounts_usage":[]}'
     )
   );
   showMessages(
@@ -152,6 +152,9 @@ function showGitHub(response) {
   const dataPullRequestsTable = google.visualization.arrayToDataTable(
     response["pull_requests"]["latest"]
   );
+  const dataAssignedTable = google.visualization.arrayToDataTable(
+    response["issues"]["assigned"]
+  );
   const dataBugsTable = google.visualization.arrayToDataTable(
     response["issues"]["bug"]
   );
@@ -213,6 +216,9 @@ function showGitHub(response) {
   );
   pullRequests.draw(dataPullRequestsTable, tableOptions);
 
+  const assigned = new google.visualization.Table(document.getElementById("assigned"));
+  assigned.draw(dataAssignedTable, tableOptions);
+  
   const bug = new google.visualization.Table(document.getElementById("bug"));
   bug.draw(dataBugsTable, tableOptions);
 

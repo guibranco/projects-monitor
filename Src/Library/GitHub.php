@@ -50,7 +50,8 @@ class GitHub
         $response = $this->request->get($url, $this->headers);
 
         if ($response->statusCode != 200) {
-            throw new RequestException("Code: {$response->statusCode} - Error: {$response->body}");
+            $error = $response->statusCode == -1 ? $response->error : $response->body;
+            throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
         }
 
         return json_decode($response->body);
@@ -64,7 +65,8 @@ class GitHub
         $response = $this->request->get($url, $this->headers);
 
         if ($response->statusCode != 200) {
-            throw new RequestException("Code: {$response->statusCode} - Error: {$response->body}");
+            $error = $response->statusCode == -1 ? $response->error : $response->body;
+            throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
         }
 
         return json_decode($response->body);
@@ -79,7 +81,8 @@ class GitHub
         $response = $this->request->get($url, $this->headers);
 
         if ($response->statusCode != 200) {
-            throw new RequestException("Code: {$response->statusCode} - Error: {$response->body}");
+            $error = $response->statusCode == -1 ? $response->error : $response->body;
+            throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
         }
 
         return json_decode($response->body);
@@ -132,8 +135,6 @@ class GitHub
         $resultAssigned = $this->getAssignedIssues(array_slice($users, 0, 1)[0], $users);
         $data["total_count"] = $resultAll->total_count;
         $data["others"] = $this->mapItems($resultOthers->items);
-        // TODO: Remove this when update the frontend to use others instead latest
-        $data["latest"] = $data["others"];
         $data["wip"] = $this->mapItems($resultWip->items);
         $data["bug"] = $this->mapItems($resultBug->items);
         $data["triage"] = $this->mapItems($resultTriage->items);

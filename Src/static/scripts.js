@@ -41,7 +41,7 @@ function preset() {
   );
   showGitHub(
     JSON.parse(
-      '{"issues":{"total_count":0,"latest":[],"bug":[],"triage":[],"wip":[],"assigned":[]},"pull_requests":{"total_count":0,"latest":[]},"accounts_usage":[]}'
+      '{"issues":{"total_count":0,"others":[],"bug":[],"triage":[],"wip":[],"assigned":[]},"pull_requests":{"total_count":0,"latest":[],"authored":[]},"accounts_usage":[]}'
     )
   );
   showMessages(
@@ -152,6 +152,9 @@ function showGitHub(response) {
   const dataPullRequestsTable = google.visualization.arrayToDataTable(
     response["pull_requests"]["latest"]
   );
+  const dataPullRequestsAuthoredTable = google.visualization.arrayToDataTable(
+    response["pull_requests"]["authored"]
+  );
   const dataAssignedTable = google.visualization.arrayToDataTable(
     response["issues"]["assigned"]
   );
@@ -165,7 +168,7 @@ function showGitHub(response) {
     response["issues"]["wip"]
   );
   const dataIssuesTable = google.visualization.arrayToDataTable(
-    response["issues"]["latest"]
+    response["issues"]["other"]
   );
   const dataAccountsUsage = google.visualization.arrayToDataTable(
     response["accounts_usage"]
@@ -216,6 +219,11 @@ function showGitHub(response) {
   );
   pullRequests.draw(dataPullRequestsTable, tableOptions);
 
+  const pullRequestsAuthored = new google.visualization.Table(
+    document.getElementById("pull_requests_authored")
+  );
+  pullRequestsAuthored.draw(dataPullRequestsAuthoredTable, tableOptions);
+
   const assigned = new google.visualization.Table(document.getElementById("assigned"));
   assigned.draw(dataAssignedTable, tableOptions);
   
@@ -234,6 +242,7 @@ function showGitHub(response) {
     document.getElementById("issues")
   );
   issues.draw(dataIssuesTable, tableOptions);
+  
   const accountsUsage = new google.visualization.Table(
     document.getElementById("accounts_usage")
   );

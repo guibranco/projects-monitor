@@ -41,7 +41,7 @@ function preset() {
   );
   showGitHub(
     JSON.parse(
-      '{"issues":{"total_count":0,"others":[],"bug":[],"triage":[],"wip":[],"assigned":[]},"pull_requests":{"total_count":0,"latest":[],"authored":[]},"accounts_usage":[]}'
+      '{"issues":{"total_count":0,"other":[],"bug":[],"triage":[],"wip":[],"assigned":[]},"pull_requests":{"total_count":0,"latest":[],"authored":[]},"accounts_usage":[]}'
     )
   );
   showMessages(

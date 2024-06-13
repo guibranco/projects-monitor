@@ -70,7 +70,7 @@ class GitHub
         return json_decode($response->body);
     }
 
-    private function getAuthoredPullRequests($user, $users) 
+    private function getAuthoredPullRequests($user, $users)
     {
         $author = "author:{$user} ";
         $usersList = implode(" ", array_map(function ($user) { return "-user:{$user}"; }, $users)) . " ";

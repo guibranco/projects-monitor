@@ -56,11 +56,26 @@ class GitHub
         return json_decode($response->body);
     }
 
-    private function getassignedIssues($user, $users)
+    private function getAssignedIssues($user, $users)
     {
         $assignee = "assignee:{$user} ";
         $usersList = implode(" ", array_map(function ($user) { return "-user:{$user}"; }, $users)) . " ";
         $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode("is:open is:issue archived:false " . $assignee . $usersList);
+        $response = $this->request->get($url, $this->headers);
+
+        if ($response->statusCode != 200) {
+            throw new RequestException("Code: {$response->statusCode} - Error: {$response->body}");
+        }
+
+        return json_decode($response->body);
+    }
+
+    private function getAuthoredPullRequests($user, $users) 
+    {
+        $author = "author:{$user} ";
+        $usersList = implode(" ", array_map(function ($user) { return "-user:{$user}"; }, $users)) . " ";
+        $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode("is:open is:pr archived:false " . $author . $usersList);
+
         $response = $this->request->get($url, $this->headers);
 
         if ($response->statusCode != 200) {
@@ -114,7 +129,7 @@ class GitHub
         $resultWip = $this->getRequest($users, "issue", "WIP");
         $resultBug = $this->getRequest($users, "issue", "bug");
         $resultTriage = $this->getRequest($users, "issue", "triage");
-        $resultAssigned = $this->getassignedIssues(array_slice($users, 0, 1)[0], $users);
+        $resultAssigned = $this->getAssignedIssues(array_slice($users, 0, 1)[0], $users);
         $data["total_count"] = $resultAll->total_count;
         $data["others"] = $this->mapItems($resultOthers->items);
         // TODO: Remove this when update the frontend to use others instead latest
@@ -149,8 +164,10 @@ class GitHub
 
         $data = array();
         $result = $this->getRequest($users, "pr");
+        $resultAuthor = $this->getAuthoredPullRequests(array_slice($users, 0, 1)[0], $users);
         $data["total_count"] = $result->total_count;
         $data["latest"] = $this->mapItems($result->items);
+        $data["author"] = $this->mapItems($resultAuthor->items);
 
         return $data;
     }

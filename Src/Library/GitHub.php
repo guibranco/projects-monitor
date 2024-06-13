@@ -33,15 +33,29 @@ class GitHub
         ];
     }
 
-    private function getRequest($users, $type, $label = null, $negate = false)
+    private function getRequest($users, $type, $label = null)
     {
-        $url = self::GITHUB_API_URL .
-            "search/issues?q=" .
-            urlencode("is:open is:" . $type . " archived:false " .
-                ($label == null ? "" : "label:{$label} ") .
-                implode(" ", array_map(function ($user) use ($negate) {
-                    return ($negate ? "-" : "") . "user:{$user}";
-                }, $users)));
+        $labels = "";
+        if ($label !== null) {
+            $label = "label:{$label} ";
+        }
+
+        $usersList = implode(" ", array_map(function ($user) { return "user:{$user}"; }, $users)) . " ";
+        $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode("is:open is:" . $type . " archived:false " . $labels . $usersList);
+        $response = $this->request->get($url, $this->headers);
+
+        if ($response->statusCode != 200) {
+            throw new RequestException("Code: {$response->statusCode} - Error: {$response->body}");
+        }
+
+        return json_decode($response->body);
+    }
+
+    private function getassignedIssues($user, $users)
+    {
+        $assignee = "assignee:{$user}";
+        $usersList = implode(" ", array_map(function ($user) { return "-user:{$user}"; }, $users)) . " ";
+        $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode("is:open is:issue archived:false " . $assignee . $usersList);
         $response = $this->request->get($url, $this->headers);
 
         if ($response->statusCode != 200) {
@@ -94,7 +108,7 @@ class GitHub
         $resultWip = $this->getRequest($users, "issue", "WIP");
         $resultBug = $this->getRequest($users, "issue", "bug");
         $resultTriage = $this->getRequest($users, "issue", "triage");
-        $resultAssigned = $this->getRequest(["guibranco"], "issue", null, true);
+        $resultAssigned = $this->getassignedIssues(array_slice($users, 0, 1)[0], array_slice($users, 1));
         $data["total_count"] = $result->total_count;
         $data["latest"] = $this->mapItems($result->items);
         $data["wip"] = $this->mapItems($resultWip->items);

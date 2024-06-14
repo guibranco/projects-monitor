@@ -37,14 +37,14 @@ class Color
         if ($minBrightness < 0 || $minBrightness > 255) {
             throw new Exception("$minBrightness is out of range");
         }
-    
+
         $hash = md5($text);
         $colors = array();
         for ($i = 0; $i < 3; $i++) {
             $current = round(((hexdec(substr($hash, $spec * $i, $spec))) / hexdec(str_pad('', $spec, 'F'))) * 255);
             $colors[$i] = max(array($current, $minBrightness));
         }
-    
+
         if ($minBrightness > 0) {
             while (array_sum($colors) / 3 < $minBrightness) {
                 for ($i = 0; $i < 3; $i++) {
@@ -52,13 +52,13 @@ class Color
                 }
             }
         }
-    
+
         $output = '';
-    
+
         for ($i = 0; $i < 3; $i++) {
             $output .= str_pad(dechex($colors[$i]), 2, 0, STR_PAD_LEFT);
         }
-    
+
         return $output;
     }
 }

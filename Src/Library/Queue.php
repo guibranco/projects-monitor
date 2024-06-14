@@ -45,7 +45,7 @@ class Queue
     {
         $data = array();
         $data["total"] = 0;
-        $data["queues"][] = array("Server", "Queue", "Messages");
+        $data["queues"][] = array("Server", "Queue");
         foreach ($this->getServers() as $server) {
             $headers = array("Authorization: Basic " . base64_encode($server["user"] . ":" . $server["password"]));
             $url = "https://" . $server["host"] . "/api/queues/" . $server["vhost"] . "/";
@@ -55,9 +55,20 @@ class Queue
             }
             $node = json_decode($response->body, true);
             foreach ($node as $queue) {
-                $item = array($server["host"], $queue["name"], $queue["messages"]);
+                $color = "green";
+                $quantity = $queue["messages"];
+                if ($quantity > 100) {
+                    $color = "red";
+                } elseif ($quantity > 50) {
+                    $color = "orange";
+                } elseif ($quantity > 10) {
+                    $color = "yellow";
+                }
+                
+                $img = "<img alt='queue length' src='https://img.shields.io/badge/" . $quantity . "-" . str_replace("-", "--", $queue["name"]) . "-" . $color . "?style=for-the-badge&labelColor=black' />"
+                $item = array($server["host"], $img);
                 $data["queues"][] = $item;
-                $data["total"] += $queue["messages"];
+                $data["total"] += $quantity;
             }
         }
         ksort($data);

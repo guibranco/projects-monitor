@@ -64,7 +64,7 @@ class Queue
                 } elseif ($quantity > 10) {
                     $color = "yellow";
                 }
-                
+
                 $img = "<img alt='queue length' src='https://img.shields.io/badge/" . $quantity . "-" . str_replace("-", "--", $queue["name"]) . "-" . $color . "?style=for-the-badge&labelColor=black' />";
                 $item = array($server["host"], $img);
                 $data["queues"][] = $item;

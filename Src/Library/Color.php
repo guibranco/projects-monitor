@@ -26,16 +26,16 @@ class Color
     public static function generateColorFromText($text, $minBrightness = 100, $spec = 10)
     {
         if (!is_int($minBrightness)) {
-            throw new Exception("$minBrightness is not an integer");
+            throw new \Exception("$minBrightness is not an integer");
         }
         if (!is_int($spec)) {
-            throw new Exception("$spec is not an integer");
+            throw new \Exception("$spec is not an integer");
         }
         if ($spec < 2 || $spec > 10) {
-            throw new Exception("$spec is out of range");
+            throw new \Exception("$spec is out of range");
         }
         if ($minBrightness < 0 || $minBrightness > 255) {
-            throw new Exception("$minBrightness is out of range");
+            throw new \Exception("$minBrightness is out of range");
         }
 
         $hash = md5($text);

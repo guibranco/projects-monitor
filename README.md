@@ -9,3 +9,11 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/guibranco/projects-monitor/badge)](https://www.codefactor.io/repository/github/guibranco/projects-monitor)
 
 ---
+
+A dashboard to visualize and monitor my GitHub projects, my personal projects and infrastructure all in one place.
+
+> [!Warning]
+>  
+> Currently a single page, but a UI kit is coming in place to give more life to this page! [#12](https://github.com/guibranco/projects-monitor/issues/12)
+
+![dashboard](projects-monitor-dashboard.png)

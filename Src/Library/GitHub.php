@@ -75,8 +75,8 @@ class GitHub
     private function getWithUserExclusion($type, $filter, $user, $usersToExclude)
     {
         $filterString = "{$filter}:{$user}";
-        $usersToRemove = implode(" ", array_map(function ($user) { return "-user:{$user}"; }, $users));
-        $queryString = urlecnode(preg_replace('!\s+!', ' ', "is:open is:{$type} archived:false {$filterString} {$usersToRemove}"));
+        $usersToRemove = implode(" ", array_map(function ($user) { return "-user:{$user}"; }, $usersToExclude));
+        $queryString = urlencode(preg_replace('!\s+!', ' ', "is:open is:{$type} archived:false {$filterString} {$usersToRemove}"));
 
         return $this->getSearch($queryString);
     }

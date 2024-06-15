@@ -36,13 +36,13 @@ class GitHub
     private function getSearch($queryString)
     {
         $hash = md5($queryString);
-        $cache = "cache_github_{$hash}.json";
+        $cache = "cache/github_{$hash}.json";
 
         if (file_exists($cache) && filemtime($cache) > strtotime("-3 minute")) {
             return json_decode(file_get_contents($cache));
         }
 
-        $url = self::GITHUB_API_URL . "search/issues?q=" . $queryString;
+        $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode(preg_replace('!\s+!', ' ', "is:open archived:false is:{$queryString}"));
         $response = $this->request->get($url, $this->headers);
 
         if ($response->statusCode != 200) {
@@ -51,7 +51,6 @@ class GitHub
         }
 
         file_put_contents($cache, $response->body);
-        file_put_contents($cache.".debug", urldecode($queryString));
         return json_decode($response->body);
     }
 
@@ -68,7 +67,7 @@ class GitHub
         }
 
         $usersList = implode(" ", array_map(function ($user) { return "user:{$user}"; }, $users));
-        $queryString = urlencode(preg_replace('!\s+!', ' ', "is:open is:{$type} archived:false ${labels} {$labelsRemove} {$usersList}"));
+        $queryString = "{$type} ${labels} {$labelsRemove} {$usersList}";
 
         return $this->getSearch($queryString);
     }
@@ -77,7 +76,7 @@ class GitHub
     {
         $filterString = "{$filter}:{$user}";
         $usersToRemove = implode(" ", array_map(function ($user) { return "-user:{$user}"; }, $usersToExclude));
-        $queryString = urlencode(preg_replace('!\s+!', ' ', "is:open is:{$type} archived:false {$filterString} {$usersToRemove}"));
+        $queryString = "{$type} {$filterString} {$usersToRemove}";
 
         return $this->getSearch($queryString);
     }

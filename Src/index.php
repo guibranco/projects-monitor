@@ -72,6 +72,8 @@ $config = new Configuration();
   <div id="repositories" style="width: 50%; height: 500px; float: left; background-color: white;"></div>
   <div id="errorLogMessages" style="width: 50%; height: 500px; float: left; background-color: white;"></div>
   <div style="clear:both;"></div>
+  <div id="workflow_runs" style="width: 100%; float: left; background-color: white;"></div>
+  <div style="clear:both;"></div>
   <div style="width: 50%; float: left; background-color: white;">
     <div id="feed"></div>
     <div id="healthchecksio"></div>
@@ -80,8 +82,7 @@ $config = new Configuration();
     <div id="pull_requests_authored"></div>
     <div id="issues_authored"></div>
   </div>
-  <div style="width: 50%; float: left; background-color: white;">
-    <div id="workflow_runs"></div>
+  <div style="width: 50%; float: left; background-color: white;">    
     <div id="pull_requests"></div>   
     <div id="assigned"></div>
     <div id="wip"></div>

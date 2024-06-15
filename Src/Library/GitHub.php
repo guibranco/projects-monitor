@@ -41,7 +41,7 @@ class GitHub
         if (file_exists($cache) && filemtime($cache) > strtotime("-3 minute")) {
             return json_decode(file_get_contents($cache));
         }
-        
+
         $url = self::GITHUB_API_URL . "search/issues?q=" . $queryString;
         $response = $this->request->get($url, $this->headers);
 
@@ -53,7 +53,7 @@ class GitHub
         file_put_contents($cache, $response->body);
         return json_decode($response->body);
     }
-    
+
     private function getWithLabel($users, $type, $label = null, $labelsToRemove = null)
     {
         $labels = "";
@@ -77,7 +77,7 @@ class GitHub
         $filterString = "{$filter}:{$user}";
         $usersToRemove = implode(" ", array_map(function ($user) { return "-user:{$user}"; }, $users));
         $queryString = urlecnode(preg_replace('!\s+!', ' ', "is:open is:{$type} archived:false {$filterString} {$usersToRemove}"));
-       
+
         return $this->getSearch($queryString);
     }
 
@@ -119,7 +119,7 @@ class GitHub
             "GuilhermeStracini",
             "InovacaoMediaBrasil",
         );
-        
+
         $resultAll = $this->getWithLabel($users, "issue");
         $resultOthers = $this->getWithLabel($users, "issue", null, ["WIP", "bug", "triage"]);
         $resultWip = $this->getWithLabel($users, "issue", "WIP");
@@ -159,7 +159,7 @@ class GitHub
             "backend-pt",
             "developersRJ"
         );
-        
+
         $result = $this->getWithLabel($users, "pr");
         $resultAuthored = $this->getWithUserExclusion("pr", "authored", array_slice($users, 0, 1)[0], $users);
 

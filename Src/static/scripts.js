@@ -41,7 +41,7 @@ function preset() {
   );
   showGitHub(
     JSON.parse(
-      '{"issues":{"total_count":0,"others":[],"bug":[],"triage":[],"wip":[],"assigned":[]},"pull_requests":{"total_count":0,"latest":[],"authored":[]},"accounts_usage":[]}'
+      '{"issues":{"total_count":0,"others":[],"bug":[],"triage":[],"wip":[],"assigned":[],"authored":[]},"pull_requests":{"total_count":0,"latest":[],"authored":[]},"accounts_usage":[]}'
     )
   );
   showMessages(
@@ -158,6 +158,9 @@ function showGitHub(response) {
   const dataAssignedTable = google.visualization.arrayToDataTable(
     response["issues"]["assigned"]
   );
+  const dataAuthoredTable = google.visualization.arrayToDataTable(
+    response["issues"]["authored"]
+  );
   const dataBugsTable = google.visualization.arrayToDataTable(
     response["issues"]["bug"]
   );
@@ -226,6 +229,9 @@ function showGitHub(response) {
 
   const assigned = new google.visualization.Table(document.getElementById("assigned"));
   assigned.draw(dataAssignedTable, tableOptions);
+
+  const authored = new google.visualization.Table(document.getElementById("issues_authored"));
+  authored.draw(dataAuthoredTable, tableOptions);
   
   const bug = new google.visualization.Table(document.getElementById("bug"));
   bug.draw(dataBugsTable, tableOptions);

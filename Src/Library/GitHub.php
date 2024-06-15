@@ -33,59 +33,52 @@ class GitHub
         ];
     }
 
-    private function getRequest($users, $type, $label = null, $labelsToRemove = null)
+    private function getSearch($queryString)
+    {
+        $hash = md5($queryString);
+        $cache = "cache_github_{$hash}.json";
+
+        if (file_exists($cache) && filemtime($cache) > strtotime("-3 minute")) {
+            return json_decode(file_get_contents($cache));
+        }
+
+        $url = self::GITHUB_API_URL . "search/issues?q=" . $queryString;
+        $response = $this->request->get($url, $this->headers);
+
+        if ($response->statusCode != 200) {
+            $error = $response->statusCode == -1 ? $response->error : $response->body;
+            throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
+        }
+
+        file_put_contents($cache, $response->body);
+        return json_decode($response->body);
+    }
+
+    private function getWithLabel($users, $type, $label = null, $labelsToRemove = null)
     {
         $labels = "";
         if ($label !== null) {
-            $labels = "label:{$label} ";
+            $labels = "label:{$label}";
         }
 
         $labelsRemove = "";
         if ($labelsToRemove !== null) {
-            $labelsRemove = implode(" ", array_map(function ($labelToRemove) { return "-label:{$labelToRemove}"; }, $labelsToRemove)) . " ";
+            $labelsRemove = implode(" ", array_map(function ($labelToRemove) { return "-label:{$labelToRemove}"; }, $labelsToRemove));
         }
 
-        $usersList = implode(" ", array_map(function ($user) { return "user:{$user}"; }, $users)) . " ";
-        $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode("is:open is:" . $type . " archived:false " . $labels . $labelsRemove . $usersList);
-        $response = $this->request->get($url, $this->headers);
+        $usersList = implode(" ", array_map(function ($user) { return "user:{$user}"; }, $users));
+        $queryString = urlencode(preg_replace('!\s+!', ' ', "is:open is:{$type} archived:false ${labels} {$labelsRemove} {$usersList}"));
 
-        if ($response->statusCode != 200) {
-            $error = $response->statusCode == -1 ? $response->error : $response->body;
-            throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
-        }
-
-        return json_decode($response->body);
+        return $this->getSearch($queryString);
     }
 
-    private function getAssignedIssues($user, $users)
+    private function getWithUserExclusion($type, $filter, $user, $usersToExclude)
     {
-        $assignee = "assignee:{$user} ";
-        $usersList = implode(" ", array_map(function ($user) { return "-user:{$user}"; }, $users)) . " ";
-        $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode("is:open is:issue archived:false " . $assignee . $usersList);
-        $response = $this->request->get($url, $this->headers);
+        $filterString = "{$filter}:{$user}";
+        $usersToRemove = implode(" ", array_map(function ($user) { return "-user:{$user}"; }, $usersToExclude));
+        $queryString = urlencode(preg_replace('!\s+!', ' ', "is:open is:{$type} archived:false {$filterString} {$usersToRemove}"));
 
-        if ($response->statusCode != 200) {
-            $error = $response->statusCode == -1 ? $response->error : $response->body;
-            throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
-        }
-
-        return json_decode($response->body);
-    }
-
-    private function getAuthoredPullRequests($user, $users)
-    {
-        $author = "author:{$user} ";
-        $usersList = implode(" ", array_map(function ($user) { return "-user:{$user}"; }, $users)) . " ";
-        $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode("is:open is:pr archived:false " . $author . $usersList);
-
-        $response = $this->request->get($url, $this->headers);
-
-        if ($response->statusCode != 200) {
-            $error = $response->statusCode == -1 ? $response->error : $response->body;
-            throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
-        }
-
-        return json_decode($response->body);
+        return $this->getSearch($queryString);
     }
 
     private function mapItems($items)
@@ -127,19 +120,22 @@ class GitHub
             "InovacaoMediaBrasil",
         );
 
+        $resultAll = $this->getWithLabel($users, "issue");
+        $resultOthers = $this->getWithLabel($users, "issue", null, ["WIP", "bug", "triage"]);
+        $resultWip = $this->getWithLabel($users, "issue", "WIP");
+        $resultBug = $this->getWithLabel($users, "issue", "bug");
+        $resultTriage = $this->getWithLabel($users, "issue", "triage");
+        $resultAssigned = $this->getWithUserExclusion("issue", "assigned", array_slice($users, 0, 1)[0], $users);
+        $resultAuthored = $this->getWithUserExclusion("issue", "authored", array_slice($users, 0, 1)[0], $users);
+
         $data = array();
-        $resultAll = $this->getRequest($users, "issue");
-        $resultOthers = $this->getRequest($users, "issue", null, ["WIP", "bug", "triage"]);
-        $resultWip = $this->getRequest($users, "issue", "WIP");
-        $resultBug = $this->getRequest($users, "issue", "bug");
-        $resultTriage = $this->getRequest($users, "issue", "triage");
-        $resultAssigned = $this->getAssignedIssues(array_slice($users, 0, 1)[0], $users);
         $data["total_count"] = $resultAll->total_count;
         $data["others"] = $this->mapItems($resultOthers->items);
         $data["wip"] = $this->mapItems($resultWip->items);
         $data["bug"] = $this->mapItems($resultBug->items);
         $data["triage"] = $this->mapItems($resultTriage->items);
         $data["assigned"] = $this->mapItems($resultAssigned->items);
+        $data["authored"] = $this->mapItems($resultAuthored->items);
 
         return $data;
     }
@@ -164,9 +160,10 @@ class GitHub
             "developersRJ"
         );
 
+        $result = $this->getWithLabel($users, "pr");
+        $resultAuthored = $this->getWithUserExclusion("pr", "authored", array_slice($users, 0, 1)[0], $users);
+
         $data = array();
-        $result = $this->getRequest($users, "pr");
-        $resultAuthored = $this->getAuthoredPullRequests(array_slice($users, 0, 1)[0], $users);
         $data["total_count"] = $result->total_count;
         $data["latest"] = $this->mapItems($result->items);
         $data["authored"] = $this->mapItems($resultAuthored->items);

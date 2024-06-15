@@ -77,11 +77,12 @@ $config = new Configuration();
     <div id="healthchecksio"></div>
     <div id="uptimerobot"></div>
     <div id="domains"></div>
+    <div id="pull_requests_authored"></div>
+    <div id="issues_authored"></div>
   </div>
   <div style="width: 50%; float: left; background-color: white;">
     <div id="workflow_runs"></div>
-    <div id="pull_requests"></div>
-    <div id="pull_requests_authored"></div>
+    <div id="pull_requests"></div>   
     <div id="assigned"></div>
     <div id="wip"></div>
     <div id="triage"></div>

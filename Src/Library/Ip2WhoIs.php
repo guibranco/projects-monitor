@@ -53,7 +53,7 @@ class Ip2WhoIs
         $data = array();
         foreach ($domains as $domain) {
 
-            $cache = "domain_cache_" . str_replace(".", "_", $domain) . ".json";
+            $cache = "cache/domain_" . str_replace(".", "_", $domain) . ".json";
             if (file_exists($cache) && filemtime($cache) > strtotime("-1 day")) {
                 $response = json_decode(file_get_contents($cache));
             } else {

@@ -157,6 +157,16 @@ jobs:
           echo "<?php" >> webhooks.secrets.php
           echo "\$webhooksApiToken = \"${{ secrets.WEBHOOKS_API_TOKEN }}\";" >> webhooks.secrets.php
 
+      - name: Zip files
+        if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
+        run: |
+          cd Src
+          zip -r deploy.zip . -x install.php
+          cd ..
+          mkdir Deploy
+          mv Src/deploy.zip Deploy
+          cp "Src/install.php" Deploy
+
       - name: Upload files
         if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
         uses: sebastianpopp/ftp-action@releases/v2
@@ -164,8 +174,12 @@ jobs:
           host: ${{ secrets.FTP_SERVER }}
           user: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          localDir: "Src/"
+          localDir: "Deploy/"
           remoteDir: "/"
+
+      - name: Call install endpoint
+        run: |
+          curl "https://guilhermebranco.com.br/projects-monitor/install.php"
 
   database_migrations:
     name: Database migrations
@@ -222,20 +236,10 @@ jobs:
     needs: [deploy, database_migrations]
 
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Check changes
-        uses: dorny/paths-filter@v3
-        id: changes
-        with:
-          filters: |
-            any:
-              - "Sql/**"
-              - "Src/**"
-              - "Tools/**"
-  
+        - name: Test
+          run: echo "Test"
+          
   #     - name: Install Postman CLI
   #       run: |
   #         curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh

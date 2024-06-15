@@ -54,6 +54,12 @@ jobs:
           progress: yes
           working_dir: "./Src/"
 
+      - name: Create cache directory
+        run: |
+          mkdir -p Src/api/v1/cache
+          cd  Src/api/v1/cache
+          echo "Denny from all" >> .htaccess
+
       - name: Create .htaccess secrets file
         if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
         run: |

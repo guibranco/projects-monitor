@@ -51,6 +51,7 @@ class GitHub
         }
 
         file_put_contents($cache, $response->body);
+        file_put_contents($cache.".debug", $queryString);
         return json_decode($response->body);
     }
 

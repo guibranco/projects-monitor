@@ -89,7 +89,7 @@ class GitHub
 
         $result = array();
 
-        $result[] = array("Title", "Repository", "User");
+        $result[] = array("Number", "Title", "Repository", "User");
 
         $mkd = Markdown::new();
 
@@ -101,8 +101,10 @@ class GitHub
             $mkd->setContent($item->title);
             $title = $mkd->toHtml();
             $colorNumber = Color::generateColorFromText($repositoryName);
+            $styleNumber = "style='background-color: #" . $colorNumber . ";color: #" . (Color::luminance($colorNumber) > 120 ? "000" : "fff") . ";padding: 0 7px;border-radius: 24px;border: 1px solid #000;line-height: 21px;text-wrap:nowrap;'";
             $result[] = array(
-                "<a href='" . $item->html_url . "' target='_blank'><span style='background-color: #" . $colorNumber . ";color: #" . (Color::luminance($colorNumber) > 120 ? "000" : "fff") . ";padding: 0 7px;border-radius: 24px;border: 1px solid #000;line-height: 21px;text-wrap:nowrap;'>#" . $item->number . "</span> " . $title . "<br />" . $labels . "</a>",
+                "<a href='" . $item->html_url . "' target='_blank'><span " . $styleNumber . ">#" . $item->number . "</span></a>",
+                "<a href='" . $item->html_url . "' target='_blank'>" . $title . "<br />" . $labels . "</a>",
                 "<a href='https://github.com/" . $repositoryName . "' target='_blank'><img alt='login' src='https://img.shields.io/badge/" . str_replace("-", "--", $repositoryName) . "-black?style=flat&logo=github' /></a>",
                 "<a href='" . $item->user->html_url . "' target='_blank'><img alt='login' src='https://img.shields.io/badge/" . str_replace("-", "--", $item->user->login) . "-black?style=social&logo=github' /></a>"
             );

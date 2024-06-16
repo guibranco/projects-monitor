@@ -95,9 +95,11 @@ class GitHub
 
         foreach ($items as $item) {
             $repositoryName = str_replace("https://api.github.com/repos/", "", $item->repository_url);
+            $labelsJson = $item->labels;
+            usort($labelsJson, function ($a, $b) { return strnatcmp($a->name, $b->name); });
             $labels = implode(" ", array_map(function ($label) {
                 return "<span style='background-color: #" . $label->color . ";color: #" . (Color::luminance($label->color) > 120 ? "000" : "fff") . ";padding: 0 7px;border-radius: 24px;border: 1px solid #000;line-height: 21px;text-wrap:nowrap;'>" . $label->name . "</span>";
-            }, $item->labels));
+            }, $labelsJson));
             $mkd->setContent($item->title);
             $title = $mkd->toHtml();
             $colorNumber = Color::generateColorFromText($repositoryName);
@@ -123,9 +125,9 @@ class GitHub
         );
 
         $resultAll = $this->getWithLabel($users, "issue");
-        $resultOthers = $this->getWithLabel($users, "issue", null, ["WIP", "🛠 WIP", "bug", "triage"]);
+        $resultOthers = $this->getWithLabel($users, "issue", null, ["WIP", "'🛠 WIP'", "bug", "triage"]);
         $resultWip = $this->getWithLabel($users, "issue", "WIP");
-        $resultWip2 = $this->getWithLabel($users, "issue", "🛠 WIP");
+        $resultWip2 = $this->getWithLabel($users, "issue", "'🛠 WIP'");
         $resultBug = $this->getWithLabel($users, "issue", "bug");
         $resultTriage = $this->getWithLabel($users, "issue", "triage");
         $resultAssigned = $this->getWithUserExclusion("issue", "assignee", array_slice($users, 0, 1)[0], $users);

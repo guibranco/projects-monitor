@@ -125,7 +125,7 @@ class GitHub
         $resultAll = $this->getWithLabel($users, "issue");
         $resultOthers = $this->getWithLabel($users, "issue", null, ["WIP", "🛠 WIP", "bug", "triage"]);
         $resultWip = $this->getWithLabel($users, "issue", "WIP");
-        $resultWip2 = $this->getWithLabel($users, "issue", "🛠 WIP");
+        $resultWip2 = $this->getWithLabel($users, "issue", "'🛠 WIP'");
         $resultBug = $this->getWithLabel($users, "issue", "bug");
         $resultTriage = $this->getWithLabel($users, "issue", "triage");
         $resultAssigned = $this->getWithUserExclusion("issue", "assignee", array_slice($users, 0, 1)[0], $users);

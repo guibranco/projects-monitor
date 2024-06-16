@@ -123,7 +123,7 @@ class GitHub
         );
 
         $resultAll = $this->getWithLabel($users, "issue");
-        $resultOthers = $this->getWithLabel($users, "issue", null, ["WIP", "🛠 WIP", "bug", "triage"]);
+        $resultOthers = $this->getWithLabel($users, "issue", null, ["WIP", "'🛠 WIP'", "bug", "triage"]);
         $resultWip = $this->getWithLabel($users, "issue", "WIP");
         $resultWip2 = $this->getWithLabel($users, "issue", "'🛠 WIP'");
         $resultBug = $this->getWithLabel($users, "issue", "bug");

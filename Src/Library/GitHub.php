@@ -96,7 +96,7 @@ class GitHub
         foreach ($items as $item) {
             $repositoryName = str_replace("https://api.github.com/repos/", "", $item->repository_url);
             $labelsJson = $item->labels;
-            usort($labelsJson, function($a, $b) { return strnatcmp($a->name, $b->name); });
+            usort($labelsJson, function ($a, $b) { return strnatcmp($a->name, $b->name); });
             $labels = implode(" ", array_map(function ($label) {
                 return "<span style='background-color: #" . $label->color . ";color: #" . (Color::luminance($label->color) > 120 ? "000" : "fff") . ";padding: 0 7px;border-radius: 24px;border: 1px solid #000;line-height: 21px;text-wrap:nowrap;'>" . $label->name . "</span>";
             }, $labelsJson));

@@ -61,7 +61,7 @@ class Queue
                     $color = "red";
                 } elseif ($quantity > 50) {
                     $color = "orange";
-                } elseif ($quantity > 1) {
+                } elseif ($quantity >= 1) {
                     $color = "yellow";
                 }
 

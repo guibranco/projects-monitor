@@ -406,7 +406,7 @@ function showWebhook(response) {
     width: "100%",
     height: "100%",
     min: 0,
-    max: 120000,
+    max: 300000,
     greenFrom: 0,
     greenTo: 75000,
     yellowFrom: 75000,

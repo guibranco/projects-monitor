@@ -408,11 +408,11 @@ function showWebhook(response) {
     min: 0,
     max: 120000,
     greenFrom: 0,
-    greenTo: 40000,
-    yellowFrom: 40000,
-    yellowTo: 80000,
-    redFrom: 80000,
-    redTo: 120000,
+    greenTo: 75000,
+    yellowFrom: 75000,
+    yellowTo: 150000,
+    redFrom: 150000,
+    redTo: 300000,
   };
 
   const optionsFailed = {

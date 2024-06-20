@@ -1,10 +1,7 @@
 <?php
-
-require_once 'vendor/autoload.php';
-
-use GuiBranco\ProjectsMonitor\Library\Configuration;
-
-$config = new Configuration();
+ini_set("default_charset", "UTF-8");
+ini_set("date.timezone", "America/Sao_Paulo");
+mb_internal_encoding("UTF-8");
 ?>
 
 <!DOCTYPE html>
@@ -82,14 +79,14 @@ $config = new Configuration();
     <div id="pull_requests_authored"></div>
     <div id="issues_authored"></div>
   </div>
-  <div style="width: 50%; float: left; background-color: white;">    
-    <div id="pull_requests"></div>   
+  <div style="width: 50%; float: left; background-color: white;">
+    <div id="pull_requests"></div>
     <div id="assigned"></div>
     <div id="wip"></div>
     <div id="triage"></div>
     <div id="bug"></div>
     <div id="issues"></div>
-    <div id="cronjobs"></div>    
+    <div id="cronjobs"></div>
   </div>
   <div style="clear:both;"></div>
   <div id="messages" style="width: 100%; float: left; background-color: white;"></div>

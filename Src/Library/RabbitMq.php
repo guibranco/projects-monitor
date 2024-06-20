@@ -4,7 +4,7 @@ namespace GuiBranco\ProjectsMonitor\Library;
 
 use GuiBranco\Pancake\Request;
 
-class Queue
+class RabbitMq
 {
     private $connectionStrings = array();
 

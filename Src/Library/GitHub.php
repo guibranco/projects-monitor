@@ -63,10 +63,14 @@ class GitHub
 
         $labelsRemove = "";
         if ($labelsToRemove !== null) {
-            $labelsRemove = implode(" ", array_map(function ($labelToRemove) { return "-label:{$labelToRemove}"; }, $labelsToRemove));
+            $labelsRemove = implode(" ", array_map(function ($labelToRemove) {
+                return "-label:{$labelToRemove}";
+            }, $labelsToRemove));
         }
 
-        $usersList = implode(" ", array_map(function ($user) { return "user:{$user}"; }, $users));
+        $usersList = implode(" ", array_map(function ($user) {
+            return "user:{$user}";
+        }, $users));
         $queryString = "{$type} ${labels} {$labelsRemove} {$usersList}";
 
         return $this->getSearch($queryString);
@@ -75,7 +79,9 @@ class GitHub
     private function getWithUserExclusion($type, $filter, $user, $usersToExclude)
     {
         $filterString = "{$filter}:{$user}";
-        $usersToRemove = implode(" ", array_map(function ($user) { return "-user:{$user}"; }, $usersToExclude));
+        $usersToRemove = implode(" ", array_map(function ($user) {
+            return "-user:{$user}";
+        }, $usersToExclude));
         $queryString = "{$type} {$filterString} {$usersToRemove}";
 
         return $this->getSearch($queryString);
@@ -96,7 +102,9 @@ class GitHub
         foreach ($items as $item) {
             $repositoryName = str_replace("https://api.github.com/repos/", "", $item->repository_url);
             $labelsJson = $item->labels;
-            usort($labelsJson, function ($a, $b) { return strnatcasecmp($a->name, $b->name); });
+            usort($labelsJson, function ($a, $b) {
+                return strnatcasecmp($a->name, $b->name);
+            });
             $labels = implode(" ", array_map(function ($label) {
                 return "<span style='background-color: #" . $label->color . ";color: #" . (Color::luminance($label->color) > 120 ? "000" : "fff") . ";padding: 0 7px;border-radius: 24px;border: 1px solid #000;line-height: 21px;text-wrap:nowrap;'>" . $label->name . "</span>";
             }, $labelsJson));
@@ -177,20 +185,28 @@ class GitHub
         return $data;
     }
 
-    public function getLatestReleaseOfBancosBrasileiros()
+    private function getLatestRelease($owner, $repository)
     {
-        $repository = "guibranco/bancosbrasileiros";
-        $url = self::GITHUB_API_URL . "repos/" . $repository . "/releases/latest";
-        $response = $this->request->get($url, $this->headers);
+        $cache = "cache/github_latest_release_{$owner}_{$repository}.json";
+        if (file_exists($cache) && filemtime($cache) > strtotime("-1 hour")) {
+            $response = json_decode(file_get_contents($cache));
+        } else {
+            $url = self::GITHUB_API_URL . "repos/". $owner . "/". $repository . "/releases/latest";
+            $response = $this->request->get($url, $this->headers);
+            if ($response->statusCode != 200) {
+                throw new RequestException("Code: {$response->statusCode} - Error: {$response->body}");
+            }
 
-        if ($response->statusCode != 200) {
-            throw new RequestException("Code: {$response->statusCode} - Error: {$response->body}");
+            file_put_contents($cache, json_encode($response));
         }
 
+        return json_decode($response->body);
+    }
+
+    public function getLatestReleaseOfBancosBrasileiros()
+    {
+        $body = $this->getLatestRelease("guibranco", "bancosbrasileiros");
         $mkd = Markdown::new();
-
-        $body = json_decode($response->body);
-
         $mkd->setContent($body->body);
         $data = array();
         $data["created"] = date("H:i:s d/m/Y", strtotime($body->created_at));
@@ -198,10 +214,29 @@ class GitHub
         $data["title"] = $body->name;
         $data["description"] = $mkd->toHtml();
         $data["release_url"] = $body->html_url;
-        $data["repository"] = $repository;
+        $data["repository"] = "guibranco/bancosbrasileiros";
         $data["author"] = $body->author->login;
 
         return $data;
+    }
+
+    private function getBillingInternal($accountType, $account, $type)
+    {
+        $cache = "cache/github_billing_{$accountType}_{$account}_{$type}.json";
+        if (file_exists($cache) && filemtime($cache) > strtotime("-5 minute")) {
+            $response = json_decode(file_get_contents($cache));
+        } else {
+            $url = self::GITHUB_API_URL . "{$accountType}/{$account}/settings/billing/{$type}";
+            $response = $this->request->get($url, $this->headers);
+            if ($response->statusCode != 200) {
+                $error = $response->statusCode == -1 ? $response->error : $response->body;
+                throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
+            }
+
+            file_put_contents($cache, json_encode($response));
+        }
+
+        return json_decode($response->body);
     }
 
     private function getBilling($type, $items)
@@ -209,26 +244,14 @@ class GitHub
         $data = array();
 
         foreach ($items as $item) {
-            $urlActions = self::GITHUB_API_URL . "{$type}/{$item}/settings/billing/actions";
-            $responseActions = $this->request->get($urlActions, $this->headers);
-            if ($responseActions->statusCode != 200) {
-                $error = $responseActions->statusCode == -1 ? $responseActions->error : $responseActions->body;
-                throw new RequestException("Code: {$responseActions->statusCode} - Error: {$error}");
-            }
-            $contentActions = json_decode($responseActions->body);
-
-            $urlStorage = self::GITHUB_API_URL . "{$type}/{$item}/settings/billing/shared-storage";
-            $responseStorage = $this->request->get($urlStorage, $this->headers);
-            if ($responseStorage->statusCode != 200) {
-                $error = $responseActions->statusCode == -1 ? $responseStorage->error : $responseStorage->body;
-                throw new RequestException("Code: {$responseStorage->statusCode} - Error: {$error}");
-            }
-            $contentStorage = json_decode($responseStorage->body);
+            $contentActions = $this->getBillingInternal($type, $item, "actions");
+            $contentStorage = $this->getBillingInternal($type, $item, "shared-storage");
 
             $used = $contentActions->total_minutes_used;
             $included = $contentActions->included_minutes;
             $percentage = ($used * 100) / $included;
             $days = $contentStorage->days_left_in_billing_cycle;
+
             $colorActions = "green";
             if ($percentage >= 90) {
                 $colorActions = "red";

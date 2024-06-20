@@ -185,7 +185,7 @@ class GitHub
         return $data;
     }
 
-    private function getLatestRelease($owner,$repository)
+    private function getLatestRelease($owner, $repository)
     {
         $cache = "cache/github_latest_release_{$owner}_{$repository}.json";
         if (file_exists($cache) && filemtime($cache) > strtotime("-1 hour")) {
@@ -205,7 +205,7 @@ class GitHub
 
     public function getLatestReleaseOfBancosBrasileiros()
     {
-        $body = $this->getLatestRelease("guibranco","bancosbrasileiros");
+        $body = $this->getLatestRelease("guibranco", "bancosbrasileiros");
         $mkd = Markdown::new();
         $mkd->setContent($body->body);
         $data = array();

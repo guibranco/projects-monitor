@@ -221,7 +221,7 @@ class GitHub
         return json_decode($response->body);
     }
 
-    private function getLatestRelease($account, $repository)
+    private function getLatestReleaseDetails($account, $repository)
     {
         $body = $this->getLatestRelease($account, $repository);
         $mkd = Markdown::new();
@@ -240,7 +240,7 @@ class GitHub
 
     public function getLatestReleaseOfBancosBrasileiros()
     {
-        return $this->getLatestRelease("guibranco", "bancosbrasileiros");
+        return $this->getLatestReleaseDetails("guibranco", "bancosbrasileiros");
     }
 
     private function getBillingInternal($accountType, $account, $type)

@@ -238,19 +238,19 @@ jobs:
 
     steps:
 
-        - name: Test
-          run: echo "Test"
+      - name: Test
+        run: echo "Test"
           
-  #     - name: Install Postman CLI
-  #       run: |
-  #         curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh
+      - name: Install Postman CLI
+        run: |
+          curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh
   
-  #     - name: Login to Postman CLI
-  #       run: postman login --with-api-key ${{ secrets.POSTMAN_API_KEY }}
+      - name: Login to Postman CLI
+        run: postman login --with-api-key ${{ secrets.POSTMAN_API_KEY }}
 
-  #     - name: Run API tests
-  #       run: |
-  #         postman collection run 23511-01109172-13a0-4cdb-bd0c-18a71d624a48 -e 23511-95105c79-d4eb-4388-9ff9-eb5dee83fdcf
+      - name: Run API tests
+        run: |
+          postman collection run 23511-01109172-13a0-4cdb-bd0c-18a71d624a48 -e 23511-95105c79-d4eb-4388-9ff9-eb5dee83fdcf
   
   create_release:
     name: Create release

@@ -165,7 +165,7 @@ class GitHub
         $data["wip"] = array_merge($data["wip"], $this->mapItems($resultWip2->items));
         $data["bug"] = $this->mapItems($resultBug->items);
         $data["triage"] = $this->mapItems($resultTriage->items);
-        $data["triage"] = array_merge($data["triage"], $this->mapItems($resultTriage2->items)); 
+        $data["triage"] = array_merge($data["triage"], $this->mapItems($resultTriage2->items));
         $data["assigned"] = $this->mapItems($resultAssigned->items);
         $data["authored"] = $this->mapItems($resultAuthored->items);
 

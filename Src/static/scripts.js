@@ -177,8 +177,8 @@ function showGitHub(response) {
     response["accounts_usage"]
   );
 
-  if (typeof response["latestRelease"] !== "undefined") {
-    const latestRelease = response["latestRelease"];
+  if (typeof response["latest_release"] !== "undefined") {
+    const latestRelease = response["latest_release"];
     document.getElementById("latest_release").innerHTML =      
       "<b>Release Notes:</b> " +
       latestRelease["description"] +

@@ -36,7 +36,7 @@ function load(url, callback) {
 function preset() {
   showCPanel(
     JSON.parse(
-      '{"errorLogFiles":[],"errorLogMessages":[],"totalLogMessages":0,"cronjobs":[]}'
+      '{"error_log_files":[],"error_log_messages":[],"total_error_messages":0,"cronjobs":[]}'
     )
   );
   showGitHub(
@@ -85,17 +85,17 @@ function drawChart() {
 
 function showCPanel(response) {
   const dataLogFiles = google.visualization.arrayToDataTable(
-    response["errorLogFiles"]
+    response["error_log_files"]
   );
   const dataLogMessages = google.visualization.arrayToDataTable(
-    response["errorLogMessages"]
+    response["error_log_messages"]
   );
   const dataCronjobs = google.visualization.arrayToDataTable(
     response["cronjobs"]
   );
   const totalLogMessages = google.visualization.arrayToDataTable([
     ["Hits", "Total"],
-    ["Log errors", response["totalLogMessages"]],
+    ["Log errors", response["total_error_messages"]],
   ]);
 
   const gaugeOptions = {
@@ -119,11 +119,11 @@ function showCPanel(response) {
   gaugeChart7.draw(totalLogMessages, gaugeOptions);
   
   const logFiles = new google.visualization.Table(
-    document.getElementById("errorLogFiles")
+    document.getElementById("error_log_files")
   );
   logFiles.draw(dataLogFiles, tableOptions);
   const logMessages = new google.visualization.Table(
-    document.getElementById("errorLogMessages")
+    document.getElementById("error_log_messages")
   );
   logMessages.draw(dataLogMessages, tableOptions);
   const cronjobs = new google.visualization.Table(
@@ -177,8 +177,8 @@ function showGitHub(response) {
     response["accounts_usage"]
   );
 
-  if (typeof response["latestRelease"] !== "undefined") {
-    const latestRelease = response["latestRelease"];
+  if (typeof response["latest_release"] !== "undefined") {
+    const latestRelease = response["latest_release"];
     document.getElementById("latest_release").innerHTML =      
       "<b>Release Notes:</b> " +
       latestRelease["description"] +

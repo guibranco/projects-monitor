@@ -132,12 +132,29 @@ class GitHub
             "InovacaoMediaBrasil",
         );
 
+        $vacanciesUsers = array(
+            "rustdevbr",
+            "pythondevbr",
+            "pydevbr",
+            "dotnetdevbr",
+            "nodejsdevbr",
+            "rubydevbr",
+            "frontend-ao",
+            "frontend-pt",
+            "backend-ao",
+            "backend-pt",
+            "developersRJ"
+        );
+
+        $allUsers = array_merge($users, $vacanciesUsers);
+
         $resultAll = $this->getWithLabel($users, "issue");
-        $resultOthers = $this->getWithLabel($users, "issue", null, ["WIP", "\"🛠 WIP\"", "bug", "triage"]);
+        $resultOthers = $this->getWithLabel($users, "issue", null, ["WIP", "\"🛠 WIP\"", "bug", "triage", "\"🚦awaiting triage\""]);
         $resultWip = $this->getWithLabel($users, "issue", "WIP");
         $resultWip2 = $this->getWithLabel($users, "issue", "\"🛠 WIP\"");
         $resultBug = $this->getWithLabel($users, "issue", "bug");
-        $resultTriage = $this->getWithLabel($users, "issue", "triage");
+        $resultTriage = $this->getWithLabel($allUsers, "issue", "triage");
+        $resultTriage2 = $this->getWithLabel($allUsers, "issue", "\"🚦awaiting triage\"");
         $resultAssigned = $this->getWithUserExclusion("issue", "assignee", array_slice($users, 0, 1)[0], $users);
         $resultAuthored = $this->getWithUserExclusion("issue", "author", array_slice($users, 0, 1)[0], $users);
 
@@ -148,6 +165,7 @@ class GitHub
         $data["wip"] = array_merge($data["wip"], $this->mapItems($resultWip2->items));
         $data["bug"] = $this->mapItems($resultBug->items);
         $data["triage"] = $this->mapItems($resultTriage->items);
+        $data["triage"] = array_merge($data["triage"], $this->mapItems($resultTriage2->items));
         $data["assigned"] = $this->mapItems($resultAssigned->items);
         $data["authored"] = $this->mapItems($resultAuthored->items);
 
@@ -203,9 +221,9 @@ class GitHub
         return json_decode($response->body);
     }
 
-    public function getLatestReleaseOfBancosBrasileiros()
+    private function getLatestReleaseDetails($account, $repository)
     {
-        $body = $this->getLatestRelease("guibranco", "bancosbrasileiros");
+        $body = $this->getLatestRelease($account, $repository);
         $mkd = Markdown::new();
         $mkd->setContent($body->body);
         $data = array();
@@ -214,10 +232,15 @@ class GitHub
         $data["title"] = $body->name;
         $data["description"] = $mkd->toHtml();
         $data["release_url"] = $body->html_url;
-        $data["repository"] = "guibranco/bancosbrasileiros";
+        $data["repository"] = $account . "/". $repository;
         $data["author"] = $body->author->login;
 
         return $data;
+    }
+
+    public function getLatestReleaseOfBancosBrasileiros()
+    {
+        return $this->getLatestReleaseDetails("guibranco", "bancosbrasileiros");
     }
 
     private function getBillingInternal($accountType, $account, $type)

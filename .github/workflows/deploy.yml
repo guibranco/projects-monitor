@@ -237,9 +237,6 @@ jobs:
     needs: [deploy, database_migrations]
 
     steps:
-
-      - name: Test
-        run: echo "Test"
           
       - name: Install Postman CLI
         run: |

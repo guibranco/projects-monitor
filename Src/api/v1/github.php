@@ -7,7 +7,7 @@ use GuiBranco\ProjectsMonitor\Library\GitHub;
 $github = new GitHub();
 $data["issues"] = $github->getIssues();
 $data["pull_requests"] = $github->getPullRequests();
-$data["latestRelease"] = $github->getLatestReleaseOfBancosBrasileiros();
+$data["latest_release"] = $github->getLatestReleaseOfBancosBrasileiros();
 $data["accounts_usage"] = $github->getAccountUsage();
 
 header("Content-Type: application/json; charset=UTF-8");

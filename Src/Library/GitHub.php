@@ -41,7 +41,7 @@ class GitHub
             return $response;
         }
 
-        return requestInternal($url, true);
+        return $this->requestInternal($url, true);
     }
 
     private function getSearch($queryString)

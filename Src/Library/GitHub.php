@@ -33,6 +33,17 @@ class GitHub
         ];
     }
 
+    private function requestInternal($url, $isRetry = false)
+    {
+        $response = $this->request->get($url, $this->headers);
+
+        if ($response->statusCode !== -1 || $isRetry) {
+            return $response;
+        }
+
+        return requestInternal($url, true);
+    }
+
     private function getSearch($queryString)
     {
         $hash = md5($queryString);
@@ -43,10 +54,9 @@ class GitHub
         }
 
         $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode(preg_replace('!\s+!', ' ', "is:open archived:false is:{$queryString}"));
-        $response = $this->request->get($url, $this->headers);
-
-        if ($response->statusCode != 200) {
-            $error = $response->statusCode == -1 ? $response->error : $response->body;
+        $response = $this->requestInternal($url);
+        if ($response->statusCode !== 200) {
+            $error = $response->statusCode === -1 ? $response->error : $response->body;
             throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
         }
 
@@ -210,9 +220,10 @@ class GitHub
             $response = json_decode(file_get_contents($cache));
         } else {
             $url = self::GITHUB_API_URL . "repos/". $owner . "/". $repository . "/releases/latest";
-            $response = $this->request->get($url, $this->headers);
-            if ($response->statusCode != 200) {
-                throw new RequestException("Code: {$response->statusCode} - Error: {$response->body}");
+            $response = $this->requestInternal($url);
+            if ($response->statusCode !== 200) {
+                $error = $response->statusCode === -1 ? $response->error : $response->body;
+                throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
             }
 
             file_put_contents($cache, json_encode($response));
@@ -250,9 +261,9 @@ class GitHub
             $response = json_decode(file_get_contents($cache));
         } else {
             $url = self::GITHUB_API_URL . "{$accountType}/{$account}/settings/billing/{$type}";
-            $response = $this->request->get($url, $this->headers);
-            if ($response->statusCode != 200) {
-                $error = $response->statusCode == -1 ? $response->error : $response->body;
+            $response = $this->requestInternal($url);
+            if ($response->statusCode !== 200) {
+                $error = $response->statusCode === -1 ? $response->error : $response->body;
                 throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
             }
 
@@ -297,7 +308,6 @@ class GitHub
             $accountLink = "<a href='https://github.com/" . $linkPrefix . "settings/billing/summary' target='_blank'><img alt='login' src='https://img.shields.io/badge/" . str_replace("-", "--", $item) . "-black?style=social&logo=github' /></a>";
             $actionsImage = "<img alt='Actions used' src='https://img.shields.io/badge/" . number_format($percentage, 2, '.', '') . "%25-" . $used . "%2F" . $included . "_minutes-" . $colorActions . "?style=for-the-badge&labelColor=black' />";
             $daysImage = "<img alt='Actions used' src='https://img.shields.io/badge/" . $days . "-Days_remaining-" . $colorDays . "?style=for-the-badge&labelColor=black' />";
-
 
             $data[$item] = array($accountLink, $actionsImage, $daysImage);
         }

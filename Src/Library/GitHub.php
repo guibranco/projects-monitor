@@ -159,9 +159,11 @@ class GitHub
         $allUsers = array_merge($users, $vacanciesUsers);
 
         $resultAll = $this->getWithLabel($users, "issue");
-        $resultOthers = $this->getWithLabel($users, "issue", null, ["WIP", "\"🛠 WIP\"", "bug", "triage", "\"🚦awaiting triage\""]);
+        $resultOthers = $this->getWithLabel($users, "issue", null, ["WIP", "\"🛠 WIP\"", "bug", "triage", "\"🚦awaiting triage\"", "blocked", "\"🚷blocked\""]);
         $resultWip = $this->getWithLabel($users, "issue", "WIP");
         $resultWip2 = $this->getWithLabel($users, "issue", "\"🛠 WIP\"");
+        $resultBlocked = $this->getWithLabel($users, "issue", "blocked");
+        $resultBlocked2 = $this->getWithLabel($users, "issue", "\"🚷blocked\"");
         $resultBug = $this->getWithLabel($users, "issue", "bug");
         $resultTriage = $this->getWithLabel($allUsers, "issue", "triage");
         $resultTriage2 = $this->getWithLabel($allUsers, "issue", "\"🚦awaiting triage\"");
@@ -173,6 +175,8 @@ class GitHub
         $data["others"] = $this->mapItems($resultOthers->items);
         $data["wip"] = $this->mapItems($resultWip->items);
         $data["wip"] = array_merge($data["wip"], $this->mapItems($resultWip2->items));
+        $data["blocked"] = $this->mapItems($resultBlocked->items);
+        $data["blocked"] = array_merge($data["blocked"], $this->mapItems($resultBlocked2->items));
         $data["bug"] = $this->mapItems($resultBug->items);
         $data["triage"] = $this->mapItems($resultTriage->items);
         $data["triage"] = array_merge($data["triage"], $this->mapItems($resultTriage2->items));
@@ -203,11 +207,16 @@ class GitHub
         );
 
         $result = $this->getWithLabel($users, "pr");
+        $resultNotBlockded = $this->getWithLabel($users, "pr", null, ["blocked", "\"🚷blocked\""]);
+        $resultBlocked = $this->getWithLabel($users, "pr", "blocked");
+        $resultBlocked2 = $this->getWithLabel($users, "pr", "\"🚷blocked\"");
         $resultAuthored = $this->getWithUserExclusion("pr", "author", array_slice($users, 0, 1)[0], $users);
 
         $data = array();
         $data["total_count"] = $result->total_count;
-        $data["latest"] = $this->mapItems($result->items);
+        $data["latest"] = $this->mapItems($resultNotBlockded->items);
+        $data["blocked"] = $this->mapItems($resultBlocked->items);
+        $data["blocked"] = array_merge($data["blocked"], $this->mapItems($resultBlocked2->items));
         $data["authored"] = $this->mapItems($resultAuthored->items);
 
         return $data;

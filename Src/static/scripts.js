@@ -156,7 +156,7 @@ function showGitHub(response) {
   const dataPullRequestsAuthoredTable = google.visualization.arrayToDataTable(
     response["pull_requests"]["authored"]
   );
-  const dataPullRequestsBlcokedTable = google.visualization.arrayToDataTable(
+  const dataPullRequestsBlockedTable = google.visualization.arrayToDataTable(
     response["pull_requests"]["blocked"]
   );
   const dataAssignedTable = google.visualization.arrayToDataTable(

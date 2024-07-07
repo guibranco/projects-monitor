@@ -62,7 +62,7 @@ class RabbitMq
                 if ($quantity === 0 && str_ends_with($name, "-retry")) {
                     continue;
                 }
-                
+
                 if ($quantity > 100) {
                     $color = "red";
                 } elseif ($quantity > 50) {

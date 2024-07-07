@@ -34,6 +34,10 @@ function load(url, callback) {
 }
 
 function preset() {
+  if (!showPreset) {
+    return;
+  }
+  showPreset = false;
   showCPanel(
     JSON.parse(
       '{"error_log_files":[],"error_log_messages":[],"total_error_messages":0,"cronjobs":[]}'
@@ -41,7 +45,7 @@ function preset() {
   );
   showGitHub(
     JSON.parse(
-      '{"issues":{"total_count":0,"others":[],"bug":[],"triage":[],"wip":[],"assigned":[],"authored":[]},"pull_requests":{"total_count":0,"latest":[],"authored":[]},"accounts_usage":[]}'
+      '{"issues":{"total_count":0,"others":[],"bug":[],"triage":[],"wip":[],"assigned":[],"authored":[],"blocked":[]},"pull_requests":{"total_count":0,"latest":[],"authored":[],"blocked":[]},"accounts_usage":[]}'
     )
   );
   showMessages(
@@ -75,10 +79,7 @@ function loadAll() {
 let showPreset = true;
 
 function drawChart() {
-  if (showPreset) {
-    preset();
-    showPreset = false;
-  }
+  preset();
   loadAll();
   setTimeout(drawChart, 30000);
 }
@@ -155,11 +156,17 @@ function showGitHub(response) {
   const dataPullRequestsAuthoredTable = google.visualization.arrayToDataTable(
     response["pull_requests"]["authored"]
   );
+  const dataPullRequestsBlcokedTable = google.visualization.arrayToDataTable(
+    response["pull_requests"]["blocked"]
+  );
   const dataAssignedTable = google.visualization.arrayToDataTable(
     response["issues"]["assigned"]
   );
   const dataAuthoredTable = google.visualization.arrayToDataTable(
     response["issues"]["authored"]
+  );
+  const dataBlockedTable = google.visualization.arrayToDataTable(
+    response["issues"]["blocked"]
   );
   const dataBugsTable = google.visualization.arrayToDataTable(
     response["issues"]["bug"]
@@ -218,7 +225,7 @@ function showGitHub(response) {
   gaugeChart6.draw(dataPullRequests, gaugeOptions);
 
   const pullRequests = new google.visualization.Table(
-    document.getElementById("pull_requests")
+    document.getElementById("pull_requests_latest")
   );
   pullRequests.draw(dataPullRequestsTable, tableOptions);
 
@@ -226,6 +233,11 @@ function showGitHub(response) {
     document.getElementById("pull_requests_authored")
   );
   pullRequestsAuthored.draw(dataPullRequestsAuthoredTable, tableOptions);
+
+  const pullRequestsBlocked = new google.visualization.Table(
+    document.getElementById("pull_requests_blocked")
+  );
+  pullRequestsBlocked.draw(dataPullRequestsBlockedTable, tableOptions);
 
   const assigned = new google.visualization.Table(document.getElementById("assigned"));
   assigned.draw(dataAssignedTable, tableOptions);
@@ -235,6 +247,9 @@ function showGitHub(response) {
   
   const bug = new google.visualization.Table(document.getElementById("bug"));
   bug.draw(dataBugsTable, tableOptions);
+
+  const blocked = new google.visualization.Table(document.getElementById("blocked"));
+  blocked.draw(dataBlockedTable, tableOptions);
 
   const triage = new google.visualization.Table(
     document.getElementById("triage")

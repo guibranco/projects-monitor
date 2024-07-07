@@ -56,7 +56,13 @@ class RabbitMq
             $node = json_decode($response->body, true);
             foreach ($node as $queue) {
                 $color = "green";
+                $name = $queue["name"];
                 $quantity = $queue["messages"];
+
+                if ($quantity === 0 && str_ends_with($name, "-retry")) {
+                    continue;
+                }
+                
                 if ($quantity > 100) {
                     $color = "red";
                 } elseif ($quantity > 50) {
@@ -65,7 +71,7 @@ class RabbitMq
                     $color = "yellow";
                 }
 
-                $img = "<img alt='queue length' src='https://img.shields.io/badge/" . $quantity . "-" . str_replace("-", "--", $queue["name"]) . "-" . $color . "?style=for-the-badge&labelColor=black' />";
+                $img = "<img alt='queue length' src='https://img.shields.io/badge/" . $quantity . "-" . str_replace("-", "--", $name) . "-" . $color . "?style=for-the-badge&labelColor=black' />";
                 $item = array($server["host"], $img);
                 $data["queues"][] = $item;
                 $data["total"] += $quantity;

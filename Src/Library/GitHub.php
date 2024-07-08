@@ -160,11 +160,12 @@ class GitHub
 
         $resultAll = $this->getWithLabel($users, "issue");
         $resultOthers = $this->getWithLabel($users, "issue", null, ["WIP", "\"🛠 WIP\"", "bug", "triage", "\"🚦awaiting triage\"", "blocked", "\"🚷blocked\""]);
-        $resultWip = $this->getWithLabel($users, "issue", "WIP");
-        $resultWip2 = $this->getWithLabel($users, "issue", "\"🛠 WIP\"");
+        $resultWip = $this->getWithLabel($users, "issue", "WIP", ["blocked", "\"🚷blocked\""]);
+        $resultWip2 = $this->getWithLabel($users, "issue", "\"🛠 WIP\"", ["blocked", "\"🚷blocked\""]);
         $resultBlocked = $this->getWithLabel($users, "issue", "blocked");
         $resultBlocked2 = $this->getWithLabel($users, "issue", "\"🚷blocked\"");
-        $resultBug = $this->getWithLabel($users, "issue", "bug");
+        $resultBug = $this->getWithLabel($users, "issue", "bug", ["blocked", "\"🚷blocked\""]);
+        $resultBug2 = $this->getWithLabel($users, "issue", "🐛 Bug", ["blocked", "\"🚷blocked\""]);
         $resultTriage = $this->getWithLabel($allUsers, "issue", "triage");
         $resultTriage2 = $this->getWithLabel($allUsers, "issue", "\"🚦awaiting triage\"");
         $resultAssigned = $this->getWithUserExclusion("issue", "assignee", array_slice($users, 0, 1)[0], $users);
@@ -178,6 +179,7 @@ class GitHub
         $data["blocked"] = $this->mapItems($resultBlocked->items);
         $data["blocked"] = array_merge($data["blocked"], $this->mapItems($resultBlocked2->items));
         $data["bug"] = $this->mapItems($resultBug->items);
+        $data["bug"] = array_merge($data["bug"], $this->mapItems($resultBug2->items));
         $data["triage"] = $this->mapItems($resultTriage->items);
         $data["triage"] = array_merge($data["triage"], $this->mapItems($resultTriage2->items));
         $data["assigned"] = $this->mapItems($resultAssigned->items);
@@ -207,14 +209,14 @@ class GitHub
         );
 
         $result = $this->getWithLabel($users, "pr");
-        $resultNotBlockded = $this->getWithLabel($users, "pr", null, ["blocked", "\"🚷blocked\""]);
+        $resultNotBlocked = $this->getWithLabel($users, "pr", null, ["blocked", "\"🚷blocked\""]);
         $resultBlocked = $this->getWithLabel($users, "pr", "blocked");
         $resultBlocked2 = $this->getWithLabel($users, "pr", "\"🚷blocked\"");
         $resultAuthored = $this->getWithUserExclusion("pr", "author", array_slice($users, 0, 1)[0], $users);
 
         $data = array();
         $data["total_count"] = $result->total_count;
-        $data["latest"] = $this->mapItems($resultNotBlockded->items);
+        $data["latest"] = $this->mapItems($resultNotBlocked->items);
         $data["blocked"] = $this->mapItems($resultBlocked->items);
         $data["blocked"] = array_merge($data["blocked"], $this->mapItems($resultBlocked2->items));
         $data["authored"] = $this->mapItems($resultAuthored->items);

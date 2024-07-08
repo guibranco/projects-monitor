@@ -1,6 +1,6 @@
 <?php
 ini_set("default_charset", "UTF-8");
-ini_set("date.timezone", "America/Sao_Paulo");
+ini_set("date.timezone", "Europe/Dublin");
 mb_internal_encoding("UTF-8");
 ?>
 

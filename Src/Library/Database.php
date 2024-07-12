@@ -38,13 +38,18 @@ class Database
         $this->connect();
     }
 
-    public function connect()
+    public function connect($isRetry = false)
     {
         $this->connection = new \mysqli($this->host, $this->user, $this->password, $this->database);
+        if (!$isRetry) {
+            sleep(5);
+            return $this->connect(true);
+        }
         if ($this->connection->connect_error) {
             throw new RequestException("Connection failed: " . $this->connection->connect_error);
         }
 
         $this->connection->set_charset("utf8mb4");
+        $this->connection->query("SET time_zone = '" . date("P") . "'");
     }
 }

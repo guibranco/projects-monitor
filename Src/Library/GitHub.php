@@ -33,6 +33,17 @@ class GitHub
         ];
     }
 
+    private function requestInternal($url, $isRetry = false)
+    {
+        $response = $this->request->get($url, $this->headers);
+
+        if ($response->statusCode !== -1 || $isRetry) {
+            return $response;
+        }
+
+        return $this->requestInternal($url, true);
+    }
+
     private function getSearch($queryString)
     {
         $hash = md5($queryString);
@@ -43,10 +54,9 @@ class GitHub
         }
 
         $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode(preg_replace('!\s+!', ' ', "is:open archived:false is:{$queryString}"));
-        $response = $this->request->get($url, $this->headers);
-
-        if ($response->statusCode != 200) {
-            $error = $response->statusCode == -1 ? $response->error : $response->body;
+        $response = $this->requestInternal($url);
+        if ($response->statusCode !== 200) {
+            $error = $response->statusCode === -1 ? $response->error : $response->body;
             throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
         }
 
@@ -149,10 +159,13 @@ class GitHub
         $allUsers = array_merge($users, $vacanciesUsers);
 
         $resultAll = $this->getWithLabel($users, "issue");
-        $resultOthers = $this->getWithLabel($users, "issue", null, ["WIP", "\"🛠 WIP\"", "bug", "triage", "\"🚦awaiting triage\""]);
-        $resultWip = $this->getWithLabel($users, "issue", "WIP");
-        $resultWip2 = $this->getWithLabel($users, "issue", "\"🛠 WIP\"");
-        $resultBug = $this->getWithLabel($users, "issue", "bug");
+        $resultOthers = $this->getWithLabel($users, "issue", null, ["WIP", "\"🛠 WIP\"", "bug", "triage", "\"🚦awaiting triage\"", "blocked", "\"🚷blocked\""]);
+        $resultWip = $this->getWithLabel($users, "issue", "WIP", ["blocked", "\"🚷blocked\""]);
+        $resultWip2 = $this->getWithLabel($users, "issue", "\"🛠 WIP\"", ["blocked", "\"🚷blocked\""]);
+        $resultBlocked = $this->getWithLabel($users, "issue", "blocked");
+        $resultBlocked2 = $this->getWithLabel($users, "issue", "\"🚷blocked\"");
+        $resultBug = $this->getWithLabel($users, "issue", "bug", ["blocked", "\"🚷blocked\""]);
+        $resultBug2 = $this->getWithLabel($users, "issue", "🐛 Bug", ["blocked", "\"🚷blocked\""]);
         $resultTriage = $this->getWithLabel($allUsers, "issue", "triage");
         $resultTriage2 = $this->getWithLabel($allUsers, "issue", "\"🚦awaiting triage\"");
         $resultAssigned = $this->getWithUserExclusion("issue", "assignee", array_slice($users, 0, 1)[0], $users);
@@ -163,7 +176,10 @@ class GitHub
         $data["others"] = $this->mapItems($resultOthers->items);
         $data["wip"] = $this->mapItems($resultWip->items);
         $data["wip"] = array_merge($data["wip"], $this->mapItems($resultWip2->items));
+        $data["blocked"] = $this->mapItems($resultBlocked->items);
+        $data["blocked"] = array_merge($data["blocked"], $this->mapItems($resultBlocked2->items));
         $data["bug"] = $this->mapItems($resultBug->items);
+        $data["bug"] = array_merge($data["bug"], $this->mapItems($resultBug2->items));
         $data["triage"] = $this->mapItems($resultTriage->items);
         $data["triage"] = array_merge($data["triage"], $this->mapItems($resultTriage2->items));
         $data["assigned"] = $this->mapItems($resultAssigned->items);
@@ -193,11 +209,16 @@ class GitHub
         );
 
         $result = $this->getWithLabel($users, "pr");
+        $resultNotBlocked = $this->getWithLabel($users, "pr", null, ["blocked", "\"🚷blocked\""]);
+        $resultBlocked = $this->getWithLabel($users, "pr", "blocked");
+        $resultBlocked2 = $this->getWithLabel($users, "pr", "\"🚷blocked\"");
         $resultAuthored = $this->getWithUserExclusion("pr", "author", array_slice($users, 0, 1)[0], $users);
 
         $data = array();
         $data["total_count"] = $result->total_count;
-        $data["latest"] = $this->mapItems($result->items);
+        $data["latest"] = $this->mapItems($resultNotBlocked->items);
+        $data["blocked"] = $this->mapItems($resultBlocked->items);
+        $data["blocked"] = array_merge($data["blocked"], $this->mapItems($resultBlocked2->items));
         $data["authored"] = $this->mapItems($resultAuthored->items);
 
         return $data;
@@ -210,9 +231,10 @@ class GitHub
             $response = json_decode(file_get_contents($cache));
         } else {
             $url = self::GITHUB_API_URL . "repos/". $owner . "/". $repository . "/releases/latest";
-            $response = $this->request->get($url, $this->headers);
-            if ($response->statusCode != 200) {
-                throw new RequestException("Code: {$response->statusCode} - Error: {$response->body}");
+            $response = $this->requestInternal($url);
+            if ($response->statusCode !== 200) {
+                $error = $response->statusCode === -1 ? $response->error : $response->body;
+                throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
             }
 
             file_put_contents($cache, json_encode($response));
@@ -250,9 +272,9 @@ class GitHub
             $response = json_decode(file_get_contents($cache));
         } else {
             $url = self::GITHUB_API_URL . "{$accountType}/{$account}/settings/billing/{$type}";
-            $response = $this->request->get($url, $this->headers);
-            if ($response->statusCode != 200) {
-                $error = $response->statusCode == -1 ? $response->error : $response->body;
+            $response = $this->requestInternal($url);
+            if ($response->statusCode !== 200) {
+                $error = $response->statusCode === -1 ? $response->error : $response->body;
                 throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
             }
 
@@ -297,7 +319,6 @@ class GitHub
             $accountLink = "<a href='https://github.com/" . $linkPrefix . "settings/billing/summary' target='_blank'><img alt='login' src='https://img.shields.io/badge/" . str_replace("-", "--", $item) . "-black?style=social&logo=github' /></a>";
             $actionsImage = "<img alt='Actions used' src='https://img.shields.io/badge/" . number_format($percentage, 2, '.', '') . "%25-" . $used . "%2F" . $included . "_minutes-" . $colorActions . "?style=for-the-badge&labelColor=black' />";
             $daysImage = "<img alt='Actions used' src='https://img.shields.io/badge/" . $days . "-Days_remaining-" . $colorDays . "?style=for-the-badge&labelColor=black' />";
-
 
             $data[$item] = array($accountLink, $actionsImage, $daysImage);
         }

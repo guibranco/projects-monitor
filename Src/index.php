@@ -1,6 +1,6 @@
 <?php
 ini_set("default_charset", "UTF-8");
-ini_set("date.timezone", "America/Sao_Paulo");
+ini_set("date.timezone", "Europe/Dublin");
 mb_internal_encoding("UTF-8");
 ?>
 
@@ -76,16 +76,18 @@ mb_internal_encoding("UTF-8");
     <div id="healthchecksio"></div>
     <div id="uptimerobot"></div>
     <div id="domains"></div>
+    <div id="blocked"></div>
+    <div id="pull_requests_blocked"></div>
     <div id="pull_requests_authored"></div>
     <div id="issues_authored"></div>
   </div>
   <div style="width: 50%; float: left; background-color: white;">
-    <div id="pull_requests"></div>
+    <div id="pull_requests_latest"></div>
     <div id="assigned"></div>
     <div id="wip"></div>
     <div id="triage"></div>
     <div id="bug"></div>
-    <div id="issues"></div>
+    <div id="issues"></div>  
     <div id="cronjobs"></div>
   </div>
   <div style="clear:both;"></div>

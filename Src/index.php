@@ -9,6 +9,9 @@ mb_internal_encoding("UTF-8");
 
 <head>
   <title>Projects Monitor</title>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       background: rgb(13, 17, 23)
@@ -31,8 +34,18 @@ mb_internal_encoding("UTF-8");
       text-wrap: nowrap;
     }
   </style>
-  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-  <script type="text/javascript" src="static/scripts.js?<?php echo filemtime("static/scripts.js"); ?>"></script>
+  <script src="https://www.gstatic.com/charts/loader.js"></script>
+  <script src="static/scripts.js?<?php echo filemtime("static/scripts.js"); ?>"></script>
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(function(OneSignal) {
+        OneSignal.init({
+          appId: "90c57079-9ef2-4719-bddf-361e6510de17",
+          googleProjectNumber: "256841700684"
+        });
+      });
+   </script>
 </head>
 
 <body>

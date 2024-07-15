@@ -139,6 +139,7 @@ jobs:
           echo "\$rabbitMqConnectionStrings[] = \"${{ secrets.RABBITMQ_CS6 }}\";" >> rabbitMq.secrets.php
           echo "\$rabbitMqConnectionStrings[] = \"${{ secrets.RABBITMQ_CS7 }}\";" >> rabbitMq.secrets.php
           echo "\$rabbitMqConnectionStrings[] = \"${{ secrets.RABBITMQ_CS8 }}\";" >> rabbitMq.secrets.php
+          echo "\$rabbitMqConnectionStrings[] = \"${{ secrets.RABBITMQ_CS9 }}\";" >> rabbitMq.secrets.php
 
       - name: Create UpTimeRobot secrets file
         if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'

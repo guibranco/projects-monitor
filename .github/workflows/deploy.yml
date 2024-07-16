@@ -180,6 +180,7 @@ jobs:
           remoteDir: "/"
 
       - name: Call install endpoint
+        if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
         run: |
           curl "https://guilhermebranco.com.br/projects-monitor/install.php"
 

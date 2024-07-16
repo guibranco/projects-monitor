@@ -112,7 +112,7 @@ class CPanel
         if (count($content) === 0 || !isset($content[0]->contents)) {
             return null;
         }
-        
+
         return array(
             "fullPath" => $fullPath,
             "dirname" => $pathInfo["dirname"],
@@ -148,11 +148,11 @@ class CPanel
 
         foreach ($items as $item) {
             $content = $this->loadContent($item->file);
-            
+
             if ($content === null) {
                 continue;
             }
-            
+
             preg_match_all(CPanel::REGEX_PATTERN, $content["contents"], $matches);
             foreach ($matches["error"] as $index => $match) {
                 $date = date("H:i:s d/m/Y", strtotime($matches["date"][$index]));

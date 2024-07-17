@@ -49,7 +49,6 @@ mb_internal_encoding("UTF-8");
 </head>
 
 <body>
-  <div id="line_chart" style="width: 100%; height: 400px; float: left;"></div>
   <div id="webhooks_statistics" style="width: 100%; height: 500px; float: left;"></div>
   <div style="clear:both;"></div>
   <div style="width: 50%; float: left;">

@@ -1,4 +1,4 @@
 RewriteEngine On
 
 RewriteCond %{HTTP_HOST} !^guilherme\.straccini\.com$ [NC]
-RewriteRule ^(.*)$ https://guilherme.straccini.com/$1 [L,R=301]
+RewriteRule ^(.*)$ https://guilherme.straccini.com/projects-monitor/$1 [L,R=301]

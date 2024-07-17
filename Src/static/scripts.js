@@ -60,7 +60,7 @@ function preset() {
   );
   showWebhook(
     JSON.parse(
-      '{"events":[["Event","Hits"]],"failed":0,"feed":[],"repositories":[],"total":0,"webhooks":[["Date","Hits"], ["01/01", 0]],"workflow_runs":[],"total_workflow_runs":0, "installations":0}'
+      '{"events":[["Event","Hits"]],"failed":0,"feed":[],"repositories":[],"total":0,"webhooks":[["Date","Hits"], ["01/01", 0]],"statistics": [["Date","Table #1"], ["01/01", 0]],"workflow_runs":[],"total_workflow_runs":0, "installations":0}'
     )
   );
 }
@@ -369,33 +369,16 @@ function showUpTimeRobot(response) {
 }
 
 function showWebhook(response) {
-  const dataWebhooks = google.visualization.arrayToDataTable(
-    response["webhooks"]
-  );
+  const dataWebhooks = google.visualization.arrayToDataTable(response["webhooks"]);
+  const dataStatistics = oogle.visualization.arrayToDataTable(response["statistics"]);
   const dataEvents = google.visualization.arrayToDataTable(response["events"]);
   const dataFeed = google.visualization.arrayToDataTable(response["feed"]);
-  const dataRepositories = google.visualization.arrayToDataTable(
-    response["repositories"]
-  );
-  const dataWorkflowRuns = google.visualization.arrayToDataTable(
-    response["workflow_runs"]
-  );
-  const dataTotal = google.visualization.arrayToDataTable([
-    ["Hits", "Total"],
-    ["GH WH", response["total"]],
-  ]);
-  const dataFailed = google.visualization.arrayToDataTable([
-    ["Hits", "Failed"],
-    ["WH Failed", response["failed"]],
-  ]);
-  const dataTotalWorkflowRuns = google.visualization.arrayToDataTable([
-    ["Hits", "GH WRs"],
-    ["GH WRs", response["total_workflow_runs"]],
-  ]);
-  const dataInstallations = google.visualization.arrayToDataTable([
-    ["Hits", "GH App"],
-    ["GH App", response["installations"]],
-  ]);
+  const dataRepositories = google.visualization.arrayToDataTable(response["repositories"]);
+  const dataWorkflowRuns = google.visualization.arrayToDataTable(response["workflow_runs"]);
+  const dataTotal = google.visualization.arrayToDataTable([["Hits", "Total"],["GH WH", response["total"]],]);
+  const dataFailed = google.visualization.arrayToDataTable([["Hits", "Failed"],["WH Failed", response["failed"]],]);
+  const dataTotalWorkflowRuns = google.visualization.arrayToDataTable([["Hits", "GH WRs"],["GH WRs", response["total_workflow_runs"]],]);
+  const dataInstallations = google.visualization.arrayToDataTable([["Hits", "GH App"],["GH App", response["installations"]],]);
 
   const optionsWebhooks = {
     title: "GitHub webhooks by date",
@@ -404,6 +387,18 @@ function showWebhook(response) {
     pointSize: 7,
     hAxis: {
       title: "Webhooks",
+      textStyle: {
+        fontSize: 10,
+      },
+    },
+  };
+
+  const optionsStatistics = {
+    title: "Webhooks by date",
+    legend: { position: "bottom" },
+    pointSize: 7,
+    hAxis: {
+      title: "Date",
       textStyle: {
         fontSize: 10,
       },
@@ -475,38 +470,24 @@ function showWebhook(response) {
     redTo: 1000,
   };
 
-  const lineChart = new google.visualization.LineChart(
-    document.getElementById("line_chart")
-  );
+  const lineChart = new google.visualization.LineChart(document.getElementById("line_chart"));
   lineChart.draw(dataWebhooks, optionsWebhooks);
-  const pieChart1 = new google.visualization.PieChart(
-    document.getElementById("pie_chart_1")
-  );
+  const statisticsChart = new google.visualization.LineChart(document.getElementById("webhooks_statistics"));
+  statisticsChart.draw(dataStatistics, optionsStatistics);  
+  const pieChart1 = new google.visualization.PieChart(document.getElementById("pie_chart_1"));
   pieChart1.draw(dataEvents, optionsEvents);
-  const repositories = new google.visualization.Table(
-    document.getElementById("repositories")
-  );
+  const repositories = new google.visualization.Table(document.getElementById("repositories"));
   repositories.draw(dataRepositories, tableOptions);
-  const workflowRuns = new google.visualization.Table(
-    document.getElementById("workflow_runs")
-  );
+  const workflowRuns = new google.visualization.Table(document.getElementById("workflow_runs"));
   workflowRuns.draw(dataWorkflowRuns, tableOptions);
   const feed = new google.visualization.Table(document.getElementById("feed"));
   feed.draw(dataFeed, tableOptions);
-  const gaugeChart1 = new google.visualization.Gauge(
-    document.getElementById("gauge_chart_1")
-  );
+  const gaugeChart1 = new google.visualization.Gauge(document.getElementById("gauge_chart_1"));
   gaugeChart1.draw(dataTotal, optionsTotal);
-  const gaugeChart2 = new google.visualization.Gauge(
-    document.getElementById("gauge_chart_2")
-  );
+  const gaugeChart2 = new google.visualization.Gauge(document.getElementById("gauge_chart_2"));
   gaugeChart2.draw(dataFailed, optionsFailed);
-  const gaugeChart8 = new google.visualization.Gauge(
-    document.getElementById("gauge_chart_8")
-  );
+  const gaugeChart8 = new google.visualization.Gauge(document.getElementById("gauge_chart_8"));
   gaugeChart8.draw(dataTotalWorkflowRuns, optionsTotalWorkflowRuns);
-  const gaugeChart9 = new google.visualization.Gauge(
-    document.getElementById("gauge_chart_9")
-  );
+  const gaugeChart9 = new google.visualization.Gauge(document.getElementById("gauge_chart_9"));
   gaugeChart9.draw(dataInstallations, optionsInstallations);
 }

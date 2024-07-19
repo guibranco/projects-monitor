@@ -102,6 +102,7 @@ mb_internal_encoding("UTF-8");
     <div id="bug"></div>
     <div id="issues"></div>  
     <div id="cronjobs"></div>
+    <div id="bots"></div>
   </div>
   <div style="clear:both;"></div>
   <div id="messages" style="width: 100%; float: left; background-color: white;"></div>

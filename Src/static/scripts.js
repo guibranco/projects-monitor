@@ -369,7 +369,7 @@ function showWebhook(response) {
   const feed = new google.visualization.Table(document.getElementById("feed"));
   feed.draw(dataFeed, tableOptions);
   const bots = new google.visualization.Table(document.getElementById("bots"));
-  feed.draw(dataBoots, tableOptions);
+  bots.draw(dataBots, tableOptions);
   
   const gaugeChart1 = new google.visualization.Gauge(document.getElementById("gauge_chart_1"));
   gaugeChart1.draw(dataTotal, optionsTotal);

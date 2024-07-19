@@ -358,10 +358,10 @@ function showWebhook(response) {
 
   const statisticsChart = new google.visualization.LineChart(document.getElementById("webhooks_statistics"));
   statisticsChart.draw(dataStatistics, optionsStatistics);
-  
+
   const pieChart1 = new google.visualization.PieChart(document.getElementById("pie_chart_1"));
   pieChart1.draw(dataEvents, optionsEvents);
-  
+
   const repositories = new google.visualization.Table(document.getElementById("repositories"));
   repositories.draw(dataRepositories, tableOptions);
   const workflowRuns = new google.visualization.Table(document.getElementById("workflow_runs"));
@@ -370,7 +370,7 @@ function showWebhook(response) {
   feed.draw(dataFeed, tableOptions);
   const bots = new google.visualization.Table(document.getElementById("bots"));
   bots.draw(dataBots, tableOptions);
-  
+
   const gaugeChart1 = new google.visualization.Gauge(document.getElementById("gauge_chart_1"));
   gaugeChart1.draw(dataTotal, optionsTotal);
   const gaugeChart2 = new google.visualization.Gauge(document.getElementById("gauge_chart_2"));

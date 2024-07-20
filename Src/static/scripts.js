@@ -60,7 +60,7 @@ function preset() {
   );
   showWebhook(
     JSON.parse(
-      '{"bots":[],"events":[["Event","Hits"]],"failed":0,"feed":[],"repositories":[],"total":0,"statistics": [["Date","Table #1"], ["01/01", 0]],"workflow_runs":[],"total_workflow_runs":0, "installations":0}'
+      '{"bots":[],"events":[["Event","Hits"]],"failed":0,"feed":[],"repositories":[],"total":0,"statistics":[["Date","Table #1"],["01/01",0]],"statistics_github":[["Date","Table #1"],["01/01",0]],"workflow_runs":[],"total_workflow_runs":0, "installations":0}'
     )
   );
 }
@@ -269,6 +269,7 @@ function showUpTimeRobot(response) {
 
 function showWebhook(response) {
   const dataStatistics = google.visualization.arrayToDataTable(response["statistics"]);
+  const dataStatisticsGitHub = google.visualization.arrayToDataTable(response["statistics_github"]);
   const dataEvents = google.visualization.arrayToDataTable(response["events"]);
   const dataFeed = google.visualization.arrayToDataTable(response["feed"]);
   const dataBots = google.visualization.arrayToDataTable(response["bots"]);
@@ -358,6 +359,8 @@ function showWebhook(response) {
 
   const statisticsChart = new google.visualization.LineChart(document.getElementById("webhooks_statistics"));
   statisticsChart.draw(dataStatistics, optionsStatistics);
+  const statisticsGitHubChart = new google.visualization.LineChart(document.getElementById("webhooks_statistics_github"));
+  statisticsGitHubChart.draw(dataStatisticsGitHub, optionsStatistics);
 
   const pieChart1 = new google.visualization.PieChart(document.getElementById("pie_chart_1"));
   pieChart1.draw(dataEvents, optionsEvents);

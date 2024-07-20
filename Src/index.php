@@ -49,7 +49,7 @@ mb_internal_encoding("UTF-8");
 </head>
 
 <body>
-  <div id="webhooks_statistics_github" style="width: 100%; height: 350px;"></div>
+  <div id="webhooks_statistics_github" style="width: 100%; height: 400px;"></div>
   <div style="clear:both;"></div>
   <div style="width: 50%; float: left;">
     <div id="gauge_chart_1" class="gauge"></div>
@@ -67,9 +67,6 @@ mb_internal_encoding("UTF-8");
     <div style="width: 100%;">
       <img id="gh_stats" style="width: 465px; float: left;" alt="GH Stats" src="" />
       <img id="gh_streak" style="width: 465px; float: left;" alt="GH Streak" src="" />
-    </div>
-    <div style="width: 100%; clear: both;">
-      <div id="webhooks_statistics" style="width: 100%; height: 250px;"></div>
     </div>
   </div>
   <div style="clear:both;"></div>
@@ -109,6 +106,8 @@ mb_internal_encoding("UTF-8");
     <div id="cronjobs"></div>
     <div id="bots"></div>
   </div>
+  <div style="clear:both;"></div>
+  <div id="webhooks_statistics" style="width: 100%; height: 400px;"></div>
   <div style="clear:both;"></div>
   <div id="messages" style="width: 100%; float: left; background-color: white;"></div>
   <div style="clear:both;"></div>

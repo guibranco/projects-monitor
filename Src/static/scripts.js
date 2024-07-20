@@ -282,6 +282,18 @@ function showWebhook(response) {
 
   const optionsStatistics = {
     title: "Webhooks by date",
+    legend: { position: "left" },
+    pointSize: 7,
+    hAxis: {
+      title: "Date",
+      textStyle: {
+        fontSize: 6,
+      },
+    },
+  };
+
+  const optionsStatisticsGitHub = {
+    title: "GitHub webhooks by date",
     legend: { position: "bottom" },
     pointSize: 7,
     hAxis: {
@@ -360,7 +372,7 @@ function showWebhook(response) {
   const statisticsChart = new google.visualization.LineChart(document.getElementById("webhooks_statistics"));
   statisticsChart.draw(dataStatistics, optionsStatistics);
   const statisticsGitHubChart = new google.visualization.LineChart(document.getElementById("webhooks_statistics_github"));
-  statisticsGitHubChart.draw(dataStatisticsGitHub, optionsStatistics);
+  statisticsGitHubChart.draw(dataStatisticsGitHub, optionsStatisticsGitHub);
 
   const pieChart1 = new google.visualization.PieChart(document.getElementById("pie_chart_1"));
   pieChart1.draw(dataEvents, optionsEvents);

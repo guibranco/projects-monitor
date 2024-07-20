@@ -282,19 +282,22 @@ function showWebhook(response) {
 
   const optionsStatistics = {
     title: "Webhooks by date",
-    legend: { position: "left" },
+    legend: { position: "right" },
     pointSize: 7,
     hAxis: {
       title: "Date",
       textStyle: {
-        fontSize: 6,
+        fontSize: 10,
       },
     },
   };
 
   const optionsStatisticsGitHub = {
     title: "GitHub webhooks by date",
-    legend: { position: "bottom" },
+    legend: 'none',
+    series: {
+      0: { color: 'green' }
+    }
     pointSize: 7,
     hAxis: {
       title: "Date",

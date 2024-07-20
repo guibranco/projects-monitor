@@ -297,7 +297,7 @@ function showWebhook(response) {
     legend: 'none',
     series: {
       0: { color: 'green' }
-    }
+    },
     pointSize: 7,
     hAxis: {
       title: "Date",

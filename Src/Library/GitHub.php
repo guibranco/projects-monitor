@@ -166,8 +166,9 @@ class GitHub
         $resultBlocked2 = $this->getWithLabel($users, "issue", "\"🚷blocked\"");
         $resultBug = $this->getWithLabel($users, "issue", "bug", ["blocked", "\"🚷blocked\""]);
         $resultBug2 = $this->getWithLabel($users, "issue", "🐛 Bug", ["blocked", "\"🚷blocked\""]);
-        $resultTriage = $this->getWithLabel($allUsers, "issue", "triage");
+        $resultTriage = $this->getWithLabel($allUsers, "issue", "awaiting triage");
         $resultTriage2 = $this->getWithLabel($allUsers, "issue", "\"🚦awaiting triage\"");
+        $resultTriage3 = $this->getWithLabel($allUsers, "issue", "triage");
         $resultAssigned = $this->getWithUserExclusion("issue", "assignee", array_slice($users, 0, 1)[0], $users);
         $resultAuthored = $this->getWithUserExclusion("issue", "author", array_slice($users, 0, 1)[0], $users);
 
@@ -182,6 +183,7 @@ class GitHub
         $data["bug"] = array_merge($data["bug"], $this->mapItems($resultBug2->items));
         $data["triage"] = $this->mapItems($resultTriage->items);
         $data["triage"] = array_merge($data["triage"], $this->mapItems($resultTriage2->items));
+        $data["triage"] = array_merge($data["triage"], $this->mapItems($resultTriage3->items));
         $data["assigned"] = $this->mapItems($resultAssigned->items);
         $data["authored"] = $this->mapItems($resultAuthored->items);
 

@@ -81,17 +81,30 @@ jobs:
           MYSQL_PWD: test
         run: |
           chmod +x Tools/db-check.sh
-          Tools/db-check.sh "localhost" "test" "test"
+          Tools/db-check.sh "localhost" "test" "test"    
 
       - name: Install Postman CLI
-        run: |
-          curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh
+        if: ${{ vars.POSTMAN_ENABLE == 'true' }}
+        run: curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh
 
       - name: Login to Postman CLI
+        if: ${{ vars.POSTMAN_ENABLE == 'true' }}
         run: postman login --with-api-key ${{ secrets.POSTMAN_API_KEY }}
 
       - name: Run API tests
+        if: ${{ vars.POSTMAN_ENABLE == 'true' }}
         run: postman collection run 23511-01109172-13a0-4cdb-bd0c-18a71d624a48 -e 23511-f4e75c62-db3e-460b-b7ac-907e4e48f9b0
+
+      - name: Comment Postman is disabled
+        if: ${{ vars.POSTMAN_ENABLE != 'true' }}
+        uses: mshick/add-pr-comment@v2
+        with:
+          refresh-message-position: true
+          message-id: "postman-disabled"
+          message: |
+            :rocket: **Postman tests are disabled**
+
+            :x: The Postman collection run is disabled.
       
       - name: Populate database
         env:

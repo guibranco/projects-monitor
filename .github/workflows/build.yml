@@ -63,7 +63,7 @@ jobs:
           echo "\$rabbitMqConnectionStrings[] = \"amqp://guest:guest@queue:5672/\";" >> rabbitMq.secrets.php
 
       - name: Docker compose up
-        run: docker-compose up -d
+        run: docker compose up -d
 
       - name: Wait for database to start
         run: sleep 10

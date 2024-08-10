@@ -23,8 +23,10 @@ function init() {
 google.charts.load("current", { packages: ["corechart", "table", "gauge"] });
 google.charts.setOnLoadCallback(drawChart);
 function load(url, callback) {
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const offset = new Date().toString().match(/([-\+][0-9]+)\s/)[1];
   const xhr = new XMLHttpRequest();
-  xhr.open("GET", url, true);
+  xhr.open("GET", url + "?timezone=" + encodeURIComponent(timezone) + "&offset=" + encodeURIComponent(offset), true);
   xhr.onreadystatechange = function () {
     if (this.readyState === 4 && this.status === 200) {
       callback(JSON.parse(this.responseText));

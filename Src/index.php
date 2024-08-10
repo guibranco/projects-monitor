@@ -1,6 +1,14 @@
 <?php
+$timezone = "Europe/Dublin";
+
+if (isset($_COOKIE["timezone"])) {
+    $timezone = strtolower($_COOKIE["timezone"]) === "europe/london"
+      ? $timezone
+      : $_COOKIE["timezone"];
+}
+
+ini_set("date.timezone", $timezone);
 ini_set("default_charset", "UTF-8");
-ini_set("date.timezone", "Europe/Dublin");
 mb_internal_encoding("UTF-8");
 ?>
 
@@ -12,28 +20,7 @@ mb_internal_encoding("UTF-8");
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      background: rgb(13, 17, 23)
-    }
-
-    .gauge {
-      width: 20%;
-      height: 200px;
-      float: left;
-      background-color: white;
-    }
-
-    code {
-      background-color: #000000;
-      color: #FFFFFF;
-      padding: 0 7px;
-      border-radius: 24px;
-      border: 1px solid #000;
-      line-height: 21px;
-      text-wrap: nowrap;
-    }
-  </style>
+  <link rel="stylesheet" href="static/styles.css?<?php echo filemtime("static/styles.css"); ?>">
   <script src="https://www.gstatic.com/charts/loader.js"></script>
   <script src="static/scripts.js?<?php echo filemtime("static/scripts.js"); ?>"></script>
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>

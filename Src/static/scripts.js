@@ -98,11 +98,11 @@ function showCPanel(response) {
     min: 0,
     max: 500,
     greenFrom: 0,
-    greenTo: 10,
-    yellowFrom: 10,
-    yellowTo: 200,
-    redFrom: 200,
-    redTo: 500,
+    greenTo: 100,
+    yellowFrom: 100,
+    yellowTo: 500,
+    redFrom: 500,
+    redTo: 1000,
   };
 
   const gaugeChart7 = new google.visualization.Gauge(document.getElementById("gauge_chart_7"));
@@ -214,11 +214,11 @@ function showMessages(response) {
     min: 0,
     max: 1000,
     greenFrom: 0,
-    greenTo: 250,
-    yellowFrom: 250,
-    yellowTo: 500,
-    redFrom: 500,
-    redTo: 1000,
+    greenTo: 500,
+    yellowFrom: 500,
+    yellowTo: 1000,
+    redFrom: 1000,
+    redTo: 3000,
   };
 
   const optionsByApplications = {
@@ -246,11 +246,11 @@ function showQueues(response) {
     min: 0,
     max: 1000,
     greenFrom: 0,
-    greenTo: 250,
-    yellowFrom: 250,
-    yellowTo: 500,
-    redFrom: 500,
-    redTo: 1000,
+    greenTo: 500,
+    yellowFrom: 500,
+    yellowTo: 1000,
+    redFrom: 1000,
+    redTo: 10000,
   };
 
   const queues = new google.visualization.Table(document.getElementById("queues"));

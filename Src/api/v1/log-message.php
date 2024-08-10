@@ -5,8 +5,6 @@ require_once '../../vendor/autoload.php';
 use GuiBranco\ProjectsMonitor\Library\Application;
 use GuiBranco\ProjectsMonitor\Library\Logger;
 
-date_default_timezone_set('Europe/Dublin');
-
 $application = new Application();
 
 if (!$application->validate()) {

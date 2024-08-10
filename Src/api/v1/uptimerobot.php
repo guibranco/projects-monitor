@@ -2,8 +2,6 @@
 
 require_once '../../vendor/autoload.php';
 
-date_default_timezone_set('Europe/Dublin');
-
 use GuiBranco\ProjectsMonitor\Library\UpTimeRobot;
 
 $upTimeRobot = new UpTimeRobot();

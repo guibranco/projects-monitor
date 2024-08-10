@@ -53,7 +53,7 @@ class Webhooks
         } else {
             $datetimezone = new \DateTimeZone($timezone);
             $dateTime = new \DateTime("now", $timezone);
-            $offset = $dateTime->getOffSet() === 3600 ? "+01:00" : "+00:00";
+            $offset = $dateTime->getOffset() === 3600 ? "+01:00" : "+00:00";
         }
 
         return array("timezone" => $timezone, "offset" => $offset);

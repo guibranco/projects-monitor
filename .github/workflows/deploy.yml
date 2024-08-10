@@ -233,15 +233,15 @@ jobs:
         run: sudo wg-quick down ./wg0.conf
 
   automated-api-tests:
-    name: Automated API tests (Postman)
-    runs-on: ubuntu-latest
+    name: Automated API tests using Postman CLI
     needs: [deploy, database_migrations]
-
+    if: ${{ vars.POSTMAN_ENABLE == 'true' }}
+    runs-on: ubuntu-latest
     steps:
-          
+        
       - name: Install Postman CLI
         run: curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh
-  
+
       - name: Login to Postman CLI
         run: postman login --with-api-key ${{ secrets.POSTMAN_API_KEY }}
 

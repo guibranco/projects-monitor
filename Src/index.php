@@ -1,7 +1,7 @@
 <?php
 $timezone = "Europe/Dublin";
 
-if (isset($_COOKIE["timezone"]) {
+if (isset($_COOKIE["timezone"])) {
   $timezone = strtolower($_COOKIE["timezone"]) === "europe/london"
     ? $timezone
     : $_COOKIE["timezone"];

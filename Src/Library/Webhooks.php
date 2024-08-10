@@ -24,7 +24,7 @@ class Webhooks
 
         require_once __DIR__ . "/../secrets/webhooks.secrets.php";
 
-        $timezone = $this->getTimezone();        
+        $timezone = $this->getTimezone();
         $this->headers = [
             "Authorization: token {$this->token}",
             "Accept: application/json",
@@ -58,7 +58,7 @@ class Webhooks
 
         return array("timezone" => $timezone, "offset" => $offset);
     }
-        
+
 
     public function getDashboard()
     {

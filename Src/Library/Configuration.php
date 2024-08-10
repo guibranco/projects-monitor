@@ -9,12 +9,12 @@ class Configuration
         $timezone = "Europe/Dublin";
 
         if (isset($_COOKIE["timezone"])) {
-          $timezone = strtolower($_COOKIE["timezone"]) === "europe/london"
-            ? $timezone
-            : $_COOKIE["timezone"];
+            $timezone = strtolower($_COOKIE["timezone"]) === "europe/london"
+              ? $timezone
+              : $_COOKIE["timezone"];
         }
         ini_set("date.timezone", $timezone);
-        ini_set("default_charset", "UTF-8");       
+        ini_set("default_charset", "UTF-8");
         mb_internal_encoding("UTF-8");
     }
 

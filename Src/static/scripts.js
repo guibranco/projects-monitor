@@ -18,15 +18,26 @@ function init() {
   document.getElementById("gh_streak").src =
     "https://github-readme-streak-stats-guibranco.vercel.app/" +
     "?user=guibranco&theme=github-green-purple&fire=FF6600";
+
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const offset = new Date().toString().match(/([-\+][0-9]+)\s/)[1];
+  setCookie("timezone", timezone, 10);
+  setCookie("offset", offset, 10);
+}
+
+function setCookie(name, value, expireDays) {
+  const date = new Date();
+  date.setTime(date.getTime() + (expireDays*24*60*60*1000));
+  let expires = "expires="+ date.toUTCString();
+  document.cookie = name + "=" + value + ";" + expires + ";";
 }
 
 google.charts.load("current", { packages: ["corechart", "table", "gauge"] });
 google.charts.setOnLoadCallback(drawChart);
+
 function load(url, callback) {
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const offset = new Date().toString().match(/([-\+][0-9]+)\s/)[1];
   const xhr = new XMLHttpRequest();
-  xhr.open("GET", url + "?timezone=" + encodeURIComponent(timezone) + "&offset=" + encodeURIComponent(offset), true);
+  xhr.open("GET", url, true);
   xhr.onreadystatechange = function () {
     if (this.readyState === 4 && this.status === 200) {
       callback(JSON.parse(this.responseText));

@@ -30,14 +30,14 @@ class Webhooks
         if (isset($_COOKIE["timezone"])) {
             $timezone = strtolower($_COOKIE["timezone"]) === "europe/london"
                 ? "Europe/Dublin"
-                : $_COOOKIE["timezone"];
+                : $_COOKIE["timezone"];
         }
 
         if (isset($_COOKIE["offset"])) {
             $offset = $_COOKIE["offset"];
         } else {
-            $datetimezone = new DateTimeZone($timezone);
-            $dateTime = new DateTime("now", $timezone);
+            $datetimezone = new \DateTimeZone($timezone);
+            $dateTime = new \DateTime("now", $timezone);
             $offset = $dateTime->getOffSet() === 3600 ? "+01:00" : "+00:00";
         }
 

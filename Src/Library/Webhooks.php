@@ -12,6 +12,8 @@ class Webhooks
 
     private $request;
 
+    private $headers;
+
     public function __construct()
     {
         global $webhooksApiToken;
@@ -22,21 +24,38 @@ class Webhooks
 
         require_once __DIR__ . "/../secrets/webhooks.secrets.php";
 
-        $this->token = $webhooksApiToken;
-        $this->request = new Request();
-    }
+        $timezone = "Europe/Dublin";
+        $offset = "+00:00";
+        
+        if (isset($_COOKIE["timezone"])) {
+            $timezone = strtolower($_COOKIE["timezone"]) === "europe/london"
+                ? "Europe/Dublin"
+                : $_COOOKIE["timezone"];
+        }
 
-    public function getDashboard()
-    {
-        $headers = [
+        if (isset($_COOKIE["offset"])) {
+            $offset = $_COOKIE["offset"];
+        } else {
+            $datetimezone = new DateTimeZone($timezone);
+            $dateTime = new DateTime("now", $timezone);
+            $offset = $dateTime->getOffSet() === 3600 ? "+01:00" : "+00:00";
+        }
+
+        $this->headers = [
             "Authorization: token {$this->token}",
             "Accept: application/json",
             "Cache-Control: no-cache",
-            "User-Agent: ProjectsMonitor/1.0 (+https://github.com/guibranco/projects-monitor)"
+            "User-Agent: ProjectsMonitor/1.0 (+https://github.com/guibranco/projects-monitor)",
+            "X-timezone: ": $timezone,
+            "X-timezone-offset: ": $offset
         ];
+        $this->request = new Request();
+        $this->token = $webhooksApiToken;
+    }
 
-        $response = $this->request->get(self::API_URL, $headers);
-
+    public function getDashboard()
+    {      
+        $response = $this->request->get(self::API_URL, $this->headers);
         if ($response->statusCode != 200) {
             $error = $response->statusCode == -1 ? $response->error : $response->body;
             throw new RequestException("Code: {$response->statusCode} - Error: {$error}");

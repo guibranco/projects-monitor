@@ -26,7 +26,7 @@ class Webhooks
 
         $timezone = "Europe/Dublin";
         $offset = "+00:00";
-        
+
         if (isset($_COOKIE["timezone"])) {
             $timezone = strtolower($_COOKIE["timezone"]) === "europe/london"
                 ? "Europe/Dublin"
@@ -54,7 +54,7 @@ class Webhooks
     }
 
     public function getDashboard()
-    {      
+    {
         $response = $this->request->get(self::API_URL, $this->headers);
         if ($response->statusCode != 200) {
             $error = $response->statusCode == -1 ? $response->error : $response->body;

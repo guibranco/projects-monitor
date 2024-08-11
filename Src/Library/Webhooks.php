@@ -8,8 +8,6 @@ class Webhooks
 {
     private const API_URL = "https://guilhermebranco.com.br/webhooks/api.php";
 
-    private $token;
-
     private $request;
 
     private $headers;
@@ -26,7 +24,7 @@ class Webhooks
 
         $timezone = $this->getTimezone();
         $this->headers = [
-            "Authorization: token {$this->token}",
+            "Authorization: token {$webhooksApiToken}",
             "Accept: application/json",
             "Cache-Control: no-cache",
             "User-Agent: ProjectsMonitor/1.0 (+https://github.com/guibranco/projects-monitor)",
@@ -34,7 +32,6 @@ class Webhooks
             "X-timezone-offset: {$timezone["offset"]}"
         ];
         $this->request = new Request();
-        $this->token = $webhooksApiToken;
     }
 
     private function getTimezone()

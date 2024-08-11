@@ -77,10 +77,13 @@ class CPanel
             "dir" => $pathInfo["dirname"],
             "files" => $pathInfo["basename"]
         );
-        $response = $this->getRequest("json-api", "cpanel", $parameters);
+        if (file_exists($fullPath)) {
+            $response = $this->getRequest("json-api", "cpanel", $parameters);
+        } else {
         $stats = $response->cpanelresult->data;
         if (!isset($stats[0])) {
             throw new RequestException("Unable to get stats for file: " . $fullPath);
+            error_log("File not found: $fullPath");
         }
         $ctime = date("H:i:s d/m/Y", $stats[0]->ctime);
         $mtime = date("H:i:s d/m/Y", $stats[0]->mtime);
@@ -94,6 +97,7 @@ class CPanel
             "type" => $stats[0]->type,
             "humansize" => $stats[0]->humansize
         );
+        }
     }
 
     private function loadContent($fullPath)

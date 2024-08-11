@@ -30,8 +30,8 @@ class Webhooks
             "Accept: application/json",
             "Cache-Control: no-cache",
             "User-Agent: ProjectsMonitor/1.0 (+https://github.com/guibranco/projects-monitor)",
-            "X-timezone: " . $timezone["timezone"],
-            "X-timezone-offset: " . $timezone["offset"]
+            "X-timezone: {$timezone["timezone"]}",
+            "X-timezone-offset: {$timezone["offset"]}"
         ];
         $this->request = new Request();
         $this->token = $webhooksApiToken;

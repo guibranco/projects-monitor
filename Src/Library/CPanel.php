@@ -33,6 +33,33 @@ class CPanel
         $this->apiToken = $cPanelApiToken;
         $this->username = $cPanelUsername;
         $this->request = new Request();
+
+        $timezone = $this->getTimezone();
+        ini_set("default_charset", "UTF-8");
+        ini_set("date.timezone", $timezone["timezone"]);
+        mb_internal_encoding("UTF-8");
+    }
+
+    private function getTimezone()
+    {
+        $timezone = "Europe/Dublin";
+        $offset = "+00:00";
+
+        if (isset($_COOKIE["timezone"])) {
+            $timezone = strtolower($_COOKIE["timezone"]) === "europe/london"
+                ? "Europe/Dublin"
+                : $_COOKIE["timezone"];
+        }
+
+        if (isset($_COOKIE["offset"])) {
+            $offset = $_COOKIE["offset"];
+        } else {
+            $datetimezone = new \DateTimeZone($timezone);
+            $dateTime = new \DateTime("now", $datetimezone);
+            $offset = $dateTime->getOffset() === 3600 ? "+01:00" : "+00:00";
+        }
+
+        return array("timezone" => $timezone, "offset" => $offset);
     }
 
     private function getRequest($module, $action, $parameters)

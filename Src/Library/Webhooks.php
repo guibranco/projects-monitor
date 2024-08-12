@@ -49,7 +49,7 @@ class Webhooks
             $offset = $_COOKIE["offset"];
         } else {
             $datetimezone = new \DateTimeZone($timezone);
-            $dateTime = new \DateTime("now", $timezone);
+            $dateTime = new \DateTime("now", $datetimezone);
             $offset = $dateTime->getOffset() === 3600 ? "+01:00" : "+00:00";
         }
 

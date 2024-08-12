@@ -43,7 +43,7 @@ class CPanel
     private function getTimezone()
     {
         $timezone = "Europe/Dublin";
-        
+
         if (isset($_COOKIE["timezone"])) {
             $timezone = strtolower($_COOKIE["timezone"]) === "europe/london"
                 ? $timezone

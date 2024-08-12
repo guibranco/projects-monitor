@@ -333,10 +333,10 @@ function showWebhook(response) {
     min: 0,
     max: 400000,
     greenFrom: 0,
-    greenTo: 100000,
-    yellowFrom: 100000,
-    yellowTo: 250000,
-    redFrom: 250000,
+    greenTo: 200000,
+    yellowFrom: 200000,
+    yellowTo: 300000,
+    redFrom: 300000,
     redTo: 400000,
   };
 

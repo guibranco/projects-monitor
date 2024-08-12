@@ -56,7 +56,6 @@ class Webhooks
         return array("timezone" => $timezone, "offset" => $offset);
     }
 
-
     public function getDashboard()
     {
         $response = $this->request->get(self::API_URL, $this->headers);

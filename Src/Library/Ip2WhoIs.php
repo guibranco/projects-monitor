@@ -43,6 +43,7 @@ class Ip2WhoIs
             "apibr.com",
             "gstraccini.bot",
             "gstraccini.dev",
+            "progress-bar.xyz",
             "straccini.com",
             "straccini.com.br",
             "stracini.com",

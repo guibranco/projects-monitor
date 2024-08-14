@@ -52,11 +52,15 @@ mb_internal_encoding("UTF-8");
   </div>
   <div style="width: 50%; float: left;">
     <div style="width: 100%;">
-      <img id="gh_stats" style="width: 465px; float: left;" alt="GH Stats" src="" />
-      <img id="gh_streak" style="width: 465px; float: left;" alt="GH Streak" src="" />
-      <a href="https://wakatime.com/@6be975b7-7258-4475-bc73-9c0fc554430e">
-        <img src="https://wakatime.com/badge/user/6be975b7-7258-4475-bc73-9c0fc554430e.svg?style=for-the-badge" />
-      </a>
+        <div style="width:465px; float: left;">
+            <img id="gh_stats" style="width: 465px;" alt="GH Stats" src="" />
+            <img id="gh_streak" style="width: 465px;" alt="GH Streak" src="" />
+        </div>
+        <div style="width: calc(100%-465px); float: left;">
+            <a href="https://wakatime.com/@6be975b7-7258-4475-bc73-9c0fc554430e">
+                <img src="https://wakatime.com/badge/user/6be975b7-7258-4475-bc73-9c0fc554430e.svg?style=for-the-badge" />
+            </a>
+        </div>
     </div>
   </div>
   <div style="clear:both;"></div>

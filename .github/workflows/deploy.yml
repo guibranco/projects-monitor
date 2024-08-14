@@ -165,9 +165,9 @@ jobs:
           cd Src
           zip -r deploy.zip . -x install.php
           cd ..
-          mkdir Deploy
-          mv Src/deploy.zip Deploy
-          cp "Src/install.php" Deploy
+          mkdir deploy
+          mv Src/deploy.zip deploy
+          cp "Src/install.php" deploy
 
       - name: Upload files
         if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
@@ -176,12 +176,12 @@ jobs:
           host: ${{ secrets.FTP_SERVER }}
           user: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          localDir: "Deploy/"
+          localDir: "deploy/"
           remoteDir: "/"
 
-      - name: Call install endpoint
+      - name: Call installation endpoint
         if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
-        run: curl "${{ secrets.INSTALLATION_ENDPOINT }}install.php"
+        run: curl --fail-with-body "${{ secrets.INSTALLATION_ENDPOINT }}install.php"
 
   database_migrations:
     name: Database migrations

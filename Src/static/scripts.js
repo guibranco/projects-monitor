@@ -221,6 +221,7 @@ function showHealthChecksIo(response) {
 
 function showMessages(response) {
   const dataMessages = google.visualization.arrayToDataTable(response["messages"]);
+  const dataGrouped = google.visualization.arrayToDataTable(response["grouped"]);
   const dataTotal = google.visualization.arrayToDataTable([["Items", "Total"],["PM Errors", response["total"]],]);
   const dataByApplications = google.visualization.arrayToDataTable(response["byApplications"]);
 
@@ -246,6 +247,8 @@ function showMessages(response) {
 
   const messages = new google.visualization.Table(document.getElementById("messages"));
   messages.draw(dataMessages, tableOptions);
+  const grouped = new google.visualization.Table(document.getElementById("messages_grouped"));
+  grouped.draw(dataGrouped, tableOptions);
   const gaugeChart3 = new google.visualization.Gauge(document.getElementById("gauge_chart_3"));
   gaugeChart3.draw(dataTotal, optionsTotal);
   const pieChart2 = new google.visualization.PieChart(document.getElementById("pie_chart_2"));

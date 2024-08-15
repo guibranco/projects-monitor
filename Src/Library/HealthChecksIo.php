@@ -30,7 +30,7 @@ class HealthChecksIo
         ini_set("date.timezone", $timezone["timezone"]);
         mb_internal_encoding("UTF-8");
     }
-    
+
     private function getTimezone()
     {
         $timezone = "Europe/Dublin";

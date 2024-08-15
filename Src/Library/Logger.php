@@ -120,10 +120,10 @@ class Logger
 
     public function getGroupedMessages()
     {
-        $stmt = $this->connection->prepare("SELECT * FROM `messages_view`");
+        $stmt = $this->connection->prepare("SELECT `name`, `message`, `user_agent`, `messages_count`, `created_at_most_recent` FROM `messages_view` ORDER BY `messages_count` DESC");
         $stmt->execute();
         $data = array();
-        $data[] = array("Application", "Message", "Correlation Ids", "User-Agent", "Messages", "Most recent");
+        $data[] = array("Application", "Message", "User-Agent", "Messages", "Most recent");
         $result = $stmt->get_result();
         if ($result->num_rows === 0) {
             return array();

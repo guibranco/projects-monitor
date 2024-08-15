@@ -15,7 +15,7 @@ $messages = $log->showLastMessages($quantity);
 $result = [
     "total" => $total,
     "byApplications" => $byApplications,
-    "grouped" => $groups,
+    "grouped" => $grouped,
     "messages" => $messages
 ];
 header("Content-Type: application/json; charset=UTF-8");

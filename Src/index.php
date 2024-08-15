@@ -104,8 +104,6 @@ mb_internal_encoding("UTF-8");
   <div style="clear:both;"></div>
   <div id="webhooks_statistics" style="width: 100%; height: 400px;"></div>
   <div style="clear:both;"></div>
-  <div id="messages" style="width: 100%; float: left; background-color: white;"></div>
-  <div style="clear:both;"></div>
 </body>
 
 </html>

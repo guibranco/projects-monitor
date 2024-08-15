@@ -186,7 +186,7 @@ jobs:
   database_migrations:
     name: Database migrations
     runs-on: ubuntu-latest
-    needs: [deploy]
+    needs: deploy
 
     steps:
       - uses: actions/checkout@v4
@@ -203,6 +203,7 @@ jobs:
               - "Tools/**"
 
       - name: Attach WireGuard connection
+        if: steps.changes.outputs.sql == 'true' || github.event_name == 'workflow_dispatch'
         shell: bash
         run: |
           sudo apt install resolvconf
@@ -229,6 +230,7 @@ jobs:
           Tools/db-migration.sh Sql "${{ secrets.MYSQL_SERVER }}" "${{ secrets.MYSQL_USER_MIGRATION }}" "${{ secrets.MYSQL_DATABASE }}"
 
       - name: Detach WireGuard connection
+        if: steps.changes.outputs.sql == 'true' || github.event_name == 'workflow_dispatch'
         shell: bash
         run: sudo wg-quick down ./wg0.conf
 

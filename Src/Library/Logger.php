@@ -102,21 +102,38 @@ class Logger
     private function getFieldList()
     {
         return array(
-            "Id",
             "Application",
             "Message",
             "Correlation Id",
-            "User Agent",
+            "User-Agent",
             "Created At"
         );
     }
 
     private function getQuery()
     {
-        $sql = "SELECT m.id, a.name, m.message, m.correlation_id, m.user_agent, m.created_at ";
+        $sql = "SELECT a.name, m.message, m.correlation_id, m.user_agent, m.created_at ";
         $sql .= "FROM messages as m INNER JOIN applications as a ON m.application_id = a.id ";
         $sql .= "ORDER BY m.id DESC LIMIT 0, ?;";
         return $sql;
+    }
+
+    public function getGroupedMessages()
+    {
+        $stmt = $this->connection->prepare("SELECT * FROM `messages_view`");
+        $stmt->execute();
+        $data = array();
+        $data[] = array("Application", "Message", "Correlation Ids", "User-Agent", "Messages", "Most recent");
+        $result = $stmt->get_result();
+        if ($result->num_rows === 0) {
+            return array();
+        }
+        while ($row = $result->fetch_array(MYSQLI_NUM)) {
+            $data[] = array_values($row);
+        }
+        $stmt->close();
+
+        return $data;
     }
 
     public function showLastMessages($quantity)

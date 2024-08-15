@@ -24,6 +24,32 @@ class HealthChecksIo
 
         $this->readKeys = $healthChecksIoReadKeys;
         $this->request = new Request();
+
+        $timezone = $this->getTimezone();
+        ini_set("default_charset", "UTF-8");
+        ini_set("date.timezone", $timezone["timezone"]);
+        mb_internal_encoding("UTF-8");
+    }
+    
+    private function getTimezone()
+    {
+        $timezone = "Europe/Dublin";
+
+        if (isset($_COOKIE["timezone"])) {
+            $timezone = strtolower($_COOKIE["timezone"]) === "europe/london"
+                ? $timezone
+                : $_COOKIE["timezone"];
+        }
+
+        if (isset($_COOKIE["offset"])) {
+            $offset = $_COOKIE["offset"];
+        } else {
+            $datetimezone = new \DateTimeZone($timezone);
+            $dateTime = new \DateTime("now", $datetimezone);
+            $offset = $dateTime->getOffset() === 3600 ? "+01:00" : "+00:00";
+        }
+
+        return array("timezone" => $timezone, "offset" => $offset);
     }
 
     private function getRequest($readKey)

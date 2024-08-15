@@ -63,7 +63,7 @@ function preset() {
   );
   showMessages(
     JSON.parse(
-      '{"total":0,"byApplications":[["Applications","Hits"]],"messages":[],"grouped":[]}'
+      '{"total":0,"byApplications":[["Applications","Hits"]],"grouped":[]}'
     )
   );
   showQueues(
@@ -220,7 +220,6 @@ function showHealthChecksIo(response) {
 }
 
 function showMessages(response) {
-  const dataMessages = google.visualization.arrayToDataTable(response["messages"]);
   const dataGrouped = google.visualization.arrayToDataTable(response["grouped"]);
   const dataTotal = google.visualization.arrayToDataTable([["Items", "Total"],["PM Errors", response["total"]],]);
   const dataByApplications = google.visualization.arrayToDataTable(response["byApplications"]);
@@ -245,8 +244,6 @@ function showMessages(response) {
     legend: { position: "right" },
   };
 
-  const messages = new google.visualization.Table(document.getElementById("messages"));
-  messages.draw(dataMessages, tableOptions);
   const grouped = new google.visualization.Table(document.getElementById("messages_grouped"));
   grouped.draw(dataGrouped, tableOptions);
   const gaugeChart3 = new google.visualization.Gauge(document.getElementById("gauge_chart_3"));

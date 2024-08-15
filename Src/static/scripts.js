@@ -63,7 +63,7 @@ function preset() {
   );
   showMessages(
     JSON.parse(
-      '{"total":0,"byApplications":[["Applications","Hits"]],"messages":[]}'
+      '{"total":0,"byApplications":[["Applications","Hits"]],"messages":[],"grouped":[]}'
     )
   );
   showQueues(
@@ -78,23 +78,28 @@ function preset() {
   );
 }
 
-function loadAll() {
+function load30Interval() {
   load("api/v1/cpanel", showCPanel);
+  load("api/v1/messages", showMessages);
+  load("api/v1/queues", showQueues);
+  load("api/v1/webhooks", showWebhook);
+}
+
+function load60Interval() {  
   load("api/v1/domains", showDomains);
   load("api/v1/github", showGitHub);
   load("api/v1/healthchecksio", showHealthChecksIo);
-  load("api/v1/messages", showMessages);
-  load("api/v1/queues", showQueues);
   load("api/v1/uptimerobot", showUpTimeRobot);
-  load("api/v1/webhooks", showWebhook);
 }
 
 let showPreset = true;
 
 function drawChart() {
   preset();
-  loadAll();
-  setTimeout(drawChart, 30000);
+  load30Interval();
+  load60Interval();
+  setInterval(load30Interval, 30 * 1000);
+  setInterval(load60Interval, 60 * 1000);
 }
 
 function showCPanel(response) {

@@ -76,9 +76,7 @@ mb_internal_encoding("UTF-8");
   </div>
   <div style="clear:both;"></div>
   <div id="messages_grouped" style="width: 50%; height: 500px; float: left; background-color: white;"></div>
-  <div id="error_log_messages" style="width: 50%; height: 500px; float: left; background-color: white;"></div>
-  <div style="clear:both;"></div>
-  <div id="repositories" style="width: 50%; height: 500px; float: left; background-color: white;"></div>
+  <div id="error_log_messages" style="width: 50%; height: 500px; float: left; background-color: white;"></div> 
   <div style="clear:both;"></div>
   <div id="workflow_runs" style="width: 100%; float: left; background-color: white;"></div>
   <div style="clear:both;"></div>
@@ -91,6 +89,7 @@ mb_internal_encoding("UTF-8");
     <div id="pull_requests_blocked"></div>
     <div id="pull_requests_authored"></div>
     <div id="issues_authored"></div>
+    <div id="repositories"></div>
   </div>
   <div style="width: 50%; float: left; background-color: white;">
     <div id="pull_requests_latest"></div>

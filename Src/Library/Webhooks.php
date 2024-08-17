@@ -10,9 +10,9 @@ class Webhooks
     private $apiUrl;
 
     private $headers;
-    
+
     private $request;
-    
+
     public function __construct()
     {
         global $webhooksApiToken, $webhooksApiUrl;
@@ -38,14 +38,14 @@ class Webhooks
     }
 
     public function getDashboard()
-     {
+    {
         $response = $this->request->get($this->apiUrl, $this->headers);
         if ($response->statusCode === 200) {
             return json_decode($response->body);
         }
-        
+
         $error = $response->statusCode == -1 ? $response->error : $response->body;
-        throw new RequestException("Code: {$response->statusCode} - Error: {$error}");        
+        throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
     }
 
     public function getWebhook($sequence)
@@ -54,8 +54,8 @@ class Webhooks
         if ($response->statusCode === 200) {
             return json_decode($response->body);
         }
-        
+
         $error = $response->statusCode == -1 ? $response->error : $response->body;
-        throw new RequestException("Code: {$response->statusCode} - Error: {$error}");        
+        throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
     }
 }

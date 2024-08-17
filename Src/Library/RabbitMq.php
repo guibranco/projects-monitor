@@ -14,7 +14,7 @@ class RabbitMq
     public function __construct()
     {
         new Configuration();
-        
+
         global $rabbitMqConnectionStrings;
 
         if (!file_exists(__DIR__ . "/../secrets/rabbitMq.secrets.php")) {

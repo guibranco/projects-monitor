@@ -35,7 +35,7 @@ class UpTimeRobot
             "Content-Type: application/x-www-form-urlencoded",
             "Accept: application/json",
             "Cache-Control: no-cache",
-            constant("USER_AGENT")            
+            constant("USER_AGENT")
         ];
 
         $data = http_build_query([

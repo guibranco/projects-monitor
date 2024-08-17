@@ -135,31 +135,12 @@ class GitHub
 
     public function getIssues()
     {
-        $users = array(
-            "guibranco",
-            "ApiBR",
-            "GuilhermeStracini",
-            "InovacaoMediaBrasil",
-        );
-
-        $vacanciesUsers = array(
-            "rustdevbr",
-            "pythondevbr",
-            "pydevbr",
-            "dotnetdevbr",
-            "nodejsdevbr",
-            "rubydevbr",
-            "frontend-ao",
-            "frontend-pt",
-            "backend-ao",
-            "backend-pt",
-            "developersRJ"
-        );
-
+        $users = ["guibranco", "ApiBR", "GuilhermeStracini", "InovacaoMediaBrasil"];
+        $vacanciesUsers = ["rustdevbr", "pythondevbr", "pydevbr", "dotnetdevbr", "nodejsdevbr", "rubydevbr", "frontend-ao", "frontend-pt", "backend-ao", "backend-pt", "developersRJ"];
         $allUsers = array_merge($users, $vacanciesUsers);
 
         $resultAll = $this->getWithLabel($users, "issue");
-        $resultOthers = $this->getWithLabel($users, "issue", null, ["WIP", "\"🛠 WIP\"", "bug", "triage", "\"🚦awaiting triage\"", "blocked", "\"🚷blocked\""]);
+        $resultOthers = $this->getWithLabel($users, "issue", null, ["WIP", "\"🛠 WIP\"", "bug", "🐛 bug", "triage", "\"🚦awaiting triage\"", "blocked", "\"🚷blocked\""]);
         $resultWip = $this->getWithLabel($users, "issue", "WIP", ["blocked", "\"🚷blocked\""]);
         $resultWip2 = $this->getWithLabel($users, "issue", "\"🛠 WIP\"", ["blocked", "\"🚷blocked\""]);
         $resultBlocked = $this->getWithLabel($users, "issue", "blocked");
@@ -175,15 +156,10 @@ class GitHub
         $data = array();
         $data["total_count"] = $resultAll->total_count;
         $data["others"] = $this->mapItems($resultOthers->items);
-        $data["wip"] = $this->mapItems($resultWip->items);
-        $data["wip"] = array_merge($data["wip"], $this->mapItems($resultWip2->items));
-        $data["blocked"] = $this->mapItems($resultBlocked->items);
-        $data["blocked"] = array_merge($data["blocked"], $this->mapItems($resultBlocked2->items));
-        $data["bug"] = $this->mapItems($resultBug->items);
-        $data["bug"] = array_merge($data["bug"], $this->mapItems($resultBug2->items));
-        $data["triage"] = $this->mapItems($resultTriage->items);
-        $data["triage"] = array_merge($data["triage"], $this->mapItems($resultTriage2->items));
-        $data["triage"] = array_merge($data["triage"], $this->mapItems($resultTriage3->items));
+        $data["wip"] = array_merge($this->mapItems($resultWip->items), $this->mapItems($resultWip2->items));
+        $data["blocked"] = array_merge($this->mapItems($resultBlocked->items), $this->mapItems($resultBlocked2->items));
+        $data["bug"] = array_merge($this->mapItems($resultBug->items), $this->mapItems($resultBug2->items));
+        $data["triage"] = array_merge($this->mapItems($resultTriage->items), $this->mapItems($resultTriage2->items), $this->mapItems($resultTriage3->items));
         $data["assigned"] = $this->mapItems($resultAssigned->items);
         $data["authored"] = $this->mapItems($resultAuthored->items);
 
@@ -192,23 +168,7 @@ class GitHub
 
     public function getPullRequests()
     {
-        $users = array(
-            "guibranco",
-            "ApiBR",
-            "GuilhermeStracini",
-            "InovacaoMediaBrasil",
-            "rustdevbr",
-            "pythondevbr",
-            "pydevbr",
-            "dotnetdevbr",
-            "nodejsdevbr",
-            "rubydevbr",
-            "frontend-ao",
-            "frontend-pt",
-            "backend-ao",
-            "backend-pt",
-            "developersRJ"
-        );
+        $users = ["guibranco", "ApiBR", "GuilhermeStracini", "InovacaoMediaBrasil", "rustdevbr", "pythondevbr", "pydevbr", "dotnetdevbr", "nodejsdevbr", "rubydevbr", "frontend-ao", "frontend-pt", "backend-ao", "backend-pt", "developersRJ"];
 
         $result = $this->getWithLabel($users, "pr");
         $resultNotBlocked = $this->getWithLabel($users, "pr", null, ["blocked", "\"🚷blocked\""]);
@@ -219,8 +179,7 @@ class GitHub
         $data = array();
         $data["total_count"] = $result->total_count;
         $data["latest"] = $this->mapItems($resultNotBlocked->items);
-        $data["blocked"] = $this->mapItems($resultBlocked->items);
-        $data["blocked"] = array_merge($data["blocked"], $this->mapItems($resultBlocked2->items));
+        $data["blocked"] = array_merge($this->mapItems($resultBlocked->items), $this->mapItems($resultBlocked2->items));
         $data["authored"] = $this->mapItems($resultAuthored->items);
 
         return $data;

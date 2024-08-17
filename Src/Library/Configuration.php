@@ -2,18 +2,14 @@
 
 namespace GuiBranco\ProjectsMonitor\Library;
 
+use GuiBranco\ProjectsMonitor\Library\TimeZone;
+
 class Configuration
 {
     public function __construct()
     {
-        $timezone = "Europe/Dublin";
-
-        if (isset($_COOKIE["timezone"])) {
-            $timezone = strtolower($_COOKIE["timezone"]) === "europe/london"
-              ? $timezone
-              : $_COOKIE["timezone"];
-        }
-        ini_set("date.timezone", $timezone);
+        $timeZone = new TimeZone();
+        ini_set("date.timezone", $timeZone->getTimeZone());
         ini_set("default_charset", "UTF-8");
         mb_internal_encoding("UTF-8");
     }
@@ -28,8 +24,7 @@ class Configuration
             }
         }
 
-        $headers["REMOTE_ADDR"] = isset($_SERVER) && isset($_SERVER['REMOTE_ADDR'])
-            ? $_SERVER['REMOTE_ADDR'] : "CRONJOB";
+        $headers["REMOTE_ADDR"] = isset($_SERVER) && isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : "CRONJOB";
         $headers["HTTP_HOST"] = isset($_SERVER) && isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : "CRONJOB";
         $headers["REQUEST_URI"] = isset($_SERVER) && isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : "/";
         return $headers;

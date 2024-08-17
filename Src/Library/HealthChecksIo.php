@@ -34,7 +34,7 @@ class HealthChecksIo
         $headers = [
             "X-Api-Key: {$readKey}",
             "Accept: application/json",
-            "User-Agent: ProjectsMonitor/1.0 (+https://github.com/guibranco/projects-monitor)"
+            constant("USER_AGENT")
         ];
 
         $response = $this->request->get($url, $headers);

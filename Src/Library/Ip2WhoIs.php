@@ -3,6 +3,7 @@
 namespace GuiBranco\ProjectsMonitor\Library;
 
 use GuiBranco\Pancake\Request;
+use GuiBranco\ProjectsMonitor\Library\Configuration;
 use GuiBranco\ProjectsMonitor\secrets\Ip2WhoIsSecrets;
 
 class Ip2WhoIs
@@ -13,6 +14,7 @@ class Ip2WhoIs
 
     public function __construct()
     {
+        $configuration = new Configuration();
         $this->request = new Request();
         $this->headers = [
             "Accept: application/json",

@@ -101,7 +101,7 @@ class GitHub
     {
         $keys = array_keys($items);
         foreach ($keys as $key) {
-            array_unshift($items[$key], array("Number", "Title", "Repository", "User"));
+            array_unshift($items[$key], ["Number", "Title", "Repository", "User"]);
         }
     }
 

@@ -140,13 +140,13 @@ class GitHub
         $allUsers = array_merge($users, $vacanciesUsers);
 
         $resultAll = $this->getWithLabel($users, "issue");
-        $resultOthers = $this->getWithLabel($users, "issue", null, ["WIP", "\"🛠 WIP\"", "bug", "🐛 bug", "triage", "\"🚦awaiting triage\"", "blocked", "\"🚷blocked\""]);
+        $resultOthers = $this->getWithLabel($users, "issue", null, ["WIP", "\"🛠 WIP\"", "bug", "\"🐛 bug\"", "triage", "\"🚦awaiting triage\"", "blocked", "\"🚷blocked\""]);
         $resultWip = $this->getWithLabel($users, "issue", "WIP", ["blocked", "\"🚷blocked\""]);
         $resultWip2 = $this->getWithLabel($users, "issue", "\"🛠 WIP\"", ["blocked", "\"🚷blocked\""]);
         $resultBlocked = $this->getWithLabel($users, "issue", "blocked");
         $resultBlocked2 = $this->getWithLabel($users, "issue", "\"🚷blocked\"");
         $resultBug = $this->getWithLabel($users, "issue", "bug", ["blocked", "\"🚷blocked\""]);
-        $resultBug2 = $this->getWithLabel($users, "issue", "🐛 bug", ["blocked", "\"🚷blocked\""]);
+        $resultBug2 = $this->getWithLabel($users, "issue", "\"🐛 bug\"", ["blocked", "\"🚷blocked\""]);
         $resultTriage = $this->getWithLabel($allUsers, "issue", "awaiting triage");
         $resultTriage2 = $this->getWithLabel($allUsers, "issue", "\"🚦awaiting triage\"");
         $resultTriage3 = $this->getWithLabel($allUsers, "issue", "triage");

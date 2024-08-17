@@ -3,7 +3,7 @@
 namespace GuiBranco\ProjectsMonitor\Library;
 
 use GuiBranco\Pancake\Request;
-use GuiBranco\ProjectsMonitor\Library\TimeZone;
+use GuiBranco\ProjectsMonitor\Library\Configuration;
 
 class HealthChecksIo
 {
@@ -15,6 +15,7 @@ class HealthChecksIo
 
     public function __construct()
     {
+        $configuration = new Configuration();
         global $healthChecksIoReadKeys;
 
         if (!file_exists(__DIR__ . "/../secrets/healthChecksIo.secrets.php")) {
@@ -25,11 +26,6 @@ class HealthChecksIo
 
         $this->readKeys = $healthChecksIoReadKeys;
         $this->request = new Request();
-
-        $timeZone = new TimeZone();
-        ini_set("default_charset", "UTF-8");
-        ini_set("date.timezone", $timeZone->getTimeZone());
-        mb_internal_encoding("UTF-8");
     }
 
     private function getRequest($readKey)

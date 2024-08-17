@@ -99,17 +99,23 @@ class GitHub
         return $this->getSearch($queryString);
     }
 
-    private function mapItems($items, $includeHeaders = true)
+    private function addHeader(&$items)
+    {
+        $keys = array_keys($items);
+        foreach ($keys as $key) {
+            if (is_array($items[$key])) {
+                array_unshift($items[$key], ["Number", "Title", "Repository", "User"]);
+            }
+        }
+    }
+
+    private function mapItems($items)
     {
         if (count($items) == 0) {
             return array();
         }
 
         $result = array();
-
-        if ($includeHeaders) {
-            $result[] = array("Number", "Title", "Repository", "User");
-        }
 
         $mkd = Markdown::new();
 
@@ -160,12 +166,14 @@ class GitHub
         $data = array();
         $data["total_count"] = $resultAll->total_count;
         $data["others"] = $this->mapItems($resultOthers->items);
-        $data["wip"] = array_merge($this->mapItems($resultWip->items), $this->mapItems($resultWip2->items, false));
-        $data["blocked"] = array_merge($this->mapItems($resultBlocked->items), $this->mapItems($resultBlocked2->items, false));
-        $data["bug"] = array_merge($this->mapItems($resultBug->items), $this->mapItems($resultBug2->items, false));
-        $data["triage"] = array_merge($this->mapItems($resultTriage->items), $this->mapItems($resultTriage2->items, false), $this->mapItems($resultTriage3->items, false));
+        $data["wip"] = array_merge($this->mapItems($resultWip->items), $this->mapItems($resultWip2->items));
+        $data["blocked"] = array_merge($this->mapItems($resultBlocked->items), $this->mapItems($resultBlocked2->items));
+        $data["bug"] = array_merge($this->mapItems($resultBug->items), $this->mapItems($resultBug2->items));
+        $data["triage"] = array_merge($this->mapItems($resultTriage->items), $this->mapItems($resultTriage2->items), $this->mapItems($resultTriage3->items));
         $data["assigned"] = $this->mapItems($resultAssigned->items);
         $data["authored"] = $this->mapItems($resultAuthored->items);
+
+        $this->addHeader($data);
 
         return $data;
     }
@@ -183,8 +191,10 @@ class GitHub
         $data = array();
         $data["total_count"] = $result->total_count;
         $data["latest"] = $this->mapItems($resultNotBlocked->items);
-        $data["blocked"] = array_merge($this->mapItems($resultBlocked->items), $this->mapItems($resultBlocked2->items, false));
+        $data["blocked"] = array_merge($this->mapItems($resultBlocked->items), $this->mapItems($resultBlocked2->items));
         $data["authored"] = $this->mapItems($resultAuthored->items);
+
+        $this->addHeader($data);
 
         return $data;
     }

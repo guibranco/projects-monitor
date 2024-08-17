@@ -21,7 +21,7 @@ class Configuration
         if (defined("USER_AGENT_VENDOR")) {
             return;
         }
-        
+
         $version = "1.0.0";
         $versionFile = "../../version.txt";
         if (file_exists($versionFile)) {

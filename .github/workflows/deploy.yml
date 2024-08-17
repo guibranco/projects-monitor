@@ -157,6 +157,7 @@ jobs:
           mkdir -p secrets
           cd secrets
           echo "<?php" >> webhooks.secrets.php
+          echo "\$webhooksApiUrl   = \"${{ secrets.WEBHOOKS_API_URL }}\";" >> webhooks.secrets.php
           echo "\$webhooksApiToken = \"${{ secrets.WEBHOOKS_API_TOKEN }}\";" >> webhooks.secrets.php
 
       - name: Zip files

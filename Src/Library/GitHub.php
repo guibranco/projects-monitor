@@ -16,7 +16,7 @@ class GitHub
 
     public function __construct()
     {
-        $configuration = new Configuration();
+        new Configuration();
         global $gitHubToken;
 
         if (!file_exists(__DIR__ . "/../secrets/gitHub.secrets.php")) {

@@ -2,6 +2,7 @@
 
 namespace GuiBranco\ProjectsMonitor\Library;
 
+use GuiBranco\ProjectsMonitor\Library\Configuration;
 use GuiBranco\Pancake\Request;
 
 class CPanel
@@ -21,6 +22,7 @@ class CPanel
 
     public function __construct()
     {
+        new Configuration();
         global $cPanelApiToken, $cPanelBaseUrl, $cPanelUsername;
 
         if (!file_exists(__DIR__ . "/../secrets/cPanel.secrets.php")) {
@@ -32,12 +34,7 @@ class CPanel
         $this->baseUrl = $cPanelBaseUrl;
         $this->apiToken = $cPanelApiToken;
         $this->username = $cPanelUsername;
-        $this->request = new Request();
-
-        $timezone = $this->getTimezone();
-        ini_set("default_charset", "UTF-8");
-        ini_set("date.timezone", $timezone["timezone"]);
-        mb_internal_encoding("UTF-8");
+        $this->request = new Request();       
     }
 
     private function getTimezone()
@@ -67,7 +64,7 @@ class CPanel
         $headers = [
             "Authorization: cpanel {$this->username}:{$this->apiToken}",
             "Accept: application/json",
-            "User-Agent: ProjectsMonitor/1.0 (+https://github.com/guibranco/projects-monitor)"
+            constant("USER_AGENT")
         ];
 
         $response = $this->request->get($url, $headers);

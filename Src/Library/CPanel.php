@@ -2,6 +2,7 @@
 
 namespace GuiBranco\ProjectsMonitor\Library;
 
+use GuiBranco\ProjectsMonitor\Library\Configuration;
 use GuiBranco\Pancake\Request;
 
 class CPanel
@@ -21,6 +22,7 @@ class CPanel
 
     public function __construct()
     {
+        new Configuration();
         global $cPanelApiToken, $cPanelBaseUrl, $cPanelUsername;
 
         if (!file_exists(__DIR__ . "/../secrets/cPanel.secrets.php")) {
@@ -33,32 +35,6 @@ class CPanel
         $this->apiToken = $cPanelApiToken;
         $this->username = $cPanelUsername;
         $this->request = new Request();
-
-        $timezone = $this->getTimezone();
-        ini_set("default_charset", "UTF-8");
-        ini_set("date.timezone", $timezone["timezone"]);
-        mb_internal_encoding("UTF-8");
-    }
-
-    private function getTimezone()
-    {
-        $timezone = "Europe/Dublin";
-
-        if (isset($_COOKIE["timezone"])) {
-            $timezone = strtolower($_COOKIE["timezone"]) === "europe/london"
-                ? $timezone
-                : $_COOKIE["timezone"];
-        }
-
-        if (isset($_COOKIE["offset"])) {
-            $offset = $_COOKIE["offset"];
-        } else {
-            $datetimezone = new \DateTimeZone($timezone);
-            $dateTime = new \DateTime("now", $datetimezone);
-            $offset = $dateTime->getOffset() === 3600 ? "+01:00" : "+00:00";
-        }
-
-        return array("timezone" => $timezone, "offset" => $offset);
     }
 
     private function getRequest($module, $action, $parameters)
@@ -67,7 +43,7 @@ class CPanel
         $headers = [
             "Authorization: cpanel {$this->username}:{$this->apiToken}",
             "Accept: application/json",
-            "User-Agent: ProjectsMonitor/1.0 (+https://github.com/guibranco/projects-monitor)"
+            constant("USER_AGENT")
         ];
 
         $response = $this->request->get($url, $headers);

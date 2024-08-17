@@ -34,7 +34,7 @@ class CPanel
         $this->baseUrl = $cPanelBaseUrl;
         $this->apiToken = $cPanelApiToken;
         $this->username = $cPanelUsername;
-        $this->request = new Request();       
+        $this->request = new Request();
     }
 
     private function getTimezone()

@@ -15,7 +15,7 @@ class UpTimeRobot
     public function __construct()
     {
         $configuration = new Configuration();
-        
+
         global $upTimeRobotToken;
 
         if (!file_exists(__DIR__ . "/../secrets/upTimeRobot.secrets.php")) {

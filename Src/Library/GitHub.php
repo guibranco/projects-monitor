@@ -165,7 +165,7 @@ class GitHub
         $resultBlocked = $this->getWithLabel($users, "issue", "blocked");
         $resultBlocked2 = $this->getWithLabel($users, "issue", "\"🚷blocked\"");
         $resultBug = $this->getWithLabel($users, "issue", "bug", ["blocked", "\"🚷blocked\""]);
-        $resultBug2 = $this->getWithLabel($users, "issue", "🐛 Bug", ["blocked", "\"🚷blocked\""]);
+        $resultBug2 = $this->getWithLabel($users, "issue", "🐛 bug", ["blocked", "\"🚷blocked\""]);
         $resultTriage = $this->getWithLabel($allUsers, "issue", "awaiting triage");
         $resultTriage2 = $this->getWithLabel($allUsers, "issue", "\"🚦awaiting triage\"");
         $resultTriage3 = $this->getWithLabel($allUsers, "issue", "triage");

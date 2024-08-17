@@ -6,12 +6,37 @@ use GuiBranco\ProjectsMonitor\Library\TimeZone;
 
 class Configuration
 {
+    private $timeZone;
+
     public function __construct()
     {
-        $timeZone = new TimeZone();
-        ini_set("date.timezone", $timeZone->getTimeZone());
+        $this->timeZone = new TimeZone();
+        ini_set("date.timezone", $this->timeZone->getTimeZone());
         ini_set("default_charset", "UTF-8");
         mb_internal_encoding("UTF-8");
+
+        $this->setUserAgent();
+    }
+
+    private function setUserAgent()
+    {
+        if (defined("USER_AGENT_VENDOR")) {
+            return;
+        }
+
+        $version = "1.0.0";
+        $versionFile = "../../version.txt";
+        if (file_exists($versionFile)) {
+            $version = file_get_contents($versionFile);
+        }
+
+        define("USER_AGENT_VENDOR", "projects-monitor/{$version} (+https://github.com/guibranco/projects-monitor)");
+        define("USER_AGENT", USER_AGENT_VENDOR);
+    }
+
+    public function getTimeZone()
+    {
+        return $this->timeZone;
     }
 
     public function getRequestHeaders()

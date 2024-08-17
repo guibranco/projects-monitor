@@ -9,11 +9,11 @@ class TimeZone
 
     public function __construct()
     {
-        $timezone = "Europe/Dublin";
+        $timeZone = "Europe/Dublin";
         $offset = "+00:00";
 
         if (isset($_COOKIE["timezone"])) {
-            $timezone = strtolower($_COOKIE["timezone"]) === "europe/london"
+            $timeZone = strtolower($_COOKIE["timezone"]) === "europe/london"
                 ? "Europe/Dublin"
                 : $_COOKIE["timezone"];
         }
@@ -21,8 +21,8 @@ class TimeZone
         if (isset($_COOKIE["offset"])) {
             $offset = $_COOKIE["offset"];
         } else {
-            $datetimezone = new \DateTimeZone($timezone);
-            $dateTime = new \DateTime("now", $datetimezone);
+            $dateTimeZone = new \DateTimeZone($timeZone);
+            $dateTime = new \DateTime("now", $dateTimeZone);
             $offset = $dateTime->getOffset() === 3600 ? "+01:00" : "+00:00";
         }
 

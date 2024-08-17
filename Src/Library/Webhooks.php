@@ -33,7 +33,7 @@ class Webhooks
             "X-timezone-offset: {$timeZone->getOffset()}"
         ];
         $this->request = new Request();
-    }   
+    }
 
     public function getDashboard()
     {

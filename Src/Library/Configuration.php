@@ -6,12 +6,19 @@ use GuiBranco\ProjectsMonitor\Library\TimeZone;
 
 class Configuration
 {
+    private $timeZone;
+    
     public function __construct()
     {
-        $timeZone = new TimeZone();
-        ini_set("date.timezone", $timeZone->getTimeZone());
+        $this->timeZone = new TimeZone();
+        ini_set("date.timezone", $this->timeZone->getTimeZone());
         ini_set("default_charset", "UTF-8");
         mb_internal_encoding("UTF-8");
+    }
+
+    public function getTimeZone()
+    {
+        return $this->timeZone;
     }
 
     public function getRequestHeaders()

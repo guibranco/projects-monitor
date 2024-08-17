@@ -96,7 +96,7 @@ class GitHub
 
         return $this->getSearch($queryString);
     }
-    
+
     private function addHeader(&$items)
     {
         $keys = array_keys($items);
@@ -104,7 +104,7 @@ class GitHub
             array_unshift($items[$key], array("Number", "Title", "Repository", "User"));
         }
     }
-    
+
     private function mapItems($items)
     {
         if (count($items) == 0) {
@@ -168,7 +168,7 @@ class GitHub
         $data["triage"] = array_merge($this->mapItems($resultTriage->items), $this->mapItems($resultTriage2->items), $this->mapItems($resultTriage3->items));
         $data["assigned"] = $this->mapItems($resultAssigned->items);
         $data["authored"] = $this->mapItems($resultAuthored->items);
-        
+
         $this->addHeader($data);
 
         return $data;

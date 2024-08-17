@@ -7,7 +7,7 @@ use GuiBranco\ProjectsMonitor\Library\TimeZone;
 class Configuration
 {
     private $timeZone;
-    
+
     public function __construct()
     {
         $this->timeZone = new TimeZone();

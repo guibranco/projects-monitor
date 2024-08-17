@@ -14,7 +14,7 @@ class UpTimeRobot
 
     public function __construct()
     {
-        $configuration = new Configuration();
+        new Configuration();
 
         global $upTimeRobotToken;
 
@@ -35,7 +35,7 @@ class UpTimeRobot
             "Content-Type: application/x-www-form-urlencoded",
             "Accept: application/json",
             "Cache-Control: no-cache",
-            "User-Agent: ProjectsMonitor/1.0 (+https://github.com/guibranco/projects-monitor)"
+            constant("USER_AGENT")            
         ];
 
         $data = http_build_query([

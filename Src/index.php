@@ -1,15 +1,10 @@
 <?php
-$timezone = "Europe/Dublin";
 
-if (isset($_COOKIE["timezone"])) {
-    $timezone = strtolower($_COOKIE["timezone"]) === "europe/london"
-      ? $timezone
-      : $_COOKIE["timezone"];
-}
+require_once 'vendor/autoload.php';
 
-ini_set("date.timezone", $timezone);
-ini_set("default_charset", "UTF-8");
-mb_internal_encoding("UTF-8");
+use GuiBranco\ProjectsMonitor\Library\Configuration;
+
+$configuration = new Configuration();
 ?>
 
 <!DOCTYPE html>

@@ -7,15 +7,15 @@ use GuiBranco\ProjectsMonitor\Library\Configuration;
 
 class Webhooks
 {
-    private const API_URL = "https://guilhermebranco.com.br/webhooks/api.php";
-
-    private $request;
+    private $apiUrl;
 
     private $headers;
-
+    
+    private $request;
+    
     public function __construct()
     {
-        global $webhooksApiToken;
+        global $webhooksApiToken, $webhooksApiUrl;
 
         $configuration = new Configuration();
 
@@ -25,11 +25,12 @@ class Webhooks
 
         require_once __DIR__ . "/../secrets/webhooks.secrets.php";
 
+        $this->apiUrl = $webhooksApiUrl;
         $this->headers = [
             "Authorization: token {$webhooksApiToken}",
             "Accept: application/json",
             "Cache-Control: no-cache",
-            "User-Agent: ProjectsMonitor/1.0 (+https://github.com/guibranco/projects-monitor)",
+            constant("USER_AGENT"),
             "X-timezone: {$configuration->getTimeZone()->getTimeZone()}",
             "X-timezone-offset: {$configuration->getTimeZone()->getOffset()}"
         ];
@@ -37,13 +38,24 @@ class Webhooks
     }
 
     public function getDashboard()
-    {
-        $response = $this->request->get(self::API_URL, $this->headers);
-        if ($response->statusCode != 200) {
-            $error = $response->statusCode == -1 ? $response->error : $response->body;
-            throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
+     {
+        $response = $this->request->get($this->apiUrl, $this->headers);
+        if ($response->statusCode === 200) {
+            return json_decode($response->body);
         }
+        
+        $error = $response->statusCode == -1 ? $response->error : $response->body;
+        throw new RequestException("Code: {$response->statusCode} - Error: {$error}");        
+    }
 
-        return json_decode($response->body);
+    public function getWebhook($sequence)
+    {
+        $response = $this->request->get($this->apiUrl . $sequence, $this->headers);
+        if ($response->statusCode === 200) {
+            return json_decode($response->body);
+        }
+        
+        $error = $response->statusCode == -1 ? $response->error : $response->body;
+        throw new RequestException("Code: {$response->statusCode} - Error: {$error}");        
     }
 }

@@ -3,7 +3,7 @@
 namespace GuiBranco\ProjectsMonitor\Library;
 
 use GuiBranco\Pancake\Request;
-use GuiBranco\ProjectsMonitor\Library\TimeZone;
+use GuiBranco\ProjectsMonitor\Library\Configuration;
 
 class Webhooks
 {
@@ -17,20 +17,21 @@ class Webhooks
     {
         global $webhooksApiToken;
 
+        $configuration = new Configuration();
+
         if (!file_exists(__DIR__ . "/../secrets/webhooks.secrets.php")) {
             throw new SecretsFileNotFoundException("File not found: webhooks.secrets.php");
         }
 
         require_once __DIR__ . "/../secrets/webhooks.secrets.php";
 
-        $timeZone = new TimeZone();
         $this->headers = [
             "Authorization: token {$webhooksApiToken}",
             "Accept: application/json",
             "Cache-Control: no-cache",
             "User-Agent: ProjectsMonitor/1.0 (+https://github.com/guibranco/projects-monitor)",
-            "X-timezone: {$timeZone->getTimeZone()}",
-            "X-timezone-offset: {$timeZone->getOffset()}"
+            "X-timezone: {$configuration->getTimeZone()->getTimeZone()}",
+            "X-timezone-offset: {$configuration->getTimeZone()->getOffset()}"
         ];
         $this->request = new Request();
     }

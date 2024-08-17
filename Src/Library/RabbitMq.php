@@ -3,6 +3,7 @@
 namespace GuiBranco\ProjectsMonitor\Library;
 
 use GuiBranco\Pancake\Request;
+use GuiBranco\ProjectsMonitor\Library\Configuration;
 
 class RabbitMq
 {
@@ -13,6 +14,8 @@ class RabbitMq
     public function __construct()
     {
         global $rabbitMqConnectionStrings;
+
+        $configuration = new Configuration();
 
         if (!file_exists(__DIR__ . "/../secrets/rabbitMq.secrets.php")) {
             throw new SecretsFileNotFoundException("File not found: rabbitMq.secrets.php");

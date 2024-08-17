@@ -3,6 +3,7 @@
 namespace GuiBranco\ProjectsMonitor\Library;
 
 use GuiBranco\Pancake\Request;
+use GuiBranco\ProjectsMonitor\Library\Configuration;
 use FastVolt\Helper\Markdown;
 
 class GitHub
@@ -15,6 +16,7 @@ class GitHub
 
     public function __construct()
     {
+        $configuration = new Configuration();
         global $gitHubToken;
 
         if (!file_exists(__DIR__ . "/../secrets/gitHub.secrets.php")) {
@@ -29,7 +31,7 @@ class GitHub
             "Authorization: token {$gitHubToken}",
             "Accept: application/vnd.github.v3+json",
             "X-GitHub-Api-Version: 2022-11-28",
-            "User-Agent: ProjectsMonitor/1.0 (+https://github.com/guibranco/projects-monitor)"
+            constant("USER_AGENT")
         ];
     }
 

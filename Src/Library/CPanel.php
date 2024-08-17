@@ -37,27 +37,6 @@ class CPanel
         $this->request = new Request();
     }
 
-    private function getTimezone()
-    {
-        $timezone = "Europe/Dublin";
-
-        if (isset($_COOKIE["timezone"])) {
-            $timezone = strtolower($_COOKIE["timezone"]) === "europe/london"
-                ? $timezone
-                : $_COOKIE["timezone"];
-        }
-
-        if (isset($_COOKIE["offset"])) {
-            $offset = $_COOKIE["offset"];
-        } else {
-            $datetimezone = new \DateTimeZone($timezone);
-            $dateTime = new \DateTime("now", $datetimezone);
-            $offset = $dateTime->getOffset() === 3600 ? "+01:00" : "+00:00";
-        }
-
-        return array("timezone" => $timezone, "offset" => $offset);
-    }
-
     private function getRequest($module, $action, $parameters)
     {
         $url = $this->baseUrl . "/" . $module . "/" . $action . "?" . http_build_query($parameters);

@@ -14,11 +14,11 @@ class Ip2WhoIs
 
     public function __construct()
     {
-        $configuration = new Configuration();
+        new Configuration();
         $this->request = new Request();
         $this->headers = [
             "Accept: application/json",
-            "User-Agent: ProjectsMonitor/1.0 (+https://github.com/guibranco/projects-monitor)"
+            constant("USER_AGENT")
         ];
     }
 

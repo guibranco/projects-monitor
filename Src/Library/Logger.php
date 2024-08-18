@@ -112,7 +112,7 @@ class Logger
 
     private function getQuery()
     {
-        $sql = "SELECT a.name, m.message, m.correlation_id, m.user_agent, m.created_at ";
+        $sql = "SELECT a.name, m.message, m.correlation_id, m.user_agent, CONVERT_TZ(m.created_at, '-03:00', '+01:00') AS `created_at`";
         $sql .= "FROM messages as m INNER JOIN applications as a ON m.application_id = a.id ";
         $sql .= "ORDER BY m.id DESC LIMIT 0, ?;";
         return $sql;
@@ -120,7 +120,10 @@ class Logger
 
     public function getGroupedMessages()
     {
-        $stmt = $this->connection->prepare("SELECT `name`, `message`, `user_agent`, `messages_count`, `created_at_most_recent` FROM `messages_view` ORDER BY `messages_count` DESC");
+        $sql = "SELECT `name`, `message`, `user_agent`, `messages_count`, ";
+        $sql .= "CONVERT_TZ(`created_at_most_recent`, '-03:00', '+01:00') AS `created_at_most_recent` ";
+        $sql .= "FROM `messages_view` ORDER BY `messages_count` DESC";
+        $stmt = $this->connection->prepare();
         $stmt->execute();
         $data = array();
         $data[] = array("Application", "Message", "User-Agent", "Messages", "Most recent");
@@ -158,15 +161,16 @@ class Logger
     public function getMessage($messageId)
     {
         $sql = "SELECT m.id, a.name, m.class, m.function, m.file, m.line, m.object, ";
-        $sql .= "m.type, m.args, m.message, m.details, m.correlation_id, m.user_agent, m.created_at ";
+        $sql .= "m.type, m.args, m.message, m.details, m.correlation_id, m.user_agent, ";
+        $sql .= "CONVERT_TZ(m.created_at, '-03:00', '+01:00') AS `created_at` ";
         $sql .= "FROM messages as m INNER JOIN applications as a ON m.application_id = a.id ";
         $sql .= "WHERE m.id = ?;";
         $stmt = $this->connection->prepare($sql);
         $stmt->bind_param("i", $messageId);
         $stmt->execute();
         $result = $stmt->get_result();
-        $row = $result->fetch_array(MYSQLI_NUM);
-        $data = array_values($row);
+        $row = $result->fetch_array(MYSQLI_ASSOC);
+        $data = $row;
         $stmt->close();
 
         return $data;

@@ -44,11 +44,12 @@ class RabbitMq
         return $servers;
     }
 
-    private function getColorByThreshold($quantity, $red, $orange, $yellow) {
+    private function getColorByThreshold($quantity, $red, $orange, $yellow)
+    {
         if ($quantity > $red) {
             return "red";
         }
-        
+
         if($quantity > $orange) {
             return "orange";
         }

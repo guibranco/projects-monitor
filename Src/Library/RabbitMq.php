@@ -80,7 +80,7 @@ class RabbitMq
                 $consumers = $queue["consumers"];
                 $state = $queue["state"];
 
-                if ($quantity === 0 && str_ends_with($name, "-retry")) {
+                if ($messages === 0 && str_ends_with($name, "-retry")) {
                     continue;
                 }
 

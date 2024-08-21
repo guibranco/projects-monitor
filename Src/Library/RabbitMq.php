@@ -86,7 +86,7 @@ class RabbitMq
 
                 $colorMessages = getColorByThreshold($messages, 100, 50, 1);
                 $imgMessages = "<img alt='queue length' src='https://img.shields.io/badge/" . $messages . "-" . str_replace("-", "--", $name) . "-" . $colorMessages . "?style=for-the-badge&labelColor=black' />";
-                $colorConsumers = getColorByThrshold($consumers, 10, 5, 1);
+                $colorConsumers = getColorByThreshold($consumers, 10, 5, 1);
                 $imgConsumers = "<img alt='queue length' src='https://img.shields.io/badge/" . $consumers . "-" . str_replace("-", "--", $state) . "-" . $colorConsumers . "?style=for-the-badge&labelColor=black' />";
                 $item = array($server["host"], $imgMessages, $imgConsumers);
                 $data["queues"][] = $item;

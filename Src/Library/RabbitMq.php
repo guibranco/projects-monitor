@@ -89,7 +89,7 @@ class RabbitMq
                 $imgConsumers = "<img alt='queue length' src='https://img.shields.io/badge/" . $consumers . "-" . str_replace("-", "--", $state) . "-" . $colorConsumers . "?style=for-the-badge&labelColor=black' />";
                 $item = array($server["host"], $imgMessages, $imgConsumers);
                 $data["queues"][] = $item;
-                $data["total"] += $quantity;
+                $data["total"] += $messages;
             }
         }
         ksort($data);

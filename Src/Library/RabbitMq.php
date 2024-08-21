@@ -44,38 +44,50 @@ class RabbitMq
         return $servers;
     }
 
+    private function getColorByThreshold($quantity, $red, $orange, $yellow) {
+        if ($quantity > $red) {
+            return "red";
+        }
+        
+        if($quantity > $orange) {
+            return "orange";
+        }
+
+        if ($quantity >= $yellow) {
+            return "yellow";
+        }
+
+        return "green";
+    }
+
     public function getQueueLength()
     {
         $data = array();
         $data["total"] = 0;
-        $data["queues"][] = array("Server", "Queue");
+        $data["queues"][] = array("Server", "Queue", "Consumers");
         foreach ($this->getServers() as $server) {
             $headers = array("Authorization: Basic " . base64_encode($server["user"] . ":" . $server["password"]));
             $url = "https://" . $server["host"] . "/api/queues/" . $server["vhost"] . "/";
             $response = $this->request->get($url, $headers);
             if ($response->statusCode !== 200) {
-                break;
+                continue;
             }
             $node = json_decode($response->body, true);
             foreach ($node as $queue) {
-                $color = "green";
                 $name = $queue["name"];
-                $quantity = $queue["messages"];
+                $messages = $queue["messages"];
+                $consumers = $queue["consumers"];
+                $state = $queue["state"];
 
                 if ($quantity === 0 && str_ends_with($name, "-retry")) {
                     continue;
                 }
 
-                if ($quantity > 100) {
-                    $color = "red";
-                } elseif ($quantity > 50) {
-                    $color = "orange";
-                } elseif ($quantity >= 1) {
-                    $color = "yellow";
-                }
-
-                $img = "<img alt='queue length' src='https://img.shields.io/badge/" . $quantity . "-" . str_replace("-", "--", $name) . "-" . $color . "?style=for-the-badge&labelColor=black' />";
-                $item = array($server["host"], $img);
+                $colorMessages = getColorByThreshold($messages, 100, 50, 1);
+                $imgMessages = "<img alt='queue length' src='https://img.shields.io/badge/" . $messages . "-" . str_replace("-", "--", $name) . "-" . $colorMessages . "?style=for-the-badge&labelColor=black' />";
+                $colorConsumers = getColorByThrshold($consumers, 10, 5, 1);
+                $imgConsumers = "<img alt='queue length' src='https://img.shields.io/badge/" . $consumers . "-" . str_replace("-", "--", $state) . "-" . $colorConsumers . "?style=for-the-badge&labelColor=black' />";
+                $item = array($server["host"], $imgMessages, $imgConsumers);
                 $data["queues"][] = $item;
                 $data["total"] += $quantity;
             }

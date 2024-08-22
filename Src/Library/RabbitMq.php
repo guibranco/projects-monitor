@@ -94,9 +94,7 @@ class RabbitMq
                     }
 
                     $state = "Idle time: {$hours}:{$minutes}";
-                }
-
-                
+                }               
 
                 if ($messages === 0 && str_ends_with($name, "-retry")) {
                     continue;

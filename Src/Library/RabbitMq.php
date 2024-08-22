@@ -80,7 +80,7 @@ class RabbitMq
                 $consumers = $queue["consumers"];
 
                 $state = "Running";
-                if (isset($queue["idle_since"]) {
+                if (isset($queue["idle_since"])) {
                     $dateDiff = intval((time()-strtotime($queue["idle_since"]))/60);
                     
                     $hours = intval($dateDiff / 60);

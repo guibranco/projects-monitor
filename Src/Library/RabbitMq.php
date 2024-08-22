@@ -80,17 +80,17 @@ class RabbitMq
                 $consumers = $queue["consumers"];
                 $state = $queue["state"];
 
-                if ($quantity === 0 && str_ends_with($name, "-retry")) {
+                if ($messages === 0 && str_ends_with($name, "-retry")) {
                     continue;
                 }
 
-                $colorMessages = getColorByThreshold($messages, 100, 50, 1);
+                $colorMessages = $this->getColorByThreshold($messages, 100, 50, 1);
                 $imgMessages = "<img alt='queue length' src='https://img.shields.io/badge/" . $messages . "-" . str_replace("-", "--", $name) . "-" . $colorMessages . "?style=for-the-badge&labelColor=black' />";
-                $colorConsumers = getColorByThrshold($consumers, 10, 5, 1);
+                $colorConsumers = $this->getColorByThreshold($consumers, 15, 5, 1);
                 $imgConsumers = "<img alt='queue length' src='https://img.shields.io/badge/" . $consumers . "-" . str_replace("-", "--", $state) . "-" . $colorConsumers . "?style=for-the-badge&labelColor=black' />";
                 $item = array($server["host"], $imgMessages, $imgConsumers);
                 $data["queues"][] = $item;
-                $data["total"] += $quantity;
+                $data["total"] += $messages;
             }
         }
         ksort($data);

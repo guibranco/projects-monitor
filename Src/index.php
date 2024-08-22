@@ -58,16 +58,17 @@ $configuration = new Configuration();
         </div>
     </div>
   </div>
-  <div style="clear:both;"></div>
-  <div style="width: 30%; height: 600px; float: left; background-color: white;">
-    <div id="pie_chart_1" style="width: 100%; height: 300px;"></div>
-    <div id="pie_chart_2" style="width: 100%; height: 300px;"></div>
-  </div>
-  <div id="queues" style="width: 30%; height: 600px; float: left; background-color: white;"></div>
-  <div style="width: 40%; height: 600px; float: left; background-color: white;">
+  <div style="clear:both;"></div>  
+  <div id="queues" style="width: 50%; height: 600px; float: left; background-color: white;"></div>
+  <div style="width: 50%; height: 600px; float: left; background-color: white;">
     <div id="accounts_usage" style="width: 100%; height: 200px;"></div>
     <div id="latest_release" style="width: 100%; height: 250px;"></div>
     <div id="error_log_files" style="width: 100%; height: 150px;"></div>
+  </div>
+  <div style="clear:both;"></div>
+  <div style="width: 100%; height: 300px; float: left; background-color: white;">
+    <div id="pie_chart_1" style="height: 300px; float: left;"></div>
+    <div id="pie_chart_2" style="height: 300px; float: left;"></div>
   </div>
   <div style="clear:both;"></div>
   <div id="messages_grouped" style="width: 50%; height: 500px; float: left; background-color: white;"></div>

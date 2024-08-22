@@ -79,7 +79,7 @@ class RabbitMq
                 $messages = $queue["messages"];
                 $consumers = $queue["consumers"];
                 $state = isset($queue["idle_since"]) ? date("H:i:s d/m/Y", strtotime($queue["idle_since"])) : "Running";
-                
+
                 if ($messages === 0 && str_ends_with($name, "-retry")) {
                     continue;
                 }

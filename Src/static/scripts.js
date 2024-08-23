@@ -170,6 +170,11 @@ function showGitHub(response) {
       "<img alt='author' src='https://img.shields.io/badge/" + latestRelease["author"] + "-black?style=social&amp;logo=github'></a>";
   }
 
+  if (typeof response["check_hooks_date"] !== "undefined") {
+    const checkHooksDate = new Date(response["check_hooks_date"]);
+    document.getElementById("hooks_last_check").innerHTML = "<b>Date: </b< " + checkHooksDate.toString();
+  }
+  
   const gaugeOptions = {
     legend: { position: "none" },
     showRowNumber: true,

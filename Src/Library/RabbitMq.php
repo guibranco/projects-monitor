@@ -78,7 +78,23 @@ class RabbitMq
                 $name = $queue["name"];
                 $messages = $queue["messages"];
                 $consumers = $queue["consumers"];
-                $state = isset($queue["idle_since"]) ? date("H:i:s d/m/Y", strtotime($queue["idle_since"])) : "Running";
+
+                $state = "Active";
+                if (isset($queue["idle_since"])) {
+                    $dateDiff = intval((time() - strtotime($queue["idle_since"])) / 60);
+
+                    $hours = intval($dateDiff / 60);
+                    if (strlen($hours) === 1) {
+                        $hours = "0{$hours}";
+                    }
+
+                    $minutes = $dateDiff % 60;
+                    if (strlen($minutes) === 1) {
+                        $minutes = "0{$minutes}";
+                    }
+
+                    $state = "Idle time: {$hours}:{$minutes}";
+                }
 
                 if ($messages === 0 && str_ends_with($name, "-retry")) {
                     continue;
@@ -86,7 +102,7 @@ class RabbitMq
 
                 $colorMessages = $this->getColorByThreshold($messages, 100, 50, 1);
                 $imgMessages = "<img alt='queue length' src='https://img.shields.io/badge/" . $messages . "-" . str_replace("-", "--", $name) . "-" . $colorMessages . "?style=for-the-badge&labelColor=black' />";
-                $colorConsumers = isset($queue["idle_since"]) ? "red" : "black";
+                $colorConsumers = isset($queue["idle_since"]) ? "red" : "green";
                 $labelColor = $this->getColorByThreshold($consumers, 15, 5, 1);
                 $imgConsumers = "<img alt='queue length' src='https://img.shields.io/badge/" . $consumers . "-" . str_replace("-", "--", $state) . "-" . $colorConsumers . "?style=for-the-badge&labelColor={$labelColor}' />";
                 $item = array($server["host"], $imgMessages, $imgConsumers);

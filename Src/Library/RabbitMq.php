@@ -79,10 +79,10 @@ class RabbitMq
                 $messages = $queue["messages"];
                 $consumers = $queue["consumers"];
 
-                $state = "Running";
-                if (isset($queue["idle_since"]) {
-                    $dateDiff = intval((time()-strtotime($queue["idle_since"]))/60);
-                    
+                $state = "Active";
+                if (isset($queue["idle_since"])) {
+                    $dateDiff = intval((time() - strtotime($queue["idle_since"])) / 60);
+
                     $hours = intval($dateDiff / 60);
                     if (strlen($hours) === 1) {
                         $hours = "0{$hours}";
@@ -95,8 +95,6 @@ class RabbitMq
 
                     $state = "Idle time: {$hours}:{$minutes}";
                 }
-
-                
 
                 if ($messages === 0 && str_ends_with($name, "-retry")) {
                     continue;

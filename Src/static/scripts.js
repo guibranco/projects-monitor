@@ -392,7 +392,7 @@ function showWebhook(response) {
 
   if (typeof response["check_hooks_date"] !== "undefined") {
     const checkHooksDate = new Date(response["check_hooks_date"]);
-    document.getElementById("hooks_last_check").innerHTML = "<b>Date: </b< " + checkHooksDate.toString();
+    document.getElementById("hooks_last_check").innerHTML = "<b>Date: </b> " + checkHooksDate.toString();
   }
 
   const statisticsChart = new google.visualization.LineChart(document.getElementById("webhooks_statistics"));

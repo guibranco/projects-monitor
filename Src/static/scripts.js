@@ -285,6 +285,45 @@ function showUpTimeRobot(response) {
   upTimeRobot.draw(dataUpTimeRobot, tableOptions);
 }
 
+/**
+ * Renders various charts and tables based on the provided webhook response data.
+ *
+ * This function processes the response object to create visual representations
+ * of webhook statistics, GitHub events, and other related data using Google Charts.
+ *
+ * @param {Object} response - The response object containing webhook data.
+ * @param {Array} response.statistics - An array of statistics data for webhooks.
+ * @param {Array} response.statistics_github - An array of statistics data for GitHub webhooks.
+ * @param {Array} response.events - An array of event data.
+ * @param {Array} response.feed - An array of feed data.
+ * @param {Array} response.bots - An array of bot data.
+ * @param {Array} response.repositories - An array of repository data.
+ * @param {Array} response.workflow_runs - An array of workflow run data.
+ * @param {number} response.total - Total number of webhook hits.
+ * @param {number} response.failed - Total number of failed webhooks.
+ * @param {number} response.total_workflow_runs - Total number of workflow runs.
+ * @param {number} response.installations - Total number of installations.
+ * @param {string} [response.check_hooks_date] - Optional date for the last check of hooks.
+ *
+ * @throws {TypeError} Throws an error if the response is not an object or if required properties are missing.
+ *
+ * @example
+ * const responseData = {
+ *   statistics: [...],
+ *   statistics_github: [...],
+ *   events: [...],
+ *   feed: [...],
+ *   bots: [...],
+ *   repositories: [...],
+ *   workflow_runs: [...],
+ *   total: 100,
+ *   failed: 5,
+ *   total_workflow_runs: 50,
+ *   installations: 10,
+ *   check_hooks_date: "2023-10-01T12:00:00Z"
+ * };
+ * showWebhook(responseData);
+ */
 function showWebhook(response) {
   const dataStatistics = google.visualization.arrayToDataTable(response["statistics"]);
   const dataStatisticsGitHub = google.visualization.arrayToDataTable(response["statistics_github"]);

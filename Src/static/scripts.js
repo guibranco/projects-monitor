@@ -378,8 +378,7 @@ function showUpTimeRobot(response) {
  *   installations: 10,
  *   check_hooks_date: "2023-10-01T12:00:00Z"
  * };
- *
- * showWebhook(webhookResponse);
+ * showWebhook(responseData);
  */
 function showWebhook(response) {
   const dataStatistics = google.visualization.arrayToDataTable(response["statistics"]);

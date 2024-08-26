@@ -139,6 +139,61 @@ function showDomains(response) {
   domains.draw(dataDomains, tableOptions);
 }
 
+/**
+ * Displays GitHub statistics and information based on the provided response data.
+ *
+ * This function processes various metrics related to GitHub issues and pull requests,
+ * visualizing them using Google Charts. It also updates the latest release information
+ * if available.
+ *
+ * @param {Object} response - The response object containing GitHub data.
+ * @param {Object} response.issues - An object containing issue-related data.
+ * @param {number} response.issues.total_count - The total number of issues.
+ * @param {Array} response.issues.assigned - Data for assigned issues.
+ * @param {Array} response.issues.authored - Data for authored issues.
+ * @param {Array} response.issues.blocked - Data for blocked issues.
+ * @param {Array} response.issues.bug - Data for bug issues.
+ * @param {Array} response.issues.triage - Data for triage issues.
+ * @param {Array} response.issues.wip - Data for work-in-progress issues.
+ * @param {Array} response.issues.others - Data for other issues.
+ * @param {Object} response.pull_requests - An object containing pull request-related data.
+ * @param {number} response.pull_requests.total_count - The total number of pull requests.
+ * @param {Array} response.pull_requests.latest - Data for the latest pull requests.
+ * @param {Array} response.pull_requests.authored - Data for authored pull requests.
+ * @param {Array} response.pull_requests.blocked - Data for blocked pull requests.
+ * @param {Object} response.latest_release - An object containing information about the latest release.
+ * @param {string} response.latest_release.description - Description of the latest release.
+ * @param {string} response.latest_release.published - Publication date of the latest release.
+ * @param {string} response.latest_release.release_url - URL for the latest release.
+ * @param {string} response.latest_release.title - Title of the latest release.
+ * @param {string} response.latest_release.repository - Repository name of the latest release.
+ * @param {string} response.latest_release.author - Author of the latest release.
+ *
+ * @throws {Error} Throws an error if the response object does not contain the expected structure.
+ *
+ * @example
+ * const response = {
+ *   issues: {
+ *     total_count: 10,
+ *     assigned: [...],
+ *     authored: [...],
+ *   },
+ *   pull_requests: {
+ *     total_count: 5,
+ *     latest: [...],
+ *   },
+ *   latest_release: {
+ *     description: "New features added",
+ *     published: "2023-10-01",
+ *     release_url: "https://github.com/user/repo/releases/tag/v1.0",
+ *     title: "Version 1.0",
+ *     repository: "user/repo",
+ *     author: "user"
+ *   }
+ * };
+ *
+ * showGitHub(response);
+ */
 function showGitHub(response) {
   const dataIssues = google.visualization.arrayToDataTable([["Hits", "Total"],["GH Issues", response["issues"]["total_count"]],]);
   const dataPullRequests = google.visualization.arrayToDataTable([["Hits", "Total"], ["GH PRs", response["pull_requests"]["total_count"]],]);
@@ -288,27 +343,28 @@ function showUpTimeRobot(response) {
 /**
  * Renders various charts and tables based on the provided webhook response data.
  *
- * This function processes the response object to create visual representations
- * of webhook statistics, GitHub events, and other related data using Google Charts.
+ * This function processes the response object to create visual representations of webhook statistics,
+ * GitHub events, and other related data using Google Charts. It generates line charts, pie charts,
+ * and gauge charts to display the information effectively.
  *
  * @param {Object} response - The response object containing webhook data.
  * @param {Array} response.statistics - An array of statistics data for webhooks.
  * @param {Array} response.statistics_github - An array of statistics data for GitHub webhooks.
- * @param {Array} response.events - An array of event data.
+ * @param {Array} response.events - An array of events data.
  * @param {Array} response.feed - An array of feed data.
  * @param {Array} response.bots - An array of bot data.
  * @param {Array} response.repositories - An array of repository data.
  * @param {Array} response.workflow_runs - An array of workflow run data.
- * @param {number} response.total - Total number of webhook hits.
- * @param {number} response.failed - Total number of failed webhooks.
- * @param {number} response.total_workflow_runs - Total number of workflow runs.
- * @param {number} response.installations - Total number of installations.
- * @param {string} [response.check_hooks_date] - Optional date for the last check of hooks.
+ * @param {number} response.total - The total number of webhooks.
+ * @param {number} response.failed - The number of failed webhooks.
+ * @param {number} response.total_workflow_runs - The total number of workflow runs.
+ * @param {number} response.installations - The number of installations.
+ * @param {string} [response.check_hooks_date] - The date when hooks were last checked.
  *
- * @throws {TypeError} Throws an error if the response is not an object or if required properties are missing.
+ * @throws {Error} Throws an error if the response object is missing required properties.
  *
  * @example
- * const responseData = {
+ * const webhookResponse = {
  *   statistics: [...],
  *   statistics_github: [...],
  *   events: [...],

@@ -168,12 +168,7 @@ function showGitHub(response) {
       " | " +
       "<a href='https://github.com/" + latestRelease["author"] + "' target='_blank'>" +
       "<img alt='author' src='https://img.shields.io/badge/" + latestRelease["author"] + "-black?style=social&amp;logo=github'></a>";
-  }
-
-  if (typeof response["check_hooks_date"] !== "undefined") {
-    const checkHooksDate = new Date(response["check_hooks_date"]);
-    document.getElementById("hooks_last_check").innerHTML = "<b>Date: </b< " + checkHooksDate.toString();
-  }
+  } 
   
   const gaugeOptions = {
     legend: { position: "none" },
@@ -394,6 +389,11 @@ function showWebhook(response) {
     redFrom: 100,
     redTo: 1000,
   };
+
+  if (typeof response["check_hooks_date"] !== "undefined") {
+    const checkHooksDate = new Date(response["check_hooks_date"]);
+    document.getElementById("hooks_last_check").innerHTML = "<b>Date: </b< " + checkHooksDate.toString();
+  }
 
   const statisticsChart = new google.visualization.LineChart(document.getElementById("webhooks_statistics"));
   statisticsChart.draw(dataStatistics, optionsStatistics);

@@ -84,10 +84,9 @@ class AppVeyor
                 $badgeVersion = $shields->generateBadgeUrl($build->branch, $build->version, "blue", "for-the-badge", "white", null);
                 $badgeVersionImg = "<a href='{$link}'><img src='{$badgeVersion}' alt='{$build->version}' /></a>";
 
-                $updated = date("Y-m-d H:i:s", strtotime($build->updated));
-
-
-                $result[] = array($badgeNameImg, $badgeVersionImg, $updated);
+                $dateValue = isset($build->updated) ? $build->updated : $build->created;
+                $date = date("Y-m-d H:i:s", strtotime($dateValue));
+                $result[] = array($badgeNameImg, $badgeVersionImg, $date);
             }
         }
 

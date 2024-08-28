@@ -17,11 +17,6 @@ class Configuration
         mb_internal_encoding("UTF-8");
 
         $this->setUserAgent();
-
-        $filename = "cache/";
-        if (!file_exists($filename)) {
-            mkdir($filename, 0755);
-        }
     }
 
     private function setUserAgent()

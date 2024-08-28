@@ -46,6 +46,7 @@ class AppVeyor
     {
         return match ($status) {
             "queued" => "⏳",
+            "starting" => "🚦",
             "running" => "🏃",
             "success" => "✅",
             "failed" => "❌",
@@ -57,6 +58,7 @@ class AppVeyor
     {
         return match ($status) {
             "queued" => "blue",
+            "starting" => "orange",
             "running" => "yellow",
             "success" => "green",
             "failed" => "red",

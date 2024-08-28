@@ -17,7 +17,7 @@ class HealthChecksIo
     {
         $config = new Configuration();
         $config->init();
-        
+
         global $healthChecksIoReadKeys;
 
         if (!file_exists(__DIR__ . "/../secrets/healthChecksIo.secrets.php")) {

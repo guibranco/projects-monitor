@@ -19,7 +19,7 @@ class Webhooks
 
         $config = new Configuration();
         $config->init();
-        
+
         if (!file_exists(__DIR__ . "/../secrets/webhooks.secrets.php")) {
             throw new SecretsFileNotFoundException("File not found: webhooks.secrets.php");
         }

@@ -16,7 +16,7 @@ class Ip2WhoIs
     {
         $config = new Configuration();
         $config->init();
-        
+
         $this->request = new Request();
         $this->headers = [
             "Accept: application/json",

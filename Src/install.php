@@ -35,7 +35,7 @@ if (checkIfIsTestEnvironment()) {
 $deployFile = "deploy.zip";
 $installFile = "install.php";
 
-if(!file_exists($deployFile)) {
+if (!file_exists($deployFile)) {
     http_response_code(404);
     die("Deploy file not found.");
 }

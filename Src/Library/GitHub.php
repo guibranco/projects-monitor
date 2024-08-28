@@ -16,7 +16,9 @@ class GitHub
 
     public function __construct()
     {
-        new Configuration();
+        $config = new Configuration();
+        $config->init();
+
         global $gitHubToken;
 
         if (!file_exists(__DIR__ . "/../secrets/gitHub.secrets.php")) {
@@ -83,7 +85,7 @@ class GitHub
         $usersList = implode(" ", array_map(function ($user) {
             return "user:{$user}";
         }, $users));
-        $queryString = "{$type} ${labels} {$labelsRemove} {$usersList}";
+        $queryString = "{$type} {$labels} {$labelsRemove} {$usersList}";
 
         return $this->getSearch($queryString);
     }
@@ -146,7 +148,7 @@ class GitHub
     public function getIssues()
     {
         $users = ["guibranco", "ApiBR", "GuilhermeStracini", "InovacaoMediaBrasil"];
-        $vacanciesUsers = ["rustdevbr", "pythondevbr", "pydevbr", "dotnetdevbr", "nodejsdevbr", "rubydevbr", "frontend-ao", "frontend-pt", "backend-ao", "backend-pt", "developersRJ"];
+        $vacanciesUsers = ["rustdevbr", "pydevbr", "dotnetdevbr", "nodejsdevbr", "rubydevbr", "frontend-ao", "frontend-pt", "backend-ao", "backend-pt", "developersRJ"];
         $allUsers = array_merge($users, $vacanciesUsers);
 
         $resultAll = $this->getWithLabel($users, "issue");
@@ -205,7 +207,7 @@ class GitHub
         if (file_exists($cache) && filemtime($cache) > strtotime("-1 hour")) {
             $response = json_decode(file_get_contents($cache));
         } else {
-            $url = self::GITHUB_API_URL . "repos/". $owner . "/". $repository . "/releases/latest";
+            $url = self::GITHUB_API_URL . "repos/" . $owner . "/" . $repository . "/releases/latest";
             $response = $this->requestInternal($url);
             if ($response->statusCode !== 200) {
                 $error = $response->statusCode === -1 ? $response->error : $response->body;
@@ -229,7 +231,7 @@ class GitHub
         $data["title"] = $body->name;
         $data["description"] = $mkd->toHtml();
         $data["release_url"] = $body->html_url;
-        $data["repository"] = $account . "/". $repository;
+        $data["repository"] = $account . "/" . $repository;
         $data["author"] = $body->author->login;
 
         return $data;

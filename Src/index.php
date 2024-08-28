@@ -20,14 +20,14 @@ $configuration = new Configuration();
   <script src="static/scripts.js?<?php echo filemtime("static/scripts.js"); ?>"></script>
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
   <script>
-      window.OneSignalDeferred = window.OneSignalDeferred || [];
-      OneSignalDeferred.push(function(OneSignal) {
-        OneSignal.init({
-          appId: "90c57079-9ef2-4719-bddf-361e6510de17",
-          googleProjectNumber: "256841700684"
-        });
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(function (OneSignal) {
+      OneSignal.init({
+        appId: "90c57079-9ef2-4719-bddf-361e6510de17",
+        googleProjectNumber: "256841700684"
       });
-   </script>
+    });
+  </script>
 </head>
 
 <body>
@@ -47,18 +47,18 @@ $configuration = new Configuration();
   </div>
   <div style="width: 50%; float: left;">
     <div style="width: 100%;">
-        <div style="width:465px; float: left;">
-            <img id="gh_stats" style="width: 465px;" alt="GH Stats" src="" />
-            <img id="gh_streak" style="width: 465px;" alt="GH Streak" src="" />
-        </div>
-        <div style="width: calc(100%-465px); float: left;">
-            <a href="https://wakatime.com/@6be975b7-7258-4475-bc73-9c0fc554430e">
-                <img src="https://wakatime.com/badge/user/6be975b7-7258-4475-bc73-9c0fc554430e.svg?style=for-the-badge" />
-            </a>
-        </div>
+      <div style="width:465px; float: left;">
+        <img id="gh_stats" style="width: 465px;" alt="GH Stats" src="" />
+        <img id="gh_streak" style="width: 465px;" alt="GH Streak" src="" />
+      </div>
+      <div style="width: calc(100%-465px); float: left;">
+        <a href="https://wakatime.com/@6be975b7-7258-4475-bc73-9c0fc554430e">
+          <img src="https://wakatime.com/badge/user/6be975b7-7258-4475-bc73-9c0fc554430e.svg?style=for-the-badge" />
+        </a>
+      </div>
     </div>
   </div>
-  <div style="clear:both;"></div>  
+  <div style="clear:both;"></div>
   <div id="queues" style="width: 50%; height: 600px; float: left; background-color: white;"></div>
   <div style="width: 50%; height: 600px; float: left; background-color: white;">
     <div id="accounts_usage" style="width: 100%; height: 200px;"></div>
@@ -73,7 +73,7 @@ $configuration = new Configuration();
   </div>
   <div style="clear:both;"></div>
   <div id="messages_grouped" style="width: 50%; height: 500px; float: left; background-color: white;"></div>
-  <div id="error_log_messages" style="width: 50%; height: 500px; float: left; background-color: white;"></div> 
+  <div id="error_log_messages" style="width: 50%; height: 500px; float: left; background-color: white;"></div>
   <div style="clear:both;"></div>
   <div id="workflow_runs" style="width: 100%; float: left; background-color: white;"></div>
   <div style="clear:both;"></div>
@@ -94,9 +94,10 @@ $configuration = new Configuration();
     <div id="wip"></div>
     <div id="triage"></div>
     <div id="bug"></div>
-    <div id="issues"></div>  
+    <div id="issues"></div>
     <div id="cronjobs"></div>
     <div id="bots"></div>
+    <div id="appveyor"></div>
   </div>
   <div style="clear:both;"></div>
   <div id="webhooks_statistics" style="width: 100%; height: 400px;"></div>

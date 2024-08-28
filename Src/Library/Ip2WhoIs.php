@@ -14,7 +14,9 @@ class Ip2WhoIs
 
     public function __construct()
     {
-        new Configuration();
+        $config = new Configuration();
+        $config->init();
+        
         $this->request = new Request();
         $this->headers = [
             "Accept: application/json",

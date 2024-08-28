@@ -3,8 +3,9 @@
 namespace GuiBranco\ProjectsMonitor\Library;
 
 use GuiBranco\Pancake\Request;
+use GuiBranco\Pancake\ShieldsIo;
 
-class AppVeyorProjects
+class AppVeyor
 {
     private const APPVEYOR_API_URL = "https://ci.appveyor.com/api/";
 
@@ -14,7 +15,8 @@ class AppVeyorProjects
 
     public function __construct()
     {
-        new Configuration();
+        $config = new Configuration();
+        $config->init();
 
         global $appVeyorApiKey;
 
@@ -25,13 +27,12 @@ class AppVeyorProjects
         require_once __DIR__ . "/../secrets/appVeyor.secrets.php";
 
         $this->request = new Request();
-        $this->headers = ['Authorization' => 'Bearer {$appVeyorApiKey}', 'Content-Type' => 'application/json'];
+        $this->headers = ["Authorization: Bearer {$appVeyorApiKey}", "Content-Type: application/json", constant("USER_AGENT")];
     }
 
     private function getProjects()
     {
-        $url = 'https://ci.appveyor.com/api/projects';
-        $response = $this->request->get($url, $this->headers);
+        $response = $this->request->get(self::APPVEYOR_API_URL . "projects", $this->headers);
 
         if ($response->statusCode != 200) {
             $error = $response->statusCode == -1 ? $response->error : $response->body;
@@ -39,5 +40,55 @@ class AppVeyorProjects
         }
 
         return json_decode($response->body);
+    }
+
+    private function mapStatus($status)
+    {
+        return match ($status) {
+            "queued" => "⏳",
+            "success" => "✅",
+            "failed" => "❌",
+            default => $status
+        };
+    }
+
+    private function mapColor($status)
+    {
+        return match ($status) {
+            "queued" => "blue",
+            "success" => "green",
+            "failed" => "red",
+            default => $status
+        };
+    }
+
+    public function getBuilds()
+    {
+        $projects = $this->getProjects();
+        $result = array();
+
+        $result[] = array("Project", "Branch/Version", "Updated");
+        $shields = new ShieldsIo();
+
+        foreach ($projects as $project) {
+            foreach ($project->builds as $build) {
+                $status = $this->mapStatus($build->status);
+                $color = $this->mapColor($build->status);
+
+                $link = "https://ci.appveyor.com/project/{$project->accountName}/{$project->slug}/builds/{$build->buildId}";
+                $badgeName = $shields->generateBadgeUrl($status, $project->name, $color, "for-the-badge", "white", null);
+                $badgeNameImg = "<a href='{$link}'><img src='{$badgeName}' alt='{$status}' /></a>";
+
+                $badgeVersion = $shields->generateBadgeUrl($build->branch, $build->version, "blue", "for-the-badge", "white", null);
+                $badgeVersionImg = "<a href='{$link}'><img src='{$badgeVersion}' alt='{$build->version}' /></a>";
+
+                $updated = date("Y-m-d H:i:s", strtotime($build->updated));
+
+
+                $result[] = array($badgeNameImg, $badgeVersionImg, $updated);
+            }
+        }
+
+        return $result;
     }
 }

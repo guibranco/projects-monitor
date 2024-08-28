@@ -23,7 +23,9 @@ class CPanel
 
     public function __construct()
     {
-        new Configuration();
+        $config = new Configuration();
+        $config->init();
+
         global $cPanelApiToken, $cPanelBaseUrl, $cPanelUsername;
 
         if (!file_exists(__DIR__ . "/../secrets/cPanel.secrets.php")) {
@@ -112,7 +114,7 @@ class CPanel
         $response = $this->getRequest("json-api", "cpanel", $parameters);
         $content = $response->cpanelresult->data;
 
-        if (count($content) === 0 || !isset($content[0]->contents)) {
+        if (empty($content) || !isset($content[0]->contents)) {
             return null;
         }
 
@@ -134,7 +136,7 @@ class CPanel
             $result[] = array(str_replace("/home/{$this->username}/", "", $stats["dirname"]), $stats["humansize"], $stats["mtime"]);
         }
 
-        if (count($result) === 0) {
+        if (empty($result)) {
             return $result;
         }
 
@@ -166,7 +168,7 @@ class CPanel
             }
         }
 
-        if (count($result) === 0) {
+        if (empty($result)) {
             return $result;
         }
 

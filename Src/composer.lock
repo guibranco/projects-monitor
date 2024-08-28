@@ -317,16 +317,16 @@
         },
         {
             "name": "amphp/file",
-            "version": "v3.1.0",
+            "version": "v3.1.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/amphp/file.git",
-                "reference": "1d51235bd8cb4973c7908e645b62c638d8c081fe"
+                "reference": "58c8efefb8808d25456ef3ef4a628645442578a2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/amphp/file/zipball/1d51235bd8cb4973c7908e645b62c638d8c081fe",
-                "reference": "1d51235bd8cb4973c7908e645b62c638d8c081fe",
+                "url": "https://api.github.com/repos/amphp/file/zipball/58c8efefb8808d25456ef3ef4a628645442578a2",
+                "reference": "58c8efefb8808d25456ef3ef4a628645442578a2",
                 "shasum": ""
             },
             "require": {
@@ -390,7 +390,7 @@
             ],
             "support": {
                 "issues": "https://github.com/amphp/file/issues",
-                "source": "https://github.com/amphp/file/tree/v3.1.0"
+                "source": "https://github.com/amphp/file/tree/v3.1.1"
             },
             "funding": [
                 {
@@ -398,7 +398,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2024-04-21T14:53:24+00:00"
+            "time": "2024-08-15T15:04:06+00:00"
         },
         {
             "name": "amphp/parallel",
@@ -548,16 +548,16 @@
         },
         {
             "name": "amphp/pipeline",
-            "version": "v1.2.0",
+            "version": "v1.2.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/amphp/pipeline.git",
-                "reference": "f1c2ce35d27ae86ead018adb803eccca7421dd9b"
+                "reference": "66c095673aa5b6e689e63b52d19e577459129ab3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/amphp/pipeline/zipball/f1c2ce35d27ae86ead018adb803eccca7421dd9b",
-                "reference": "f1c2ce35d27ae86ead018adb803eccca7421dd9b",
+                "url": "https://api.github.com/repos/amphp/pipeline/zipball/66c095673aa5b6e689e63b52d19e577459129ab3",
+                "reference": "66c095673aa5b6e689e63b52d19e577459129ab3",
                 "shasum": ""
             },
             "require": {
@@ -603,7 +603,7 @@
             ],
             "support": {
                 "issues": "https://github.com/amphp/pipeline/issues",
-                "source": "https://github.com/amphp/pipeline/tree/v1.2.0"
+                "source": "https://github.com/amphp/pipeline/tree/v1.2.1"
             },
             "funding": [
                 {
@@ -611,7 +611,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2024-03-10T14:48:16+00:00"
+            "time": "2024-07-04T00:56:47+00:00"
         },
         {
             "name": "amphp/process",
@@ -825,16 +825,16 @@
         },
         {
             "name": "amphp/sync",
-            "version": "v2.2.0",
+            "version": "v2.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/amphp/sync.git",
-                "reference": "375ef5b54a0d12c38e12728dde05a55e30f2fbec"
+                "reference": "217097b785130d77cfcc58ff583cf26cd1770bf1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/amphp/sync/zipball/375ef5b54a0d12c38e12728dde05a55e30f2fbec",
-                "reference": "375ef5b54a0d12c38e12728dde05a55e30f2fbec",
+                "url": "https://api.github.com/repos/amphp/sync/zipball/217097b785130d77cfcc58ff583cf26cd1770bf1",
+                "reference": "217097b785130d77cfcc58ff583cf26cd1770bf1",
                 "shasum": ""
             },
             "require": {
@@ -888,7 +888,7 @@
             ],
             "support": {
                 "issues": "https://github.com/amphp/sync/issues",
-                "source": "https://github.com/amphp/sync/tree/v2.2.0"
+                "source": "https://github.com/amphp/sync/tree/v2.3.0"
             },
             "funding": [
                 {
@@ -896,7 +896,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2024-03-12T01:00:01+00:00"
+            "time": "2024-08-03T19:31:26+00:00"
         },
         {
             "name": "amphp/windows-registry",
@@ -996,16 +996,16 @@
         },
         {
             "name": "fastvolt/markdown",
-            "version": "v0.2.0",
+            "version": "v0.2.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/fastvolt/markdown.git",
-                "reference": "146a69ff1218b0994e3d644464cec87bf7aa4486"
+                "reference": "c068d3644ac544e024b8f04381f7995b79f60849"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/fastvolt/markdown/zipball/146a69ff1218b0994e3d644464cec87bf7aa4486",
-                "reference": "146a69ff1218b0994e3d644464cec87bf7aa4486",
+                "url": "https://api.github.com/repos/fastvolt/markdown/zipball/c068d3644ac544e024b8f04381f7995b79f60849",
+                "reference": "c068d3644ac544e024b8f04381f7995b79f60849",
                 "shasum": ""
             },
             "require": {
@@ -1040,22 +1040,22 @@
             ],
             "support": {
                 "issues": "https://github.com/fastvolt/markdown/issues",
-                "source": "https://github.com/fastvolt/markdown/tree/v0.2.0"
+                "source": "https://github.com/fastvolt/markdown/tree/v0.2.1"
             },
-            "time": "2023-11-12T12:32:33+00:00"
+            "time": "2024-08-28T22:09:35+00:00"
         },
         {
             "name": "guibranco/pancake",
-            "version": "v0.8.23",
+            "version": "v0.8.26",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guibranco/pancake.git",
-                "reference": "3ee8b2ec39953db1e0f22cf76ec116e096360aff"
+                "reference": "1f8a079e7d759d1ea84024d838ec6ec4476b6f29"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guibranco/pancake/zipball/3ee8b2ec39953db1e0f22cf76ec116e096360aff",
-                "reference": "3ee8b2ec39953db1e0f22cf76ec116e096360aff",
+                "url": "https://api.github.com/repos/guibranco/pancake/zipball/1f8a079e7d759d1ea84024d838ec6ec4476b6f29",
+                "reference": "1f8a079e7d759d1ea84024d838ec6ec4476b6f29",
                 "shasum": ""
             },
             "require-dev": {
@@ -1080,9 +1080,9 @@
             "description": "The Pancake project, a toolkit for PHP projects",
             "support": {
                 "issues": "https://github.com/guibranco/pancake/issues",
-                "source": "https://github.com/guibranco/pancake/tree/v0.8.23"
+                "source": "https://github.com/guibranco/pancake/tree/v0.8.26"
             },
-            "time": "2024-08-26T23:27:03+00:00"
+            "time": "2024-08-28T23:02:04+00:00"
         },
         {
             "name": "kelunik/certificate",

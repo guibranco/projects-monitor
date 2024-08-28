@@ -8,14 +8,20 @@ class Configuration
 {
     private $timeZone;
 
-    public function __construct()
+    public function init()
     {
         $this->timeZone = new TimeZone();
         ini_set("date.timezone", $this->timeZone->getTimeZone());
         ini_set("default_charset", "UTF-8");
+        ini_set('error_reporting', E_ALL);
         mb_internal_encoding("UTF-8");
 
         $this->setUserAgent();
+
+        $filename = "cache/";
+        if (!file_exists($filename)) {
+            mkdir($filename, 0755);
+        }
     }
 
     private function setUserAgent()

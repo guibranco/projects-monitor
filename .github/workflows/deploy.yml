@@ -68,6 +68,15 @@ jobs:
           cd secrets
           echo "Deny from all" >> .htaccess
 
+      - name: Create AppVeyor secrets file
+        if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
+        run: |
+          cd Src
+          mkdir -p secrets
+          cd secrets
+          echo "<?php" >> appVeyor.secrets.php
+          echo "\$appVeyorApiKey = \"${{ secrets.APPVEYOR_API_KEY }}\";" >> appVeyor.secrets.php
+
       - name: Create CPanel secrets file
         if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
         run: |

@@ -4,6 +4,7 @@ namespace GuiBranco\ProjectsMonitor\Library;
 
 use GuiBranco\ProjectsMonitor\Library\Configuration;
 use GuiBranco\Pancake\Request;
+use GuiBranco\Pancake\ShieldsIo;
 
 class CPanel
 {
@@ -184,13 +185,16 @@ class CPanel
         );
         $response = $this->getRequest("json-api", "cpanel", $parameters);
         $lines = $response->cpanelresult->data;
+        $badge = new ShieldsIo();
         foreach ($lines as $line) {
             if (!isset($line->command) || $line->command == null) {
                 continue;
             }
             $command = str_replace("/home/zerocool/", "", str_replace("/usr/local/bin/", "", $line->command));
             $time = $line->minute . " " . $line->hour . " " . $line->day . " " . $line->month . " " . $line->weekday;
-            $result[] = array($command, $time);
+            $badgeUrl = $badge->generateBadgeUrl("⏰", $time, "black", "for-the-badge", "white");
+            $timeBadge = "<img alt='Cron expression' src='{$badgeUrl}' />";
+            $result[] = array($command, $timeBadge);
         }
 
         sort($result, SORT_ASC);

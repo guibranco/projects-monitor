@@ -26,5 +26,3 @@ class AppVeyorProjects
         return json_decode($response->getBody(), true);
     }
 }
-
-?>

@@ -11,7 +11,7 @@ class Color
         return ($rgb['red'] * 0.2126) + ($rgb['green'] * 0.7152) + ($rgb['blue'] * 0.0722);
     }
 
-    public static function hex2rgb($color)
+    private static function hex2rgb($color)
     {
         if (strlen($color) == 3) {
             $color = $color[0] . $color[0] . $color[1] . $color[1] . $color[2] . $color[2];

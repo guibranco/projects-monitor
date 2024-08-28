@@ -14,7 +14,8 @@ class UpTimeRobot
 
     public function __construct()
     {
-        new Configuration();
+        $config = new Configuration();
+        $config->init();
 
         global $upTimeRobotToken;
 

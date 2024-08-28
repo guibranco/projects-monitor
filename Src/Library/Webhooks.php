@@ -17,7 +17,8 @@ class Webhooks
     {
         global $webhooksApiToken, $webhooksApiUrl;
 
-        $configuration = new Configuration();
+        $config = new Configuration();
+        $config->init();
 
         if (!file_exists(__DIR__ . "/../secrets/webhooks.secrets.php")) {
             throw new SecretsFileNotFoundException("File not found: webhooks.secrets.php");
@@ -31,8 +32,8 @@ class Webhooks
             "Accept: application/json",
             "Cache-Control: no-cache",
             constant("USER_AGENT"),
-            "X-timezone: {$configuration->getTimeZone()->getTimeZone()}",
-            "X-timezone-offset: {$configuration->getTimeZone()->getOffset()}"
+            "X-timezone: {$config->getTimeZone()->getTimeZone()}",
+            "X-timezone-offset: {$config->getTimeZone()->getOffset()}"
         ];
         $this->request = new Request();
     }

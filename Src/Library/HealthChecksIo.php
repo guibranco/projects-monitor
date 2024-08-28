@@ -7,7 +7,7 @@ use GuiBranco\ProjectsMonitor\Library\Configuration;
 
 class HealthChecksIo
 {
-    private const HEALTHCHECKS_API_URL = "https://healthchecks.io/api/v3/";
+    private const HEALTH_CHECKS_API_URL = "https://healthchecks.io/api/v3/";
 
     private $readKeys = array();
 
@@ -15,7 +15,9 @@ class HealthChecksIo
 
     public function __construct()
     {
-        $configuration = new Configuration();
+        $config = new Configuration();
+        $config->init();
+
         global $healthChecksIoReadKeys;
 
         if (!file_exists(__DIR__ . "/../secrets/healthChecksIo.secrets.php")) {
@@ -30,7 +32,7 @@ class HealthChecksIo
 
     private function getRequest($readKey)
     {
-        $url = self::HEALTHCHECKS_API_URL . "checks/";
+        $url = self::HEALTH_CHECKS_API_URL . "checks/";
         $headers = [
             "X-Api-Key: {$readKey}",
             "Accept: application/json",

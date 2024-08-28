@@ -27,8 +27,8 @@ function init() {
 
 function setCookie(name, value, expireDays) {
   const date = new Date();
-  date.setTime(date.getTime() + (expireDays*24*60*60*1000));
-  let expires = "expires="+ date.toUTCString();
+  date.setTime(date.getTime() + expireDays * 24 * 60 * 60 * 1000);
+  let expires = "expires=" + date.toUTCString();
   document.cookie = name + "=" + value + ";" + expires + ";";
 }
 
@@ -66,11 +66,7 @@ function preset() {
       '{"total":0,"byApplications":[["Applications","Hits"]],"grouped":[]}'
     )
   );
-  showQueues(
-    JSON.parse(
-      '{"queues":[],"total":0}'
-    )
-  );
+  showQueues(JSON.parse('{"queues":[],"total":0}'));
   showWebhook(
     JSON.parse(
       '{"bots":[],"events":[["Event","Hits"]],"failed":0,"feed":[],"repositories":[],"total":0,"statistics":[["Date","Table #1"],["01/01",0]],"statistics_github":[["Date","Table #1"],["01/01",0]],"workflow_runs":[],"total_workflow_runs":0, "installations":0}'
@@ -79,13 +75,14 @@ function preset() {
 }
 
 function load30Interval() {
+  load("api/v1/appveyor", showAppVeyor);
   load("api/v1/cpanel", showCPanel);
   load("api/v1/messages", showMessages);
   load("api/v1/queues", showQueues);
   load("api/v1/webhooks", showWebhook);
 }
 
-function load60Interval() {  
+function load60Interval() {
   load("api/v1/domains", showDomains);
   load("api/v1/github", showGitHub);
   load("api/v1/healthchecksio", showHealthChecksIo);
@@ -102,11 +99,31 @@ function drawChart() {
   setInterval(load60Interval, 60 * 1000);
 }
 
+function showAppVeyor(response) {
+  const dataProjects = google.visualization.arrayToDataTable(
+    response["projects"]
+  );
+
+  const projects = new google.visualization.Table(
+    document.getElementById("appveyor")
+  );
+  projects.draw(dataProjects, tableOptions);
+}
+
 function showCPanel(response) {
-  const dataLogFiles = google.visualization.arrayToDataTable(response["error_log_files"]);
-  const dataLogMessages = google.visualization.arrayToDataTable(response["error_log_messages"]);
-  const dataCronjobs = google.visualization.arrayToDataTable(response["cronjobs"]);
-  const totalLogMessages = google.visualization.arrayToDataTable([["Hits", "Total"],["Log errors", response["total_error_messages"]],]);
+  const dataLogFiles = google.visualization.arrayToDataTable(
+    response["error_log_files"]
+  );
+  const dataLogMessages = google.visualization.arrayToDataTable(
+    response["error_log_messages"]
+  );
+  const dataCronjobs = google.visualization.arrayToDataTable(
+    response["cronjobs"]
+  );
+  const totalLogMessages = google.visualization.arrayToDataTable([
+    ["Hits", "Total"],
+    ["Log errors", response["total_error_messages"]],
+  ]);
 
   const gaugeOptions = {
     legend: { position: "none" },
@@ -123,19 +140,31 @@ function showCPanel(response) {
     redTo: 1000,
   };
 
-  const gaugeChart7 = new google.visualization.Gauge(document.getElementById("gauge_chart_7"));
-  gaugeChart7.draw(totalLogMessages, gaugeOptions);  
-  const logFiles = new google.visualization.Table(document.getElementById("error_log_files"));
+  const gaugeChart7 = new google.visualization.Gauge(
+    document.getElementById("gauge_chart_7")
+  );
+  gaugeChart7.draw(totalLogMessages, gaugeOptions);
+  const logFiles = new google.visualization.Table(
+    document.getElementById("error_log_files")
+  );
   logFiles.draw(dataLogFiles, tableOptions);
-  const logMessages = new google.visualization.Table(document.getElementById("error_log_messages"));
+  const logMessages = new google.visualization.Table(
+    document.getElementById("error_log_messages")
+  );
   logMessages.draw(dataLogMessages, tableOptions);
-  const cronjobs = new google.visualization.Table(document.getElementById("cronjobs"));
+  const cronjobs = new google.visualization.Table(
+    document.getElementById("cronjobs")
+  );
   cronjobs.draw(dataCronjobs, tableOptions);
 }
 
 function showDomains(response) {
-  const dataDomains = google.visualization.arrayToDataTable(response["domains"]);
-  const domains = new google.visualization.Table(document.getElementById("domains"));
+  const dataDomains = google.visualization.arrayToDataTable(
+    response["domains"]
+  );
+  const domains = new google.visualization.Table(
+    document.getElementById("domains")
+  );
   domains.draw(dataDomains, tableOptions);
 }
 
@@ -195,36 +224,78 @@ function showDomains(response) {
  * showGitHub(response);
  */
 function showGitHub(response) {
-  const dataIssues = google.visualization.arrayToDataTable([["Hits", "Total"],["GH Issues", response["issues"]["total_count"]],]);
-  const dataPullRequests = google.visualization.arrayToDataTable([["Hits", "Total"], ["GH PRs", response["pull_requests"]["total_count"]],]);
-  const dataPullRequestsTable = google.visualization.arrayToDataTable(response["pull_requests"]["latest"]);
-  const dataPullRequestsAuthoredTable = google.visualization.arrayToDataTable(response["pull_requests"]["authored"]);
-  const dataPullRequestsBlockedTable = google.visualization.arrayToDataTable(response["pull_requests"]["blocked"]);
-  const dataAssignedTable = google.visualization.arrayToDataTable(response["issues"]["assigned"]);
-  const dataAuthoredTable = google.visualization.arrayToDataTable(response["issues"]["authored"]);
-  const dataBlockedTable = google.visualization.arrayToDataTable(response["issues"]["blocked"]);
-  const dataBugsTable = google.visualization.arrayToDataTable(response["issues"]["bug"]);
-  const dataTriageTable = google.visualization.arrayToDataTable(response["issues"]["triage"]);
-  const dataWipTable = google.visualization.arrayToDataTable(response["issues"]["wip"]);
-  const dataIssuesTable = google.visualization.arrayToDataTable(response["issues"]["others"]);
-  const dataAccountsUsage = google.visualization.arrayToDataTable(response["accounts_usage"]);
+  const dataIssues = google.visualization.arrayToDataTable([
+    ["Hits", "Total"],
+    ["GH Issues", response["issues"]["total_count"]],
+  ]);
+  const dataPullRequests = google.visualization.arrayToDataTable([
+    ["Hits", "Total"],
+    ["GH PRs", response["pull_requests"]["total_count"]],
+  ]);
+  const dataPullRequestsTable = google.visualization.arrayToDataTable(
+    response["pull_requests"]["latest"]
+  );
+  const dataPullRequestsAuthoredTable = google.visualization.arrayToDataTable(
+    response["pull_requests"]["authored"]
+  );
+  const dataPullRequestsBlockedTable = google.visualization.arrayToDataTable(
+    response["pull_requests"]["blocked"]
+  );
+  const dataAssignedTable = google.visualization.arrayToDataTable(
+    response["issues"]["assigned"]
+  );
+  const dataAuthoredTable = google.visualization.arrayToDataTable(
+    response["issues"]["authored"]
+  );
+  const dataBlockedTable = google.visualization.arrayToDataTable(
+    response["issues"]["blocked"]
+  );
+  const dataBugsTable = google.visualization.arrayToDataTable(
+    response["issues"]["bug"]
+  );
+  const dataTriageTable = google.visualization.arrayToDataTable(
+    response["issues"]["triage"]
+  );
+  const dataWipTable = google.visualization.arrayToDataTable(
+    response["issues"]["wip"]
+  );
+  const dataIssuesTable = google.visualization.arrayToDataTable(
+    response["issues"]["others"]
+  );
+  const dataAccountsUsage = google.visualization.arrayToDataTable(
+    response["accounts_usage"]
+  );
 
   if (typeof response["latest_release"] !== "undefined") {
     const latestRelease = response["latest_release"];
-    document.getElementById("latest_release").innerHTML =      
+    document.getElementById("latest_release").innerHTML =
       "<b>Release Notes:</b> " +
       latestRelease["description"] +
-      "<b>Date:</b> " + latestRelease["published"] +
+      "<b>Date:</b> " +
+      latestRelease["published"] +
       " | " +
-      "<b>Version:</b> " +  "<a href='" + latestRelease["release_url"] + "'>" + latestRelease["title"] + "</a>" +
+      "<b>Version:</b> " +
+      "<a href='" +
+      latestRelease["release_url"] +
+      "'>" +
+      latestRelease["title"] +
+      "</a>" +
       " | " +
-      "<a href='https://github.com/" + latestRelease["repository"] + "' target='_blank'>" +
-      "<img alt='Static Badge' src='https://img.shields.io/badge/" + latestRelease["repository"] + "-black?style=flat&amp;logo=github'></a>" +
+      "<a href='https://github.com/" +
+      latestRelease["repository"] +
+      "' target='_blank'>" +
+      "<img alt='Static Badge' src='https://img.shields.io/badge/" +
+      latestRelease["repository"] +
+      "-black?style=flat&amp;logo=github'></a>" +
       " | " +
-      "<a href='https://github.com/" + latestRelease["author"] + "' target='_blank'>" +
-      "<img alt='author' src='https://img.shields.io/badge/" + latestRelease["author"] + "-black?style=social&amp;logo=github'></a>";
-  } 
-  
+      "<a href='https://github.com/" +
+      latestRelease["author"] +
+      "' target='_blank'>" +
+      "<img alt='author' src='https://img.shields.io/badge/" +
+      latestRelease["author"] +
+      "-black?style=social&amp;logo=github'></a>";
+  }
+
   const gaugeOptions = {
     legend: { position: "none" },
     showRowNumber: true,
@@ -240,44 +311,77 @@ function showGitHub(response) {
     redTo: 1000,
   };
 
-  const gaugeChart5 = new google.visualization.Gauge(document.getElementById("gauge_chart_5"));
+  const gaugeChart5 = new google.visualization.Gauge(
+    document.getElementById("gauge_chart_5")
+  );
   gaugeChart5.draw(dataIssues, gaugeOptions);
-  const gaugeChart6 = new google.visualization.Gauge(document.getElementById("gauge_chart_6"));
+  const gaugeChart6 = new google.visualization.Gauge(
+    document.getElementById("gauge_chart_6")
+  );
   gaugeChart6.draw(dataPullRequests, gaugeOptions);
-  const pullRequests = new google.visualization.Table(document.getElementById("pull_requests_latest"));
+  const pullRequests = new google.visualization.Table(
+    document.getElementById("pull_requests_latest")
+  );
   pullRequests.draw(dataPullRequestsTable, tableOptions);
-  const pullRequestsAuthored = new google.visualization.Table(document.getElementById("pull_requests_authored"));
+  const pullRequestsAuthored = new google.visualization.Table(
+    document.getElementById("pull_requests_authored")
+  );
   pullRequestsAuthored.draw(dataPullRequestsAuthoredTable, tableOptions);
-  const pullRequestsBlocked = new google.visualization.Table(document.getElementById("pull_requests_blocked"));
+  const pullRequestsBlocked = new google.visualization.Table(
+    document.getElementById("pull_requests_blocked")
+  );
   pullRequestsBlocked.draw(dataPullRequestsBlockedTable, tableOptions);
-  const assigned = new google.visualization.Table(document.getElementById("assigned"));
+  const assigned = new google.visualization.Table(
+    document.getElementById("assigned")
+  );
   assigned.draw(dataAssignedTable, tableOptions);
-  const authored = new google.visualization.Table(document.getElementById("issues_authored"));
-  authored.draw(dataAuthoredTable, tableOptions);  
+  const authored = new google.visualization.Table(
+    document.getElementById("issues_authored")
+  );
+  authored.draw(dataAuthoredTable, tableOptions);
   const bug = new google.visualization.Table(document.getElementById("bug"));
   bug.draw(dataBugsTable, tableOptions);
-  const blocked = new google.visualization.Table(document.getElementById("blocked"));
+  const blocked = new google.visualization.Table(
+    document.getElementById("blocked")
+  );
   blocked.draw(dataBlockedTable, tableOptions);
-  const triage = new google.visualization.Table(document.getElementById("triage"));
+  const triage = new google.visualization.Table(
+    document.getElementById("triage")
+  );
   triage.draw(dataTriageTable, tableOptions);
   const wip = new google.visualization.Table(document.getElementById("wip"));
   wip.draw(dataWipTable, tableOptions);
-  const issues = new google.visualization.Table(document.getElementById("issues"));
+  const issues = new google.visualization.Table(
+    document.getElementById("issues")
+  );
   issues.draw(dataIssuesTable, tableOptions);
-  const accountsUsage = new google.visualization.Table(document.getElementById("accounts_usage"));
+  const accountsUsage = new google.visualization.Table(
+    document.getElementById("accounts_usage")
+  );
   accountsUsage.draw(dataAccountsUsage, tableOptions);
 }
 
 function showHealthChecksIo(response) {
-  const dataHealthChecksIo = google.visualization.arrayToDataTable(response["checks"]);
-  const healthChecksIo = new google.visualization.Table(document.getElementById("healthchecksio"));
+  const dataHealthChecksIo = google.visualization.arrayToDataTable(
+    response["checks"]
+  );
+  const healthChecksIo = new google.visualization.Table(
+    document.getElementById("healthchecksio")
+  );
   healthChecksIo.draw(dataHealthChecksIo, tableOptions);
 }
 
 function showMessages(response) {
-  const dataGrouped = google.visualization.arrayToDataTable(response["grouped"]);
-  const dataTotal = google.visualization.arrayToDataTable([["Items", "Total"],["PM Errors", response["total"]],]);
-  const dataByApplications = google.visualization.arrayToDataTable(response["byApplications"]);
+  const dataGrouped = google.visualization.arrayToDataTable(
+    response["grouped"]
+  );
+  const dataTotal = google.visualization.arrayToDataTable([
+    ["Items", "Total"],
+    ["PM Errors", response["total"]],
+  ]);
+  const dataByApplications = google.visualization.arrayToDataTable(
+    response["byApplications"]
+  );
 
   const optionsTotal = {
     legend: { position: "none" },
@@ -299,16 +403,25 @@ function showMessages(response) {
     legend: { position: "right" },
   };
 
-  const grouped = new google.visualization.Table(document.getElementById("messages_grouped"));
+  const grouped = new google.visualization.Table(
+    document.getElementById("messages_grouped")
+  );
   grouped.draw(dataGrouped, tableOptions);
-  const gaugeChart3 = new google.visualization.Gauge(document.getElementById("gauge_chart_3"));
+  const gaugeChart3 = new google.visualization.Gauge(
+    document.getElementById("gauge_chart_3")
+  );
   gaugeChart3.draw(dataTotal, optionsTotal);
-  const pieChart2 = new google.visualization.PieChart(document.getElementById("pie_chart_2"));
+  const pieChart2 = new google.visualization.PieChart(
+    document.getElementById("pie_chart_2")
+  );
   pieChart2.draw(dataByApplications, optionsByApplications);
 }
 
 function showQueues(response) {
-  const dataTotal = google.visualization.arrayToDataTable([["Items", "Total"],["Queues", response["total"]],]);
+  const dataTotal = google.visualization.arrayToDataTable([
+    ["Items", "Total"],
+    ["Queues", response["total"]],
+  ]);
   const dataQueues = google.visualization.arrayToDataTable(response["queues"]);
 
   const optionsTotal = {
@@ -326,9 +439,13 @@ function showQueues(response) {
     redTo: 10000,
   };
 
-  const queues = new google.visualization.Table(document.getElementById("queues"));
+  const queues = new google.visualization.Table(
+    document.getElementById("queues")
+  );
   queues.draw(dataQueues, tableOptions);
-  const gaugeChart4 = new google.visualization.Gauge(document.getElementById("gauge_chart_4"));
+  const gaugeChart4 = new google.visualization.Gauge(
+    document.getElementById("gauge_chart_4")
+  );
   gaugeChart4.draw(dataTotal, optionsTotal);
 }
 
@@ -336,7 +453,9 @@ function showUpTimeRobot(response) {
   const dataUpTimeRobot = google.visualization.arrayToDataTable(
     response["monitors"]
   );
-  const upTimeRobot = new google.visualization.Table(document.getElementById("uptimerobot"));
+  const upTimeRobot = new google.visualization.Table(
+    document.getElementById("uptimerobot")
+  );
   upTimeRobot.draw(dataUpTimeRobot, tableOptions);
 }
 
@@ -381,17 +500,37 @@ function showUpTimeRobot(response) {
  * showWebhook(responseData);
  */
 function showWebhook(response) {
-  const dataStatistics = google.visualization.arrayToDataTable(response["statistics"]);
-  const dataStatisticsGitHub = google.visualization.arrayToDataTable(response["statistics_github"]);
+  const dataStatistics = google.visualization.arrayToDataTable(
+    response["statistics"]
+  );
+  const dataStatisticsGitHub = google.visualization.arrayToDataTable(
+    response["statistics_github"]
+  );
   const dataEvents = google.visualization.arrayToDataTable(response["events"]);
   const dataFeed = google.visualization.arrayToDataTable(response["feed"]);
   const dataBots = google.visualization.arrayToDataTable(response["bots"]);
-  const dataRepositories = google.visualization.arrayToDataTable(response["repositories"]);
-  const dataWorkflowRuns = google.visualization.arrayToDataTable(response["workflow_runs"]);
-  const dataTotal = google.visualization.arrayToDataTable([["Hits", "Total"],["GH WH", response["total"]],]);
-  const dataFailed = google.visualization.arrayToDataTable([["Hits", "Failed"],["WH Failed", response["failed"]],]);
-  const dataTotalWorkflowRuns = google.visualization.arrayToDataTable([["Hits", "GH WRs"],["GH WRs", response["total_workflow_runs"]],]);
-  const dataInstallations = google.visualization.arrayToDataTable([["Hits", "GH App"],["GH App", response["installations"]],]);  
+  const dataRepositories = google.visualization.arrayToDataTable(
+    response["repositories"]
+  );
+  const dataWorkflowRuns = google.visualization.arrayToDataTable(
+    response["workflow_runs"]
+  );
+  const dataTotal = google.visualization.arrayToDataTable([
+    ["Hits", "Total"],
+    ["GH WH", response["total"]],
+  ]);
+  const dataFailed = google.visualization.arrayToDataTable([
+    ["Hits", "Failed"],
+    ["WH Failed", response["failed"]],
+  ]);
+  const dataTotalWorkflowRuns = google.visualization.arrayToDataTable([
+    ["Hits", "GH WRs"],
+    ["GH WRs", response["total_workflow_runs"]],
+  ]);
+  const dataInstallations = google.visualization.arrayToDataTable([
+    ["Hits", "GH App"],
+    ["GH App", response["installations"]],
+  ]);
 
   const optionsStatistics = {
     title: "Webhooks by date",
@@ -407,9 +546,9 @@ function showWebhook(response) {
 
   const optionsStatisticsGitHub = {
     title: "GitHub webhooks by date",
-    legend: 'none',
+    legend: "none",
     series: {
-      0: { color: 'green' }
+      0: { color: "green" },
     },
     pointSize: 7,
     hAxis: {
@@ -487,32 +626,51 @@ function showWebhook(response) {
 
   if (typeof response["check_hooks_date"] !== "undefined") {
     const checkHooksDate = new Date(response["check_hooks_date"]);
-    document.getElementById("hooks_last_check").innerHTML = "<b>Date: </b> " + checkHooksDate.toString();
+    document.getElementById("hooks_last_check").innerHTML =
+      "<b>Date: </b> " + checkHooksDate.toString();
   }
 
-  const statisticsChart = new google.visualization.LineChart(document.getElementById("webhooks_statistics"));
+  const statisticsChart = new google.visualization.LineChart(
+    document.getElementById("webhooks_statistics")
+  );
   statisticsChart.draw(dataStatistics, optionsStatistics);
-  const statisticsGitHubChart = new google.visualization.LineChart(document.getElementById("webhooks_statistics_github"));
+  const statisticsGitHubChart = new google.visualization.LineChart(
+    document.getElementById("webhooks_statistics_github")
+  );
   statisticsGitHubChart.draw(dataStatisticsGitHub, optionsStatisticsGitHub);
 
-  const pieChart1 = new google.visualization.PieChart(document.getElementById("pie_chart_1"));
+  const pieChart1 = new google.visualization.PieChart(
+    document.getElementById("pie_chart_1")
+  );
   pieChart1.draw(dataEvents, optionsEvents);
 
-  const repositories = new google.visualization.Table(document.getElementById("repositories"));
+  const repositories = new google.visualization.Table(
+    document.getElementById("repositories")
+  );
   repositories.draw(dataRepositories, tableOptions);
-  const workflowRuns = new google.visualization.Table(document.getElementById("workflow_runs"));
+  const workflowRuns = new google.visualization.Table(
+    document.getElementById("workflow_runs")
+  );
   workflowRuns.draw(dataWorkflowRuns, tableOptions);
   const feed = new google.visualization.Table(document.getElementById("feed"));
   feed.draw(dataFeed, tableOptions);
   const bots = new google.visualization.Table(document.getElementById("bots"));
   bots.draw(dataBots, tableOptions);
 
-  const gaugeChart1 = new google.visualization.Gauge(document.getElementById("gauge_chart_1"));
+  const gaugeChart1 = new google.visualization.Gauge(
+    document.getElementById("gauge_chart_1")
+  );
   gaugeChart1.draw(dataTotal, optionsTotal);
-  const gaugeChart2 = new google.visualization.Gauge(document.getElementById("gauge_chart_2"));
+  const gaugeChart2 = new google.visualization.Gauge(
+    document.getElementById("gauge_chart_2")
+  );
   gaugeChart2.draw(dataFailed, optionsFailed);
-  const gaugeChart8 = new google.visualization.Gauge(document.getElementById("gauge_chart_8"));
+  const gaugeChart8 = new google.visualization.Gauge(
+    document.getElementById("gauge_chart_8")
+  );
   gaugeChart8.draw(dataTotalWorkflowRuns, optionsTotalWorkflowRuns);
-  const gaugeChart9 = new google.visualization.Gauge(document.getElementById("gauge_chart_9"));
+  const gaugeChart9 = new google.visualization.Gauge(
+    document.getElementById("gauge_chart_9")
+  );
   gaugeChart9.draw(dataInstallations, optionsInstallations);
 }

@@ -4,6 +4,7 @@ namespace GuiBranco\ProjectsMonitor\Library;
 
 use GuiBranco\Pancake\Request;
 use GuiBranco\ProjectsMonitor\Library\Configuration;
+use GuiBranco\Pancake\ShieldsIo;
 
 class RabbitMq
 {
@@ -13,7 +14,8 @@ class RabbitMq
 
     public function __construct()
     {
-        new Configuration();
+        $config = new Configuration();
+        $config->init();
 
         global $rabbitMqConnectionStrings;
 
@@ -50,7 +52,7 @@ class RabbitMq
             return "red";
         }
 
-        if($quantity > $orange) {
+        if ($quantity > $orange) {
             return "orange";
         }
 
@@ -61,8 +63,48 @@ class RabbitMq
         return "green";
     }
 
+    private function parseQueue($host, $queue, $shieldsIo)
+    {
+        $name = $queue["name"];
+        $messages = $queue["messages"];
+        $consumers = $queue["consumers"];
+
+        $state = "Active";
+        if (isset($queue["idle_since"])) {
+            $dateDiff = intval((time() - strtotime($queue["idle_since"])) / 60);
+
+            $hours = intval($dateDiff / 60);
+            if (strlen($hours) === 1) {
+                $hours = "0{$hours}";
+            }
+
+            $minutes = $dateDiff % 60;
+            if (strlen($minutes) === 1) {
+                $minutes = "0{$minutes}";
+            }
+
+            $state = "Idle time: {$hours}:{$minutes}";
+        }
+
+        if ($messages === 0 && str_ends_with($name, "-retry")) {
+            return null;
+        }
+
+        $colorMessages = $this->getColorByThreshold($messages, 100, 50, 1);
+        $badgeMessage = $shieldsIo->generateBadgeUrl($messages, $name, $colorMessages, "for-the-badge", "black", null);
+        $imgMessages = "<img alt='queue length' src='{$badgeMessage}' />";
+        $colorConsumers = isset($queue["idle_since"]) ? "red" : "green";
+        $labelColor = $this->getColorByThreshold($consumers, 15, 5, 1);
+        $badgeConsumers = $shieldsIo->generateBadgeUrl($consumers, $state, $colorConsumers, "for-the-badge", $labelColor, null);
+        $imgConsumers = "<img alt='queue length' src='{$badgeConsumers}' />";
+        $item = array($host, $imgMessages, $imgConsumers);
+
+        return array("item" => $item, "messages" => $messages);
+    }
+
     public function getQueueLength()
     {
+        $shieldsIo = new ShieldsIo();
         $data = array();
         $data["total"] = 0;
         $data["queues"][] = array("Server", "Queue", "Consumers");
@@ -75,41 +117,17 @@ class RabbitMq
             }
             $node = json_decode($response->body, true);
             foreach ($node as $queue) {
-                $name = $queue["name"];
-                $messages = $queue["messages"];
-                $consumers = $queue["consumers"];
+                $result = $this->parseQueue($server["host"], $queue, $shieldsIo);
 
-                $state = "Active";
-                if (isset($queue["idle_since"])) {
-                    $dateDiff = intval((time() - strtotime($queue["idle_since"])) / 60);
-
-                    $hours = intval($dateDiff / 60);
-                    if (strlen($hours) === 1) {
-                        $hours = "0{$hours}";
-                    }
-
-                    $minutes = $dateDiff % 60;
-                    if (strlen($minutes) === 1) {
-                        $minutes = "0{$minutes}";
-                    }
-
-                    $state = "Idle time: {$hours}:{$minutes}";
-                }
-
-                if ($messages === 0 && str_ends_with($name, "-retry")) {
+                if ($result === null) {
                     continue;
                 }
 
-                $colorMessages = $this->getColorByThreshold($messages, 100, 50, 1);
-                $imgMessages = "<img alt='queue length' src='https://img.shields.io/badge/" . $messages . "-" . str_replace("-", "--", $name) . "-" . $colorMessages . "?style=for-the-badge&labelColor=black' />";
-                $colorConsumers = isset($queue["idle_since"]) ? "red" : "green";
-                $labelColor = $this->getColorByThreshold($consumers, 15, 5, 1);
-                $imgConsumers = "<img alt='queue length' src='https://img.shields.io/badge/" . $consumers . "-" . str_replace("-", "--", $state) . "-" . $colorConsumers . "?style=for-the-badge&labelColor={$labelColor}' />";
-                $item = array($server["host"], $imgMessages, $imgConsumers);
-                $data["queues"][] = $item;
-                $data["total"] += $messages;
+                $data["queues"][] = $result["item"];
+                $data["total"] += $result["messages"];
             }
         }
+
         ksort($data);
         return $data;
     }

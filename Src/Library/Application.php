@@ -19,6 +19,7 @@ class Application
     public function __construct()
     {
         $this->config = new Configuration();
+        $this->config->init();
         $this->database = new Database();
     }
 

@@ -10,7 +10,6 @@ class TimeZone
     public function __construct()
     {
         $timeZone = "Europe/Dublin";
-        $offset = "+00:00";
 
         if (isset($_COOKIE["timezone"])) {
             $timeZone = strtolower($_COOKIE["timezone"]) === "europe/london"

@@ -3,6 +3,7 @@ RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME} !-f
 
+RewriteRule ^appveyor$ appveyor.php [NC,L]
 RewriteRule ^cpanel$ cpanel.php [NC,L]
 RewriteRule ^domains$ domains.php [NC,L]
 RewriteRule ^github$ github.php [NC,L]

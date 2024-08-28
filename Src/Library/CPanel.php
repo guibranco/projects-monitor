@@ -192,7 +192,7 @@ class CPanel
             }
             $command = str_replace("/home/zerocool/", "", str_replace("/usr/local/bin/", "", $line->command));
             $time = $line->minute . " " . $line->hour . " " . $line->day . " " . $line->month . " " . $line->weekday;
-            $badgeUrl = $badge->generateBadgeUrl("⏰", $time, "black", "for-the-badge", "white");
+            $badgeUrl = $badge->generateBadgeUrl("⏰", $time, "black", "for-the-badge", "white", null);
             $timeBadge = "<img alt='Cron expression' src='{$badgeUrl}' />";
             $result[] = array($command, $timeBadge);
         }

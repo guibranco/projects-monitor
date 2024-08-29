@@ -81,10 +81,10 @@ class AppVeyor
 
                 $link = "https://ci.appveyor.com/project/{$project->accountName}/{$project->slug}/builds/{$build->buildId}";
                 $badgeName = $shields->generateBadgeUrl($status, $project->name, $color, "for-the-badge", "white", null);
-                $badgeNameImg = "<a href='{$link}'><img src='{$badgeName}' alt='{$status}' /></a>";
+                $badgeNameImg = "<a href='{$link}' title='{$status}'><img src='{$badgeName}' alt='{$status}' /></a>";
 
                 $badgeVersion = $shields->generateBadgeUrl($build->branch, $build->version, "blue", "for-the-badge", "white", null);
-                $badgeVersionImg = "<a href='{$link}'><img src='{$badgeVersion}' alt='{$build->version}' /></a>";
+                $badgeVersionImg = "<a href='{$link}' title='{$build->version} - {$build->branch}'><img src='{$badgeVersion}' alt='{$build->version}' /></a>";
 
                 $dateValue = isset($build->updated) ? $build->updated : $build->created;
                 $date = date("Y-m-d H:i:s", strtotime($dateValue));

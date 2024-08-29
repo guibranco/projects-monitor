@@ -25,6 +25,19 @@ function init() {
   setCookie("offset", offset, 10);
 }
 
+/**
+ * Sets a cookie in the browser with the specified name, value, and expiration days.
+ *
+ * @param {string} name - The name of the cookie.
+ * @param {string} value - The value to be stored in the cookie.
+ * @param {number} expireDays - The number of days until the cookie expires.
+ * 
+ * @throws {Error} Throws an error if the name or value is not a string.
+ * 
+ * @example
+ * // Set a cookie named "username" with the value "JohnDoe" that expires in 7 days
+ * setCookie("username", "JohnDoe", 7);
+ */
 function setCookie(name, value, expireDays) {
   const date = new Date();
   date.setTime(date.getTime() + expireDays * 24 * 60 * 60 * 1000);
@@ -46,6 +59,21 @@ function load(url, callback) {
   xhr.send();
 }
 
+/**
+ * Toggles the display of preset information in the application.
+ * If the preset is currently shown, it will hide it and display various 
+ * data related to error logs, GitHub issues, messages, queues, and webhooks.
+ * 
+ * This function does not return any value. It modifies the UI state 
+ * based on the parsed JSON data for different components.
+ * 
+ * @throws {Error} Throws an error if JSON parsing fails for any of the 
+ *                 components. Ensure that the JSON structure is valid.
+ * 
+ * @example
+ * // To show preset information
+ * preset();
+ */
 function preset() {
   if (!showPreset) {
     return;
@@ -74,6 +102,25 @@ function preset() {
   );
 }
 
+/**
+ * Initiates the loading of various API endpoints at a 30-second interval.
+ * This function calls the `load` function for multiple API routes, 
+ * each of which is associated with a specific handler function to process 
+ * the data returned from the API.
+ *
+ * The following API endpoints are loaded:
+ * - "api/v1/appveyor" - handled by `showAppVeyor`
+ * - "api/v1/cpanel" - handled by `showCPanel`
+ * - "api/v1/messages" - handled by `showMessages`
+ * - "api/v1/queues" - handled by `showQueues`
+ * - "api/v1/webhooks" - handled by `showWebhook`
+ *
+ * @throws {Error} Throws an error if the loading of any API endpoint fails.
+ *
+ * @example
+ * // To load the APIs at a 30-second interval
+ * load30Interval();
+ */
 function load30Interval() {
   load("api/v1/appveyor", showAppVeyor);
   load("api/v1/cpanel", showCPanel);
@@ -82,6 +129,28 @@ function load30Interval() {
   load("api/v1/webhooks", showWebhook);
 }
 
+/**
+ * Loads data from multiple API endpoints at a 60-second interval.
+ * This function initiates asynchronous requests to fetch data from
+ * the following endpoints:
+ * - /api/v1/domains
+ * - /api/v1/github
+ * - /api/v1/healthchecksio
+ * - /api/v1/uptimerobot
+ *
+ * Each API response is handled by its respective callback function:
+ * - showDomains for domains data
+ * - showGitHub for GitHub data
+ * - showHealthChecksIo for health checks data
+ * - showUpTimeRobot for uptime robot data
+ *
+ * @throws {Error} Throws an error if any of the API requests fail.
+ *
+ * @example
+ * // To load the data from all specified APIs every 60 seconds,
+ * // simply call the function:
+ * load60Interval();
+ */
 function load60Interval() {
   load("api/v1/domains", showDomains);
   load("api/v1/github", showGitHub);
@@ -99,6 +168,29 @@ function drawChart() {
   setInterval(load60Interval, 60 * 1000);
 }
 
+/**
+ * Renders a table displaying project data from AppVeyor using Google Charts.
+ *
+ * This function takes a response object containing project data and converts it
+ * into a format suitable for visualization. It then creates a new table in the
+ * specified HTML element and draws the data onto it.
+ *
+ * @param {Object} response - The response object containing project data.
+ * @param {Array} response.projects - An array of project data to be visualized.
+ *
+ * @throws {Error} Throws an error if the response does not contain the expected
+ *                 structure or if the Google Charts library is not loaded.
+ *
+ * @example
+ * const response = {
+ *   projects: [
+ *     ['Project Name', 'Status'],
+ *     ['Project A', 'Success'],
+ *     ['Project B', 'Failed']
+ *   ]
+ * };
+ * showAppVeyor(response);
+ */
 function showAppVeyor(response) {
   const dataProjects = google.visualization.arrayToDataTable(
     response["projects"]
@@ -110,6 +202,30 @@ function showAppVeyor(response) {
   projects.draw(dataProjects, tableOptions);
 }
 
+/**
+ * Displays the control panel with various visualizations based on the provided response data.
+ *
+ * This function processes the response object to extract error log files, error log messages,
+ * and cronjob data, and then visualizes this information using Google Charts. It creates a gauge
+ * chart for total log messages and tables for log files, log messages, and cronjobs.
+ *
+ * @param {Object} response - The response object containing data for visualization.
+ * @param {Array} response.error_log_files - An array of error log files to be displayed.
+ * @param {Array} response.error_log_messages - An array of error log messages to be displayed.
+ * @param {Array} response.cronjobs - An array of cronjob data to be displayed.
+ * @param {number} response.total_error_messages - The total number of error messages.
+ *
+ * @throws {Error} Throws an error if the response object is missing required properties.
+ *
+ * @example
+ * const response = {
+ *   error_log_files: [...],
+ *   error_log_messages: [...],
+ *   cronjobs: [...],
+ *   total_error_messages: 42
+ * };
+ * showCPanel(response);
+ */
 function showCPanel(response) {
   const dataLogFiles = google.visualization.arrayToDataTable(
     response["error_log_files"]
@@ -158,6 +274,30 @@ function showCPanel(response) {
   cronjobs.draw(dataCronjobs, tableOptions);
 }
 
+/**
+ * Renders a table of domains using Google Visualization API.
+ *
+ * This function takes a response object containing domain data,
+ * converts it into a format suitable for visualization, and then
+ * draws the table in the specified HTML element.
+ *
+ * @param {Object} response - The response object containing domain data.
+ * @param {Array} response.domains - An array of domain data to be visualized.
+ * 
+ * @throws {TypeError} Throws an error if the response does not contain
+ *                     the expected structure or if the domains are not
+ *                     in the correct format.
+ *
+ * @example
+ * const response = {
+ *   domains: [
+ *     ['Domain', 'Count'],
+ *     ['example.com', 10],
+ *     ['test.com', 5]
+ *   ]
+ * };
+ * showDomains(response);
+ */
 function showDomains(response) {
   const dataDomains = google.visualization.arrayToDataTable(
     response["domains"]
@@ -361,6 +501,27 @@ function showGitHub(response) {
   accountsUsage.draw(dataAccountsUsage, tableOptions);
 }
 
+/**
+ * Renders a table visualization of health checks data using Google Charts.
+ *
+ * This function takes a response object containing health check data,
+ * converts it into a format suitable for visualization, and then draws
+ * the table in the specified HTML element.
+ *
+ * @param {Object} response - The response object containing health check data.
+ * @param {Array} response.checks - An array of health check objects to be visualized.
+ *
+ * @throws {Error} Throws an error if the response does not contain the expected data format.
+ *
+ * @example
+ * const response = {
+ *   checks: [
+ *     ['Check 1', 'OK'],
+ *     ['Check 2', 'Failed']
+ *   ]
+ * };
+ * showHealthChecksIo(response);
+ */
 function showHealthChecksIo(response) {
   const dataHealthChecksIo = google.visualization.arrayToDataTable(
     response["checks"]
@@ -371,6 +532,26 @@ function showHealthChecksIo(response) {
   healthChecksIo.draw(dataHealthChecksIo, tableOptions);
 }
 
+/**
+ * Displays various visualizations based on the provided response data.
+ * This function processes the response to create a grouped data table,
+ * a total gauge chart, and a pie chart representing messages by applications.
+ *
+ * @param {Object} response - The response object containing data for visualization.
+ * @param {Array} response.grouped - An array of grouped data for the table.
+ * @param {number} response.total - The total number of PM errors.
+ * @param {Array} response.byApplications - An array of data categorized by applications.
+ *
+ * @throws {Error} Throws an error if the response does not contain the required properties.
+ *
+ * @example
+ * const response = {
+ *   grouped: [[...], [...]], // Example grouped data
+ *   total: 1500,             // Example total PM errors
+ *   byApplications: [[...], [...]] // Example application data
+ * };
+ * showMessages(response);
+ */
 function showMessages(response) {
   const dataGrouped = google.visualization.arrayToDataTable(
     response["grouped"]
@@ -417,6 +598,29 @@ function showMessages(response) {
   pieChart2.draw(dataByApplications, optionsByApplications);
 }
 
+/**
+ * Displays queue data in a table and a gauge chart using Google Visualization API.
+ *
+ * This function takes a response object containing total queue data and individual queue details,
+ * processes this data, and renders it in a specified HTML element.
+ *
+ * @param {Object} response - The response object containing queue information.
+ * @param {number} response.total - The total number of items in the queues.
+ * @param {Array<Array>} response.queues - An array of arrays representing individual queue data.
+ * Each inner array should contain the necessary data for visualization.
+ *
+ * @throws {Error} Throws an error if the response object is missing required properties.
+ *
+ * @example
+ * const response = {
+ *   total: 1500,
+ *   queues: [
+ *     ["Queue 1", 500],
+ *     ["Queue 2", 1000]
+ *   ]
+ * };
+ * showQueues(response);
+ */
 function showQueues(response) {
   const dataTotal = google.visualization.arrayToDataTable([
     ["Items", "Total"],
@@ -449,6 +653,29 @@ function showQueues(response) {
   gaugeChart4.draw(dataTotal, optionsTotal);
 }
 
+/**
+ * Renders a table visualization of uptime data from the response object.
+ *
+ * This function takes a response object containing monitor data and uses
+ * the Google Visualization API to create and display a table in the specified
+ * HTML element.
+ *
+ * @param {Object} response - The response object containing monitor data.
+ * @param {Array} response.monitors - An array of monitor data to be visualized.
+ *
+ * @throws {Error} Throws an error if the response does not contain the expected
+ *                 structure or if the Google Visualization API is not loaded.
+ *
+ * @example
+ * // Example usage:
+ * const response = {
+ *   monitors: [
+ *     ['Monitor 1', 'Up', '100%'],
+ *     ['Monitor 2', 'Down', '0%']
+ *   ]
+ * };
+ * showUpTimeRobot(response);
+ */
 function showUpTimeRobot(response) {
   const dataUpTimeRobot = google.visualization.arrayToDataTable(
     response["monitors"]
@@ -497,7 +724,7 @@ function showUpTimeRobot(response) {
  *   installations: 10,
  *   check_hooks_date: "2023-10-01T12:00:00Z"
  * };
- * showWebhook(responseData);
+ * showWebhook(webhookResponse);
  */
 function showWebhook(response) {
   const dataStatistics = google.visualization.arrayToDataTable(

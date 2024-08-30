@@ -196,11 +196,11 @@ class CPanel
             $time = $line->minute . " " . $line->hour . " " . $line->day . " " . $line->month . " " . $line->weekday;
             $badgeUrl = $badge->generateBadgeUrl("⏰", $time, "black", "for-the-badge", "white", null);
             $timeBadge = "<img alt='Cron expression' src='{$badgeUrl}' />";
-            $result[] = array($command, $timeBadge);
+            $result[] = array($timeBadge, $command);
         }
 
         sort($result, SORT_ASC);
-        array_unshift($result, array("Command", "Expression"));
+        array_unshift($result, array("Expression", "Command"));
         return $result;
     }
 }

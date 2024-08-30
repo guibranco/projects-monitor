@@ -92,11 +92,11 @@ class RabbitMq
 
         $colorMessages = $this->getColorByThreshold($messages, 100, 50, 1);
         $badgeMessage = $shieldsIo->generateBadgeUrl($messages, $name, $colorMessages, "for-the-badge", "black", null);
-        $imgMessages = "<img alt='queue length' src='{$badgeMessage}' />";
+        $imgMessages = "<img alt='{$messages} message in queue' src='{$badgeMessage}' />";
         $colorConsumers = isset($queue["idle_since"]) ? "red" : "green";
         $labelColor = $this->getColorByThreshold($consumers, 15, 5, 1);
         $badgeConsumers = $shieldsIo->generateBadgeUrl($consumers, $state, $colorConsumers, "for-the-badge", $labelColor, null);
-        $imgConsumers = "<img alt='queue length' src='{$badgeConsumers}' />";
+        $imgConsumers = "<img alt='{$consumers} consumers in queue' src='{$badgeConsumers}' />";
         $item = array($host, $imgMessages, $imgConsumers);
 
         return array("item" => $item, "messages" => $messages);
@@ -128,7 +128,9 @@ class RabbitMq
             }
         }
 
-        ksort($data);
+        usort($data, function ($a, $b) {
+            return $b[1] <=> $a[1];
+        });
         return $data;
     }
 }

@@ -128,7 +128,7 @@ class RabbitMq
             }
         }
 
-        usort($data, function($a, $b) {
+        usort($data, function ($a, $b) {
             return $b[1] <=> $a[1];
         });
         return $data;

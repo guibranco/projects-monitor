@@ -128,9 +128,7 @@ class RabbitMq
             }
         }
 
-        usort($data, function ($a, $b) {
-            return $b[1] <=> $a[1];
-        });
+        ksort($data);
         return $data;
     }
 }

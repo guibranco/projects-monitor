@@ -132,7 +132,7 @@ class CPanel
         $items = $this->searchFiles("error_log", "/");
 
         foreach ($items as $item) {
-            if (strpos($item, ".trash") !== false) {
+            if (strpos($item->file, ".trash") !== false) {
                 continue;
             }
             $stats = $this->loadStats($item->file);

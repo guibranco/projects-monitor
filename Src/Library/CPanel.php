@@ -132,6 +132,9 @@ class CPanel
         $items = $this->searchFiles("error_log", "/");
 
         foreach ($items as $item) {
+            if (strpos($item, ".trash") !== false) {
+                continue;
+            }
             $stats = $this->loadStats($item->file);
             $result[] = array(str_replace("/home/{$this->username}/", "", $stats["dirname"]), $stats["humansize"], $stats["mtime"]);
         }

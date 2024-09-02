@@ -135,7 +135,7 @@ class CPanel
             if (strpos($item->file, ".trash") !== false) {
                 continue;
             }
-            
+
             $stats = $this->loadStats($item->file);
             $result[] = array(str_replace("/home/{$this->username}/", "", $stats["dirname"]), $stats["humansize"], $stats["mtime"]);
         }
@@ -159,7 +159,7 @@ class CPanel
             if (strpos($item->file, ".trash") !== false) {
                 continue;
             }
-            
+
             $content = $this->loadContent($item->file);
 
             if ($content === null) {

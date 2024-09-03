@@ -245,7 +245,7 @@ jobs:
         run: sudo wg-quick down ./wg0.conf
 
   automated-api-tests:
-    name: Automated API tests using Postman CLI
+    name: Automated API tests (Postman)
     needs: [deploy, database_migrations]    
     runs-on: ubuntu-latest
     steps:

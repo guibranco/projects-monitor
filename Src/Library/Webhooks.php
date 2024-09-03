@@ -40,7 +40,7 @@ class Webhooks
 
     public function getDashboard()
     {
-        $response = $this->request->get($this->apiUrl, $this->headers);
+        $response = $this->request->get("{$this->apiUrl}github", $this->headers);
         if ($response->statusCode === 200) {
             return json_decode($response->body);
         }
@@ -51,7 +51,7 @@ class Webhooks
 
     public function getWebhook($sequence)
     {
-        $response = $this->request->get($this->apiUrl . $sequence, $this->headers);
+        $response = $this->request->get("{$this->apiUrl}github/{$sequence}", $this->headers);
         if ($response->statusCode === 200) {
             return json_decode($response->body);
         }

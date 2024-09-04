@@ -133,6 +133,15 @@ jobs:
           echo "\$mySqlPassword = \"${{ secrets.MYSQL_PASSWORD }}\";" >> mySql.secrets.php
           echo "\$mySqlDatabase = \"${{ secrets.MYSQL_DATABASE }}\";" >> mySql.secrets.php
 
+      - name: Create Postman secrets file
+        if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
+        run: |
+          cd Src
+          mkdir -p secrets
+          cd secrets
+          echo "<?php" >> postman.secrets.php
+          echo "\$postmanToken = \"${{ secrets.POSTMAN_API_KEY }}\";" >> postman.secrets.php
+
       - name: Create RabbitMQ secrets file
         if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
         run: |

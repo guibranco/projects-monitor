@@ -20,7 +20,7 @@ class Postman
 
         global $postmanToken;
 
-        if (!file_exists(__DIR__ . "/../secrets/postman.secrets.php")) {
+        if (file_exists(__DIR__ . "/../secrets/postman.secrets.php") === false) {
             throw new SecretsFileNotFoundException("File not found: postman.secrets.php");
         }
 
@@ -41,7 +41,7 @@ class Postman
 
         $response = $this->request->get($url, $headers);
 
-        if ($response->statusCode != 200) {
+        if ($response->statusCode !== 200) {
             $error = $response->statusCode == -1 ? $response->error : $response->body;
             throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
         }

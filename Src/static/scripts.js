@@ -206,7 +206,7 @@ function drawChart() {
   load300Interval();
   setInterval(load30Interval, 30 * 1000);
   setInterval(load60Interval, 60 * 1000);
-  setInterval(load300Interval, 30 * 1000);
+  setInterval(load300Interval, 300 * 1000);
 }
 
 /**
@@ -659,7 +659,7 @@ function showPostman(response) {
        return;
    }
 
-   document.getElementById("postman").innnerHTML = response["usage"];
+   document.getElementById("postman").innerHTML = response["usage"];
 }
 
 /**

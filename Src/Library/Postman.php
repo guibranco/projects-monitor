@@ -87,7 +87,7 @@ class Postman
             $color = "yellow";
         }
 
-        $badge = $shields->generateBadgeUrl(number_format($percentage, 2, '.', ''), "{$usage}/{$limit}", $color, "for-the-badge", "white", null);
+        $badge = $shields->generateBadgeUrl(number_format($percentage, 2, '.', '') . "%", "{$usage}/{$limit}", $color, "for-the-badge", "black", null);
         return "<a href='https://web.postman.co/billing/add-ons/overview'><img src='{$badge}' alt='Postman API usage' /></a>";
     }
 

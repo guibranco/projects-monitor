@@ -53,7 +53,7 @@ class Postman
     {
         $shields = new ShieldsIo();
         $me = $this->doRequest("me");
-        $apiUsage = isset($me["operations"]) && isset($me["operations"][""]) ? $me["operations"]["api_usage"] : null;
+        $apiUsage = isset($me->operations) && isset($me->operations->api_usage) ? $me->operations->api_usage : null;
 
         if ($apiUsage === null) {
             return "<a href='https://web.postman.co/billing/add-ons/overview'>Error</a>";

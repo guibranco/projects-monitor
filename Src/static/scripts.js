@@ -158,14 +158,20 @@ function load60Interval() {
   load("api/v1/uptimerobot", showUpTimeRobot);
 }
 
+function load300Interval() {
+  load("api/v1/postman", showPostman);
+}
+
 let showPreset = true;
 
 function drawChart() {
   preset();
   load30Interval();
   load60Interval();
+  load300Interval();
   setInterval(load30Interval, 30 * 1000);
   setInterval(load60Interval, 60 * 1000);
+  setInterval(load300Interval, 30 * 1000);
 }
 
 /**
@@ -596,6 +602,14 @@ function showMessages(response) {
     document.getElementById("pie_chart_2")
   );
   pieChart2.draw(dataByApplications, optionsByApplications);
+}
+
+function showPostman(response) {
+   if (typeof response["usage"] === "undefined") {
+       return;
+   }
+
+   document.getElementById("postman").innnerHTML = response["usage"];
 }
 
 /**

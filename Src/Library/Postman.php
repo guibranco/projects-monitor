@@ -66,9 +66,9 @@ class Postman
         $color = "green";
         if ($percentage >= 90) {
             $color = "red";
-        } else if ($percentage >= 75) {
+        } elseif ($percentage >= 75) {
             $color = "orange";
-        } else if ($percentage >= 50) {
+        } elseif ($percentage >= 50) {
             $color = "yellow";
         }
 

@@ -191,7 +191,7 @@ let showPreset = true;
  * The intervals for data loading are as follows:
  * - 30 seconds for `load30Interval`
  * - 60 seconds for `load60Interval`
- * - 30 seconds for `load300Interval`
+ * - 300 seconds for `load300Interval`
  *
  * @throws {Error} Throws an error if any of the loading functions fail to execute properly.
  *

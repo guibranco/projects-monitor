@@ -69,8 +69,8 @@ class Postman
                 break;
             }
         }
-        
-        if ($apiUsage === null) {   
+
+        if ($apiUsage === null) {
             return $link;
         }
 

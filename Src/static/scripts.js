@@ -158,12 +158,47 @@ function load60Interval() {
   load("api/v1/uptimerobot", showUpTimeRobot);
 }
 
+/**
+ * Loads data from the Postman API at a specified interval.
+ * This function initiates a request to the API endpoint "api/v1/postman"
+ * and processes the response using the `showPostman` callback function.
+ *
+ * @function load300Interval
+ * @returns {void} This function does not return a value.
+ *
+ * @example
+ * // Call the function to load Postman data
+ * load300Interval();
+ *
+ * @throws {Error} Throws an error if the API request fails.
+ */
 function load300Interval() {
   load("api/v1/postman", showPostman);
 }
 
 let showPreset = true;
 
+/**
+ * Initializes and starts the chart drawing process by setting up necessary presets 
+ * and loading data at specified intervals.
+ *
+ * This function performs the following actions:
+ * - Calls the `preset` function to set up initial configurations.
+ * - Loads data for 30-second, 60-second, and 300-second intervals by calling 
+ *   `load30Interval`, `load60Interval`, and `load300Interval` respectively.
+ * - Sets up automatic data loading at regular intervals using `setInterval`.
+ *
+ * The intervals for data loading are as follows:
+ * - 30 seconds for `load30Interval`
+ * - 60 seconds for `load60Interval`
+ * - 30 seconds for `load300Interval`
+ *
+ * @throws {Error} Throws an error if any of the loading functions fail to execute properly.
+ *
+ * @example
+ * // To start drawing the chart with the default settings
+ * drawChart();
+ */
 function drawChart() {
   preset();
   load30Interval();
@@ -604,6 +639,21 @@ function showMessages(response) {
   pieChart2.draw(dataByApplications, optionsByApplications);
 }
 
+/**
+ * Displays the usage information from the provided response object in the HTML element with the ID "postman".
+ * If the usage information is not present in the response, the function will exit without making any changes to the DOM.
+ *
+ * @param {Object} response - The response object containing usage information.
+ * @param {string} response.usage - The usage information to be displayed.
+ * 
+ * @returns {void} This function does not return a value.
+ *
+ * @example
+ * const response = { usage: "API usage details here" };
+ * showPostman(response);
+ *
+ * @throws {TypeError} Throws an error if the response is not an object or if the innerHTML property is accessed incorrectly.
+ */
 function showPostman(response) {
    if (typeof response["usage"] === "undefined") {
        return;

@@ -15,7 +15,7 @@
         }
     ],
     "require": {
-        "guibranco/pancake": "^0.8.27",
+        "guibranco/pancake": "^0.8.28",
         "fastvolt/markdown": "^0.2.1"
     }
 }

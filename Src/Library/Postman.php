@@ -49,31 +49,8 @@ class Postman
         return json_decode($response->body);
     }
 
-    public function getUsage()
+    private function getImageUsage($apiUsage, $label)
     {
-        $shields = new ShieldsIo();
-        $me = $this->doRequest("me");
-
-        $badge = $shields->generateBadgeUrl("⭕", "Error", "red", "for-the-badge", "white", null);
-        $link = "<a href='https://web.postman.co/billing/add-ons/overview'>{$badge}</a>";
-
-        if (isset($me->operations) === false || is_array($me->operations) === false || count($me->operations) === 0) {
-            return $link;
-        }
-
-        $apiUsage = null;
-
-        foreach ($me->operations as $operation) {
-            if($operation->name === "api_usage") {
-                $apiUsage = $operation;
-                break;
-            }
-        }
-
-        if ($apiUsage === null) {
-            return $link;
-        }
-
         $usage = $apiUsage->usage;
         $limit = $apiUsage->limit;
         $percentage = ($usage * 100) / $limit;
@@ -87,8 +64,41 @@ class Postman
             $color = "yellow";
         }
 
-        $badge = $shields->generateBadgeUrl(number_format($percentage, 2, '.', '') . "%", "{$usage}/{$limit} Postman API Usage", $color, "for-the-badge", "black", null);
-        return "<a href='https://web.postman.co/billing/add-ons/overview'><img src='{$badge}' alt='Postman API usage' /></a>";
+        $badge = $shields->generateBadgeUrl(number_format($percentage, 2, '.', '') . "%", "{$usage}/{$limit} {$label}", $color, "for-the-badge", "black", null);
+        return "<a href='https://web.postman.co/billing/add-ons/overview'><img src='{$badge}' alt='{$label}' /></a>";
+    }
+
+    public function getUsage()
+    {
+        $shields = new ShieldsIo();
+        $me = $this->doRequest("me");
+
+        $badge = $shields->generateBadgeUrl("⭕", "Error", "red", "for-the-badge", "white", null);
+        $link = "<a href='https://web.postman.co/billing/add-ons/overview'>{$badge}</a>";
+
+        if (isset($me->operations) === false || is_array($me->operations) === false || count($me->operations) === 0) {
+            return $link;
+        }
+
+        $apiUsage = "";
+        $monitorUsage = "";
+        
+        foreach ($me->operations as $operation) {
+            switch ($operation->name) {
+                case "api_usage":
+                    $apiUsage = $this->getUsage($operation, "Postman API Usage");
+                break;
+                case "":
+                    $monitorUsage = $this->getUsage($operation, "Monitor Request Runs");
+                break;
+            }
+        }
+
+        if ($apiUsage === "" && $monitorUsage === "") {
+            return $link;
+        }
+
+        return $apiUsage . "\n<br />" . $monitorUsage;
     }
 
 }

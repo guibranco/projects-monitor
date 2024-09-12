@@ -82,15 +82,15 @@ class Postman
 
         $apiUsage = "";
         $monitorUsage = "";
-        
+
         foreach ($me->operations as $operation) {
             switch ($operation->name) {
                 case "api_usage":
                     $apiUsage = $this->getUsage($operation, "Postman API Usage");
-                break;
+                    break;
                 case "":
                     $monitorUsage = $this->getUsage($operation, "Monitor Request Runs");
-                break;
+                    break;
             }
         }
 

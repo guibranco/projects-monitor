@@ -152,7 +152,7 @@ class GitHub
         $allUsers = array_merge($users, $vacanciesUsers);
 
         $resultAll = $this->getWithLabel($users, "issue");
-        $resultOthers = $this->getWithLabel($users, "issue", null, ["WIP", "\"🛠 WIP\"", "bug", "\"🐛 bug\"", "triage", "\"🚦awaiting triage\"", "blocked", "\"🚷blocked\""]);
+        $resultOthers = $this->getWithLabel($users, "issue", null, ["WIP", "\"🛠 WIP\"", "bug", "\"🐛 bug\"", "triage", "\"🚦awaiting triage\"", "\"🚦 awaiting triage\"", "blocked", "\"🚷blocked\""]);
         $resultWip = $this->getWithLabel($users, "issue", "WIP", ["blocked", "\"🚷blocked\""]);
         $resultWip2 = $this->getWithLabel($users, "issue", "\"🛠 WIP\"", ["blocked", "\"🚷blocked\""]);
         $resultBlocked = $this->getWithLabel($users, "issue", "blocked");
@@ -161,7 +161,8 @@ class GitHub
         $resultBug2 = $this->getWithLabel($users, "issue", "\"🐛 bug\"", ["blocked", "\"🚷blocked\""]);
         $resultTriage = $this->getWithLabel($allUsers, "issue", "awaiting triage");
         $resultTriage2 = $this->getWithLabel($allUsers, "issue", "\"🚦awaiting triage\"");
-        $resultTriage3 = $this->getWithLabel($allUsers, "issue", "triage");
+        $resultTriage2 = $this->getWithLabel($allUsers, "issue", "\"🚦 awaiting triage\"");
+        $resultTriage4 = $this->getWithLabel($allUsers, "issue", "triage");
         $resultAssigned = $this->getWithUserExclusion("issue", "assignee", array_slice($users, 0, 1)[0], $users);
         $resultAuthored = $this->getWithUserExclusion("issue", "author", array_slice($users, 0, 1)[0], $users);
 
@@ -171,7 +172,7 @@ class GitHub
         $data["wip"] = array_merge($this->mapItems($resultWip->items), $this->mapItems($resultWip2->items));
         $data["blocked"] = array_merge($this->mapItems($resultBlocked->items), $this->mapItems($resultBlocked2->items));
         $data["bug"] = array_merge($this->mapItems($resultBug->items), $this->mapItems($resultBug2->items));
-        $data["triage"] = array_merge($this->mapItems($resultTriage->items), $this->mapItems($resultTriage2->items), $this->mapItems($resultTriage3->items));
+        $data["triage"] = array_merge($this->mapItems($resultTriage->items), $this->mapItems($resultTriage2->items), $this->mapItems($resultTriage3->items), $this->mapItems($resultTriage4->items));
         $data["assigned"] = $this->mapItems($resultAssigned->items);
         $data["authored"] = $this->mapItems($resultAuthored->items);
 

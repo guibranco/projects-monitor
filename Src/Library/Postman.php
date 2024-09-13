@@ -86,10 +86,10 @@ class Postman
         foreach ($me->operations as $operation) {
             switch ($operation->name) {
                 case "api_usage":
-                    $apiUsage = $this->getUsage($operation, "Postman API Usage");
+                    $apiUsage = $this->getImageUsage($operation, "Postman API Usage");
                     break;
                 case "":
-                    $monitorUsage = $this->getUsage($operation, "Monitor Request Runs");
+                    $monitorUsage = $this->getImageUsage($operation, "Monitor Request Runs");
                     break;
             }
         }

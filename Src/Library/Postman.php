@@ -64,6 +64,7 @@ class Postman
             $color = "yellow";
         }
 
+        $shields = new ShieldsIo();
         $badge = $shields->generateBadgeUrl(number_format($percentage, 2, '.', '') . "%", "{$usage}/{$limit} {$label}", $color, "for-the-badge", "black", null);
         return "<a href='https://web.postman.co/billing/add-ons/overview'><img src='{$badge}' alt='{$label}' /></a>";
     }

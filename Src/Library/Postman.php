@@ -65,7 +65,7 @@ class Postman
         }
 
         $shields = new ShieldsIo();
-        $badge = $shields->generateBadgeUrl(number_format($percentage, 2, '.', '') . "%", "{$usage}/{$limit} {$label}", $color, "for-the-badge", "black", null);
+        $badge = $shields->generateBadgeUrl(number_format($percentage, 2, '.', '')."%", "{$usage}/{$limit} {$label}", $color, "for-the-badge", "black", null);
         return "<a href='https://web.postman.co/billing/add-ons/overview'><img src='{$badge}' alt='{$label}' /></a>";
     }
 
@@ -89,7 +89,7 @@ class Postman
                 case "api_usage":
                     $apiUsage = $this->getImageUsage($operation, "Postman API Usage");
                     break;
-                case "":
+                case "monitor_request_runs":
                     $monitorUsage = $this->getImageUsage($operation, "Monitor Request Runs");
                     break;
             }

@@ -38,29 +38,29 @@ class Webhooks
         $this->request = new Request();
     }
 
-    private function doRequest($endpoint, $method, $expectedStatusCode, $data=null)
+    private function doRequest($endpoint, $method, $expectedStatusCode, $data = null)
     {
         $response = null;
         $method = strtolower($method);
         switch ($method) {
             case "get":
-                 $response = $this->request->get("{$this->apiUrl}{$endpoint}", $this->headers);
-            break;
+                $response = $this->request->get("{$this->apiUrl}{$endpoint}", $this->headers);
+                break;
             case "post":
                 $response = $this->request->post("{$this->apiUrl}{$endpoint}", json_encode($data), $this->headers);
-            break;
+                break;
             case "delete":
                 $response = $this->request->delete("{$this->apiUrl}{$endpoint}", $this->headers);
-            break;
+                break;
             default:
                 throw new RequestException("Method not mapped: {$method}");
-            break;
+                break;
         }
 
         if ($response->statusCode === $expectedStatusCode) {
             return json_decode($response->body);
         }
-        
+
         $error = $response->statusCode == -1 ? $response->error : $response->body;
         throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
     }
@@ -79,7 +79,7 @@ class Webhooks
     {
         return $this->doRequest("github/workflow", "post", 201, array("sequence", $sequence));
     }
-    
+
     public function requestDelete($sequence)
     {
         return $this->doRequest("github/workflow/{$sequence}", "delete", 202);

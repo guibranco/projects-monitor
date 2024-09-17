@@ -69,7 +69,7 @@ class Postman
             $percentageStr = "0" . $percentageStr;
         }
 
-        $usage = str_pad($usage, strlen($limit), "0");
+        $usage = str_pad($usage, strlen($limit), "0", STR_PAD_LEFT);
         $shields = new ShieldsIo();
         $badge = $shields->generateBadgeUrl($percentageStr, "{$usage}/{$limit} {$label}", $color, "for-the-badge", "black", null);
         return "<a href='https://web.postman.co/billing/add-ons/overview'><img src='{$badge}' alt='{$label}' /></a>";

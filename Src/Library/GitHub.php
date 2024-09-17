@@ -117,7 +117,7 @@ class GitHub
             return array();
         }
 
-        $result = array();       
+        $result = array();
 
         foreach ($items as $item) {
             $repositoryName = str_replace("https://api.github.com/repos/", "", $item->repository_url);

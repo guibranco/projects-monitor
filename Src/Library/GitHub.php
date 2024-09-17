@@ -51,7 +51,7 @@ class GitHub
     private function getSearch($queryString)
     {
         $hash = md5($queryString);
-        $cache = "cache/github_{$hash}.json";
+        $cache = "cache/github_search_{$hash}.json";
 
         if (file_exists($cache) && filemtime($cache) > strtotime("-3 minute")) {
             return json_decode(file_get_contents($cache));

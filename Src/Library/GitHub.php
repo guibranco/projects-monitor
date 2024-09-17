@@ -117,9 +117,7 @@ class GitHub
             return array();
         }
 
-        $result = array();
-
-        $mkd = Markdown::new();
+        $result = array();       
 
         foreach ($items as $item) {
             $repositoryName = str_replace("https://api.github.com/repos/", "", $item->repository_url);
@@ -130,6 +128,7 @@ class GitHub
             $labels = implode(" ", array_map(function ($label) {
                 return "<span style='background-color: #" . $label->color . ";color: #" . (Color::luminance($label->color) > 120 ? "000" : "fff") . ";padding: 0 7px;border-radius: 24px;border: 1px solid #000;line-height: 21px;text-wrap:nowrap;'>" . $label->name . "</span>";
             }, $labelsJson));
+            $mkd = Markdown::new();
             $mkd->setContent($item->title);
             $title = $mkd->toHtml();
             $colorNumber = Color::generateColorFromText($repositoryName);

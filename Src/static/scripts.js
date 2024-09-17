@@ -8,6 +8,20 @@ const tableOptions = {
 
 window.addEventListener("load", init);
 
+/**
+     * Initializes the application by setting the user's timezone and offset as cookies.
+     * This function retrieves the user's current timezone and UTC offset, then stores them
+     * in cookies for later use.
+     *
+     * @function init
+     * @returns {void} This function does not return a value.
+     *
+     * @example
+     * // Call the init function to set the timezone and offset cookies
+     * init();
+     *
+     * @throws {Error} Throws an error if setting cookies fails due to browser restrictions.
+     */
 function init() {  
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const offset = new Date().toString().match(/([-\+][0-9]+)\s/)[1];
@@ -169,26 +183,22 @@ function load300Interval() {
 let showPreset = true;
 
 /**
- * Initializes and starts the chart drawing process by setting up necessary presets 
- * and loading data at specified intervals.
- *
- * This function performs the following actions:
- * - Calls the `preset` function to set up initial configurations.
- * - Loads data for 30-second, 60-second, and 300-second intervals by calling 
- *   `load30Interval`, `load60Interval`, and `load300Interval` respectively.
- * - Sets up automatic data loading at regular intervals using `setInterval`.
- *
- * The intervals for data loading are as follows:
- * - 30 seconds for `load30Interval`
- * - 60 seconds for `load60Interval`
- * - 300 seconds for `load300Interval`
- *
- * @throws {Error} Throws an error if any of the loading functions fail to execute properly.
- *
- * @example
- * // To start drawing the chart with the default settings
- * drawChart();
- */
+     * Initializes and starts the chart drawing process.
+     * This function sets up the necessary presets, loads GitHub statistics,
+     * and establishes intervals for updating the chart data at specified times.
+     *
+     * The following intervals are set:
+     * - Loads data every 30 seconds
+     * - Loads data every 60 seconds
+     * - Loads data every 300 seconds
+     * - Updates GitHub statistics every 15 minutes
+     *
+     * @throws {Error} Throws an error if any of the loading functions fail to execute.
+     *
+     * @example
+     * // To start drawing the chart, simply call:
+     * drawChart();
+     */
 function drawChart() {
   preset();
   showGitHubStats();
@@ -201,6 +211,25 @@ function drawChart() {
   setInterval(showGitHubStats, 60 * 15 * 1000);
 }
 
+/**
+     * Displays GitHub statistics and streaks by updating the source of 
+     * specific HTML elements with the latest data from GitHub's API.
+     *
+     * This function generates a random refresh parameter to ensure that 
+     * the statistics are updated each time the function is called, 
+     * preventing caching issues.
+     *
+     * It modifies the `src` attributes of two elements with IDs `gh_stats` 
+     * and `gh_streak` to fetch and display the user's GitHub statistics 
+     * and streaks respectively.
+     *
+     * @throws {Error} Throws an error if the elements with IDs `gh_stats` 
+     *                 or `gh_streak` do not exist in the DOM.
+     *
+     * @example
+     * // Call the function to display GitHub stats
+     * showGitHubStats();
+     */
 function showGitHubStats() {
   const refresh = Math.floor(Math.random() * 100000);
   

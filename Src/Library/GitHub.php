@@ -57,7 +57,7 @@ class GitHub
             return json_decode(file_get_contents($cache));
         }
 
-        $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode(preg_replace('!\s+!', ' ', "is:open archived:false is:{$queryString}&per_page=100"));
+        $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode(preg_replace('!\s+!', ' ', "is:open archived:false is:{$queryString}")) . "&per_page=100";
         $response = $this->requestInternal($url);
         if ($response->statusCode !== 200) {
             $error = $response->statusCode === -1 ? $response->error : $response->body;

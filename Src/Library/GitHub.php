@@ -57,7 +57,7 @@ class GitHub
             return json_decode(file_get_contents($cache));
         }
 
-        $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode(preg_replace('!\s+!', ' ', "is:open archived:false is:{$queryString}"));
+        $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode(preg_replace('!\s+!', ' ', "is:open archived:false is:{$queryString}&per_page=100"));
         $response = $this->requestInternal($url);
         if ($response->statusCode !== 200) {
             $error = $response->statusCode === -1 ? $response->error : $response->body;
@@ -152,13 +152,14 @@ class GitHub
         $allUsers = array_merge($users, $vacanciesUsers);
 
         $resultAll = $this->getWithLabel($users, "issue");
-        $resultOthers = $this->getWithLabel($users, "issue", null, ["WIP", "\"🛠 WIP\"", "bug", "\"🐛 bug\"", "triage", "\"🚦awaiting triage\"", "\"🚦 awaiting triage\"", "blocked", "\"🚷blocked\""]);
-        $resultWip = $this->getWithLabel($users, "issue", "WIP", ["blocked", "\"🚷blocked\""]);
-        $resultWip2 = $this->getWithLabel($users, "issue", "\"🛠 WIP\"", ["blocked", "\"🚷blocked\""]);
+        $resultOthers = $this->getWithLabel($users, "issue", null, ["WIP", "\"🛠 WIP\"", "bug", "\"🐛 bug\"", "triage", "\"🚦awaiting triage\"", "\"🚦 awaiting triage\"", "blocked", "\"🚷blocked\"", "\"🚷 blocked\""]);
+        $resultWip = $this->getWithLabel($users, "issue", "WIP", ["blocked", "\"🚷 blocked\""]);
+        $resultWip2 = $this->getWithLabel($users, "issue", "\"🛠 WIP\"", ["blocked", "\"🚷 blocked\""]);
         $resultBlocked = $this->getWithLabel($users, "issue", "blocked");
         $resultBlocked2 = $this->getWithLabel($users, "issue", "\"🚷blocked\"");
-        $resultBug = $this->getWithLabel($users, "issue", "bug", ["blocked", "\"🚷blocked\""]);
-        $resultBug2 = $this->getWithLabel($users, "issue", "\"🐛 bug\"", ["blocked", "\"🚷blocked\""]);
+        $resultBlocked3 = $this->getWithLabel($users, "issue", "\"🚷 blocked\"");
+        $resultBug = $this->getWithLabel($users, "issue", "bug", ["blocked", "\"🚷 blocked\""]);
+        $resultBug2 = $this->getWithLabel($users, "issue", "\"🐛 bug\"", ["blocked", "\"🚷 blocked\""]);
         $resultTriage = $this->getWithLabel($allUsers, "issue", "awaiting triage");
         $resultTriage2 = $this->getWithLabel($allUsers, "issue", "\"🚦awaiting triage\"");
         $resultTriage3 = $this->getWithLabel($allUsers, "issue", "\"🚦 awaiting triage\"");
@@ -170,7 +171,7 @@ class GitHub
         $data["total_count"] = $resultAll->total_count;
         $data["others"] = $this->mapItems($resultOthers->items);
         $data["wip"] = array_merge($this->mapItems($resultWip->items), $this->mapItems($resultWip2->items));
-        $data["blocked"] = array_merge($this->mapItems($resultBlocked->items), $this->mapItems($resultBlocked2->items));
+        $data["blocked"] = array_merge($this->mapItems($resultBlocked->items), $this->mapItems($resultBlocked2->items), $this->mapItems($resultBlocked3->items));
         $data["bug"] = array_merge($this->mapItems($resultBug->items), $this->mapItems($resultBug2->items));
         $data["triage"] = array_merge($this->mapItems($resultTriage->items), $this->mapItems($resultTriage2->items), $this->mapItems($resultTriage3->items), $this->mapItems($resultTriage4->items));
         $data["assigned"] = $this->mapItems($resultAssigned->items);
@@ -186,9 +187,9 @@ class GitHub
         $users = ["guibranco", "ApiBR", "GuilhermeStracini", "InovacaoMediaBrasil", "rustdevbr", "pythondevbr", "pydevbr", "dotnetdevbr", "nodejsdevbr", "rubydevbr", "frontend-ao", "frontend-pt", "backend-ao", "backend-pt", "developersRJ"];
 
         $result = $this->getWithLabel($users, "pr");
-        $resultNotBlocked = $this->getWithLabel($users, "pr", null, ["blocked", "\"🚷blocked\""]);
+        $resultNotBlocked = $this->getWithLabel($users, "pr", null, ["blocked", "\"🚷 blocked\""]);
         $resultBlocked = $this->getWithLabel($users, "pr", "blocked");
-        $resultBlocked2 = $this->getWithLabel($users, "pr", "\"🚷blocked\"");
+        $resultBlocked2 = $this->getWithLabel($users, "pr", "\"🚷 blocked\"");
         $resultAuthored = $this->getWithUserExclusion("pr", "author", array_slice($users, 0, 1)[0], $users);
 
         $data = array();

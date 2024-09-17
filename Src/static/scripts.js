@@ -8,17 +8,7 @@ const tableOptions = {
 
 window.addEventListener("load", init);
 
-function init() {
-  document.getElementById("gh_stats").src =
-    "https://github-readme-stats-guibranco.vercel.app/api" +
-    "?username=guibranco&line_height=28&card_width=490&hide_title=true&hide_border=true" +
-    "&show_icons=true&theme=chartreuse-dark&icon_color=7FFF00&include_all_commits=true" +
-    "&count_private=true&show=reviews,discussions_started&count_private=true";
-
-  document.getElementById("gh_streak").src =
-    "https://github-readme-streak-stats-guibranco.vercel.app/" +
-    "?user=guibranco&theme=github-green-purple&fire=FF6600";
-
+function init() {  
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const offset = new Date().toString().match(/([-\+][0-9]+)\s/)[1];
   setCookie("timezone", timezone, 10);
@@ -201,12 +191,28 @@ let showPreset = true;
  */
 function drawChart() {
   preset();
+  showGitHubStats();
   load30Interval();
   load60Interval();
   load300Interval();
   setInterval(load30Interval, 30 * 1000);
   setInterval(load60Interval, 60 * 1000);
   setInterval(load300Interval, 300 * 1000);
+  setInterval(showGitHubStats, 60 * 15 * 1000);
+}
+
+function showGitHubStats() {
+  const refresh = Math.floor(Math.random() * 100000);
+  
+  document.getElementById("gh_stats").src =
+    "https://github-readme-stats-guibranco.vercel.app/api" +
+    "?username=guibranco&line_height=28&card_width=490&hide_title=true&hide_border=true" +
+    "&show_icons=true&theme=chartreuse-dark&icon_color=7FFF00&include_all_commits=true" +
+    "&count_private=true&show=reviews,discussions_started&count_private=true&refresh=" + refresh;
+
+  document.getElementById("gh_streak").src =
+    "https://github-readme-streak-stats-guibranco.vercel.app/" +
+    "?user=guibranco&theme=github-green-purple&fire=FF6600&refresh=" + refresh;
 }
 
 /**

@@ -64,8 +64,13 @@ class Postman
             $color = "yellow";
         }
 
+        $percentageStr = number_format($percentage, 2, '.', '')."%";
+        if ($percentage < 10) {
+            $percentageStr = "0" . $percentageStr;
+        }
+        
         $shields = new ShieldsIo();
-        $badge = $shields->generateBadgeUrl(number_format($percentage, 2, '.', '')."%", "{$usage}/{$limit} {$label}", $color, "for-the-badge", "black", null);
+        $badge = $shields->generateBadgeUrl($percentageStr, "{$usage}/{$limit} {$label}", $color, "for-the-badge", "black", null);
         return "<a href='https://web.postman.co/billing/add-ons/overview'><img src='{$badge}' alt='{$label}' /></a>";
     }
 

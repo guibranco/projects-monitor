@@ -18,3 +18,12 @@ code {
   float: left;
   background-color: white;
 }
+
+.topping {
+  width: calc(100% - 30px);
+  padding: 10px;
+  border: 5px orange dashed;
+  font-weight: bold;
+  font-size: 2em;
+  text-align: center;
+}

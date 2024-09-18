@@ -834,7 +834,7 @@ function showWebhook(response) {
   );
   const dataEvents = google.visualization.arrayToDataTable(response["events"]);
   const dataFeed = google.visualization.arrayToDataTable(response["feed"]);
-  const dataBots = google.visualization.arrayToDataTable(response["bots"]);
+  const dataSenders = google.visualization.arrayToDataTable(response["bots"]);
   const dataRepositories = google.visualization.arrayToDataTable(
     response["repositories"]
   );
@@ -980,8 +980,8 @@ function showWebhook(response) {
   workflowRuns.draw(dataWorkflowRuns, tableOptions);
   const feed = new google.visualization.Table(document.getElementById("feed"));
   feed.draw(dataFeed, tableOptions);
-  const bots = new google.visualization.Table(document.getElementById("bots"));
-  bots.draw(dataBots, tableOptions);
+  const senders = new google.visualization.Table(document.getElementById("senders"));
+  senders.draw(dataSenders, tableOptions);
 
   const gaugeChart1 = new google.visualization.Gauge(
     document.getElementById("gauge_chart_1")

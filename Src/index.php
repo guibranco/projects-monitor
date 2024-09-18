@@ -76,14 +76,15 @@ $configuration = new Configuration();
   <div id="messages_grouped" style="width: 50%; height: 500px; float: left; background-color: white;"></div>
   <div id="error_log_messages" style="width: 50%; height: 500px; float: left; background-color: white;"></div>
   <div style="clear:both;"></div>
+  <div class="topping">Workflow Runs</div>
   <div id="workflow_runs" style="width: 100%; float: left; background-color: white;"></div>
   <div style="clear:both;"></div>
   <div style="width: 50%; float: left; background-color: white;">
     <div class="topping">Feed</div>
     <div id="feed"></div>
-    <div class="topping">HealthChecks</div>
+    <div class="topping">HealthChecksIo</div>
     <div id="healthchecksio"></div>
-    <div class="topping">UpTimeBot</div>
+    <div class="topping">UpTimeRobot</div>
     <div id="uptimerobot"></div>
     <div class="topping">Domains</div>
     <div id="domains"></div>

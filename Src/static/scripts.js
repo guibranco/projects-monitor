@@ -101,7 +101,7 @@ function preset() {
   showQueues(JSON.parse('{"queues":[],"total":0}'));
   showWebhook(
     JSON.parse(
-      '{"bots":[],"events":[["Event","Hits"]],"failed":0,"feed":[],"repositories":[],"total":0,"statistics":[["Date","Table #1"],["01/01",0]],"statistics_github":[["Date","Table #1"],["01/01",0]],"workflow_runs":[],"total_workflow_runs":0, "installations":0}'
+      '{"senders":[],"events":[["Event","Hits"]],"failed":0,"feed":[],"repositories":[],"total":0,"statistics":[["Date","Table #1"],["01/01",0]],"statistics_github":[["Date","Table #1"],["01/01",0]],"workflow_runs":[],"total_workflow_runs":0, "installations":0}'
     )
   );
 }
@@ -797,7 +797,7 @@ function showUpTimeRobot(response) {
  * @param {Array} response.statistics_github - An array of statistics data for GitHub webhooks.
  * @param {Array} response.events - An array of events data.
  * @param {Array} response.feed - An array of feed data.
- * @param {Array} response.bots - An array of bot data.
+ * @param {Array} response.senders - An array of senders data.
  * @param {Array} response.repositories - An array of repository data.
  * @param {Array} response.workflow_runs - An array of workflow run data.
  * @param {number} response.total - The total number of webhooks.
@@ -814,7 +814,7 @@ function showUpTimeRobot(response) {
  *   statistics_github: [...],
  *   events: [...],
  *   feed: [...],
- *   bots: [...],
+ *   senders: [...],
  *   repositories: [...],
  *   workflow_runs: [...],
  *   total: 100,
@@ -834,7 +834,10 @@ function showWebhook(response) {
   );
   const dataEvents = google.visualization.arrayToDataTable(response["events"]);
   const dataFeed = google.visualization.arrayToDataTable(response["feed"]);
-  const dataSenders = google.visualization.arrayToDataTable(response["bots"]);
+  const responseSenders = typeof response["senders"] !== "undefined" ? response["senders"] : response["bots"];
+  console.log("GitHub Senders: " + (typeof response["senders"] !== "undefined"));
+  console.log("GitHub Bots: " + (typeof response["bots"] !== "undefined"));
+  const dataSenders = google.visualization.arrayToDataTable(responseSenders);
   const dataRepositories = google.visualization.arrayToDataTable(
     response["repositories"]
   );

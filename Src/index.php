@@ -114,8 +114,8 @@ $configuration = new Configuration();
     <div id="issues"></div>
     <div class="topping">Cronjobs</div>
     <div id="cronjobs"></div>
-    <div class="topping">Bots</div>
-    <div id="bots"></div>
+    <div class="topping">Senders</div>
+    <div id="senders"></div>
     <div class="topping">App Veyor</div>
     <div id="appveyor"></div>
   </div>

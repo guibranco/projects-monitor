@@ -20,6 +20,7 @@ code {
 }
 
 .topping {
+  background: #FFF;
   width: calc(100% - 30px);
   padding: 10px;
   border: 5px orange dashed;

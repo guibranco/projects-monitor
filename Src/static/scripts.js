@@ -64,20 +64,17 @@ function load(url, callback) {
 }
 
 /**
- * Toggles the display of preset information in the application.
- * If the preset is currently shown, it will hide it and display various 
- * data related to error logs, GitHub issues, messages, queues, and webhooks.
- * 
- * This function does not return any value. It modifies the UI state 
- * based on the parsed JSON data for different components.
- * 
- * @throws {Error} Throws an error if JSON parsing fails for any of the 
- *                 components. Ensure that the JSON structure is valid.
- * 
- * @example
- * // To show preset information
- * preset();
- */
+     * Initializes and displays various preset data on the user interface.
+     * This function checks if the preset should be shown, and if so, it 
+     * retrieves and displays data related to error logs, GitHub issues, 
+     * messages, queues, and webhooks.
+     *
+     * @throws {Error} Throws an error if there is an issue parsing JSON data.
+     *
+     * @example
+     * // Call the preset function to display the preset data
+     * preset();
+     */
 function preset() {
   if (!showPreset) {
     return;
@@ -786,45 +783,44 @@ function showUpTimeRobot(response) {
 }
 
 /**
- * Renders various charts and tables based on the provided webhook response data.
- *
- * This function processes the response object to create visual representations of webhook statistics,
- * GitHub events, and other related data using Google Charts. It generates line charts, pie charts,
- * and gauge charts to display the information effectively.
- *
- * @param {Object} response - The response object containing webhook data.
- * @param {Array} response.statistics - An array of statistics data for webhooks.
- * @param {Array} response.statistics_github - An array of statistics data for GitHub webhooks.
- * @param {Array} response.events - An array of events data.
- * @param {Array} response.feed - An array of feed data.
- * @param {Array} response.senders - An array of senders data.
- * @param {Array} response.repositories - An array of repository data.
- * @param {Array} response.workflow_runs - An array of workflow run data.
- * @param {number} response.total - The total number of webhooks.
- * @param {number} response.failed - The number of failed webhooks.
- * @param {number} response.total_workflow_runs - The total number of workflow runs.
- * @param {number} response.installations - The number of installations.
- * @param {string} [response.check_hooks_date] - The date when hooks were last checked.
- *
- * @throws {Error} Throws an error if the response object is missing required properties.
- *
- * @example
- * const webhookResponse = {
- *   statistics: [...],
- *   statistics_github: [...],
- *   events: [...],
- *   feed: [...],
- *   senders: [...],
- *   repositories: [...],
- *   workflow_runs: [...],
- *   total: 100,
- *   failed: 5,
- *   total_workflow_runs: 50,
- *   installations: 10,
- *   check_hooks_date: "2023-10-01T12:00:00Z"
- * };
- * showWebhook(webhookResponse);
- */
+     * Displays various statistics and data visualizations based on the provided webhook response.
+     *
+     * This function processes the response object to create data tables and charts using Google Visualization API.
+     * It handles statistics related to webhooks, GitHub events, senders, repositories, workflow runs, and installations.
+     *
+     * @param {Object} response - The response object containing webhook data.
+     * @param {Array} response.statistics - An array of statistics data for webhooks.
+     * @param {Array} response.statistics_github - An array of statistics data specific to GitHub webhooks.
+     * @param {Array} response.events - An array of events data.
+     * @param {Array} response.feed - An array of feed data.
+     * @param {Array} [response.senders] - An optional array of senders data. If not provided, 'bots' will be used.
+     * @param {Array} response.repositories - An array of repository data.
+     * @param {Array} response.workflow_runs - An array of workflow run data.
+     * @param {number} response.total - The total number of hits.
+     * @param {number} response.failed - The number of failed hits.
+     * @param {number} response.total_workflow_runs - The total number of workflow runs.
+     * @param {number} response.installations - The number of installations.
+     * @param {string} [response.check_hooks_date] - An optional date string for the last check of hooks.
+     *
+     * @throws {Error} Throws an error if the response object is not valid or if required properties are missing.
+     *
+     * @example
+     * const webhookResponse = {
+     *   statistics: [...],
+     *   statistics_github: [...],
+     *   events: [...],
+     *   feed: [...],
+     *   senders: [...],
+     *   repositories: [...],
+     *   workflow_runs: [...],
+     *   total: 100,
+     *   failed: 5,
+     *   total_workflow_runs: 50,
+     *   installations: 10,
+     *   check_hooks_date: "2023-10-01T12:00:00Z"
+     * };
+     * showWebhook(webhookResponse);
+     */
 function showWebhook(response) {
   const dataStatistics = google.visualization.arrayToDataTable(
     response["statistics"]

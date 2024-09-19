@@ -65,16 +65,14 @@ function load(url, callback) {
 
 /**
      * Initializes and displays various preset data on the user interface.
-     * This function checks if the preset display is enabled and, if so, 
-     * proceeds to show different panels with parsed JSON data related 
-     * to error logs, GitHub issues and pull requests, application messages, 
-     * queues, and webhooks.
+     * This function checks if the preset should be shown and, if so, 
+     * it retrieves and displays data related to error logs, GitHub issues, 
+     * messages, queues, and webhooks.
      *
-     * @throws {Error} Throws an error if JSON parsing fails for any of the 
-     *                 data sources.
+     * @throws {Error} Throws an error if there is an issue parsing the JSON data.
      *
      * @example
-     * // To display the preset data, simply call the function:
+     * // Call the preset function to display the preset data
      * preset();
      */
 function preset() {

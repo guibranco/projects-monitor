@@ -98,6 +98,8 @@ $configuration = new Configuration();
     <div id="issues_authored"></div>
     <div class="topping">Repositories</div>
     <div id="repositories"></div>
+    <div class="topping">WireGuard</div>
+    <div id="wireguard"></div>
   </div>
   <div style="width: 50%; float: left; background-color: white;">
     <div class="topping">Pull Requests Awaiting Triage</div>

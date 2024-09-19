@@ -9,20 +9,20 @@ const tableOptions = {
 window.addEventListener("load", init);
 
 /**
-     * Initializes the application by setting the user's timezone and offset as cookies.
-     * This function retrieves the user's current timezone and UTC offset, then stores them
-     * in cookies for later use.
-     *
-     * @function init
-     * @returns {void} This function does not return a value.
-     *
-     * @example
-     * // Call the init function to set the timezone and offset cookies
-     * init();
-     *
-     * @throws {Error} Throws an error if setting cookies fails due to browser restrictions.
-     */
-function init() {  
+ * Initializes the application by setting the user's timezone and offset as cookies.
+ * This function retrieves the user's current timezone and UTC offset, then stores them
+ * in cookies for later use.
+ *
+ * @function init
+ * @returns {void} This function does not return a value.
+ *
+ * @example
+ * // Call the init function to set the timezone and offset cookies
+ * init();
+ *
+ * @throws {Error} Throws an error if setting cookies fails due to browser restrictions.
+ */
+function init() {
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const offset = new Date().toString().match(/([-\+][0-9]+)\s/)[1];
   setCookie("timezone", timezone, 10);
@@ -35,9 +35,9 @@ function init() {
  * @param {string} name - The name of the cookie.
  * @param {string} value - The value to be stored in the cookie.
  * @param {number} expireDays - The number of days until the cookie expires.
- * 
+ *
  * @throws {Error} Throws an error if the name or value is not a string.
- * 
+ *
  * @example
  * // Set a cookie named "username" with the value "JohnDoe" that expires in 7 days
  * setCookie("username", "JohnDoe", 7);
@@ -64,17 +64,17 @@ function load(url, callback) {
 }
 
 /**
-     * Initializes and displays various preset data on the user interface.
-     * This function checks if the preset should be shown and, if so, 
-     * it retrieves and displays data related to error logs, GitHub issues, 
-     * messages, queues, and webhooks.
-     *
-     * @throws {Error} Throws an error if there is an issue parsing the JSON data.
-     *
-     * @example
-     * // Call the preset function to display the preset data
-     * preset();
-     */
+ * Initializes and displays various preset data on the user interface.
+ * This function checks if the preset should be shown and, if so,
+ * it retrieves and displays data related to error logs, GitHub issues,
+ * messages, queues, and webhooks.
+ *
+ * @throws {Error} Throws an error if there is an issue parsing the JSON data.
+ *
+ * @example
+ * // Call the preset function to display the preset data
+ * preset();
+ */
 function preset() {
   if (!showPreset) {
     return;
@@ -105,8 +105,8 @@ function preset() {
 
 /**
  * Initiates the loading of various API endpoints at a 30-second interval.
- * This function calls the `load` function for multiple API routes, 
- * each of which is associated with a specific handler function to process 
+ * This function calls the `load` function for multiple API routes,
+ * each of which is associated with a specific handler function to process
  * the data returned from the API.
  *
  * The following API endpoints are loaded:
@@ -157,6 +157,7 @@ function load60Interval() {
   load("api/v1/github", showGitHub);
   load("api/v1/healthchecksio", showHealthChecksIo);
   load("api/v1/uptimerobot", showUpTimeRobot);
+  load("api/v1/wireguard", showWireGuard);
 }
 
 /**
@@ -180,22 +181,22 @@ function load300Interval() {
 let showPreset = true;
 
 /**
-     * Initializes and starts the chart drawing process.
-     * This function sets up the necessary presets, loads GitHub statistics,
-     * and establishes intervals for updating the chart data at specified times.
-     *
-     * The following intervals are set:
-     * - Loads data every 30 seconds
-     * - Loads data every 60 seconds
-     * - Loads data every 300 seconds
-     * - Updates GitHub statistics every 15 minutes
-     *
-     * @throws {Error} Throws an error if any of the loading functions fail to execute.
-     *
-     * @example
-     * // To start drawing the chart, simply call:
-     * drawChart();
-     */
+ * Initializes and starts the chart drawing process.
+ * This function sets up the necessary presets, loads GitHub statistics,
+ * and establishes intervals for updating the chart data at specified times.
+ *
+ * The following intervals are set:
+ * - Loads data every 30 seconds
+ * - Loads data every 60 seconds
+ * - Loads data every 300 seconds
+ * - Updates GitHub statistics every 15 minutes
+ *
+ * @throws {Error} Throws an error if any of the loading functions fail to execute.
+ *
+ * @example
+ * // To start drawing the chart, simply call:
+ * drawChart();
+ */
 function drawChart() {
   preset();
   showGitHubStats();
@@ -209,36 +210,38 @@ function drawChart() {
 }
 
 /**
-     * Displays GitHub statistics and streaks by updating the source of 
-     * specific HTML elements with the latest data from GitHub's API.
-     *
-     * This function generates a random refresh parameter to ensure that 
-     * the statistics are updated each time the function is called, 
-     * preventing caching issues.
-     *
-     * It modifies the `src` attributes of two elements with IDs `gh_stats` 
-     * and `gh_streak` to fetch and display the user's GitHub statistics 
-     * and streaks respectively.
-     *
-     * @throws {Error} Throws an error if the elements with IDs `gh_stats` 
-     *                 or `gh_streak` do not exist in the DOM.
-     *
-     * @example
-     * // Call the function to display GitHub stats
-     * showGitHubStats();
-     */
+ * Displays GitHub statistics and streaks by updating the source of
+ * specific HTML elements with the latest data from GitHub's API.
+ *
+ * This function generates a random refresh parameter to ensure that
+ * the statistics are updated each time the function is called,
+ * preventing caching issues.
+ *
+ * It modifies the `src` attributes of two elements with IDs `gh_stats`
+ * and `gh_streak` to fetch and display the user's GitHub statistics
+ * and streaks respectively.
+ *
+ * @throws {Error} Throws an error if the elements with IDs `gh_stats`
+ *                 or `gh_streak` do not exist in the DOM.
+ *
+ * @example
+ * // Call the function to display GitHub stats
+ * showGitHubStats();
+ */
 function showGitHubStats() {
   const refresh = Math.floor(Math.random() * 100000);
-  
+
   document.getElementById("gh_stats").src =
     "https://github-readme-stats-guibranco.vercel.app/api" +
     "?username=guibranco&line_height=28&card_width=490&hide_title=true&hide_border=true" +
     "&show_icons=true&theme=chartreuse-dark&icon_color=7FFF00&include_all_commits=true" +
-    "&count_private=true&show=reviews,discussions_started&count_private=true&refresh=" + refresh;
+    "&count_private=true&show=reviews,discussions_started&count_private=true&refresh=" +
+    refresh;
 
   document.getElementById("gh_streak").src =
     "https://github-readme-streak-stats-guibranco.vercel.app/" +
-    "?user=guibranco&theme=github-green-purple&fire=FF6600&refresh=" + refresh;
+    "?user=guibranco&theme=github-green-purple&fire=FF6600&refresh=" +
+    refresh;
 }
 
 /**
@@ -356,7 +359,7 @@ function showCPanel(response) {
  *
  * @param {Object} response - The response object containing domain data.
  * @param {Array} response.domains - An array of domain data to be visualized.
- * 
+ *
  * @throws {TypeError} Throws an error if the response does not contain
  *                     the expected structure or if the domains are not
  *                     in the correct format.
@@ -382,70 +385,70 @@ function showDomains(response) {
 }
 
 /**
-     * Displays GitHub statistics and information based on the provided response data.
-     *
-     * This function processes the response from a GitHub API call and visualizes various metrics
-     * such as issues and pull requests using Google Charts. It creates data tables for different
-     * categories of issues and pull requests, and updates the HTML elements with the latest release
-     * information if available.
-     *
-     * @param {Object} response - The response object from the GitHub API.
-     * @param {Object} response.issues - An object containing issue-related data.
-     * @param {number} response.issues.total_count - Total number of issues.
-     * @param {Array} response.issues.assigned - List of assigned issues.
-     * @param {Array} response.issues.authored - List of authored issues.
-     * @param {Array} response.issues.blocked - List of blocked issues.
-     * @param {Array} response.issues.bug - List of bug issues.
-     * @param {Array} response.issues.triage - List of triage issues.
-     * @param {Array} response.issues.wip - List of work-in-progress issues.
-     * @param {Array} response.issues.others - List of other issues.
-     * @param {Object} response.pull_requests - An object containing pull request-related data.
-     * @param {number} response.pull_requests.total_count - Total number of pull requests.
-     * @param {Array} response.pull_requests.latest - List of latest pull requests.
-     * @param {Array} response.pull_requests.authored - List of authored pull requests.
-     * @param {Array} response.pull_requests.awaiting_triage - List of pull requests awaiting triage.
-     * @param {Array} response.pull_requests.blocked - List of blocked pull requests.
-     * @param {Object} response.latest_release - Information about the latest release.
-     * @param {string} response.latest_release.description - Description of the latest release.
-     * @param {string} response.latest_release.published - Date of the latest release.
-     * @param {string} response.latest_release.release_url - URL to the latest release.
-     * @param {string} response.latest_release.title - Title of the latest release.
-     * @param {string} response.latest_release.repository - Repository name for the latest release.
-     * @param {string} response.latest_release.author - Author of the latest release.
-     *
-     * @throws {TypeError} Throws an error if the response is not in the expected format or if required fields are missing.
-     *
-     * @example
-     * const apiResponse = {
-     *   issues: {
-     *     total_count: 10,
-     *     assigned: [...],
-     *     authored: [...],
-     *     blocked: [...],
-     *     bug: [...],
-     *     triage: [...],
-     *     wip: [...],
-     *     others: [...]
-     *   },
-     *   pull_requests: {
-     *     total_count: 5,
-     *     latest: [...],
-     *     authored: [...],
-     *     awaiting_triage: [...],
-     *     blocked: [...]
-     *   },
-     *   latest_release: {
-     *     description: "First stable release",
-     *     published: "2023-01-01",
-     *     release_url: "https://github.com/user/repo/releases/tag/v1.0",
-     *     title: "v1.0",
-     *     repository: "user/repo",
-     *     author: "user"
-     *   }
-     * };
-     *
-     * showGitHub(apiResponse);
-     */
+ * Displays GitHub statistics and information based on the provided response data.
+ *
+ * This function processes the response from a GitHub API call and visualizes various metrics
+ * such as issues and pull requests using Google Charts. It creates data tables for different
+ * categories of issues and pull requests, and updates the HTML elements with the latest release
+ * information if available.
+ *
+ * @param {Object} response - The response object from the GitHub API.
+ * @param {Object} response.issues - An object containing issue-related data.
+ * @param {number} response.issues.total_count - Total number of issues.
+ * @param {Array} response.issues.assigned - List of assigned issues.
+ * @param {Array} response.issues.authored - List of authored issues.
+ * @param {Array} response.issues.blocked - List of blocked issues.
+ * @param {Array} response.issues.bug - List of bug issues.
+ * @param {Array} response.issues.triage - List of triage issues.
+ * @param {Array} response.issues.wip - List of work-in-progress issues.
+ * @param {Array} response.issues.others - List of other issues.
+ * @param {Object} response.pull_requests - An object containing pull request-related data.
+ * @param {number} response.pull_requests.total_count - Total number of pull requests.
+ * @param {Array} response.pull_requests.latest - List of latest pull requests.
+ * @param {Array} response.pull_requests.authored - List of authored pull requests.
+ * @param {Array} response.pull_requests.awaiting_triage - List of pull requests awaiting triage.
+ * @param {Array} response.pull_requests.blocked - List of blocked pull requests.
+ * @param {Object} response.latest_release - Information about the latest release.
+ * @param {string} response.latest_release.description - Description of the latest release.
+ * @param {string} response.latest_release.published - Date of the latest release.
+ * @param {string} response.latest_release.release_url - URL to the latest release.
+ * @param {string} response.latest_release.title - Title of the latest release.
+ * @param {string} response.latest_release.repository - Repository name for the latest release.
+ * @param {string} response.latest_release.author - Author of the latest release.
+ *
+ * @throws {TypeError} Throws an error if the response is not in the expected format or if required fields are missing.
+ *
+ * @example
+ * const apiResponse = {
+ *   issues: {
+ *     total_count: 10,
+ *     assigned: [...],
+ *     authored: [...],
+ *     blocked: [...],
+ *     bug: [...],
+ *     triage: [...],
+ *     wip: [...],
+ *     others: [...]
+ *   },
+ *   pull_requests: {
+ *     total_count: 5,
+ *     latest: [...],
+ *     authored: [...],
+ *     awaiting_triage: [...],
+ *     blocked: [...]
+ *   },
+ *   latest_release: {
+ *     description: "First stable release",
+ *     published: "2023-01-01",
+ *     release_url: "https://github.com/user/repo/releases/tag/v1.0",
+ *     title: "v1.0",
+ *     repository: "user/repo",
+ *     author: "user"
+ *   }
+ * };
+ *
+ * showGitHub(apiResponse);
+ */
 function showGitHub(response) {
   const dataIssues = google.visualization.arrayToDataTable([
     ["Hits", "Total"],
@@ -694,7 +697,7 @@ function showMessages(response) {
  *
  * @param {Object} response - The response object containing usage information.
  * @param {string} response.usage - The usage information to be displayed.
- * 
+ *
  * @returns {void} This function does not return a value.
  *
  * @example
@@ -704,11 +707,11 @@ function showMessages(response) {
  * @throws {TypeError} Throws an error if the response is not an object or if the innerHTML property is accessed incorrectly.
  */
 function showPostman(response) {
-   if (typeof response["usage"] === "undefined") {
-       return;
-   }
+  if (typeof response["usage"] === "undefined") {
+    return;
+  }
 
-   document.getElementById("postman").innerHTML = response["usage"];
+  document.getElementById("postman").innerHTML = response["usage"];
 }
 
 /**
@@ -800,44 +803,44 @@ function showUpTimeRobot(response) {
 }
 
 /**
-     * Displays various statistics and data visualizations based on the provided webhook response.
-     *
-     * This function processes the response object to create data tables and charts using Google Visualization API.
-     * It handles statistics related to webhooks, GitHub events, senders, repositories, workflow runs, and installations.
-     *
-     * @param {Object} response - The response object containing webhook data.
-     * @param {Array} response.statistics - An array of statistics data for webhooks.
-     * @param {Array} response.statistics_github - An array of statistics data specific to GitHub webhooks.
-     * @param {Array} response.events - An array of events data.
-     * @param {Array} response.feed - An array of feed data.
-     * @param {Array} [response.senders] - An optional array of senders data. If not provided, 'bots' will be used.
-     * @param {Array} response.repositories - An array of repository data.
-     * @param {Array} response.workflow_runs - An array of workflow run data.
-     * @param {number} response.total - The total number of hits.
-     * @param {number} response.failed - The number of failed hits.
-     * @param {number} response.total_workflow_runs - The total number of workflow runs.
-     * @param {number} response.installations - The number of installations.
-     * @param {string} [response.check_hooks_date] - An optional date string for the last check of hooks.
-     *
-     * @throws {Error} Throws an error if the response object is not valid or if required properties are missing.
-     *
-     * @example
-     * const webhookResponse = {
-     *   statistics: [...],
-     *   statistics_github: [...],
-     *   events: [...],
-     *   feed: [...],
-     *   senders: [...],
-     *   repositories: [...],
-     *   workflow_runs: [...],
-     *   total: 100,
-     *   failed: 5,
-     *   total_workflow_runs: 50,
-     *   installations: 10,
-     *   check_hooks_date: "2023-10-01T12:00:00Z"
-     * };
-     * showWebhook(webhookResponse);
-     */
+ * Displays various statistics and data visualizations based on the provided webhook response.
+ *
+ * This function processes the response object to create data tables and charts using Google Visualization API.
+ * It handles statistics related to webhooks, GitHub events, senders, repositories, workflow runs, and installations.
+ *
+ * @param {Object} response - The response object containing webhook data.
+ * @param {Array} response.statistics - An array of statistics data for webhooks.
+ * @param {Array} response.statistics_github - An array of statistics data specific to GitHub webhooks.
+ * @param {Array} response.events - An array of events data.
+ * @param {Array} response.feed - An array of feed data.
+ * @param {Array} [response.senders] - An optional array of senders data. If not provided, 'bots' will be used.
+ * @param {Array} response.repositories - An array of repository data.
+ * @param {Array} response.workflow_runs - An array of workflow run data.
+ * @param {number} response.total - The total number of hits.
+ * @param {number} response.failed - The number of failed hits.
+ * @param {number} response.total_workflow_runs - The total number of workflow runs.
+ * @param {number} response.installations - The number of installations.
+ * @param {string} [response.check_hooks_date] - An optional date string for the last check of hooks.
+ *
+ * @throws {Error} Throws an error if the response object is not valid or if required properties are missing.
+ *
+ * @example
+ * const webhookResponse = {
+ *   statistics: [...],
+ *   statistics_github: [...],
+ *   events: [...],
+ *   feed: [...],
+ *   senders: [...],
+ *   repositories: [...],
+ *   workflow_runs: [...],
+ *   total: 100,
+ *   failed: 5,
+ *   total_workflow_runs: 50,
+ *   installations: 10,
+ *   check_hooks_date: "2023-10-01T12:00:00Z"
+ * };
+ * showWebhook(webhookResponse);
+ */
 function showWebhook(response) {
   const dataStatistics = google.visualization.arrayToDataTable(
     response["statistics"]
@@ -847,8 +850,13 @@ function showWebhook(response) {
   );
   const dataEvents = google.visualization.arrayToDataTable(response["events"]);
   const dataFeed = google.visualization.arrayToDataTable(response["feed"]);
-  const responseSenders = typeof response["senders"] !== "undefined" ? response["senders"] : response["bots"];
-  console.log("GitHub Senders: " + (typeof response["senders"] !== "undefined"));
+  const responseSenders =
+    typeof response["senders"] !== "undefined"
+      ? response["senders"]
+      : response["bots"];
+  console.log(
+    "GitHub Senders: " + (typeof response["senders"] !== "undefined")
+  );
   console.log("GitHub Bots: " + (typeof response["bots"] !== "undefined"));
   const dataSenders = google.visualization.arrayToDataTable(responseSenders);
   const dataRepositories = google.visualization.arrayToDataTable(
@@ -996,7 +1004,9 @@ function showWebhook(response) {
   workflowRuns.draw(dataWorkflowRuns, tableOptions);
   const feed = new google.visualization.Table(document.getElementById("feed"));
   feed.draw(dataFeed, tableOptions);
-  const senders = new google.visualization.Table(document.getElementById("senders"));
+  const senders = new google.visualization.Table(
+    document.getElementById("senders")
+  );
   senders.draw(dataSenders, tableOptions);
 
   const gaugeChart1 = new google.visualization.Gauge(
@@ -1015,4 +1025,14 @@ function showWebhook(response) {
     document.getElementById("gauge_chart_9")
   );
   gaugeChart9.draw(dataInstallations, optionsInstallations);
+}
+
+function showWireGuard(response) {
+  const dataWireGuard = google.visualization.arrayToDataTable(
+    response["wireguard"]
+  );
+  const wireGuard = new google.visualization.Table(
+    document.getElementById("wireguard")
+  );
+  wireGuard.draw(dataWireGuard, tableOptions);
 }

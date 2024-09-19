@@ -16,6 +16,7 @@ class Configuration
         ini_set('error_reporting', E_ALL);
         mb_internal_encoding("UTF-8");
 
+        error_reporting(E_ALL);
         $this->setUserAgent();
     }
 

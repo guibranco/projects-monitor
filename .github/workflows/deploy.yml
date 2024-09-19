@@ -149,15 +149,23 @@ jobs:
           mkdir -p secrets
           cd secrets
           echo "<?php" >> rabbitMq.secrets.php
-          echo "\$rabbitMqConnectionStrings[] = \"${{ secrets.RABBITMQ_CS1 }}\";" >> rabbitMq.secrets.php
-          echo "\$rabbitMqConnectionStrings[] = \"${{ secrets.RABBITMQ_CS2 }}\";" >> rabbitMq.secrets.php
-          echo "\$rabbitMqConnectionStrings[] = \"${{ secrets.RABBITMQ_CS3 }}\";" >> rabbitMq.secrets.php
-          echo "\$rabbitMqConnectionStrings[] = \"${{ secrets.RABBITMQ_CS4 }}\";" >> rabbitMq.secrets.php
-          echo "\$rabbitMqConnectionStrings[] = \"${{ secrets.RABBITMQ_CS5 }}\";" >> rabbitMq.secrets.php
-          echo "\$rabbitMqConnectionStrings[] = \"${{ secrets.RABBITMQ_CS6 }}\";" >> rabbitMq.secrets.php
-          echo "\$rabbitMqConnectionStrings[] = \"${{ secrets.RABBITMQ_CS7 }}\";" >> rabbitMq.secrets.php
-          echo "\$rabbitMqConnectionStrings[] = \"${{ secrets.RABBITMQ_CS8 }}\";" >> rabbitMq.secrets.php
-          echo "\$rabbitMqConnectionStrings[] = \"${{ secrets.RABBITMQ_CS9 }}\";" >> rabbitMq.secrets.php
+
+          for i in $(seq 1 9); do
+            secret_var="secrets.RABBITMQ_CS${i}"
+            if [ -n "$secret_var" ]; then
+              echo "\$rabbitMqConnectionStrings[] = \"$secret_var\";" >> rabbitMq.secrets.php
+            fi
+          done
+
+      - name: Create SSH secrets file for service
+        run: |
+          cd Src/service
+          mkdir -p secrets
+          cd secrets
+          echo "<?php" >> ssh.secrets.php
+          echo "\$sshHost        = \"${{ secrets.SSH_HOST }}\";" >> ssh.secrets.php
+          echo "\$sshUsername    = \"${{ secrets.SSH_USERNAME }}\";" >> ssh.secrets.php
+          echo "\$sshPrivateKey  = \"${{ secrets.SSH_PRIVATE_KEY }}\";" >> ssh.secrets.php
 
       - name: Create UpTimeRobot secrets file
         if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'

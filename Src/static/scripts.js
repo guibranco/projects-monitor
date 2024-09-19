@@ -87,7 +87,7 @@ function preset() {
   );
   showGitHub(
     JSON.parse(
-      '{"issues":{"total_count":0,"others":[],"bug":[],"triage":[],"wip":[],"assigned":[],"authored":[],"blocked":[]},"pull_requests":{"total_count":0,"latest":[],"authored":[],"blocked":[]},"accounts_usage":[]}'
+      '{"issues":{"total_count":0,"awaiting_triage":[],"others":[],"bug":[],"triage":[],"wip":[],"assigned":[],"authored":[],"blocked":[]},"pull_requests":{"total_count":0,"latest":[],"authored":[],"blocked":[]},"accounts_usage":[]}'
     )
   );
   showMessages(
@@ -451,6 +451,9 @@ function showGitHub(response) {
   const dataPullRequestsAuthoredTable = google.visualization.arrayToDataTable(
     response["pull_requests"]["authored"]
   );
+  const dataPullRequestsTriageTable = google.visualization.arrayToDataTable(
+    response["pull_requests"]["awaiting_triage"]
+  );
   const dataPullRequestsBlockedTable = google.visualization.arrayToDataTable(
     response["pull_requests"]["blocked"]
   );
@@ -532,6 +535,10 @@ function showGitHub(response) {
     document.getElementById("gauge_chart_6")
   );
   gaugeChart6.draw(dataPullRequests, gaugeOptions);
+  const pullRequestsTriage = new google.visualization.Table(
+    document.getElementById("pull_requests_triage")
+  );
+  pullRequestsTriage.draw(dataPullRequestsTriageTable, tableOptions);
   const pullRequests = new google.visualization.Table(
     document.getElementById("pull_requests_latest")
   );

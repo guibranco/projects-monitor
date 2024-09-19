@@ -9,7 +9,6 @@ use phpseclib3\Crypt\PublicKeyLoader;
 
 class SSH
 {
-
     private $ssh;
 
     private $host;

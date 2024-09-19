@@ -159,7 +159,7 @@ jobs:
 
       - name: Create SSH secrets file for service
         run: |
-          cd Src/service
+          cd Src
           mkdir -p secrets
           cd secrets
           echo "<?php" >> ssh.secrets.php

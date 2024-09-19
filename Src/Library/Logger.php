@@ -13,6 +13,20 @@ class Logger
     {
         $this->connection = (new Database())->getConnection();
     }
+    
+    function convertUserAgentToLink(string $userAgent): string
+    {
+        $regex = '/(.+)\s\(\+?((https?:\/\/[^\)]+))\)$/';
+    
+        if (!preg_match($regex, $userAgent, $matches)) {
+            return htmlspecialchars($userAgent, ENT_QUOTES);
+        }
+        
+        $text = trim($matches[1]);
+        $url = $matches[2];
+        return '<a href="' . htmlspecialchars($url, ENT_QUOTES) . '">' . htmlspecialchars($text, ENT_QUOTES) . '</a>';
+    }
+
 
     private function getInsert()
     {
@@ -132,7 +146,9 @@ class Logger
             return array();
         }
         while ($row = $result->fetch_array(MYSQLI_NUM)) {
-            $data[] = array_values($row);
+            $rowData = array_values($row);
+            $rowData[2] = $this->convertUserAgentToLink($rowData[2]);
+            $data[] = $rowData;
         }
         $stmt->close();
 

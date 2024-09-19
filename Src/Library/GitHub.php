@@ -188,16 +188,22 @@ class GitHub
         $users = ["guibranco", "ApiBR", "GuilhermeStracini", "InovacaoMediaBrasil", "rustdevbr", "pythondevbr", "pydevbr", "dotnetdevbr", "nodejsdevbr", "rubydevbr", "frontend-ao", "frontend-pt", "backend-ao", "backend-pt", "developersRJ"];
 
         $result = $this->getWithLabel($users, "pr");
+
         $resultNotBlocked = $this->getWithLabel($users, "pr", null, ["blocked", "\"🚷 blocked\""]);
         $resultBlocked = $this->getWithLabel($users, "pr", "blocked");
         $resultBlocked2 = $this->getWithLabel($users, "pr", "\"🚷 blocked\"");
         $resultAuthored = $this->getWithUserExclusion("pr", "author", array_slice($users, 0, 1)[0], $users);
+        $resultTriage = $this->getWithLabel($users, "pr", "awaiting triage");
+        $resultTriage2 = $this->getWithLabel($users, "pr", "\"🚦awaiting triage\"");
+        $resultTriage3 = $this->getWithLabel($users, "pr", "\"🚦 awaiting triage\"");
+        $resultTriage4 = $this->getWithLabel($users, "pr", "triage");
 
         $data = array();
         $data["total_count"] = $result->total_count;
         $data["latest"] = $this->mapItems($resultNotBlocked->items);
         $data["blocked"] = array_merge($this->mapItems($resultBlocked->items), $this->mapItems($resultBlocked2->items));
         $data["authored"] = $this->mapItems($resultAuthored->items);
+        $data["awaiting_triage"] = array_merge($this->mapItems($resultTriage->items), $this->mapItems($resultTriage2->items), $this->mapItems($resultTriage3->items), $this->mapItems($resultTriage4->items));
 
         $this->addHeader($data);
 

@@ -188,7 +188,7 @@ class GitHub
         $users = ["guibranco", "ApiBR", "GuilhermeStracini", "InovacaoMediaBrasil", "rustdevbr", "pythondevbr", "pydevbr", "dotnetdevbr", "nodejsdevbr", "rubydevbr", "frontend-ao", "frontend-pt", "backend-ao", "backend-pt", "developersRJ"];
 
         $result = $this->getWithLabel($users, "pr");
-        
+
         $resultNotBlocked = $this->getWithLabel($users, "pr", null, ["blocked", "\"🚷 blocked\""]);
         $resultBlocked = $this->getWithLabel($users, "pr", "blocked");
         $resultBlocked2 = $this->getWithLabel($users, "pr", "\"🚷 blocked\"");
@@ -197,7 +197,7 @@ class GitHub
         $resultTriage2 = $this->getWithLabel($users, "pr", "\"🚦awaiting triage\"");
         $resultTriage3 = $this->getWithLabel($users, "pr", "\"🚦 awaiting triage\"");
         $resultTriage4 = $this->getWithLabel($users, "pr", "triage");
-        
+
         $data = array();
         $data["total_count"] = $result->total_count;
         $data["latest"] = $this->mapItems($resultNotBlocked->items);

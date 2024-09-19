@@ -65,14 +65,16 @@ function load(url, callback) {
 
 /**
      * Initializes and displays various preset data on the user interface.
-     * This function checks if the preset should be shown, and if so, it 
-     * retrieves and displays data related to error logs, GitHub issues, 
-     * messages, queues, and webhooks.
+     * This function checks if the preset display is enabled and, if so, 
+     * proceeds to show different panels with parsed JSON data related 
+     * to error logs, GitHub issues and pull requests, application messages, 
+     * queues, and webhooks.
      *
-     * @throws {Error} Throws an error if there is an issue parsing JSON data.
+     * @throws {Error} Throws an error if JSON parsing fails for any of the 
+     *                 data sources.
      *
      * @example
-     * // Call the preset function to display the preset data
+     * // To display the preset data, simply call the function:
      * preset();
      */
 function preset() {
@@ -382,60 +384,70 @@ function showDomains(response) {
 }
 
 /**
- * Displays GitHub statistics and information based on the provided response data.
- *
- * This function processes various metrics related to GitHub issues and pull requests,
- * visualizing them using Google Charts. It also updates the latest release information
- * if available.
- *
- * @param {Object} response - The response object containing GitHub data.
- * @param {Object} response.issues - An object containing issue-related data.
- * @param {number} response.issues.total_count - The total number of issues.
- * @param {Array} response.issues.assigned - Data for assigned issues.
- * @param {Array} response.issues.authored - Data for authored issues.
- * @param {Array} response.issues.blocked - Data for blocked issues.
- * @param {Array} response.issues.bug - Data for bug issues.
- * @param {Array} response.issues.triage - Data for triage issues.
- * @param {Array} response.issues.wip - Data for work-in-progress issues.
- * @param {Array} response.issues.others - Data for other issues.
- * @param {Object} response.pull_requests - An object containing pull request-related data.
- * @param {number} response.pull_requests.total_count - The total number of pull requests.
- * @param {Array} response.pull_requests.latest - Data for the latest pull requests.
- * @param {Array} response.pull_requests.authored - Data for authored pull requests.
- * @param {Array} response.pull_requests.blocked - Data for blocked pull requests.
- * @param {Object} response.latest_release - An object containing information about the latest release.
- * @param {string} response.latest_release.description - Description of the latest release.
- * @param {string} response.latest_release.published - Publication date of the latest release.
- * @param {string} response.latest_release.release_url - URL for the latest release.
- * @param {string} response.latest_release.title - Title of the latest release.
- * @param {string} response.latest_release.repository - Repository name of the latest release.
- * @param {string} response.latest_release.author - Author of the latest release.
- *
- * @throws {Error} Throws an error if the response object does not contain the expected structure.
- *
- * @example
- * const response = {
- *   issues: {
- *     total_count: 10,
- *     assigned: [...],
- *     authored: [...],
- *   },
- *   pull_requests: {
- *     total_count: 5,
- *     latest: [...],
- *   },
- *   latest_release: {
- *     description: "New features added",
- *     published: "2023-10-01",
- *     release_url: "https://github.com/user/repo/releases/tag/v1.0",
- *     title: "Version 1.0",
- *     repository: "user/repo",
- *     author: "user"
- *   }
- * };
- *
- * showGitHub(response);
- */
+     * Displays GitHub statistics and information based on the provided response data.
+     *
+     * This function processes the response from a GitHub API call and visualizes various metrics
+     * such as issues and pull requests using Google Charts. It creates data tables for different
+     * categories of issues and pull requests, and updates the HTML elements with the latest release
+     * information if available.
+     *
+     * @param {Object} response - The response object from the GitHub API.
+     * @param {Object} response.issues - An object containing issue-related data.
+     * @param {number} response.issues.total_count - Total number of issues.
+     * @param {Array} response.issues.assigned - List of assigned issues.
+     * @param {Array} response.issues.authored - List of authored issues.
+     * @param {Array} response.issues.blocked - List of blocked issues.
+     * @param {Array} response.issues.bug - List of bug issues.
+     * @param {Array} response.issues.triage - List of triage issues.
+     * @param {Array} response.issues.wip - List of work-in-progress issues.
+     * @param {Array} response.issues.others - List of other issues.
+     * @param {Object} response.pull_requests - An object containing pull request-related data.
+     * @param {number} response.pull_requests.total_count - Total number of pull requests.
+     * @param {Array} response.pull_requests.latest - List of latest pull requests.
+     * @param {Array} response.pull_requests.authored - List of authored pull requests.
+     * @param {Array} response.pull_requests.awaiting_triage - List of pull requests awaiting triage.
+     * @param {Array} response.pull_requests.blocked - List of blocked pull requests.
+     * @param {Object} response.latest_release - Information about the latest release.
+     * @param {string} response.latest_release.description - Description of the latest release.
+     * @param {string} response.latest_release.published - Date of the latest release.
+     * @param {string} response.latest_release.release_url - URL to the latest release.
+     * @param {string} response.latest_release.title - Title of the latest release.
+     * @param {string} response.latest_release.repository - Repository name for the latest release.
+     * @param {string} response.latest_release.author - Author of the latest release.
+     *
+     * @throws {TypeError} Throws an error if the response is not in the expected format or if required fields are missing.
+     *
+     * @example
+     * const apiResponse = {
+     *   issues: {
+     *     total_count: 10,
+     *     assigned: [...],
+     *     authored: [...],
+     *     blocked: [...],
+     *     bug: [...],
+     *     triage: [...],
+     *     wip: [...],
+     *     others: [...]
+     *   },
+     *   pull_requests: {
+     *     total_count: 5,
+     *     latest: [...],
+     *     authored: [...],
+     *     awaiting_triage: [...],
+     *     blocked: [...]
+     *   },
+     *   latest_release: {
+     *     description: "First stable release",
+     *     published: "2023-01-01",
+     *     release_url: "https://github.com/user/repo/releases/tag/v1.0",
+     *     title: "v1.0",
+     *     repository: "user/repo",
+     *     author: "user"
+     *   }
+     * };
+     *
+     * showGitHub(apiResponse);
+     */
 function showGitHub(response) {
   const dataIssues = google.visualization.arrayToDataTable([
     ["Hits", "Total"],

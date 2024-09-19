@@ -13,15 +13,15 @@ class Logger
     {
         $this->connection = (new Database())->getConnection();
     }
-    
-    function convertUserAgentToLink(string $userAgent): string
+
+    public function convertUserAgentToLink(string $userAgent): string
     {
         $regex = '/(.+)\s\(\+?((https?:\/\/[^\)]+))\)$/';
-    
+
         if (!preg_match($regex, $userAgent, $matches)) {
             return htmlspecialchars($userAgent, ENT_QUOTES);
         }
-        
+
         $text = trim($matches[1]);
         $url = $matches[2];
         return '<a href="' . htmlspecialchars($url, ENT_QUOTES) . '">' . htmlspecialchars($text, ENT_QUOTES) . '</a>';

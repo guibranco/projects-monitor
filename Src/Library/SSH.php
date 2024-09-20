@@ -142,14 +142,26 @@ class SSH
                 continue;
             }
 
-            $connected = array_key_exists('latest handshake', $peer) ? true : false;
-            $label = $connected ? "🟢" : "🔴";
-            $content = $connected ? "Connected" : "Disconnected";
-            $color = $connected ? "brightgreen" : "red";
+            $handshake = array_key_exists('latest handshake', $peer) ? true : false;
+            $time = $handshake ? strtotime($peer["latest handshake"]) : 0;
+            $diff = time() - $time;
+
+            $label = "🔴";
+            $content = "Disconnected";
+            $color = "red";
+
+            if ($handshake === true && $diff > 600) {
+                $label = "🟠";
+                $content = "Inactive";
+                $color = "orange";
+            } elseif ($handshake === true) {
+                $label =  "🟢";
+                $content = "Active";
+                $color = "brightgreen";
+            }
 
             $status = $shields->generateBadgeUrl($label, $content, $color, "for-the-badge", "white", null);
             $statusImg = "<img src='$status' alt='Status' />";
-
 
             $peers[] = array(
                 $this->mapPeerToHostname($peer['allowed ips']),

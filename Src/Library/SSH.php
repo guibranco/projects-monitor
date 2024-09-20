@@ -136,7 +136,7 @@ class SSH
         $shields = new ShieldsIo();
 
         $peers = array();
-        $peers[] = array("Peer", "Status", "Received", "Sent", "Last Handshake", "Allowed IP");
+        $peers[] = array("Peer", "Status", "Last Handshake", "Received", "Sent");
         foreach ($data as $peer) {
             if (array_key_exists('peer', $peer) === false) {
                 continue;
@@ -156,8 +156,7 @@ class SSH
                 $statusImg,
                 $peer['latest handshake'] ?? '',
                 $peer['transfer']['received'] ?? '0',
-                $peer['transfer']['sent'] ?? '0',
-                $peer['allowed ips'] ?? ''
+                $peer['transfer']['sent'] ?? '0'
             );
         }
 

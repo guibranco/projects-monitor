@@ -151,9 +151,9 @@ jobs:
           echo "<?php" >> rabbitMq.secrets.php
 
           for i in $(seq 1 9); do
-            secret_var="secrets.RABBITMQ_CS${i}"
+            secret_var="RABBITMQ_CS${i}"
             if [ -n "$secret_var" ]; then
-              echo "\$rabbitMqConnectionStrings[] = \"$secret_var\";" >> rabbitMq.secrets.php
+              echo "\$rabbitMqConnectionStrings[] = \"${{ secrets[$secret_var] }}\";" >> rabbitMq.secrets.php
             fi
           done
 

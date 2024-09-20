@@ -1,9 +1,5 @@
 RewriteEngine On
 
-<Files "install.php">
-    Require all denied
-</Files>
-
 <Files "deploy.zip">
     Require all denied
 </Files>

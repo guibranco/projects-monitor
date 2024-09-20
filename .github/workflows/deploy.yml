@@ -145,7 +145,7 @@ jobs:
       - name: Create RabbitMQ secrets file
         if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
         run: |
-          SECRETS_CONTEXT=${{ toJson(secrets) }}
+          SECRETS_CONTEXT='${{ toJson(secrets) }}'
           cd Src
           mkdir -p secrets
           cd secrets

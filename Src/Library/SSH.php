@@ -145,7 +145,7 @@ class SSH
             $handshake = array_key_exists('latest handshake', $peer) ? true : false;
             $time = $handshake ? strtotime($peer["latest handshake"]) : 0;
             $diff = time() - $time;
-            
+
             $label = "🔴";
             $content = "Disconnected";
             $color = "red";
@@ -154,12 +154,12 @@ class SSH
                 $label = "🟠";
                 $content = "Inactive";
                 $color = "orange";
-            } else if ($handshake === true) {
+            } elseif ($handshake === true) {
                 $label =  "🟢";
                 $content = "Active";
                 $color = "brightgreen";
             }
-            
+
             $status = $shields->generateBadgeUrl($label, $content, $color, "for-the-badge", "white", null);
             $statusImg = "<img src='$status' alt='Status' />";
 

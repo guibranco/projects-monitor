@@ -144,20 +144,19 @@ jobs:
 
       - name: Create RabbitMQ secrets file
         if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
-        env:
-          SECRETS_CONTEXT: ${{ toJson(secrets) }}
         run: |
+          SECRETS_CONTEXT=${{ toJson(secrets) }}
           cd Src
           mkdir -p secrets
           cd secrets
           echo "<?php" >> rabbitMq.secrets.php
-
-          for i in $(seq 1 9); do
-            echo "secret_var=RABBITMQ_CS${i}" >> $GITHUB_ENV
-            if [ -n "${{ env.secret_var }}" ]; then
-              echo "\$rabbitMqConnectionStrings[] = \"${{ secrets[env.secret_var] }}\";" >> rabbitMq.secrets.php
-            fi
+          rabbitmq_values=$(echo "$SECRETS_CONTEXT" | jq -S '.' | jq -r 'to_entries | map(select(.key | startswith("RABBITMQ_CS"))) | .[].value')
+          
+          for value in $rabbitmq_values; do
+              value_final=$(echo $value | sed 's/\\n/ /g')
+              echo "\$rabbitMqConnectionStrings[] = \"$value_final\";" >> rabbitMq.secrets.php
           done
+
 
       - name: Create SSH secrets file for service
         run: |

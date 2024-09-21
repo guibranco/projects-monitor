@@ -150,7 +150,7 @@ jobs:
           mkdir -p secrets
           cd secrets
           echo "<?php" >> rabbitMq.secrets.php
-          rabbitmq_values=$(echo "$SECRETS_CONTEXT" | jq -S '.' | jq -r 'to_entries | map(select(.key | startswith("RABBITMQ_CS"))) | .[].value')
+          rabbitmq_values=$(echo "$SECRETS_CONTEXT" | jq -S '.' | jq -r 'to_entries | map(select(.key | startswith("RABBITMQ_"))) | .[].value')
           
           for value in $rabbitmq_values; do
               value_final=$(echo $value | sed 's/\\n/ /g')

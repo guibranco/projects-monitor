@@ -157,7 +157,6 @@ jobs:
               echo "\$rabbitMqConnectionStrings[] = \"$value_final\";" >> rabbitMq.secrets.php
           done
 
-
       - name: Create SSH secrets file for service
         run: |
           cd Src

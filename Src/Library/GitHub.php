@@ -14,6 +14,8 @@ class GitHub
 
     private $headers;
 
+    private $responseHeaders;
+
     public function __construct()
     {
         $config = new Configuration();
@@ -42,6 +44,7 @@ class GitHub
         $response = $this->request->get($url, $this->headers);
 
         if ($response->statusCode !== -1 || $isRetry) {
+            $this->responseHeaders = $response->headers;
             return $response;
         }
 
@@ -324,5 +327,10 @@ class GitHub
         $result = array_values($result);
         array_unshift($result, array("Account", "Actions usage/quota", "Days Left In Billing Cycle"));
         return $result;
+    }
+
+    public function getResponseHeaders()
+    {
+        return $this->responseHeaders;
     }
 }

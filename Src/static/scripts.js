@@ -105,7 +105,7 @@ function preset() {
   showQueues(JSON.parse('{"queues":[],"total":0}'));
   showWebhook(
     JSON.parse(
-      '{"senders":[],"events":[["Event","Hits"]],"failed":0,"feed":[],"repositories":[],"total":0,"statistics":[["Date","Table #1"],["01/01",0]],"statistics_github":[["Date","Table #1"],["01/01",0]],"workflow_runs":[],"total_workflow_runs":0, "installations":0}'
+      '{"senders":[],"events":[["Event","Hits"]],"failed":0,"feed":[],"repositories":[],"total":0,"statistics":[["Date","Table #1"],["01/01",0]],"statistics_github":[["Date","Table #1"],["01/01",0]],"workflow_runs":[],"total_workflow_runs":0, "installations":0, "installation_repositories": [], "installation_repositories_count": 0}'
     )
   );
 }
@@ -843,6 +843,14 @@ function showUpTimeRobot(response) {
      * showWebhook(webhookResponse);
      */
 function showWebhook(response) {
+  if (typeof response["installation_repositories"] === "undefined") {
+    response["installation_repositories"] = [];
+  }
+  
+  if (typeof response["installation_repositories_count"] === "undefined") {
+    response["installation_repositories_count"] = 0;
+  }
+  
   const dataStatistics = google.visualization.arrayToDataTable(
     response["statistics"]
   );
@@ -881,6 +889,13 @@ function showWebhook(response) {
   const dataInstallations = google.visualization.arrayToDataTable([
     ["Hits", "GH App"],
     ["GH App", response["installations"]],
+  ]);
+  const dataInstallationRepositoriesCount = google.visualization.arrayToDataTable([
+    ["Hits", "GH App Repos"],
+    ["GH App Repos", response["installation_repositories_count"]],
+  ]);
+  const dataInstallationRepositories = google.visualization.arrayToDataTable([
+     response["installation_repositories"]
   ]);
 
   const optionsStatistics = {
@@ -1026,6 +1041,10 @@ function showWebhook(response) {
     document.getElementById("gauge_chart_9")
   );
   gaugeChart9.draw(dataInstallations, optionsInstallations);
+  const gaugeChart10 = new google.visualization.Gauge(
+    document.getElementById("gauge_chart_installation_repositories")
+  );
+  gaugeChart10.draw(dataInstallationRepositoriesCount, optionsInstallations);
 }
 
 /**

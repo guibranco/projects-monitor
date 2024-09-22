@@ -120,7 +120,7 @@ $configuration = new Configuration();
     <div id="cronjobs"></div>
     <div class="topping">Senders</div>
     <div id="senders"></div>
-    <div class="topping">App Veyor</div>
+    <div class="topping">AppVeyor</div>
     <div id="appveyor"></div>
   </div>
   <div style="clear:both;"></div>

@@ -43,7 +43,7 @@ $configuration = new Configuration();
     <div id="gauge_chart_4" class="gauge"></div>
     <div id="gauge_chart_3" class="gauge"></div>
     <div id="gauge_chart_7" class="gauge"></div>
-    <div id="gauge_chart_10" class="gauge"></div>
+    <div id="gauge_chart_installation_repositories" class="gauge"></div>
   </div>
   <div style="width: 50%; float: left;">
     <div style="width: 100%;">

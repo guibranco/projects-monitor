@@ -339,7 +339,7 @@ class GitHub
         return $result;
     }
 
-    public function getApiUsage() : array
+    public function getApiUsage(): array
     {
         if (count($this->apiUsage) === 0) {
             return array();

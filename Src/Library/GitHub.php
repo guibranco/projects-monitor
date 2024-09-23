@@ -339,8 +339,11 @@ class GitHub
         return $result;
     }
 
-    public function getApiUsage()
+    public function getApiUsage() : array
     {
+        if (count($this->apiUsage) === 0) {
+            return array();
+        }
         $data = array();
         $data[] = ["Resource", "Limit", "Remaining", "Used", "Reset"];
         foreach($this->apiUsage as $resource => $item) {

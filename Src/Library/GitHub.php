@@ -341,7 +341,11 @@ class GitHub
 
     public function getApiUsage(): array
     {
+        $cache = "cache/github_api_usage.json";
         if (count($this->apiUsage) === 0) {
+            if (file_exists($cache)) {
+                return json_decode(file_get_contents($cache));
+            }
             return array();
         }
         $data = array();
@@ -349,6 +353,7 @@ class GitHub
         foreach($this->apiUsage as $resource => $item) {
             $data[] = [$resource, $item["limit"], $item["remaining"], $item["used"], date("H:i:s d/m/Y", $item["reset"])];
         }
+        file_put_contents($cache, json_encode($data));
         return $data;
     }
 }

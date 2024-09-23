@@ -64,23 +64,21 @@ function load(url, callback) {
 }
 
 /**
-     * Initializes and displays various preset data on the user interface.
-     * This function checks if the preset display is enabled and, if so, 
-     * retrieves and shows data related to error logs, GitHub issues, 
-     * messages, queues, and webhooks.
+     * Toggles the display of preset information in the application.
+     * If the preset is not set to show, the function exits early.
+     * Otherwise, it sets the `showPreset` flag to false and proceeds to display various components
+     * such as error logs, GitHub issues, messages, queues, and webhooks using JSON data.
      *
-     * It performs the following actions:
-     * - Displays error log information including total error messages.
-     * - Shows GitHub issues and pull requests statistics.
-     * - Displays application hit messages.
-     * - Shows queue information.
-     * - Displays webhook event statistics.
-     *
-     * @throws {Error} Throws an error if there is an issue with parsing JSON data.
+     * @throws {Error} Throws an error if JSON parsing fails for any of the data sources.
      *
      * @example
-     * // To display the preset data, simply call the function
+     * // To show the preset information
      * preset();
+     *
+     * @example
+     * // If `showPreset` is false, this call will not display any information
+     * showPreset = false;
+     * preset(); // No output
      */
 function preset() {
   if (!showPreset) {
@@ -801,46 +799,51 @@ function showUpTimeRobot(response) {
 }
 
 /**
-     * Displays various statistics and data visualizations based on the provided webhook response.
+     * Displays webhook statistics and related data visualizations based on the provided response object.
      *
-     * This function processes the response data to create charts and tables using Google Charts.
-     * It handles statistics related to webhooks, GitHub events, senders, repositories, workflow runs,
-     * and installations. The visualizations include line charts, pie charts, and gauges.
+     * This function processes the response data to create various charts and tables using Google Charts.
+     * It initializes data tables for statistics, events, senders, repositories, workflow runs, and other metrics.
+     * The function also handles undefined properties by setting default values where necessary.
      *
      * @param {Object} response - The response object containing webhook data.
-     * @param {Array} response.statistics - An array of statistics data for webhooks.
-     * @param {Array} response.statistics_github - An array of statistics data specific to GitHub webhooks.
-     * @param {Array} response.events - An array of events data.
-     * @param {Array} response.feed - An array of feed data.
-     * @param {Array} response.senders - An array of sender data (optional).
-     * @param {Array} response.bots - An array of bot data (optional).
-     * @param {Array} response.repositories - An array of repository data.
-     * @param {Array} response.workflow_runs - An array of workflow run data.
-     * @param {number} response.total - Total number of hits.
-     * @param {number} response.failed - Number of failed hits.
-     * @param {number} response.total_workflow_runs - Total number of workflow runs.
-     * @param {number} response.installations - Number of installations.
-     * @param {string} [response.check_hooks_date] - The date when hooks were last checked (optional).
+     * @param {Array} [response.statistics] - An array of statistics data for the webhook.
+     * @param {Array} [response.statistics_github] - An array of GitHub-specific statistics data.
+     * @param {Array} [response.events] - An array of events data related to the webhook.
+     * @param {Array} [response.feed] - An array of feed data related to the webhook.
+     * @param {Array} [response.senders] - An array of senders associated with the webhook.
+     * @param {Array} [response.bots] - An array of bots associated with the webhook.
+     * @param {Array} [response.repositories] - An array of repositories associated with the webhook.
+     * @param {Array} [response.workflow_runs] - An array of workflow runs associated with the webhook.
+     * @param {number} [response.total] - The total number of webhook hits.
+     * @param {number} [response.failed] - The number of failed webhook hits.
+     * @param {number} [response.total_workflow_runs] - The total number of workflow runs.
+     * @param {number} [response.installations] - The number of installations associated with the webhook.
+     * @param {number} [response.installation_repositories_count] - The count of installation repositories.
+     * @param {Array} [response.installation_repositories] - An array of installation repositories.
+     * @param {string} [response.check_hooks_date] - The date when hooks were last checked.
      *
-     * @throws {Error} Throws an error if the response object is malformed or missing required properties.
+     * @throws {Error} Throws an error if the response object is invalid or missing required properties.
      *
      * @example
-     * const webhookResponse = {
+     * const response = {
      *   statistics: [...],
      *   statistics_github: [...],
      *   events: [...],
      *   feed: [...],
      *   senders: [...],
+     *   bots: [...],
      *   repositories: [...],
      *   workflow_runs: [...],
      *   total: 100,
      *   failed: 5,
-     *   total_workflow_runs: 10,
-     *   installations: 20,
+     *   total_workflow_runs: 50,
+     *   installations: 10,
+     *   installation_repositories_count: 3,
+     *   installation_repositories: [...],
      *   check_hooks_date: "2023-10-01T12:00:00Z"
      * };
      *
-     * showWebhook(webhookResponse);
+     * showWebhook(response);
      */
 function showWebhook(response) {
   if (typeof response["installation_repositories"] === "undefined") {

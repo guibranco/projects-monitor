@@ -14,7 +14,7 @@ class GitHub
 
     private $headers;
 
-    private $responseHeaders;
+    private $apiUsage;
 
     public function __construct()
     {
@@ -29,8 +29,8 @@ class GitHub
 
         require_once __DIR__ . "/../secrets/gitHub.secrets.php";
 
+        $this->apiUsage = array();
         $this->request = new Request();
-
         $this->headers = [
             "Authorization: token {$gitHubToken}",
             "Accept: application/vnd.github.v3+json",
@@ -39,12 +39,22 @@ class GitHub
         ];
     }
 
+    private function processHeaders($headers): void
+    {
+        $limit = $headers["X-RateLimit-Limit"];
+        $remaining = $headers["X-RateLimit-Remaining"];
+        $reset = $headers["X-RateLimit-Reset"];
+        $used = $headers["X-RateLimit-Used"];
+        $resource = $headers["X-RateLimit-Resource"];
+        $this->apiUsage[$resource] = array("limit" => $limit, "remaining" => $remaining, "reset" => $reset, "used" => $used);
+    }
+
     private function requestInternal($url, $isRetry = false)
     {
         $response = $this->request->get($url, $this->headers);
 
         if ($response->statusCode !== -1 || $isRetry) {
-            $this->responseHeaders = $response->headers;
+            $this->processHeaders($response->headers);
             return $response;
         }
 
@@ -329,8 +339,13 @@ class GitHub
         return $result;
     }
 
-    public function getResponseHeaders()
+    public function getApiUsage()
     {
-        return $this->responseHeaders;
+        $data = array();
+        $data[] = ["Resource", "Limit", "Remaining", "Reset", "Used"];
+        foreach($this->apiUsage as $resource => $data) {
+            $data = [$resource, $data["limit"], $data["remaining"], $data["reset"], $data["used"]];
+        }
+        return $data;
     }
 }

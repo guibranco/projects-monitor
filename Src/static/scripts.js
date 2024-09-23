@@ -951,11 +951,11 @@ function showWebhook(response) {
     min: 0,
     max: 500000,
     greenFrom: 0,
-    greenTo: 250000,
-    yellowFrom: 250000,
-    yellowTo: 400000,
-    redFrom: 400000,
-    redTo: 500000,
+    greenTo: 300000,
+    yellowFrom: 300000,
+    yellowTo: 500000,
+    redFrom: 500000,
+    redTo: 750000,
   };
 
   const optionsFailed = {

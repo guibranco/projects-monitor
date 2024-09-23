@@ -45,7 +45,7 @@ class GitHub
         $remaining = $headers["X-RateLimit-Remaining"];
         $reset = $headers["X-RateLimit-Reset"];
         $used = $headers["X-RateLimit-Used"];
-        $resource = $headers["X-RateLimit-Resource"];        
+        $resource = $headers["X-RateLimit-Resource"];
         $this->apiUsage[$resource] = array("limit" => $limit, "remaining" => $remaining, "reset" => $reset, "used" => $used);
     }
 
@@ -343,7 +343,7 @@ class GitHub
     {
         $data = array();
         $data[] = ["Resource", "Limit", "Remaining", "Reset", "Used"];
-        foreach($this->apiUsage as $resource=>$data) {
+        foreach($this->apiUsage as $resource => $data) {
             $data = [$resource, $data["limit"], $data["remaining"], $data["reset"], $data["used"]];
         }
         return $data;

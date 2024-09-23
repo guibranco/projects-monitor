@@ -811,49 +811,35 @@ function showUpTimeRobot(response) {
 /**
      * Displays webhook statistics and related data visualizations based on the provided response object.
      *
-     * This function processes the response data to create various charts and tables using Google Charts.
-     * It initializes data tables for statistics, events, senders, repositories, workflow runs, and other metrics.
-     * The function also handles undefined properties by setting default values where necessary.
+     * This function processes various statistics from the response, including installation repositories,
+     * events, and workflow runs, and visualizes them using Google Charts. It also handles default values
+     * for certain properties if they are not defined in the response.
      *
      * @param {Object} response - The response object containing webhook data.
-     * @param {Array} [response.statistics] - An array of statistics data for the webhook.
-     * @param {Array} [response.statistics_github] - An array of GitHub-specific statistics data.
-     * @param {Array} [response.events] - An array of events data related to the webhook.
-     * @param {Array} [response.feed] - An array of feed data related to the webhook.
-     * @param {Array} [response.senders] - An array of senders associated with the webhook.
-     * @param {Array} [response.bots] - An array of bots associated with the webhook.
-     * @param {Array} [response.repositories] - An array of repositories associated with the webhook.
-     * @param {Array} [response.workflow_runs] - An array of workflow runs associated with the webhook.
-     * @param {number} [response.total] - The total number of webhook hits.
-     * @param {number} [response.failed] - The number of failed webhook hits.
-     * @param {number} [response.total_workflow_runs] - The total number of workflow runs.
-     * @param {number} [response.installations] - The number of installations associated with the webhook.
-     * @param {number} [response.installation_repositories_count] - The count of installation repositories.
      * @param {Array} [response.installation_repositories] - An array of installation repositories.
+     * @param {number} [response.installation_repositories_count] - The count of installation repositories.
+     * @param {Array} response.statistics - An array of statistics data for visualization.
+     * @param {Array} response.statistics_github - An array of GitHub statistics data for visualization.
+     * @param {Array} response.events - An array of events data for visualization.
+     * @param {Array} response.feed - An array of feed data for visualization.
+     * @param {Array} [response.senders] - An array of senders data; if undefined, bots are used instead.
+     * @param {Array} response.repositories - An array of repository data for visualization.
+     * @param {Array} response.workflow_runs - An array of workflow run data for visualization.
+     * @param {number} response.total - The total count of hits for visualization.
+     * @param {number} response.failed - The count of failed hits for visualization.
+     * @param {number} response.total_workflow_runs - The total count of workflow runs for visualization.
+     * @param {number} response.installations - The count of installations for visualization.
      * @param {string} [response.check_hooks_date] - The date when hooks were last checked.
      *
-     * @throws {Error} Throws an error if the response object is invalid or missing required properties.
+     * @throws {Error} Throws an error if the response object is not valid or if required properties are missing.
      *
      * @example
-     * const response = {
-     *   statistics: [...],
-     *   statistics_github: [...],
-     *   events: [...],
-     *   feed: [...],
-     *   senders: [...],
-     *   bots: [...],
-     *   repositories: [...],
-     *   workflow_runs: [...],
-     *   total: 100,
-     *   failed: 5,
-     *   total_workflow_runs: 50,
-     *   installations: 10,
-     *   installation_repositories_count: 3,
+     * const webhookResponse = {
      *   installation_repositories: [...],
-     *   check_hooks_date: "2023-10-01T12:00:00Z"
+     *   statistics: [...],
+     *   ...
      * };
-     *
-     * showWebhook(response);
+     * showWebhook(webhookResponse);
      */
 function showWebhook(response) {
   if (typeof response["installation_repositories"] === "undefined") {

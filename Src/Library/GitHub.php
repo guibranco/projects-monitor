@@ -211,7 +211,7 @@ class GitHub
         $resultTriage2 = $this->getWithLabel($users, "pr", "awaiting triage");
         $resultTriage3 = $this->getWithLabel($users, "pr", "\"🚦awaiting triage\"");
         $resultTriage4 = $this->getWithLabel($users, "pr", "\"🚦 awaiting triage\"");
-        
+
         $data = array();
         $data["total_count"] = $result->total_count;
         $data["latest"] = $this->mapItems($resultNotBlocked->items);

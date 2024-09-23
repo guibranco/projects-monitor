@@ -64,21 +64,24 @@ function load(url, callback) {
 }
 
 /**
-     * Toggles the display of preset information in the application.
-     * If the preset is not set to show, the function exits early.
-     * Otherwise, it sets the `showPreset` flag to false and proceeds to display various components
-     * such as error logs, GitHub issues, messages, queues, and webhooks using JSON data.
+     * Initializes and displays preset information if the `showPreset` flag is true.
+     * This function retrieves various data sets in JSON format and displays them
+     * using corresponding display functions.
      *
-     * @throws {Error} Throws an error if JSON parsing fails for any of the data sources.
+     * The following data is fetched and displayed:
+     * - Error log files and messages
+     * - GitHub API usage and issues
+     * - Application hit statistics
+     * - Queue information
+     * - Webhook event statistics
+     *
+     * If `showPreset` is false, the function will terminate early without performing any actions.
+     *
+     * @throws {Error} Throws an error if JSON parsing fails for any of the data sets.
      *
      * @example
-     * // To show the preset information
+     * // Assuming showPreset is true, calling preset() will display the preset information.
      * preset();
-     *
-     * @example
-     * // If `showPreset` is false, this call will not display any information
-     * showPreset = false;
-     * preset(); // No output
      */
 function preset() {
   if (!showPreset) {
@@ -381,13 +384,13 @@ function showDomains(response) {
 }
 
 /**
-     * Displays GitHub-related data in various visualizations.
+     * Displays GitHub statistics and data visualizations based on the provided response object.
      *
-     * This function processes the response from a GitHub API call and visualizes
-     * the data using Google Charts. It creates data tables for issues and pull
-     * requests, and draws gauges and tables to represent this data visually.
+     * This function processes various metrics related to GitHub issues and pull requests,
+     * converting them into data tables for visualization. It also updates the latest release
+     * information if available.
      *
-     * @param {Object} response - The response object from the GitHub API.
+     * @param {Object} response - The response object containing GitHub data.
      * @param {Object} response.issues - An object containing issue-related data.
      * @param {number} response.issues.total_count - The total number of issues.
      * @param {Array} response.issues.assigned - List of assigned issues.
@@ -397,7 +400,7 @@ function showDomains(response) {
      * @param {Array} response.issues.triage - List of triaged issues.
      * @param {Array} response.issues.wip - List of work-in-progress issues.
      * @param {Array} response.issues.others - List of other issues.
-     * @param {Object} response.pull_requests - An object containing pull request data.
+     * @param {Object} response.pull_requests - An object containing pull request-related data.
      * @param {number} response.pull_requests.total_count - The total number of pull requests.
      * @param {Array} response.pull_requests.latest - List of latest pull requests.
      * @param {Array} response.pull_requests.authored - List of authored pull requests.
@@ -406,15 +409,15 @@ function showDomains(response) {
      * @param {Object} response.latest_release - Information about the latest release.
      * @param {string} response.latest_release.description - Description of the latest release.
      * @param {string} response.latest_release.published - Publication date of the latest release.
-     * @param {string} response.latest_release.release_url - URL for the latest release.
+     * @param {string} response.latest_release.release_url - URL to the latest release.
      * @param {string} response.latest_release.title - Title of the latest release.
      * @param {string} response.latest_release.repository - Repository name for the latest release.
      * @param {string} response.latest_release.author - Author of the latest release.
      *
-     * @throws {Error} Throws an error if the response format is incorrect or if required fields are missing.
+     * @throws {TypeError} Throws an error if the response object is not valid or does not contain expected properties.
      *
      * @example
-     * const apiResponse = {
+     * const githubResponse = {
      *   issues: {
      *     total_count: 10,
      *     assigned: [...],
@@ -433,16 +436,16 @@ function showDomains(response) {
      *     blocked: [...]
      *   },
      *   latest_release: {
-     *     description: "Latest features and fixes.",
-     *     published: "2023-10-01",
+     *     description: "Initial release",
+     *     published: "2023-01-01",
      *     release_url: "https://github.com/user/repo/releases/tag/v1.0",
-     *     title: "Version 1.0",
+     *     title: "v1.0",
      *     repository: "user/repo",
      *     author: "user"
      *   }
      * };
      *
-     * showGitHub(apiResponse);
+     * showGitHub(githubResponse);
      */
 function showGitHub(response) {
   const dataIssues = google.visualization.arrayToDataTable([

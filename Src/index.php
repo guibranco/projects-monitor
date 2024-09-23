@@ -99,7 +99,9 @@ $configuration = new Configuration();
     <div class="topping">Issues Authored</div>
     <div id="issues_authored"></div>
     <div class="topping">Repositories</div>
-    <div id="repositories"></div>    
+    <div id="repositories"></div>
+    <div class="topping">GitHub API Usage</div>
+    <div id="api_usage"></div>
   </div>
   <div style="width: 50%; float: left; background-color: white;">
     <div class="topping">Issues Awaiting Triage</div>

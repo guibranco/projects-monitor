@@ -342,9 +342,9 @@ class GitHub
     public function getApiUsage()
     {
         $data = array();
-        $data[] = ["Resource", "Limit", "Remaining", "Reset", "Used"];
+        $data[] = ["Resource", "Limit", "Remaining", "Used", "Reset"];
         foreach($this->apiUsage as $resource => $item) {
-            $data[] = [$resource, $item["limit"], $item["remaining"], $item["reset"], $item["used"]];
+            $data[] = [$resource, $item["limit"], $item["remaining"], $item["used"], date("H:i:s d/m/Y", $item["reset"])];
         }
         return $data;
     }

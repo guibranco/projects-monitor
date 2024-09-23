@@ -344,7 +344,7 @@ class GitHub
         $data = array();
         $data[] = ["Resource", "Limit", "Remaining", "Reset", "Used"];
         foreach($this->apiUsage as $resource=>$data) {
-            $data = [$resource, $data["limit"], $data["remaining"], $data["reset"], $data["used"]);
+            $data = [$resource, $data["limit"], $data["remaining"], $data["reset"], $data["used"]];
         }
         return $data;
     }

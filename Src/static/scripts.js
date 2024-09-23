@@ -92,7 +92,7 @@ function preset() {
   );
   showGitHub(
     JSON.parse(
-      '{"issues":{"total_count":0,"others":[],"bug":[],"triage":[],"wip":[],"assigned":[],"authored":[],"blocked":[]},"pull_requests":{"total_count":0,"awaiting_triage":[],"latest":[],"authored":[],"blocked":[]},"accounts_usage":[]}'
+      '{"api_usage":[],"issues":{"total_count":0,"others":[],"bug":[],"triage":[],"wip":[],"assigned":[],"authored":[],"blocked":[]},"pull_requests":{"total_count":0,"awaiting_triage":[],"latest":[],"authored":[],"blocked":[]},"accounts_usage":[]}'
     )
   );
   showMessages(
@@ -489,6 +489,9 @@ function showGitHub(response) {
   const dataAccountsUsage = google.visualization.arrayToDataTable(
     response["accounts_usage"]
   );
+  const dataApiUsage = google.visualization.arrayToDataTable(
+    response["api_usage"]
+  );
 
   if (typeof response["latest_release"] !== "undefined") {
     const latestRelease = response["latest_release"];
@@ -587,6 +590,10 @@ function showGitHub(response) {
     document.getElementById("accounts_usage")
   );
   accountsUsage.draw(dataAccountsUsage, tableOptions);
+  const apiUsage = new google.visualization.Table(
+    document.getElementById("api_usage")
+  );
+  apiUsage.draw(dataApiUsage, tableOptions);
 }
 
 /**

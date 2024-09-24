@@ -102,6 +102,8 @@ $configuration = new Configuration();
     <div id="repositories"></div>
     <div class="topping">GitHub API Usage</div>
     <div id="api_usage"></div>
+    <div class="toppinh">Installed Repositories</div>
+    <div id="installed_repositories"></div>
   </div>
   <div style="width: 50%; float: left; background-color: white;">
     <div class="topping">Issues Awaiting Triage</div>

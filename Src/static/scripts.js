@@ -854,15 +854,7 @@ function showUpTimeRobot(response) {
      *
      * showWebhook(webhookResponse);
      */
-function showWebhook(response) {
-  if (typeof response["installation_repositories"] === "undefined") {
-    response["installation_repositories"] = [];
-  }
-  
-  if (typeof response["installation_repositories_count"] === "undefined") {
-    response["installation_repositories_count"] = 0;
-  }
-  
+function showWebhook(response) {  
   const dataStatistics = google.visualization.arrayToDataTable(
     response["statistics"]
   );
@@ -1020,11 +1012,15 @@ function showWebhook(response) {
     document.getElementById("repositories")
   );
   repositories.draw(dataRepositories, tableOptions);
+  const installationRepositories = new google.visualization.Table(
+    document.getElementById("installed_repositories")
+  );
+  installationRepositories.draw(dataInstallationRepositories, tableOptions);
   const workflowRuns = new google.visualization.Table(
     document.getElementById("workflow_runs")
   );
   workflowRuns.draw(dataWorkflowRuns, tableOptions);
-  const feed = new google.visualization.Table(document.getElementById("feed"));
+    const feed = new google.visualization.Table(document.getElementById("feed"));
   feed.draw(dataFeed, tableOptions);
   const senders = new google.visualization.Table(
     document.getElementById("senders")

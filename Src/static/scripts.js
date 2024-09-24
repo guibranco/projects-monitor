@@ -858,15 +858,9 @@ function showWebhook(response) {
   );
   const dataEvents = google.visualization.arrayToDataTable(response["events"]);
   const dataFeed = google.visualization.arrayToDataTable(response["feed"]);
-  const responseSenders =
-    typeof response["senders"] !== "undefined"
-      ? response["senders"]
-      : response["bots"];
-  console.log(
-    "GitHub Senders: " + (typeof response["senders"] !== "undefined")
+  const dataSenders = google.visualization.arrayToDataTable(
+    response["senders"]
   );
-  console.log("GitHub Bots: " + (typeof response["bots"] !== "undefined"));
-  const dataSenders = google.visualization.arrayToDataTable(responseSenders);
   const dataRepositories = google.visualization.arrayToDataTable(
     response["repositories"]
   );

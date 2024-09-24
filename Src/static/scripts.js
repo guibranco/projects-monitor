@@ -811,34 +811,47 @@ function showUpTimeRobot(response) {
 /**
      * Displays webhook statistics and related data visualizations based on the provided response object.
      *
-     * This function processes various statistics from the response, including installation repositories,
-     * events, and workflow runs, and visualizes them using Google Charts. It also handles default values
-     * for certain properties if they are not defined in the response.
+     * This function processes various data points from the response, including installation repositories,
+     * statistics, events, and workflow runs, and renders them using Google Charts.
+     *
+     * It initializes several data tables and chart options for visual representation of the data.
+     * If certain properties are undefined in the response, they are initialized to default values.
      *
      * @param {Object} response - The response object containing webhook data.
-     * @param {Array} [response.installation_repositories] - An array of installation repositories.
-     * @param {number} [response.installation_repositories_count] - The count of installation repositories.
-     * @param {Array} response.statistics - An array of statistics data for visualization.
-     * @param {Array} response.statistics_github - An array of GitHub statistics data for visualization.
-     * @param {Array} response.events - An array of events data for visualization.
-     * @param {Array} response.feed - An array of feed data for visualization.
-     * @param {Array} [response.senders] - An array of senders data; if undefined, bots are used instead.
-     * @param {Array} response.repositories - An array of repository data for visualization.
-     * @param {Array} response.workflow_runs - An array of workflow run data for visualization.
-     * @param {number} response.total - The total count of hits for visualization.
-     * @param {number} response.failed - The count of failed hits for visualization.
-     * @param {number} response.total_workflow_runs - The total count of workflow runs for visualization.
-     * @param {number} response.installations - The count of installations for visualization.
-     * @param {string} [response.check_hooks_date] - The date when hooks were last checked.
+     * @param {Array} response.statistics - An array of statistics data for webhooks.
+     * @param {Array} response.statistics_github - An array of GitHub-specific statistics data.
+     * @param {Array} response.events - An array of events data.
+     * @param {Array} response.feed - An array of feed data.
+     * @param {Array} response.senders - An array of sender data.
+     * @param {Array} response.repositories - An array of repository data.
+     * @param {Array} response.workflow_runs - An array of workflow run data.
+     * @param {number} response.total - Total number of hits.
+     * @param {number} response.failed - Number of failed hits.
+     * @param {number} response.total_workflow_runs - Total number of workflow runs.
+     * @param {number} response.installations - Number of installations.
+     * @param {number} response.installation_repositories_count - Count of installation repositories.
+     * @param {Array} response.installation_repositories - An array of installation repositories.
+     * @param {string} [response.check_hooks_date] - Optional date string for the last check of hooks.
      *
-     * @throws {Error} Throws an error if the response object is not valid or if required properties are missing.
+     * @throws {Error} Throws an error if the Google Charts library is not loaded or if the response format is invalid.
      *
      * @example
      * const webhookResponse = {
-     *   installation_repositories: [...],
      *   statistics: [...],
-     *   ...
+     *   statistics_github: [...],
+     *   events: [...],
+     *   feed: [...],
+     *   senders: [...],
+     *   repositories: [...],
+     *   workflow_runs: [...],
+     *   total: 100,
+     *   failed: 5,
+     *   total_workflow_runs: 50,
+     *   installations: 10,
+     *   installation_repositories_count: 3,
+     *   installation_repositories: [...]
      * };
+     *
      * showWebhook(webhookResponse);
      */
 function showWebhook(response) {

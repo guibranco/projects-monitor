@@ -888,9 +888,9 @@ function showWebhook(response) {
     ["Hits", "GH Repos"],
     ["GH Repos", response["installation_repositories_count"]],
   ]);
-  const dataInstallationRepositories = google.visualization.arrayToDataTable([
+  const dataInstallationRepositories = google.visualization.arrayToDataTable(
      response["installation_repositories"]
-  ]);
+  );
 
   const optionsStatistics = {
     title: "Webhooks by date",

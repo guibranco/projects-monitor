@@ -809,34 +809,31 @@ function showUpTimeRobot(response) {
 }
 
 /**
-     * Displays webhook statistics and related data visualizations based on the provided response object.
+     * Displays webhook statistics and related data using Google Charts.
      *
-     * This function processes various data points from the response, including installation repositories,
-     * statistics, events, and workflow runs, and renders them using Google Charts.
-     *
-     * It initializes several data tables and chart options for visual representation of the data.
-     * If certain properties are undefined in the response, they are initialized to default values.
+     * This function processes the response object containing various statistics
+     * and visualizes them through different types of charts and tables.
      *
      * @param {Object} response - The response object containing webhook data.
      * @param {Array} response.statistics - An array of statistics data for webhooks.
-     * @param {Array} response.statistics_github - An array of GitHub-specific statistics data.
-     * @param {Array} response.events - An array of events data.
+     * @param {Array} response.statistics_github - An array of GitHub webhook statistics.
+     * @param {Array} response.events - An array of GitHub events data.
      * @param {Array} response.feed - An array of feed data.
      * @param {Array} response.senders - An array of sender data.
      * @param {Array} response.repositories - An array of repository data.
      * @param {Array} response.workflow_runs - An array of workflow run data.
-     * @param {number} response.total - Total number of hits.
-     * @param {number} response.failed - Number of failed hits.
-     * @param {number} response.total_workflow_runs - Total number of workflow runs.
-     * @param {number} response.installations - Number of installations.
-     * @param {number} response.installation_repositories_count - Count of installation repositories.
-     * @param {Array} response.installation_repositories - An array of installation repositories.
-     * @param {string} [response.check_hooks_date] - Optional date string for the last check of hooks.
+     * @param {number} response.total - The total number of hits.
+     * @param {number} response.failed - The number of failed webhooks.
+     * @param {number} response.total_workflow_runs - The total number of workflow runs.
+     * @param {number} response.installations - The number of installations.
+     * @param {number} response.installation_repositories_count - The count of installation repositories.
+     * @param {Array} response.installation_repositories - An array of installation repository data.
+     * @param {string} [response.check_hooks_date] - The date when hooks were last checked (optional).
      *
-     * @throws {Error} Throws an error if the Google Charts library is not loaded or if the response format is invalid.
+     * @throws {Error} Throws an error if the Google Charts library is not loaded.
      *
      * @example
-     * const webhookResponse = {
+     * const response = {
      *   statistics: [...],
      *   statistics_github: [...],
      *   events: [...],
@@ -846,13 +843,12 @@ function showUpTimeRobot(response) {
      *   workflow_runs: [...],
      *   total: 100,
      *   failed: 5,
-     *   total_workflow_runs: 50,
+     *   total_workflow_runs: 20,
      *   installations: 10,
-     *   installation_repositories_count: 3,
+     *   installation_repositories_count: 15,
      *   installation_repositories: [...]
      * };
-     *
-     * showWebhook(webhookResponse);
+     * showWebhook(response);
      */
 function showWebhook(response) {  
   const dataStatistics = google.visualization.arrayToDataTable(

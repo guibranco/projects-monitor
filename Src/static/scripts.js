@@ -933,13 +933,13 @@ function showWebhook(response) {
     width: "100%",
     height: "100%",
     min: 0,
-    max: 500000,
+    max: 1000000,
     greenFrom: 0,
-    greenTo: 300000,
-    yellowFrom: 300000,
-    yellowTo: 500000,
-    redFrom: 500000,
-    redTo: 750000,
+    greenTo: 350000,
+    yellowFrom: 350000,
+    yellowTo: 700000,
+    redFrom: 700000,
+    redTo: 1000000,
   };
 
   const optionsFailed = {

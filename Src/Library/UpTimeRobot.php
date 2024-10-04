@@ -45,7 +45,7 @@ class UpTimeRobot
             "logs" => 1
         ]);
 
-        $response = $this->request->post($url, $data, $headers);
+        $response = $this->request->post($url, $headers, $data);
 
         if ($response->statusCode != 200) {
             $error = $response->statusCode == -1 ? $response->error : $response->body;

@@ -72,7 +72,7 @@ class Postman
         $usage = str_pad($usage, strlen($limit), "0", STR_PAD_LEFT);
         $shields = new ShieldsIo();
         $badge = $shields->generateBadgeUrl($percentageStr, "{$usage}/{$limit} {$label}", $color, "for-the-badge", "black", null);
-        return "<a href='https://web.postman.co/billing/add-ons/overview'><img src='{$badge}' alt='{$label}' /></a>";
+        return "<a href='https://web.postman.co/billing/add-ons/overview' target='_blank' rel='noopener noreferrer'><img src='{$badge}' alt='{$label}' /></a>";
     }
 
     public function getUsage()

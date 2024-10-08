@@ -513,14 +513,14 @@ function showGitHub(response) {
       " | " +
       "<a href='https://github.com/" +
       latestRelease["repository"] +
-      "' target='_blank'>" +
+      "' target='_blank' rel='noopener noreferrer'>" +
       "<img alt='Static Badge' src='https://img.shields.io/badge/" +
       latestRelease["repository"] +
       "-black?style=flat&amp;logo=github'></a>" +
       " | " +
       "<a href='https://github.com/" +
       latestRelease["author"] +
-      "' target='_blank'>" +
+      "' target='_blank' rel='noopener noreferrer'>" +
       "<img alt='author' src='https://img.shields.io/badge/" +
       latestRelease["author"] +
       "-black?style=social&amp;logo=github'></a>";

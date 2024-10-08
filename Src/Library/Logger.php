@@ -24,7 +24,7 @@ class Logger
 
         $text = trim($matches[1]);
         $url = $matches[2];
-        return '<a href="' . htmlspecialchars($url, ENT_QUOTES) . '">' . htmlspecialchars($text, ENT_QUOTES) . '</a>';
+        return '<a href="' . htmlspecialchars($url, ENT_QUOTES) . '" target="_blank" rel="noopener noreferrer">' . htmlspecialchars($text, ENT_QUOTES) . '</a>';
     }
 
 

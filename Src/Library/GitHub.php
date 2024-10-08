@@ -149,10 +149,10 @@ class GitHub
             $colorNumber = Color::generateColorFromText($repositoryName);
             $styleNumber = "style='background-color: #" . $colorNumber . ";color: #" . (Color::luminance($colorNumber) > 120 ? "000" : "fff") . ";padding: 0 7px;border-radius: 24px;border: 1px solid #000;line-height: 21px;text-wrap:nowrap;'";
             $result[] = array(
-                "<a href='" . $item->html_url . "' target='_blank'><span " . $styleNumber . ">#" . $item->number . "</span></a>",
-                "<a href='" . $item->html_url . "' target='_blank'>" . $title . "<br />" . $labels . "</a>",
-                "<a href='https://github.com/" . $repositoryName . "' target='_blank'><img alt='login' src='https://img.shields.io/badge/" . str_replace("-", "--", $repositoryName) . "-black?style=flat&logo=github' /></a>",
-                "<a href='" . $item->user->html_url . "' target='_blank'><img alt='login' src='https://img.shields.io/badge/" . str_replace("-", "--", $item->user->login) . "-black?style=social&logo=github' /></a>"
+                "<a href='" . $item->html_url . "' target='_blank' rel='noopener noreferrer'><span " . $styleNumber . ">#" . $item->number . "</span></a>",
+                "<a href='" . $item->html_url . "' target='_blank' rel='noopener noreferrer'>" . $title . "<br />" . $labels . "</a>",
+                "<a href='https://github.com/" . $repositoryName . "' target='_blank' rel='noopener noreferrer'><img alt='login' src='https://img.shields.io/badge/" . str_replace("-", "--", $repositoryName) . "-black?style=flat&logo=github' /></a>",
+                "<a href='" . $item->user->html_url . "' target='_blank' rel='noopener noreferrer'><img alt='login' src='https://img.shields.io/badge/" . str_replace("-", "--", $item->user->login) . "-black?style=social&logo=github' /></a>"
             );
         }
 
@@ -316,7 +316,7 @@ class GitHub
             }
 
             $linkPrefix = $type == "users" ? "" : "organizations/" . $item . "/";
-            $accountLink = "<a href='https://github.com/" . $linkPrefix . "settings/billing/summary' target='_blank'><img alt='login' src='https://img.shields.io/badge/" . str_replace("-", "--", $item) . "-black?style=social&logo=github' /></a>";
+            $accountLink = "<a href='https://github.com/" . $linkPrefix . "settings/billing/summary' target='_blank' rel='noopener noreferrer'><img alt='login' src='https://img.shields.io/badge/" . str_replace("-", "--", $item) . "-black?style=social&logo=github' /></a>";
             $actionsImage = "<img alt='Actions used' src='https://img.shields.io/badge/" . number_format($percentage, 2, '.', '') . "%25-" . $used . "%2F" . $included . "_minutes-" . $colorActions . "?style=for-the-badge&labelColor=black' />";
             $daysImage = "<img alt='Actions used' src='https://img.shields.io/badge/" . $days . "-Days_remaining-" . $colorDays . "?style=for-the-badge&labelColor=black' />";
 

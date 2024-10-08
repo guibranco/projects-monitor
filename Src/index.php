@@ -52,7 +52,7 @@ $configuration = new Configuration();
         <img id="gh_streak" style="width: 465px;" alt="GH Streak" src="" />
       </div>
       <div style="width: calc(100%-465px); float: left;">
-        <a href="https://wakatime.com/@6be975b7-7258-4475-bc73-9c0fc554430e">
+        <a href="https://wakatime.com/@6be975b7-7258-4475-bc73-9c0fc554430e" target='_blank' rel='noopener noreferrer'>
           <img src="https://wakatime.com/badge/user/6be975b7-7258-4475-bc73-9c0fc554430e.svg?style=for-the-badge" />
         </a>
         <div id="postman"></div>

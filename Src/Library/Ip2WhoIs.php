@@ -66,7 +66,7 @@ class Ip2WhoIs
                 file_put_contents($cache, json_encode($response));
             }
 
-            $link = "<a href='https://whois.domaintools.com/$domain' target='_blank'>$domain</a>";
+            $link = "<a href='https://whois.domaintools.com/$domain' target='_blank' rel='noopener noreferrer'>$domain</a>";
 
             $createdTime = strtotime($response->create_date);
             $createdDate = date("d/m/Y", $createdTime);

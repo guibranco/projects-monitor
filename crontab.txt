@@ -1,0 +1,1 @@
+0 * * * * /usr/bin/php /path/to/scripts/fetch_appveyor_builds.php

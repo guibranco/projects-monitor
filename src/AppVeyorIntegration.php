@@ -1,14 +1,17 @@
 <?php
 
-class AppVeyorIntegration {
+class AppVeyorIntegration
+{
     private $apiToken;
     private $baseUrl = 'https://ci.appveyor.com/api';
 
-    public function __construct($apiToken) {
+    public function __construct($apiToken)
+    {
         $this->apiToken = $apiToken;
     }
 
-    private function makeApiRequest($endpoint) {
+    private function makeApiRequest($endpoint)
+    {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $this->baseUrl . $endpoint);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -21,7 +24,8 @@ class AppVeyorIntegration {
         return json_decode($response, true);
     }
 
-    public function getBuildInfo($projectSlug) {
+    public function getBuildInfo($projectSlug)
+    {
         return $this->makeApiRequest('/projects/' . $projectSlug . '/builds');
     }
 }

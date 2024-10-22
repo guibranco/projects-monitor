@@ -1,3 +1,4 @@
+scripts/config.php
 **/cache/**
 **/secrets/**
 **/vendor/**

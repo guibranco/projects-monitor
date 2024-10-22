@@ -4,16 +4,19 @@ namespace Services;
 
 use Integrations\GitHubActionsIntegration;
 
-class WorkflowService {
+class WorkflowService
+{
     private $db;
     private $githubIntegration;
 
-    public function __construct($db, $githubToken) {
+    public function __construct($db, $githubToken)
+    {
         $this->db = $db;
         $this->githubIntegration = new GitHubActionsIntegration($githubToken);
     }
 
-    public function fetchWorkflowsAndStore() {
+    public function fetchWorkflowsAndStore()
+    {
         $repositories = $this->getRepositories();
         foreach ($repositories as $repository) {
             $owner = $repository['owner'];
@@ -33,13 +36,15 @@ class WorkflowService {
         }
     }
 
-    private function getRepositories() {
+    private function getRepositories()
+    {
         $stmt = $this->db->prepare('SELECT id, owner, name FROM repositories');
         $stmt->execute();
         return $stmt->fetchAll();
     }
 
-    private function storeWorkflowData($repositoryId, $workflowName, $lastRunStatus, $lastRunTimestamp) {
+    private function storeWorkflowData($repositoryId, $workflowName, $lastRunStatus, $lastRunTimestamp)
+    {
         $stmt = $this->db->prepare('
             INSERT INTO github_workflows (repository_id, workflow_name, last_run_status, last_run_timestamp)
             VALUES (?, ?, ?, ?)
@@ -50,5 +55,3 @@ class WorkflowService {
         $stmt->execute([$repositoryId, $workflowName, $lastRunStatus, $lastRunTimestamp]);
     }
 }
-
-?>

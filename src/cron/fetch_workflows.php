@@ -9,5 +9,3 @@ $githubToken = 'your_github_token';
 
 $workflowService = new WorkflowService($db, $githubToken);
 $workflowService->fetchWorkflowsAndStore();
-
-?>

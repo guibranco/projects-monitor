@@ -2,15 +2,18 @@
 
 namespace Integrations;
 
-class GitHubActionsIntegration {
+class GitHubActionsIntegration
+{
     private $token;
     private $apiUrl = 'https://api.github.com';
 
-    public function __construct($token) {
+    public function __construct($token)
+    {
         $this->token = $token;
     }
 
-    private function request($url) {
+    private function request($url)
+    {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -23,15 +26,15 @@ class GitHubActionsIntegration {
         return json_decode($response, true);
     }
 
-    public function getWorkflows($owner, $repo) {
+    public function getWorkflows($owner, $repo)
+    {
         $url = "$this->apiUrl/repos/$owner/$repo/actions/workflows";
         return $this->request($url);
     }
 
-    public function getWorkflowRuns($owner, $repo, $workflowId) {
+    public function getWorkflowRuns($owner, $repo, $workflowId)
+    {
         $url = "$this->apiUrl/repos/$owner/$repo/actions/workflows/$workflowId/runs";
         return $this->request($url);
     }
 }
-
-?>

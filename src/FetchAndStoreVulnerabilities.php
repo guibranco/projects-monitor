@@ -2,16 +2,19 @@
 
 require_once 'SnykIntegration.php';
 
-class FetchAndStoreVulnerabilities {
+class FetchAndStoreVulnerabilities
+{
     private $db;
     private $snykIntegration;
 
-    public function __construct($dbConnection, $snykApiToken) {
+    public function __construct($dbConnection, $snykApiToken)
+    {
         $this->db = $dbConnection;
         $this->snykIntegration = new SnykIntegration($snykApiToken);
     }
 
-    public function execute() {
+    public function execute()
+    {
         $repositories = $this->getRepositories();
         foreach ($repositories as $repository) {
             $vulnerabilities = $this->snykIntegration->fetchVulnerabilities($repository['id']);
@@ -19,13 +22,15 @@ class FetchAndStoreVulnerabilities {
         }
     }
 
-    private function getRepositories() {
+    private function getRepositories()
+    {
         $query = "SELECT id FROM repositories WHERE active = 1";
         $result = $this->db->query($query);
         return $result->fetchAll();
     }
 
-    private function storeVulnerabilities($repositoryId, $vulnerabilities) {
+    private function storeVulnerabilities($repositoryId, $vulnerabilities)
+    {
         $query = "INSERT INTO snyk_vulnerabilities (repository_id, vulnerability_count, critical_issues, high_issues, created_at, updated_at) 
                   VALUES (:repository_id, :vulnerability_count, :critical_issues, :high_issues, NOW(), NOW())
                   ON CONFLICT (repository_id) DO UPDATE SET 
@@ -43,5 +48,3 @@ class FetchAndStoreVulnerabilities {
         ]);
     }
 }
-
-?>

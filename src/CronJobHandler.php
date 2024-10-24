@@ -22,12 +22,10 @@ foreach ($repositories as $repository) {
         $totalLines = $coverageData['total_lines'];
 
         $dbHandler->insertOrUpdateCoverageData(
-            $repository['id'], 
-            $coveragePercentage, 
-            $linesCovered, 
+            $repository['id'],
+            $coveragePercentage,
+            $linesCovered,
             $totalLines
         );
     }
 }
-
-?>

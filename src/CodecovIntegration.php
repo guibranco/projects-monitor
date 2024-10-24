@@ -1,14 +1,17 @@
 <?php
 
-class CodecovIntegration {
+class CodecovIntegration
+{
     private $apiToken;
     private $baseUrl = 'https://api.codecov.io';
 
-    public function __construct($apiToken) {
+    public function __construct($apiToken)
+    {
         $this->apiToken = $apiToken;
     }
 
-    public function fetchCoverageData($repository) {
+    public function fetchCoverageData($repository)
+    {
         $url = $this->baseUrl . '/v2/' . $repository . '/coverage';
         $headers = [
             'Authorization: Bearer ' . $this->apiToken,
@@ -26,5 +29,3 @@ class CodecovIntegration {
         return json_decode($response, true);
     }
 }
-
-?>

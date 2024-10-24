@@ -1,18 +1,22 @@
 <?php
 
-class DatabaseHandler {
+class DatabaseHandler
+{
     private $pdo;
 
-    public function __construct($dsn, $username, $password) {
+    public function __construct($dsn, $username, $password)
+    {
         $this->pdo = new PDO($dsn, $username, $password);
     }
 
-    public function getRepositories() {
+    public function getRepositories()
+    {
         $stmt = $this->pdo->query('SELECT id, name FROM repositories');
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function createCodecovInfoTable() {
+    public function createCodecovInfoTable()
+    {
         $sql = "CREATE TABLE IF NOT EXISTS codecov_info (
             id INT AUTO_INCREMENT PRIMARY KEY,
             repository_id INT NOT NULL,
@@ -24,7 +28,8 @@ class DatabaseHandler {
         $this->pdo->exec($sql);
     }
 
-    public function insertOrUpdateCoverageData($repositoryId, $coveragePercentage, $linesCovered, $totalLines) {
+    public function insertOrUpdateCoverageData($repositoryId, $coveragePercentage, $linesCovered, $totalLines)
+    {
         $sql = "INSERT INTO codecov_info (repository_id, coverage_percentage, lines_covered, total_lines) 
                 VALUES (:repository_id, :coverage_percentage, :lines_covered, :total_lines) 
                 ON DUPLICATE KEY UPDATE 
@@ -41,5 +46,3 @@ class DatabaseHandler {
         ]);
     }
 }
-
-?>

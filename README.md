@@ -1,3 +1,23 @@
+# CodeClimate Integration
+
+This feature integrates with the CodeClimate API to fetch and store key code quality metrics for each of our repositories.
+
+## Setup Instructions
+
+1. **Environment Variables**
+   
+   - Copy `.env.example` to `.env` and update the `CODECLIMATE_API_KEY` with your CodeClimate API key.
+
+2. **Database Migration**
+
+   - Run the migration to create the `codeclimate_metrics` table:
+     ```
+     php artisan migrate
+     ```
+
+3. **Cron Job Setup**
+
+   - Set up a cron job to run the `scripts/cron_job.sh` script at your desired interval to update metrics periodically.
 # Projects Monitor
 
 :gear: :bell: GitHub projects monitor.

@@ -1,21 +1,25 @@
 <?php
 
-class CodeClimateIntegration {
+class CodeClimateIntegration
+{
     private $apiKey;
     private $baseUrl = 'https://api.codeclimate.com/v1';
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->apiKey = getenv('CODECLIMATE_API_KEY');
     }
 
-    private function getHeaders() {
+    private function getHeaders()
+    {
         return [
             'Authorization: Token ' . $this->apiKey,
             'Content-Type: application/json',
         ];
     }
 
-    public function fetchRepositoryData($repositoryName) {
+    public function fetchRepositoryData($repositoryName)
+    {
         $url = $this->baseUrl . '/repos/' . urlencode($repositoryName);
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -35,5 +39,3 @@ class CodeClimateIntegration {
         return $data;
     }
 }
-
-?>

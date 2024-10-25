@@ -25,5 +25,3 @@ class CreateCodeclimateMetricsTable extends Migration
         Schema::dropIfExists('codeclimate_metrics');
     }
 }
-
-?>

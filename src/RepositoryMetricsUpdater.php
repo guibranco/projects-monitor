@@ -2,16 +2,19 @@
 
 require_once 'CodeClimateIntegration.php';
 
-class RepositoryMetricsUpdater {
+class RepositoryMetricsUpdater
+{
     private $db;
     private $codeClimate;
 
-    public function __construct($dbConnection) {
+    public function __construct($dbConnection)
+    {
         $this->db = $dbConnection;
         $this->codeClimate = new CodeClimateIntegration();
     }
 
-    public function updateMetrics() {
+    public function updateMetrics()
+    {
         $repositories = $this->getRepositories();
         foreach ($repositories as $repository) {
             $metrics = $this->codeClimate->fetchRepositoryData($repository['name']);
@@ -19,13 +22,15 @@ class RepositoryMetricsUpdater {
         }
     }
 
-    private function getRepositories() {
+    private function getRepositories()
+    {
         $query = "SELECT id, name FROM repositories WHERE active = 1";
         $result = $this->db->query($query);
         return $result->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    private function storeMetrics($repositoryId, $metrics) {
+    private function storeMetrics($repositoryId, $metrics)
+    {
         $query = "INSERT INTO codeclimate_metrics (repository_id, gpa, issues_count, maintainability_index, last_updated) 
                   VALUES (:repository_id, :gpa, :issues_count, :maintainability_index, NOW()) 
                   ON DUPLICATE KEY UPDATE gpa = :gpa, issues_count = :issues_count, maintainability_index = :maintainability_index, last_updated = NOW()";
@@ -43,5 +48,3 @@ class RepositoryMetricsUpdater {
         }
     }
 }
-
-?>

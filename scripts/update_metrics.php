@@ -13,5 +13,3 @@ try {
 } catch (Exception $e) {
     echo "An error occurred while updating metrics: " . $e->getMessage() . "\n";
 }
-
-?>

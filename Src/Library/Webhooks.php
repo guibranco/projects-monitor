@@ -3,6 +3,13 @@
 namespace GuiBranco\ProjectsMonitor\Library;
 
 use GuiBranco\Pancake\Request;
+
+    public function updateDependabotStatus($repository, $status) {
+        $query = "UPDATE repositories SET dependabot_file_exists = :status WHERE name = :repository";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':status', $status, PDO::PARAM_BOOL);
+        $stmt->bindParam(':repository', $repository, PDO::PARAM_STR);
+        $stmt->execute();
 use GuiBranco\ProjectsMonitor\Library\Configuration;
 
 class Webhooks

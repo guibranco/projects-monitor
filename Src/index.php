@@ -1,10 +1,10 @@
 <?php
 require_once 'vendor/autoload.php';
 use GuiBranco\ProjectsMonitor\Library\Configuration;
+
 require_once 'vendor/autoload.php';
 
 use GuiBranco\ProjectsMonitor\Library\Configuration;
-
 
 echo '<div id="linter_files"></div>';
 $configuration = new Configuration();

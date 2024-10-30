@@ -8,6 +8,11 @@ use FastVolt\Helper\Markdown;
 
 class GitHub
 {
+    private const LINTER_FILES = [
+        'javascript' => ['.eslintrc.json', '.eslintignore'],
+        'python' => ['pylintrc', '.flake8'],
+        'php' => ['phpcs.xml', 'phpmd.xml'],
+    ];
     private const GITHUB_API_URL = "https://api.github.com/";
 
     private $request;

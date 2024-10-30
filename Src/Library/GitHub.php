@@ -32,6 +32,15 @@ class GitHub
     }
 
     private function makeApiRequest($url)
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'User-Agent: Projects-Monitor',
+            'Authorization: token ' . $this->getAccessToken(),
+        ]);
+        $response = curl_exec($ch);
+        curl_close($ch);
     {
     private const GITHUB_API_URL = "https://api.github.com/";
 

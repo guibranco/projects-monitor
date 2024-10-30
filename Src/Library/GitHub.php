@@ -13,6 +13,26 @@ class GitHub
         'python' => ['pylintrc', '.flake8'],
         'php' => ['phpcs.xml', 'phpmd.xml'],
     ];
+
+    public function checkLinterFiles($repoName, $language)
+    {
+        $linterFiles = self::LINTER_FILES[strtolower($language)] ?? [];
+        $foundFiles = [];
+
+        foreach ($linterFiles as $file) {
+            $url = self::GITHUB_API_URL . "repos/{$repoName}/contents/{$file}";
+            $response = $this->makeApiRequest($url);
+
+            if ($response && isset($response['name'])) {
+                $foundFiles[] = $response['name'];
+            }
+        }
+
+        return $foundFiles;
+    }
+
+    private function makeApiRequest($url)
+    {
     private const GITHUB_API_URL = "https://api.github.com/";
 
     private $request;

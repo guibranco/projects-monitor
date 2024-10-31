@@ -1,4 +1,13 @@
 <?php
+<?php
+require_once '../../Library/GitHub.php';
+$github = new GitHub();
+
+$owner = $_GET['owner'];
+$repo = $_GET['repo'];
+$templatesExist = $github->checkIssueTemplates($owner, $repo);
+
+echo json_encode(['templatesExist' => $templatesExist]);
 
 require_once '../../vendor/autoload.php';
 

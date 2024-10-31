@@ -158,6 +158,7 @@ function load30Interval() {
      */
 function load60Interval() {
   load("api/v1/domains", showDomains);
+  load("api/v1/github?owner=your_owner&repo=your_repo", showIssueTemplates);
   load("api/v1/github", showGitHub);
   load("api/v1/healthchecksio", showHealthChecksIo);
   load("api/v1/uptimerobot", showUpTimeRobot);
@@ -210,6 +211,15 @@ function drawChart() {
   setInterval(load60Interval, 60 * 1000);
   setInterval(load300Interval, 300 * 1000);
   setInterval(showGitHubStats, 60 * 15 * 1000);
+function showIssueTemplates(response) {
+  const status = response.templatesExist ? "Both templates are present." : "One or both templates are missing.";
+  document.getElementById("issue_templates_status").innerText = status;
+
+  const dataTemplates = google.visualization.arrayToDataTable([
+    ["Templates", "Status"],
+    ["Issue Templates", response.templatesExist ? 1 : 0],
+  ]);
+}
 }
 
 /**

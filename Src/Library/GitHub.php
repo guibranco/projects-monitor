@@ -35,8 +35,6 @@ use GuiBranco\Pancake\Request;
 
         return $bugTemplateExists && $featureTemplateExists;
     }
-use GuiBranco\ProjectsMonitor\Library\Configuration;
-use FastVolt\Helper\Markdown;
 
 class GitHub
 {

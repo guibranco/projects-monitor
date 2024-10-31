@@ -1,8 +1,40 @@
 <?php
+use GuiBranco\ProjectsMonitor\Library\Configuration;
+use FastVolt\Helper\Markdown;
 
 namespace GuiBranco\ProjectsMonitor\Library;
+    private const GITHUB_API_URL = "https://api.github.com/";
 
 use GuiBranco\Pancake\Request;
+    public function checkIssueTemplates($owner, $repo) {
+        $bugTemplateExists = false;
+    private function makeApiRequest($url) {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $response = curl_exec($ch);
+        curl_close($ch);
+        return json_decode($response, true);
+    }
+
+        $featureTemplateExists = false;
+
+        $url = self::GITHUB_API_URL . "repos/$owner/$repo/contents/.github/ISSUE_TEMPLATE";
+        $response = $this->makeApiRequest($url);
+
+        if ($response && is_array($response)) {
+            foreach ($response as $file) {
+                if (strpos($file['name'], 'bug') !== false) {
+                    $bugTemplateExists = true;
+                }
+                if (strpos($file['name'], 'feature') !== false) {
+                    $featureTemplateExists = true;
+                }
+            }
+        }
+
+        return $bugTemplateExists && $featureTemplateExists;
+    }
 use GuiBranco\ProjectsMonitor\Library\Configuration;
 use FastVolt\Helper\Markdown;
 

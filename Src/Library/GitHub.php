@@ -9,14 +9,6 @@ class GitHub {
 use GuiBranco\Pancake\Request;
     public function checkIssueTemplates($owner, $repo) {
         $bugTemplateExists = false;
-    private function makeApiRequest($url) {
-}
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        $response = curl_exec($ch);
-        curl_close($ch);
-        return json_decode($response, true);
     }
 
         $featureTemplateExists = false;
@@ -38,8 +30,6 @@ use GuiBranco\Pancake\Request;
         return $bugTemplateExists && $featureTemplateExists;
     }
 
-class GitHub
-{
     private const GITHUB_API_URL = "https://api.github.com/";
 
     private $request;

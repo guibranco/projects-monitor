@@ -3,12 +3,14 @@ use GuiBranco\ProjectsMonitor\Library\Configuration;
 use FastVolt\Helper\Markdown;
 
 namespace GuiBranco\ProjectsMonitor\Library;
+class GitHub {
     private const GITHUB_API_URL = "https://api.github.com/";
 
 use GuiBranco\Pancake\Request;
     public function checkIssueTemplates($owner, $repo) {
         $bugTemplateExists = false;
     private function makeApiRequest($url) {
+}
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);

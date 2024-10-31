@@ -1,5 +1,4 @@
 <?php
-<?php
 require_once '../../Library/GitHub.php';
 $github = new GitHub();
 

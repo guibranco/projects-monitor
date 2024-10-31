@@ -6,6 +6,21 @@ namespace GuiBranco\ProjectsMonitor\Library;
 class GitHub {
     private const GITHUB_API_URL = "https://api.github.com/";
 
+    private function makeApiRequest($url) {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $response = curl_exec($ch);
+        curl_close($ch);
+        return json_decode($response, true);
+    }
+
+    public function checkIssueTemplates($owner, $repo) {
+        $bugTemplateExists = false;
+        $featureTemplateExists = false;
+        $url = self::GITHUB_API_URL . "repos/$owner/$repo/contents/.github/ISSUE_TEMPLATE";
+        $response = $this->makeApiRequest($url);
+
 use GuiBranco\Pancake\Request;
     public function checkIssueTemplates($owner, $repo) {
         $bugTemplateExists = false;
@@ -36,6 +51,7 @@ use GuiBranco\Pancake\Request;
 
     private $headers;
 
+    }
     private $apiUsage;
 
     public function __construct()

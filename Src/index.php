@@ -1,6 +1,7 @@
 <?php
 
 require_once 'vendor/autoload.php';
+    <div id="issue_templates"></div>
 
 use GuiBranco\ProjectsMonitor\Library\Configuration;
 
@@ -8,6 +9,7 @@ $configuration = new Configuration();
 ?>
 
 <!DOCTYPE html>
+    <div id="issue_templates_status"></div>
 <html lang="en">
 
 <head>

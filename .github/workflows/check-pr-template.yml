@@ -18,7 +18,7 @@ jobs:
         fi
 
     - name: Optional: Create Default PR Template
-      if: ${{ ! (exists('.github/PULL_REQUEST_TEMPLATE.md') || exists('PULL_REQUEST_TEMPLATE.md')) }}
+      if: "${{ ! (exists('.github/PULL_REQUEST_TEMPLATE.md') || exists('PULL_REQUEST_TEMPLATE.md')) }}"
       run: |
         echo "Creating default PR template..."
         mkdir -p .github

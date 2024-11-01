@@ -1,0 +1,29 @@
+name: 'Check PR Template'
+
+on:
+  pull_request:
+    types: [opened]
+
+jobs:
+  check-pr-template:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+
+    - name: Verify PR Template
+      run: |
+        if [ ! -f .github/PULL_REQUEST_TEMPLATE.md ] && [ ! -f PULL_REQUEST_TEMPLATE.md ]; then
+          echo "::warning::No PR template found. Please create a PULL_REQUEST_TEMPLATE.md in the .github directory or the root of the repository."
+        fi
+
+    - name: Optional: Create Default PR Template
+      if: ${{ ! (exists('.github/PULL_REQUEST_TEMPLATE.md') || exists('PULL_REQUEST_TEMPLATE.md')) }}
+      run: |
+        echo "Creating default PR template..."
+        mkdir -p .github
+        echo "# Pull Request Template" > .github/PULL_REQUEST_TEMPLATE.md
+        echo "\n## Description" >> .github/PULL_REQUEST_TEMPLATE.md
+        echo "Please include a summary of the change and which issue is fixed." >> .github/PULL_REQUEST_TEMPLATE.md
+        echo "\n## Checklist" >> .github/PULL_REQUEST_TEMPLATE.md
+        echo "- [ ] My code follows the style guidelines of this project" >> .github/PULL_REQUEST_TEMPLATE.md

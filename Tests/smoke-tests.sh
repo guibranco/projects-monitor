@@ -41,6 +41,11 @@ if [ "$RESULT" -ne 403 ]; then
 fi
 
 RESULT=$(curl -s -o /dev/null -w "%{http_code}" --location 'http://localhost:8000/api/v1/log-message' \
+    "details": "some details"
+}')
+if [ "$RESULT" -ne 202 ]; then
+    CONTENT=$(curl --location 'http://localhost:8000/api/v1/log-message' \
+        --header 'X-API-KEY: test_application' \
     --header 'X-API-KEY: test_application' \
     --header 'X-API-TOKEN: 1234567890' \
     --header 'Content-Type: application/json' \
@@ -53,11 +58,6 @@ RESULT=$(curl -s -o /dev/null -w "%{http_code}" --location 'http://localhost:800
     "type": "",
     "args": "",
     "message": "test",
-    "details": "some details"
-}')
-if [ "$RESULT" -ne 202 ]; then
-    CONTENT=$(curl --location 'http://localhost:8000/api/v1/log-message' \
-        --header 'X-API-KEY: test_application' \
         --header 'X-API-TOKEN: 1234567890' \
         --header 'Content-Type: application/json' \
         --data '{

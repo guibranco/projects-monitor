@@ -1046,16 +1046,16 @@
         },
         {
             "name": "guibranco/pancake",
-            "version": "v0.14.4",
+            "version": "v0.14.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guibranco/pancake.git",
-                "reference": "b3036075e59315aac6583953d612e1c0f4892275"
+                "reference": "28fe9cabcfc71077b4c6778962fdbc9e742310e2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guibranco/pancake/zipball/b3036075e59315aac6583953d612e1c0f4892275",
-                "reference": "b3036075e59315aac6583953d612e1c0f4892275",
+                "url": "https://api.github.com/repos/guibranco/pancake/zipball/28fe9cabcfc71077b4c6778962fdbc9e742310e2",
+                "reference": "28fe9cabcfc71077b4c6778962fdbc9e742310e2",
                 "shasum": ""
             },
             "require-dev": {
@@ -1080,9 +1080,9 @@
             "description": "The Pancake project, a toolkit for PHP projects",
             "support": {
                 "issues": "https://github.com/guibranco/pancake/issues",
-                "source": "https://github.com/guibranco/pancake/tree/v0.14.4"
+                "source": "https://github.com/guibranco/pancake/tree/v0.14.5"
             },
-            "time": "2024-10-28T03:48:54+00:00"
+            "time": "2024-11-04T03:31:19+00:00"
         },
         {
             "name": "kelunik/certificate",

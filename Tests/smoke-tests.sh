@@ -75,3 +75,12 @@ if [ "$RESULT" -ne 202 ]; then
     echo "error=true" >>"$GITHUB_OUTPUT"
     exit 1
 fi
+RESULT=$(curl -s -o /dev/null -w "%{http_code}" --location 'http://localhost:8000/api/v1/log-message' \
+    --header 'Content-Type: application/json' \
+    --data '{"details": "some details"}'
+) 
+if [ "$RESULT" -ne 202 ]; then
+    CONTENT=$(curl --location 'http://localhost:8000/api/v1/log-message' \
+        --header 'X-API-KEY: test_application' \
+        --header 'X-API-TOKEN: 1234567890' \
+        --header 'Content-Type: application/json' \

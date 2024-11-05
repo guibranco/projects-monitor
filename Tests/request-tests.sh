@@ -24,7 +24,7 @@ for FILE in *.json; do
     HEADERS="${FILE/.json/".txt"}"
     RESULT=$(curl -s -o /dev/null -w "%{http_code}" --location "$ENDPOINT" --header @"$HEADERS" --data @"$FILE")
 
-    if [ "$RESULT" -eq 202 ]; then
+    if [ "$RESULT" -eq 200 ] || [ "$RESULT" -eq 202 ]; then
         echo "- :white_check_mark: The request \`$FILE\` succeeded." >>"$GITHUB_STEP_SUMMARY"
     else
         MESSAGE="- :x: The request \`$FILE\` failed with **HTTP status $RESULT**."

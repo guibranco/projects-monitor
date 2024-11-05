@@ -1,3 +1,4 @@
+// Enhance the projects-monitor service to check for the existence of the sonarcloud-pixeebot.yml file in the .github/workflows directory of each monitored repository.
 <?php
 
 namespace GuiBranco\ProjectsMonitor\Library;

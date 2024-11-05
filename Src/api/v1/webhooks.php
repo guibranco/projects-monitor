@@ -1,3 +1,4 @@
+// Modify the dashboard to visually represent the status of the sonarcloud-pixeebot.yml file for each repository.
 <?php
 
 require_once '../../vendor/autoload.php';

@@ -47,7 +47,6 @@ RESULT=$(curl -s -o /dev/null -w "%{http_code}" --location 'http://localhost:800
     --data '{
     "class": "class-name",
     "function": "function-name",
-    "file": "postman.php",
     "line": 1,
     "object": "",
     "type": "",

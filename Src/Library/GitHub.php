@@ -1,3 +1,4 @@
+// Utilize the existing PHP class that interfaces with the GitHub API to verify the presence of the sonarcloud-pixeebot.yml file at the path .github/workflows/sonarcloud-pixeebot.yml in each monitored repository.
 <?php
 
 namespace GuiBranco\ProjectsMonitor\Library;

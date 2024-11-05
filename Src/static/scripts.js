@@ -162,7 +162,6 @@ function load60Interval() {
   load("api/v1/healthchecksio", showHealthChecksIo);
   load("api/v1/uptimerobot", showUpTimeRobot);
   load("api/v1/wireguard", showWireGuard);
-}
 
 /**
  * Loads data from the Postman API at a specified interval.

@@ -1,3 +1,4 @@
+// Update the MySQL repositories table by adding a new column sonarcloud_file_exists to store the result of the file check.
 const tableOptions = {
   legend: { position: "none" },
   allowHtml: true,

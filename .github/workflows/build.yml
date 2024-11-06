@@ -8,6 +8,14 @@ concurrency:
   group: build-deploy
 
 jobs:
+  check_run_annotations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Log Check Run Warnings
+        run: |
+          python src/github_actions/check_run_logger.py
+        env:
   build:
     permissions: write-all
     runs-on: ubuntu-latest

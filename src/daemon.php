@@ -21,7 +21,7 @@ foreach ($files as $file) {
     $filePath = $file['path'];
     $newFileName = $filePath . '_processed';
     rename($filePath, $newFileName);
-    
+
     $contents = file_get_contents($newFileName);
     // Parse the contents
     $errors = parseErrors($contents);
@@ -35,9 +35,8 @@ foreach ($files as $file) {
     unlink($newFileName); // Delete the processed file
 }
 
-function parseErrors($contents) {
+function parseErrors($contents)
+{
     // Implement error parsing logic
     return explode("\n", $contents); // Example logic
 }
-
-?>

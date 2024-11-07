@@ -1,0 +1,12 @@
+{
+    "name": "your-username/projects-monitor",
+    "description": "Daemon to monitor and process error_log files from CPanel API",
+    "require": {
+        "php": "^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "ProjectsMonitor\\": "src/"
+        }
+    }
+}

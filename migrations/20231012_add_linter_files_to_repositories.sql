@@ -1,0 +1,2 @@
+ALTER TABLE repositories
+ADD COLUMN linter_files VARCHAR(255) DEFAULT NULL;

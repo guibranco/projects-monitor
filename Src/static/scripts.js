@@ -868,6 +868,11 @@ function showWebhook(response) {
   const dataRepositories = google.visualization.arrayToDataTable(
     response["repositories"]
   );
+  const dataLinterFiles = google.visualization.arrayToDataTable(
+    response["linter_files"].map(file => [file])
+  );
+  const linterFiles = new google.visualization.Table(
+    document.getElementById("linter_files")
   const dataWorkflowRuns = google.visualization.arrayToDataTable(
     response["workflow_runs"]
   );

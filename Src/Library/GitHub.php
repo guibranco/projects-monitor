@@ -8,6 +8,41 @@ use FastVolt\Helper\Markdown;
 
 class GitHub
 {
+    private const LINTER_FILES = [
+        'javascript' => ['.eslintrc.json', '.eslintignore'],
+        'python' => ['pylintrc', '.flake8'],
+        'php' => ['phpcs.xml', 'phpmd.xml'],
+    ];
+
+    public function checkLinterFiles($repoName, $language)
+    {
+        $linterFiles = self::LINTER_FILES[strtolower($language)] ?? [];
+        $foundFiles = [];
+
+        foreach ($linterFiles as $file) {
+            $url = self::GITHUB_API_URL . "repos/{$repoName}/contents/{$file}";
+            $response = $this->makeApiRequest($url);
+
+            if ($response && isset($response['name'])) {
+                $foundFiles[] = $response['name'];
+            }
+        }
+
+        return $foundFiles;
+    }
+
+    private function makeApiRequest($url)
+    {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'User-Agent: Projects-Monitor',
+            'Authorization: token ' . $this->getAccessToken(),
+        ]);
+        $response = curl_exec($ch);
+        curl_close($ch);
+    {
     private const GITHUB_API_URL = "https://api.github.com/";
 
     private $request;

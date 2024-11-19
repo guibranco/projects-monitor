@@ -5,6 +5,13 @@ require_once 'vendor/autoload.php';
 use GuiBranco\ProjectsMonitor\Library\Configuration;
 use GuiBranco\ProjectsMonitor\Library\Database;
 
+if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    header('Location: index.php');
+    exit;
+}
+
 $configuration = new Configuration();
 $configuration->init();
 $database = new Database();
@@ -53,7 +60,7 @@ function login()
         return;
     }
 
-    $stmt = $conn->prepare('SELECT id, password FROM users WHERE username = ?');
+    $stmt = $conn->prepare('SELECT id, username, email, password FROM users WHERE username = ?');
     $stmt->bind_param('s', $username);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -61,6 +68,8 @@ function login()
     $user = $result->fetch_assoc();
     if ($user && password_verify($password, $user['password'])) {
         $_SESSION['user_id'] = $user['id'];
+        $_SESSION['username'] = $user['username'];
+        $_SESSION['email'] = $user['email'];
         $_SESSION['last_activity'] = time();
         unset($_SESSION['login_attempts']);
         unset($_SESSION['last_attempt']);

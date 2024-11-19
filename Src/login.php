@@ -17,29 +17,47 @@ $conn = $database->getConnection();
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = $_POST['username'];
-    $password = $_POST['password'];
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        die('Invalid request');
+    }
 
+    $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING);
+    $password = filter_input(INPUT_POST, 'password', FILTER_UNSAFE_RAW);
+
+    if (empty($username) || empty($password)) {
+        $error = 'All fields are required';
+        return;
+    }
+
+    $attempts = isset($_SESSION['login_attempts']) ? $_SESSION['login_attempts'] : 0; 
+    $lastAttempt = isset($_SESSION['last_attempt']) ? $_SESSION['last_attempt'] : 0; 
+     
+    if ($attempts >= 3 && time() - $lastAttempt < 900) { 
+     $error = 'Too many failed attempts. Please try again later.'; 
+     return; 
+    }
+    
     $stmt = $conn->prepare('SELECT id, password FROM users WHERE username = ?');
     $stmt->bind_param('s', $username);
     $stmt->execute();
     $result = $stmt->get_result();
 
-    if ($result->num_rows === 1) {
-        $user = $result->fetch_assoc();
-        if (password_verify($password, $user['password'])) {
-            $_SESSION['user_id'] = $user['id'];
-            header('Location: index.php');
-            exit;
-        } else {
-            $error = 'Invalid username or password.';
-        }
+    $user = $result->fetch_assoc();
+    if ($user && password_verify($password, $user['password'])) {
+        $_SESSION['user_id'] = $user['id'];
+        unset($_SESSION['login_attempts']);
+        unset($_SESSION['last_attempt']);
+        header('Location: index.php');
+        exit;
     } else {
         $error = 'Invalid username or password.';
+        $_SESSION['login_attempts'] = $attempts + 1; 
+        $_SESSION['last_attempt'] = time();
     }
 
     $stmt->close();
 }
+$_SESSION['csrf_token'] = uniqid();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -62,13 +80,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="alert alert-danger"><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></div>
                         <?php endif; ?>
                         <form method="POST" action="">
+                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
                             <div class="mb-3">
                                 <label for="username" class="form-label">Username</label>
-                                <input type="text" class="form-control" id="username" name="username" required>
+                                <input type="text" class="form-control" id="username" name="username" required + aria-required="true" autocomplete="username">
                             </div>
                             <div class="mb-3">
                                 <label for="password" class="form-label">Password</label>
-                                <input type="password" class="form-control" id="password" name="password" required>
+                                <input type="password" class="form-control" id="password" name="password" required + aria-required="true" autocomplete="current-password">
                             </div>
                             <button type="submit" class="btn btn-primary w-100">Login</button>
                         </form>

@@ -29,14 +29,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         return;
     }
 
-    $attempts = isset($_SESSION['login_attempts']) ? $_SESSION['login_attempts'] : 0; 
-    $lastAttempt = isset($_SESSION['last_attempt']) ? $_SESSION['last_attempt'] : 0; 
-     
-    if ($attempts >= 3 && time() - $lastAttempt < 900) { 
-     $error = 'Too many failed attempts. Please try again later.'; 
-     return; 
+    $attempts = isset($_SESSION['login_attempts']) ? $_SESSION['login_attempts'] : 0;
+    $lastAttempt = isset($_SESSION['last_attempt']) ? $_SESSION['last_attempt'] : 0;
+
+    if ($attempts >= 3 && time() - $lastAttempt < 900) {
+        $error = 'Too many failed attempts. Please try again later.';
+        return;
     }
-    
+
     $stmt = $conn->prepare('SELECT id, password FROM users WHERE username = ?');
     $stmt->bind_param('s', $username);
     $stmt->execute();
@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     } else {
         $error = 'Invalid username or password.';
-        $_SESSION['login_attempts'] = $attempts + 1; 
+        $_SESSION['login_attempts'] = $attempts + 1;
         $_SESSION['last_attempt'] = time();
     }
 

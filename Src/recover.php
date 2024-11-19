@@ -9,8 +9,17 @@ $conn = $database->getConnection();
 
 $message = '';
 
+session_start();
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $identifier = $_POST['identifier'];
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        die('Invalid request');
+    }
+    $identifier = filter_input(INPUT_POST, 'identifier', FILTER_SANITIZE_EMAIL);
+    if (!$identifier) {
+        $message = 'Invalid input provided';
+        exit;
+    }
     $stmt = $conn->prepare("SELECT id, email FROM users WHERE username = ? OR email = ?");
     $stmt->bind_param('ss', $identifier, $identifier);
     $stmt->execute();

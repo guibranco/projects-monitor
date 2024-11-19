@@ -18,7 +18,7 @@ $error = '';
 
 function login()
 {
-    global $error;
+    global $error, $conn;
 
     if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
         $error = 'Invalid request';

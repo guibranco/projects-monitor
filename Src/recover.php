@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = 'No account found with that username or email.';
     }
 }
-$_SESSION['csrf_token'] = uniqid();
+$_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 ?>
 <!DOCTYPE html>
 <html lang="en">

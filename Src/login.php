@@ -16,6 +16,31 @@ $conn = $database->getConnection();
 
 $error = '';
 
+/**
+ * @param string $value
+ * @param array $flags
+ * @return string
+ */
+function sanitizeFilterString($value, array $flags): string
+{
+    $noQuotes = in_array(FILTER_FLAG_NO_ENCODE_QUOTES, $flags);
+    $options = ($noQuotes ? ENT_NOQUOTES : ENT_QUOTES) | ENT_SUBSTITUTE;
+    $optionsDecode = ($noQuotes ? ENT_QUOTES : ENT_NOQUOTES) | ENT_SUBSTITUTE;
+
+    // Strip the tags
+    $value = strip_tags($value);
+
+    // Run the replacement for FILTER_SANITIZE_STRING
+    $value = htmlspecialchars($value, $options);
+
+    // Fix that HTML entities are converted to entity numbers instead of entity name (e.g. ' -> &#34; and not ' -> &quote;)
+    // https://stackoverflow.com/questions/64083440/use-php-htmlentities-to-convert-special-characters-to-their-entity-number-rather
+    $value = str_replace(["&quot;", "&#039;"], ["&#34;", "&#39;"], $value);
+
+    // Decode all entities
+    return html_entity_decode($value, $optionsDecode);
+}
+
 function login()
 {
     global $error, $conn;
@@ -25,7 +50,7 @@ function login()
         return;
     }
 
-    $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING);
+    $username = sanitizeFilterString($_POST['username'], []);
     $password = filter_input(INPUT_POST, 'password', FILTER_UNSAFE_RAW);
 
     if (empty($username) || empty($password)) {

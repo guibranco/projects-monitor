@@ -25,7 +25,7 @@ Files=${#SqlFiles[@]}
 Schema=$(mysql -h "$MYSQL_HOST" --protocol tcp "--user=$MYSQL_USER" "--database=$MYSQL_DB" -sse "SELECT COUNT(1) FROM schema_version;")
 Applications=$(mysql -h "$MYSQL_HOST" --protocol tcp "--user=$MYSQL_USER" "--database=$MYSQL_DB" -sse "SELECT COUNT(1) FROM applications;")
 Messages=$(mysql -h "$MYSQL_HOST" --protocol tcp "--user=$MYSQL_USER" "--database=$MYSQL_DB" -sse "SELECT COUNT(1) FROM messages;")
-Users==$(mysql -h "$MYSQL_HOST" --protocol tcp "--user=$MYSQL_USER" "--database=$MYSQL_DB" -sse "SELECT COUNT(1) FROM users;")
+Users=$(mysql -h "$MYSQL_HOST" --protocol tcp "--user=$MYSQL_USER" "--database=$MYSQL_DB" -sse "SELECT COUNT(1) FROM users;")
 
 ExpectedApplications=1
 ExpectedMessages=1

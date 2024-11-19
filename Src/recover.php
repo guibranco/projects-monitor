@@ -101,7 +101,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                             <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
                             <div class="mb-3">
                                 <label for="identifier" class="form-label">Username or Email</label>
-                                <input type="text" + class="form-control" + id="identifier" + name="identifier" + pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$|^[a-zA-Z0-9_]{3,}$" + required + maxlength="255" + autocomplete="username">
+                                <input type="text" class="form-control" id="identifier" name="identifier" pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$|^[a-zA-Z0-9_]{3,}$" required maxlength="255" autocomplete="username">
                             </div>
                             <button type="submit" class="btn btn-primary w-100">Send Recovery Email</button>
                         </form>

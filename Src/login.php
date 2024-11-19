@@ -24,7 +24,7 @@ function sanitizeFilterString($value, array $flags): string
     $optionsDecode = ($noQuotes ? ENT_QUOTES : ENT_NOQUOTES) | ENT_SUBSTITUTE;
     $value = strip_tags($value);
     $value = htmlspecialchars($value, $options);
-    $value = str_replace(["&quot;", "&#039;"], ["&#34;", "&#39;"], $value); 
+    $value = str_replace(["&quot;", "&#039;"], ["&#34;", "&#39;"], $value);
     return html_entity_decode($value, $optionsDecode);
 }
 

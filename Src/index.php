@@ -25,7 +25,7 @@ if (!isset($_SESSION['user_id'])) {
     header('Pragma: no-cache');
     exit;
 }
-$username = isset($_SESSION['username']) ? $_SESSION['username'] : ''; 
+$username = isset($_SESSION['username']) ? $_SESSION['username'] : '';
 $configuration = new Configuration();
 ?>
 <!DOCTYPE html>

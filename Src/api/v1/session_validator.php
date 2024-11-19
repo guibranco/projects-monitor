@@ -8,6 +8,14 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+if (headers_sent($file, $line)) {
+    error_log("Headers already sent in $file:$line");
+    exit(1);
+}
+
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header('X-XSS-Protection: 1; mode=block');
 header("Content-Type: application/json");
 
 function sendErrorResponse($message, $code = 401)

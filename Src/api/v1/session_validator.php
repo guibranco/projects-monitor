@@ -1,11 +1,13 @@
 <?php
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
 header("Content-Type: application/json");
 
-function sendErrorResponse($message, $code = 401) {
+function sendErrorResponse($message, $code = 401)
+{
     http_response_code($code);
     echo json_encode(["error" => $message]);
     exit();

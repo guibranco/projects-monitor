@@ -61,8 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'Failed to send the email. Try again later.';
         }
     } else {
-        error_log(sprintf( + 'Failed password recovery attempt for identifier: %s, IP: %s', + $identifier, + $_SERVER['REMOTE_ADDR'] + ));
-        
+        error_log(sprintf('Failed password recovery attempt for identifier: %s, IP: %s', $identifier, $_SERVER['REMOTE_ADDR']));        
         $message = 'No account found with that username or email.';
     }
 }

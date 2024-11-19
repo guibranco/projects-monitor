@@ -61,8 +61,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = wordwrap("Click the link below to reset your password:\n\n{$reset_link}\n\nThis link is valid for 1 hour.\n\nIf you didn't request this reset, please ignore this email.", 70);
         $headers = [
             'MIME-Version: 1.0',
-            'Content-Type: text/html; Content-Type: text/plain; charset=UTF-8; format=flowed',
-            'Content-Transfer-Encoding: 8bit'
+            'Content-Type: text/plain; charset=UTF-8; format=flowed',
+            'Content-Transfer-Encoding: 8bit',
             'From: '.sprintf('=?UTF-8?B?%s?= <noreply@%s>', base64_encode("Projects Monitor"), $_SERVER['HTTP_HOST'])
         ];
         if (mail($to, $subject, $message, implode("\r\n", $headers))) {

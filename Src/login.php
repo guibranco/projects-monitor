@@ -45,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user = $result->fetch_assoc();
     if ($user && password_verify($password, $user['password'])) {
         $_SESSION['user_id'] = $user['id'];
+        $_SESSION['last_activity'] = time();
         unset($_SESSION['login_attempts']);
         unset($_SESSION['last_attempt']);
         header('Location: index.php');

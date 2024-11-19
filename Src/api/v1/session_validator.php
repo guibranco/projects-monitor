@@ -44,7 +44,7 @@ validateIP();
 
 if (isset($_SERVER['HTTP_HOST']) && $_SERVER["HTTP_HOST"] === "localhost:8000") {
     $_SESSION['user_id'] = 1;
-    $_SESSION['last_activity'] = time();    
+    $_SESSION['last_activity'] = time();
 }
 
 if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {

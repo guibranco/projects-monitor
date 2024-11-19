@@ -19,12 +19,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
         http_response_code(403);
         header('Content-Type: text/plain; charset=utf-8');
+        $conn->close();
         die('Invalid request');
     }
     $identifier = filter_input(INPUT_POST, 'identifier', FILTER_SANITIZE_EMAIL);
     if (!$identifier) {
-        $message = 'Invalid input provided';
-        exit;
+        http_response_code(400);
+        header('Content-Type: text/plain; charset=utf-8');
+        $conn->close();
+        die('Invalid input provided');
     }
     $stmt = $conn->prepare("SELECT id, email FROM users WHERE username = ? OR email = ?");
     $stmt->bind_param('ss', $identifier, $identifier);

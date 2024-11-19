@@ -1,8 +1,14 @@
 <?php
+session_start();
 require_once 'vendor/autoload.php';
 
 use GuiBranco\ProjectsMonitor\Library\Configuration;
 use GuiBranco\ProjectsMonitor\Library\Database;
+
+header("Content-Security-Policy: default-src 'self' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;");
+header("X-Content-Type-Options: nosniff");
+header("X-Frame-Options: DENY");
+header("Referrer-Policy: strict-origin-when-cross-origin");
 
 $configuration = new Configuration();
 $configuration->init();
@@ -10,13 +16,32 @@ $database = new Database();
 $conn = $database->getConnection();
 
 $message = '';
-$token = $_GET['token'] ?? '';
+$token = isset($_GET['token']) ? htmlspecialchars(trim($_GET['token'])) : '';
+if (empty($token)) {
+    http_response_code(401);
+    header('Content-Type: text/plain; charset=utf-8');
+    $conn->close();
+    die('Invalid password reset request');
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        http_response_code(403);
+        header('Content-Type: text/plain; charset=utf-8');
+        $conn->close();
+        die('Invalid request');
+    }
     $new_password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
     $token = $_POST['token'];
 
+    if (strlen($new_password) < 8 || 
+        !preg_match('/[A-Z]/', $new_password) || 
+        !preg_match('/[a-z]/', $new_password) || 
+        !preg_match('/[0-9]/', $new_password)) {
+        $message = 'Password must be at least 8 characters and contain uppercase, lowercase, and numbers';
+        exit;
+    }
     // Check if passwords match
     if ($new_password !== $confirm_password) {
         $message = 'Passwords do not match.';
@@ -42,6 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+$_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -76,6 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <?php endif; ?>
                         <?php if (!$message): ?>
                             <form method="POST" action="" onsubmit="return validatePasswords()">
+                                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
                                 <input type="hidden" name="token" value="<?php echo htmlspecialchars($token); ?>">
                                 <div class="mb-3">
                                     <label for="password" class="form-label">New Password</label>

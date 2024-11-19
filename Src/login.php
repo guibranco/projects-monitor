@@ -25,7 +25,7 @@ function login()
         return;
     }
 
-    $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING);
+    $username = filter_input(INPUT_POST, 'username', FILTER_UNSAFE_RAW);
     $password = filter_input(INPUT_POST, 'password', FILTER_UNSAFE_RAW);
 
     if (empty($username) || empty($password)) {

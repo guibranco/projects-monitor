@@ -50,7 +50,7 @@ function login()
         return;
     }
 
-    $username = sanitizeFilterString($_POST['username']);
+    $username = sanitizeFilterString($_POST['username'], []);
     $password = filter_input(INPUT_POST, 'password', FILTER_UNSAFE_RAW);
 
     if (empty($username) || empty($password)) {

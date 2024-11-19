@@ -21,7 +21,7 @@ function login() {
     
     if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
         $error = 'Invalid request';
-        return
+        return;
     }
 
     $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING);

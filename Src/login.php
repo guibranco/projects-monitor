@@ -60,7 +60,7 @@ function login()
         return;
     }
 
-    $stmt = $conn->prepare('SELECT id, password FROM users WHERE username = ?');
+    $stmt = $conn->prepare('SELECT id, username, email, password FROM users WHERE username = ?');
     $stmt->bind_param('s', $username);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -68,6 +68,8 @@ function login()
     $user = $result->fetch_assoc();
     if ($user && password_verify($password, $user['password'])) {
         $_SESSION['user_id'] = $user['id'];
+        $_SESSION['username'] = $user['username'];
+        $_SESSION['email'] = $user['email'];
         $_SESSION['last_activity'] = time();
         unset($_SESSION['login_attempts']);
         unset($_SESSION['last_attempt']);

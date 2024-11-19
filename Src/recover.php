@@ -1,4 +1,5 @@
 <?php
+session_start();
 use GuiBranco\ProjectsMonitor\Library\Configuration;
 use GuiBranco\ProjectsMonitor\Library\Database;
 
@@ -9,10 +10,10 @@ $conn = $database->getConnection();
 
 $message = '';
 
-session_start();
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        http_response_code(403);
+        header('Content-Type: text/plain; charset=utf-8');
         die('Invalid request');
     }
     $identifier = filter_input(INPUT_POST, 'identifier', FILTER_SANITIZE_EMAIL);
@@ -30,27 +31,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $reset_token = bin2hex(random_bytes(16));
         $reset_token_expiration = date('Y-m-d H:i:s', strtotime('+1 hour'));
 
-        // Update reset token and expiration in the database
-        $update_stmt = $conn->prepare("UPDATE users SET reset_token = ?, reset_token_expiration = ? WHERE id = ?");
-        $update_stmt->bind_param('ssi', $reset_token, $reset_token_expiration, $user['id']);
-        $update_stmt->execute();
+        $conn->begin_transaction();
+        try {
+            $cleanup_stmt = $conn->prepare("UPDATE users SET reset_token = NULL, reset_token_expiration = NULL WHERE reset_token_expiration < NOW()");
+            $cleanup_stmt->execute();
+    
+            $update_stmt = $conn->prepare("UPDATE users SET reset_token = ?, reset_token_expiration = ? WHERE id = ?");
+            $update_stmt->bind_param('ssi', $reset_token, $reset_token_expiration, $user['id']);
+            $update_stmt->execute();
+        $conn->commit();
+        } catch (Exception $e) {
+            $conn->rollback();
+            throw $e; 
+        }
 
-        // Send reset email
-        $reset_link = "http://yourdomain.com/reset.php?token=$reset_token";
+        $reset_link = sprintf('%s://%s/projects-monitor/reset.php?token=%s', + isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off' ? 'https' : 'http', + $_SERVER['HTTP_HOST'], + urlencode($reset_token) + );
         $to = $user['email'];
-        $subject = "Password Reset Request";
-        $message = "Click the link below to reset your password:\n\n$reset_link\n\nThis link is valid for 1 hour.";
-        $headers = "From: noreply@yourdomain.com";
-
+        $subject = '=?UTF-8?B?'.base64_encode('Password Reset Request').'?='; 
+        $message = wordwrap("Click the link below to reset your password:\n\n{$reset_link}\n\n"."This link is valid for 1 hour.\n\nIf you didn't request this reset, please ignore this email.",70); 
+        $headers = [ 
+            'MIME-Version: 1.0', 
+            'Content-Type: text/plain; charset=UTF-8', 
+            'From: '.sprintf('=?UTF-8?B?%s?= <noreply@%s>', base64_encode("Projects Monitor"), $_SERVER['HTTP_HOST']), 
+            'X-Mailer: PHP/'.phpversion() 
+        ];
         if (mail($to, $subject, $message, $headers)) {
             $message = 'A password reset link has been sent to your email.';
         } else {
             $message = 'Failed to send the email. Try again later.';
         }
     } else {
+        error_log(sprintf( + 'Failed password recovery attempt for identifier: %s, IP: %s', + $identifier, + $_SERVER['REMOTE_ADDR'] + ));
+        
         $message = 'No account found with that username or email.';
     }
 }
+$_SESSION['csrf_token'] = uniqid();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -71,9 +87,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="alert alert-info"><?php echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8'); ?></div>
                         <?php endif; ?>
                         <form method="POST" action="">
+                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
                             <div class="mb-3">
                                 <label for="identifier" class="form-label">Username or Email</label>
-                                <input type="text" class="form-control" id="identifier" name="identifier" required>
+                                <input type="text" + class="form-control" + id="identifier" + name="identifier" + pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$|^[a-zA-Z0-9_]{3,}$" + required + maxlength="255" + autocomplete="username">
                             </div>
                             <button type="submit" class="btn btn-primary w-100">Send Recovery Email</button>
                         </form>

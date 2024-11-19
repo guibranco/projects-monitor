@@ -3,6 +3,11 @@ session_start();
 use GuiBranco\ProjectsMonitor\Library\Configuration;
 use GuiBranco\ProjectsMonitor\Library\Database;
 
+header("Content-Security-Policy: default-src 'self' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;");
+header("X-Content-Type-Options: nosniff");
+header("X-Frame-Options: DENY");
+header("Referrer-Policy: strict-origin-when-cross-origin");
+
 $configuration = new Configuration();
 $configuration->init();
 $database = new Database();

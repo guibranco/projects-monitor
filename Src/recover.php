@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once 'session.php';
 require_once 'vendor/autoload.php';
 
 use GuiBranco\ProjectsMonitor\Library\Configuration;

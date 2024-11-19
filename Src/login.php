@@ -21,7 +21,7 @@ $error = '';
  * @param array $flags
  * @return string
  */
-private static function sanitizeFilterString($value, array $flags): string
+function sanitizeFilterString($value, array $flags): string
 {
     $noQuotes = in_array(FILTER_FLAG_NO_ENCODE_QUOTES, $flags);
     $options = ($noQuotes ? ENT_NOQUOTES : ENT_QUOTES) | ENT_SUBSTITUTE;

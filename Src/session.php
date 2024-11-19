@@ -1,4 +1,5 @@
 <?php
+
 if (headers_sent($file, $line)) {
     error_log("Headers already sent in $file:$line");
     exit(1);

@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $user = $result->fetch_assoc();
         $reset_token = bin2hex(random_bytes(16));
         $reset_token_expiration = gmdate('Y-m-d H:i:s', strtotime('+1 hour UTC'));
-        
+
         $conn->begin_transaction();
         try {
             $cleanup_stmt = $conn->prepare("UPDATE users SET reset_token = NULL, reset_token_expiration = NULL WHERE reset_token_expiration < NOW()");
@@ -66,7 +66,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'Failed to send the email. Try again later.';
         }
     } else {
-        error_log(sprintf('Failed password recovery attempt for identifier: %s, IP: %s', 
+        error_log(sprintf(
+            'Failed password recovery attempt for identifier: %s, IP: %s',
             preg_replace('/[^\w\-\.\@]/', '', $identifier),
             filter_var($_SERVER['REMOTE_ADDR'], FILTER_VALIDATE_IP)
         ));

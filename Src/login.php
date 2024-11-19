@@ -8,6 +8,7 @@ require_once 'vendor/autoload.php';
 
 use GuiBranco\ProjectsMonitor\Library\Configuration;
 use GuiBranco\ProjectsMonitor\Library\Database;
+
 $configuration = new Configuration();
 $configuration->init();
 $database = new Database();

@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="card-body">
                         <h3 class="card-title text-center">Reset Password</h3>
                         <?php if ($message): ?>
-                            <div class="alert alert-info"><?php echo $message; ?></div>
+                            <div class="alert alert-info"><?php echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8'); ?></div>
                         <?php endif; ?>
                         <?php if (!$message): ?>
                             <form method="POST" action="" onsubmit="return validatePasswords()">

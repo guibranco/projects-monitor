@@ -16,9 +16,13 @@ $conn = $database->getConnection();
 
 $error = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+function login()
+{
+    global $error, $conn;
+
     if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        die('Invalid request');
+        $error = 'Invalid request';
+        return;
     }
 
     $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING);
@@ -45,6 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user = $result->fetch_assoc();
     if ($user && password_verify($password, $user['password'])) {
         $_SESSION['user_id'] = $user['id'];
+        $_SESSION['last_activity'] = time();
         unset($_SESSION['login_attempts']);
         unset($_SESSION['last_attempt']);
         header('Location: index.php');
@@ -56,6 +61,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $stmt->close();
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    login();
 }
 $_SESSION['csrf_token'] = uniqid();
 ?>
@@ -91,6 +100,9 @@ $_SESSION['csrf_token'] = uniqid();
                             </div>
                             <button type="submit" class="btn btn-primary w-100">Login</button>
                         </form>
+                        <div class="mt-3 text-center">
+                            <a href="recover.php" class="text-decoration-none">Forgot your password?</a>
+                        </div>
                     </div>
                 </div>
             </div>

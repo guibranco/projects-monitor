@@ -5,10 +5,10 @@ require_once 'vendor/autoload.php';
 use GuiBranco\ProjectsMonitor\Library\Configuration;
 use GuiBranco\ProjectsMonitor\Library\Database;
 
-if (isset($_SESSION['user_id'])) {
-    header('Location: index.php');
+if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
     header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
     header('Pragma: no-cache');
+    header('Location: index.php');
     exit;
 }
 

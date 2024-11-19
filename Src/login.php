@@ -91,6 +91,9 @@ $_SESSION['csrf_token'] = uniqid();
                             </div>
                             <button type="submit" class="btn btn-primary w-100">Login</button>
                         </form>
+                        <div class="mt-3 text-center">
+                            <a href="recover.php" class="text-decoration-none">Forgot your password?</a>
+                        </div>
                     </div>
                 </div>
             </div>

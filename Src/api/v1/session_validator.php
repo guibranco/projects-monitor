@@ -20,7 +20,8 @@ function sendErrorResponse($message, $code = 401)
 define('SESSION_TIMEOUT', 1800);
 define('MAX_REQUESTS_PER_MINUTE', 60);
 
-function validateIP() {
+function validateIP()
+{
     if (!isset($_SESSION['ip'])) {
         $_SESSION['ip'] = $_SERVER['REMOTE_ADDR'];
     }

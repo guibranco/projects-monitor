@@ -25,7 +25,7 @@ if (!isset($_SESSION['user_id'])) {
     header('Pragma: no-cache');
     exit;
 }
-
+$username = isset($_SESSION['username']) ? $_SESSION['username'] : ''; 
 $configuration = new Configuration();
 ?>
 <!DOCTYPE html>
@@ -48,17 +48,34 @@ $configuration = new Configuration();
              googleProjectNumber: "256841700684"
            });
          });
-      </script>      
+      </script>
+      <style>
+        .floating-box {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            max-width: 300px;
+            z-index: 1050;
+        }
+      </style>
    </head>
-   <body class="bg-light">
-      <div class="container">
-         <div class="row justify-content-center mt-5">
-            <div class="col-md-6 text-center">
-               <h1>Welcome!</h1>
-               <p>You are logged in.</p>
-               <a href="logout.php" class="btn btn-danger">Logout</a>
+   <body>
+      <div class="floating-box">
+        <div class="card shadow">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <a href="#" class="text-decoration-none" data-bs-toggle="collapse" data-bs-target="#userMenu" aria-expanded="true" aria-controls="userMenu">
+                        User Menu
+                    </a>
+                </h6>
             </div>
-         </div>
+            <div id="userMenu" class="collapse show">
+                <div class="card-body">
+                    <p class="mb-2">Welcome, <strong><?php echo htmlspecialchars($username); ?></strong>!</p>
+                    <a href="logout.php" class="btn btn-danger btn-sm w-100">Logout</a>
+                </div>
+            </div>
+        </div>
       </div>
       <div id="webhooks_statistics_github" style="width: 100%; height: 400px;"></div>
       <div style="clear:both;"></div>
@@ -160,4 +177,5 @@ $configuration = new Configuration();
       <div id="webhooks_statistics" style="width: 100%; height: 400px;"></div>
       <div style="clear:both;"></div>
    </body>
+   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </html>

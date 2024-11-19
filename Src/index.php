@@ -1,8 +1,14 @@
 <?php
+session_start();
 
 require_once 'vendor/autoload.php';
 
 use GuiBranco\ProjectsMonitor\Library\Configuration;
+
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php');
+    exit;
+}
 
 $configuration = new Configuration();
 ?>

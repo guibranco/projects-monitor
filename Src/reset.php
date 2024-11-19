@@ -35,9 +35,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $confirm_password = $_POST['confirm_password'];
     $token = $_POST['token'];
 
-    if (strlen($new_password) < 8 || 
-        !preg_match('/[A-Z]/', $new_password) || 
-        !preg_match('/[a-z]/', $new_password) || 
+    if (strlen($new_password) < 8 ||
+        !preg_match('/[A-Z]/', $new_password) ||
+        !preg_match('/[a-z]/', $new_password) ||
         !preg_match('/[0-9]/', $new_password)) {
         $message = 'Password must be at least 8 characters and contain uppercase, lowercase, and numbers';
         exit;

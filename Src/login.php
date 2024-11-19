@@ -16,9 +16,13 @@ $conn = $database->getConnection();
 
 $error = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+function login()
+{
+    global $error, $conn;
+
     if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        die('Invalid request');
+        $error = 'Invalid request';
+        return;
     }
 
     $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING);
@@ -57,6 +61,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $stmt->close();
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    login();
 }
 $_SESSION['csrf_token'] = uniqid();
 ?>

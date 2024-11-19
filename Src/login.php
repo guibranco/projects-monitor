@@ -22,18 +22,9 @@ function sanitizeFilterString($value, array $flags): string
     $noQuotes = in_array(FILTER_FLAG_NO_ENCODE_QUOTES, $flags);
     $options = ($noQuotes ? ENT_NOQUOTES : ENT_QUOTES) | ENT_SUBSTITUTE;
     $optionsDecode = ($noQuotes ? ENT_QUOTES : ENT_NOQUOTES) | ENT_SUBSTITUTE;
-
-    // Strip the tags
     $value = strip_tags($value);
-
-    // Run the replacement for FILTER_SANITIZE_STRING
     $value = htmlspecialchars($value, $options);
-
-    // Fix that HTML entities are converted to entity numbers instead of entity name (e.g. ' -> &#34; and not ' -> &quote;)
-    // https://stackoverflow.com/questions/64083440/use-php-htmlentities-to-convert-special-characters-to-their-entity-number-rather
-    $value = str_replace(["&quot;", "&#039;"], ["&#34;", "&#39;"], $value);
-
-    // Decode all entities
+    $value = str_replace(["&quot;", "&#039;"], ["&#34;", "&#39;"], $value); 
     return html_entity_decode($value, $optionsDecode);
 }
 

@@ -16,7 +16,7 @@ if (session_status() === PHP_SESSION_NONE) {
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: DENY');
 header('X-XSS-Protection: 1; mode=block');
-header("Content-Type: application/json");
+header("Content-Type: application/json; charset=UTF-8");
 
 function sendErrorResponse($message, $code = 401)
 {

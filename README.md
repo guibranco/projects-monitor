@@ -17,3 +17,24 @@ A dashboard to visualize and monitor my GitHub projects, my personal projects an
 > Currently a single page, but a UI kit is coming in place to give more life to this page! [#12](https://github.com/guibranco/projects-monitor/issues/12)
 
 ![dashboard](projects-monitor-dashboard.png)
+
+# Codacy Integration Feature
+
+This feature implements the ability to fetch and store relevant information from Codacy for each repository in our system. It involves querying repositories from our database, leveraging the existing Codacy integration class to call the Codacy API, parsing the received data, and storing essential details—such as repository name, code quality score, and issues count—in a new dedicated database table.
+
+## Key Components
+
+1. **Database Table**: A new table `codacy_info` is created to store Codacy data.
+2. **CodacyDataService**: A service to fetch and store Codacy data.
+3. **Scheduler Task**: A task to periodically update Codacy data.
+
+## How to Use
+
+1. Run the migration script in `Sql/Migrations/20231101_create_codacy_info_table.sql` to create the necessary database table.
+2. Use the `CodacyDataService` to fetch and store data.
+3. Schedule the `CodacyDataUpdateTask` to run at desired intervals.
+
+## Configuration
+
+Ensure that the Codacy API keys and endpoints are correctly configured in your environment variables.
+

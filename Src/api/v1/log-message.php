@@ -1,5 +1,4 @@
 <?php
-
 require_once '../../vendor/autoload.php';
 
 use GuiBranco\ProjectsMonitor\Library\Application;

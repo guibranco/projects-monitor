@@ -60,7 +60,7 @@ $configuration = new Configuration();
             <div class="card-header">
                 <h6 class="mb-0">
                     <a href="#" class="text-decoration-none" data-bs-toggle="collapse" data-bs-target="#userMenu" aria-expanded="true" aria-controls="userMenu">
-                        User Menu
+                        Options
                     </a>
                 </h6>
             </div>

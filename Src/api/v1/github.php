@@ -1,5 +1,4 @@
 <?php
-
 require_once 'session_validator.php';
 require_once '../../vendor/autoload.php';
 

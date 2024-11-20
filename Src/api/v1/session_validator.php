@@ -85,3 +85,4 @@ if (isset($_SESSION['user_data'])) {
 } else {
     $userData = null;
 }
+session_write_close();

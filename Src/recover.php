@@ -89,10 +89,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             filter_var($_SERVER['REMOTE_ADDR'], FILTER_VALIDATE_IP)
         ));
         $message = 'No account found with that username or email.';
-    $stmt = $conn->prepare('INSERT INTO password_recovery_attempts (ip_address, timestamp) VALUES (?, NOW())');
-    $stmt->bind_param('s', $ip_address);
-    $stmt->execute();
-    $stmt->close();
+        $stmt = $conn->prepare('INSERT INTO password_recovery_attempts (ip_address, timestamp) VALUES (?, NOW())');
+        $stmt->bind_param('s', $ip_address);
+        $stmt->execute();
+        $stmt->close();
     }
 }
 $_SESSION['csrf_token'] = bin2hex(random_bytes(32));

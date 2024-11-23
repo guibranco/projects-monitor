@@ -1,3 +1,12 @@
+let feedFilter = "all"; 
+
+function updateFeedPreference(toggle) {
+    feedFilter = toggle.checked ? "mine" : "all";
+    console.log("Feed preference updated to:", feedFilter);
+    // Trigger API fetch or other logic here
+    fetchDataFromAPI(feedFilter);
+}
+
 const tableOptions = {
   legend: { position: "none" },
   allowHtml: true,
@@ -139,7 +148,7 @@ function load30Interval() {
   load("api/v1/cpanel", showCPanel);
   load("api/v1/messages", showMessages);
   load("api/v1/queues", showQueues);
-  load("api/v1/webhooks", showWebhook);
+  load(`api/v1/webhooks?feedOptions=${feedFilter}`, showWebhook);
 }
 
 /**

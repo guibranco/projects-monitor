@@ -1,3 +1,23 @@
+const OPTIONS_BOX_STATE_KEY = "optionsBoxState";
+function saveOptionsBoxState(state) {
+    localStorage.setItem(OPTIONS_BOX_STATE_KEY, state);
+}
+function loadOptionsBoxState() {
+    return localStorage.getItem(OPTIONS_BOX_STATE_KEY) || "open"; // Default to "open"
+}
+function handleOptionsBoxState(){
+    const optionsBoxState = loadOptionsBoxState();
+    const optionsBox = document.getElementById("userMenu");
+    
+    if (optionsBoxState === "collapsed") {
+        optionsBox.classList.remove("show");
+    } else {
+        optionsBox.classList.add("show");
+    }
+
+    optionsBox.addEventListener("shown.bs.collapse", () => saveOptionsBoxState("open"));
+    optionsBox.addEventListener("hidden.bs.collapse", () => saveOptionsBoxState("collapsed"));
+}
 let feedFilter = "all"; 
 
 function updateFeedPreference(toggle) {

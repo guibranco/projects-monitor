@@ -1,28 +1,28 @@
 <?php
-require_once 'session.php';
-require_once 'vendor/autoload.php';
-
-use GuiBranco\ProjectsMonitor\Library\Configuration;
-
-if (!isset($_SESSION['last_activity']) || (time() - $_SESSION['last_activity'] > 1800)) {
-    session_unset();
-    session_destroy();
-    header('Location: login.php');
-    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-    header('Pragma: no-cache');
-    exit;
-}
-$_SESSION['last_activity'] = time();
-
-if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
-    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-    header('Pragma: no-cache');
-    exit;
-}
-$username = isset($_SESSION['username']) ? $_SESSION['username'] : '';
-$configuration = new Configuration();
-?>
+   require_once 'session.php';
+   require_once 'vendor/autoload.php';
+   
+   use GuiBranco\ProjectsMonitor\Library\Configuration;
+   
+   if (!isset($_SESSION['last_activity']) || (time() - $_SESSION['last_activity'] > 1800)) {
+       session_unset();
+       session_destroy();
+       header('Location: login.php');
+       header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+       header('Pragma: no-cache');
+       exit;
+   }
+   $_SESSION['last_activity'] = time();
+   
+   if (!isset($_SESSION['user_id'])) {
+       header('Location: login.php');
+       header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+       header('Pragma: no-cache');
+       exit;
+   }
+   $username = isset($_SESSION['username']) ? $_SESSION['username'] : '';
+   $configuration = new Configuration();
+   ?>
 <!DOCTYPE html>
 <html lang="en">
    <head>
@@ -45,32 +45,43 @@ $configuration = new Configuration();
          });
       </script>
       <style>
-        .floating-box {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            max-width: 300px;
-            z-index: 1050;
-        }
+         .floating-box {
+         position: fixed;
+         top: 20px;
+         right: 20px;
+         max-width: 300px;
+         z-index: 1050;
+         }
       </style>
    </head>
    <body>
       <div class="floating-box">
-        <div class="card shadow">
+         <div class="card shadow">
             <div class="card-header">
-                <h6 class="mb-0">
-                    <a href="#" class="text-decoration-none" data-bs-toggle="collapse" data-bs-target="#userMenu" aria-expanded="true" aria-controls="userMenu">
-                        Options
-                    </a>
-                </h6>
+               <h6 class="mb-0">
+                  <a href="#" class="text-decoration-none" data-bs-toggle="collapse" data-bs-target="#userMenu" aria-expanded="true" aria-controls="userMenu">
+                  Options
+                  </a>
+               </h6>
             </div>
             <div id="userMenu" class="collapse show">
-                <div class="card-body">
-                    <p class="mb-2">Welcome, <strong><?php echo htmlspecialchars($username); ?></strong>!</p>
-                    <a href="logout.php" class="btn btn-danger btn-sm w-100">Logout</a>
-                </div>
+               <div class="card-body">
+                  <p class="mb-2">Welcome, <strong><?php echo htmlspecialchars($username); ?></strong>!</p>
+                  <a href="logout.php" class="btn btn-danger btn-sm w-100">Logout</a>
+                  <!-- Feed toggle switch -->
+                  <div class="form-check form-switch mt-3">
+                     <input 
+                        class="form-check-input" 
+                        type="checkbox" 
+                        id="feedToggle" 
+                        onchange="updateFeedPreference(this)">
+                     <label class="form-check-label" for="feedToggle">
+                     Feed - Show All / Only mine
+                     </label>
+                  </div>
+               </div>
             </div>
-        </div>
+         </div>
       </div>
       <div id="webhooks_statistics_github" style="width: 100%; height: 400px;"></div>
       <div style="clear:both;"></div>
@@ -173,6 +184,6 @@ $configuration = new Configuration();
       <div style="clear:both;"></div>
    </body>
    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" 
-        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" 
-        crossorigin="anonymous"></script>
+      integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" 
+      crossorigin="anonymous"></script>
 </html>

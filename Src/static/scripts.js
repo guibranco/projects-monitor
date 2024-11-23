@@ -56,6 +56,7 @@ function init() {
   const offset = new Date().toString().match(/([-\+][0-9]+)\s/)[1];
   setCookie("timezone", timezone, 10);
   setCookie("offset", offset, 10);
+  handleOptionsBoxState();
 }
 
 /**

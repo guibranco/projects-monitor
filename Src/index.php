@@ -68,7 +68,6 @@ $configuration = new Configuration();
                <div class="card-body">
                   <p class="mb-2">Welcome, <strong><?php echo htmlspecialchars($username); ?></strong>!</p>
                   <a href="logout.php" class="btn btn-danger btn-sm w-100">Logout</a>
-                  <!-- Feed toggle switch -->
                   <div class="form-check form-switch mt-3">
                      <input 
                         class="form-check-input" 

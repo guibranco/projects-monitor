@@ -8,7 +8,7 @@ function loadOptionsBoxState() {
 function handleOptionsBoxState(){
     const optionsBoxState = loadOptionsBoxState();
     const optionsBox = document.getElementById("userMenu");
-    
+
     if (optionsBoxState === "collapsed") {
         optionsBox.classList.remove("show");
     } else {

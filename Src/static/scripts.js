@@ -1,22 +1,44 @@
 const OPTIONS_BOX_STATE_KEY = "optionsBoxState";
+const VALID_STATES = {
+    OPEN: "open",
+    COLLAPSED: "collapsed"
+};
 function saveOptionsBoxState(state) {
-    localStorage.setItem(OPTIONS_BOX_STATE_KEY, state);
+    if (!Object.values(VALID_STATES).includes(state)) {
+        console.error(`Invalid state: ${state}. Must be one of ${Object.values(VALID_STATES)}`);
+        return;
+    }
+    try {
+         localStorage.setItem(OPTIONS_BOX_STATE_KEY, state);
+    } catch (e) {
+        console.error('Failed to save options box state:', e);
+    }
 }
 function loadOptionsBoxState() {
-    return localStorage.getItem(OPTIONS_BOX_STATE_KEY) || "open"; // Default to "open"
+    try {
+        return localStorage.getItem(OPTIONS_BOX_STATE_KEY) || VALID_STATES.OPEN;
+    } catch (e) {
+        console.error('Failed to load options box state:', e);
+        return VALID_STATES.OPEN;
+    }
 }
 function handleOptionsBoxState(){
     const optionsBoxState = loadOptionsBoxState();
     const optionsBox = document.getElementById("userMenu");
 
-    if (optionsBoxState === "collapsed") {
+    if (!optionsBox) {
+        console.error('Options box element not found');
+        return;
+    }
+
+    if (optionsBoxState === VALID_STATES.COLLAPSED) {
         optionsBox.classList.remove("show");
     } else {
         optionsBox.classList.add("show");
     }
 
-    optionsBox.addEventListener("shown.bs.collapse", () => saveOptionsBoxState("open"));
-    optionsBox.addEventListener("hidden.bs.collapse", () => saveOptionsBoxState("collapsed"));
+    optionsBox.addEventListener("shown.bs.collapse", () => saveOptionsBoxState(VALID_STATES.OPEN));
+    optionsBox.addEventListener("hidden.bs.collapse", () => saveOptionsBoxState(VALID_STATES.COLLAPSED));
 }
 const FEED_FILTERS = {
     ALL: "all",

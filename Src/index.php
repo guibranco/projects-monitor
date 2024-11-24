@@ -72,8 +72,7 @@ $configuration = new Configuration();
                      <input 
                         class="form-check-input" 
                         type="checkbox" 
-                        id="feedToggle" 
-                        onchange="updateFeedPreference(this)">
+                        id="feedToggle">
                      <label class="form-check-label" for="feedToggle">
                      Feed - Show All / Only mine
                      </label>

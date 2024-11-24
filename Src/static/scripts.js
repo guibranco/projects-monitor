@@ -57,6 +57,10 @@ function init() {
   setCookie("timezone", timezone, 10);
   setCookie("offset", offset, 10);
   handleOptionsBoxState();
+  const feedToggle = document.getElementById('feedToggle');
+  if (feedToggle) {
+      feedToggle.addEventListener('change', function() { updateFeedPreference(this); });
+  }
 }
 
 /**

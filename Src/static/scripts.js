@@ -18,13 +18,33 @@ function handleOptionsBoxState(){
     optionsBox.addEventListener("shown.bs.collapse", () => saveOptionsBoxState("open"));
     optionsBox.addEventListener("hidden.bs.collapse", () => saveOptionsBoxState("collapsed"));
 }
-let feedFilter = "all"; 
+const FEED_FILTERS = {
+    ALL: "all",
+    MINE: "mine"
+};
 
-function updateFeedPreference(toggle) {
-    feedFilter = toggle.checked ? "mine" : "all";
-    console.log("Feed preference updated to:", feedFilter);
-    // Trigger API fetch or other logic here
-    fetchDataFromAPI(feedFilter);
+class FeedState {
+    constructor() {
+        this._filter = FEED_FILTERS.ALL;
+    }
+    
+    get filter() {
+        return this._filter;
+    }
+    
+    set filter(value) {
+        if (!Object.values(FEED_FILTERS).includes(value)) {
+            throw new Error(`Invalid filter: ${value}`);
+        }
+        this._filter = value;
+    }
+}
+ function updateFeedPreference(toggle) {
+    if (!toggle || typeof toggle.checked !== 'boolean') {
+        console.error('Invalid toggle parameter');
+        return;
+    }
+    feedState.filter = toggle.checked ? FEED_FILTERS.MINE : FEED_FILTERS.ALL;
 }
 
 const tableOptions = {
@@ -173,7 +193,7 @@ function load30Interval() {
   load("api/v1/cpanel", showCPanel);
   load("api/v1/messages", showMessages);
   load("api/v1/queues", showQueues);
-  load(`api/v1/webhooks?feedOptions=${feedFilter}`, showWebhook);
+  load(`api/v1/webhooks?feedOptionsFilter=${feedState.filter}`, showWebhook);
 }
 
 /**

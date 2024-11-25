@@ -147,8 +147,10 @@ function load(url, callback) {
       if (this.status === 200) {
         callback(JSON.parse(this.responseText));
       } else if (this.status === 401 || this.status === 403) {
-        isSessionInvalid = true;
-        showLoginModal();
+        if (isSessionInvalid === false) {
+            isSessionInvalid = true;
+            showLoginModal();
+        }
       }
     }
   };

@@ -1,3 +1,76 @@
+const OPTIONS_BOX_STATE_KEY = "optionsBoxState";
+const VALID_STATES = {
+    OPEN: "open",
+    COLLAPSED: "collapsed"
+};
+function saveOptionsBoxState(state) {
+    if (!Object.values(VALID_STATES).includes(state)) {
+        console.error(`Invalid state: ${state}. Must be one of ${Object.values(VALID_STATES)}`);
+        return;
+    }
+    try {
+         localStorage.setItem(OPTIONS_BOX_STATE_KEY, state);
+    } catch (e) {
+        console.error('Failed to save options box state:', e);
+    }
+}
+function loadOptionsBoxState() {
+    try {
+        return localStorage.getItem(OPTIONS_BOX_STATE_KEY) || VALID_STATES.OPEN;
+    } catch (e) {
+        console.error('Failed to load options box state:', e);
+        return VALID_STATES.OPEN;
+    }
+}
+function handleOptionsBoxState(){
+    const optionsBoxState = loadOptionsBoxState();
+    const optionsBox = document.getElementById("userMenu");
+
+    if (!optionsBox) {
+        console.error('Options box element not found');
+        return;
+    }
+
+    if (optionsBoxState === VALID_STATES.COLLAPSED) {
+        optionsBox.classList.remove("show");
+    } else {
+        optionsBox.classList.add("show");
+    }
+
+    optionsBox.addEventListener("shown.bs.collapse", () => saveOptionsBoxState(VALID_STATES.OPEN));
+    optionsBox.addEventListener("hidden.bs.collapse", () => saveOptionsBoxState(VALID_STATES.COLLAPSED));
+}
+
+const FEED_FILTERS = {
+    ALL: "all",
+    MINE: "mine"
+};
+
+class FeedState {
+    constructor() {
+        this._filter = FEED_FILTERS.ALL;
+    }
+
+    get filter() {
+        return this._filter;
+    }
+
+    set filter(value) {
+        if (!Object.values(FEED_FILTERS).includes(value)) {
+            throw new Error(`Invalid filter: ${value}`);
+        }
+        this._filter = value;
+    }
+}
+
+function updateFeedPreference(toggle) {
+    if (!toggle || typeof toggle.checked !== 'boolean') {
+        console.error('Invalid toggle parameter');
+        return;
+    }
+    feedState.filter = toggle.checked ? FEED_FILTERS.MINE : FEED_FILTERS.ALL;
+}
+
 const tableOptions = {
   legend: { position: "none" },
   allowHtml: true,
@@ -27,6 +100,11 @@ function init() {
   const offset = new Date().toString().match(/([-\+][0-9]+)\s/)[1];
   setCookie("timezone", timezone, 10);
   setCookie("offset", offset, 10);
+  handleOptionsBoxState();
+  const feedToggle = document.getElementById('feedToggle');
+  if (feedToggle) {
+      feedToggle.addEventListener('change', function() { updateFeedPreference(this); });
+  }
 }
 
 /**
@@ -139,7 +217,7 @@ function load30Interval() {
   load("api/v1/cpanel", showCPanel);
   load("api/v1/messages", showMessages);
   load("api/v1/queues", showQueues);
-  load("api/v1/webhooks", showWebhook);
+  load(`api/v1/webhooks?feedOptionsFilter=${feedState.filter}`, showWebhook);
 }
 
 /**

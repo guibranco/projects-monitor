@@ -130,15 +130,64 @@ function setCookie(name, value, expireDays) {
 google.charts.load("current", { packages: ["corechart", "table", "gauge"] });
 google.charts.setOnLoadCallback(drawChart);
 
+let isSessionInvalid = false;
+
 function load(url, callback) {
+  if (isSessionInvalid) {
+    console.warn("Session is invalid. API call aborted.");
+    return;
+  }
+
   const xhr = new XMLHttpRequest();
   xhr.open("GET", url, true);
   xhr.onreadystatechange = function () {
-    if (this.readyState === 4 && this.status === 200) {
-      callback(JSON.parse(this.responseText));
+    if (this.readyState === 4) {
+      if (this.status === 200) {
+        callback(JSON.parse(this.responseText));
+      } else if (this.status === 401 || this.status === 403) {
+        isSessionInvalid = true;
+        showLoginModal();
+      }
     }
   };
   xhr.send();
+}
+
+function showLoginModal() {
+  const modal = document.createElement("div");
+  modal.style.position = "fixed";
+  modal.style.top = "0";
+  modal.style.left = "0";
+  modal.style.width = "100%";
+  modal.style.height = "100%";
+  modal.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+  modal.style.display = "flex";
+  modal.style.justifyContent = "center";
+  modal.style.alignItems = "center";
+  modal.style.zIndex = "1000";
+
+  const modalContent = document.createElement("div");
+  modalContent.style.backgroundColor = "#fff";
+  modalContent.style.padding = "20px";
+  modalContent.style.borderRadius = "8px";
+  modalContent.style.textAlign = "center";
+  modalContent.innerHTML = `
+    <h2>Session Expired</h2>
+    <p>Your session has expired. Please login again.</p>
+    <button id="cancelBtn" style="margin-right: 10px;">Cancel</button>
+    <button id="loginBtn">Login</button>
+  `;
+
+  modal.appendChild(modalContent);
+  document.body.appendChild(modal);
+
+  document.getElementById("cancelBtn").addEventListener("click", () => {
+    modal.remove();
+  });
+
+  document.getElementById("loginBtn").addEventListener("click", () => {
+    window.location.href = "login.php";
+  });
 }
 
 /**

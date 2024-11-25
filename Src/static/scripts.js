@@ -49,7 +49,7 @@ class FeedState {
     constructor() {
         this._filter = FEED_FILTERS.ALL;
     }
-    
+
     get filter() {
         return this._filter;
     }

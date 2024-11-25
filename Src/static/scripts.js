@@ -63,6 +63,8 @@ class FeedState {
     }
 }
 
+const feedState = new FeedState();
+
 function updateFeedPreference(toggle) {
     if (!toggle || typeof toggle.checked !== 'boolean') {
         console.error('Invalid toggle parameter');

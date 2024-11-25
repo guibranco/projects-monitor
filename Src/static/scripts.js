@@ -40,6 +40,7 @@ function handleOptionsBoxState(){
     optionsBox.addEventListener("shown.bs.collapse", () => saveOptionsBoxState(VALID_STATES.OPEN));
     optionsBox.addEventListener("hidden.bs.collapse", () => saveOptionsBoxState(VALID_STATES.COLLAPSED));
 }
+
 const FEED_FILTERS = {
     ALL: "all",
     MINE: "mine"
@@ -53,7 +54,7 @@ class FeedState {
     get filter() {
         return this._filter;
     }
-    
+
     set filter(value) {
         if (!Object.values(FEED_FILTERS).includes(value)) {
             throw new Error(`Invalid filter: ${value}`);
@@ -61,7 +62,8 @@ class FeedState {
         this._filter = value;
     }
 }
- function updateFeedPreference(toggle) {
+
+function updateFeedPreference(toggle) {
     if (!toggle || typeof toggle.checked !== 'boolean') {
         console.error('Invalid toggle parameter');
         return;

@@ -1,8 +1,14 @@
 const OPTIONS_BOX_STATE_KEY = "optionsBoxState";
+const FEED_FILTER_KEY = "feedFilter";
 const VALID_STATES = {
     OPEN: "open",
     COLLAPSED: "collapsed"
 };
+const FEED_FILTERS = {
+    ALL: "all",
+    MINE: "mine"
+};
+
 function saveOptionsBoxState(state) {
     if (!Object.values(VALID_STATES).includes(state)) {
         console.error(`Invalid state: ${state}. Must be one of ${Object.values(VALID_STATES)}`);
@@ -41,14 +47,9 @@ function handleOptionsBoxState(){
     optionsBox.addEventListener("hidden.bs.collapse", () => saveOptionsBoxState(VALID_STATES.COLLAPSED));
 }
 
-const FEED_FILTERS = {
-    ALL: "all",
-    MINE: "mine"
-};
-
 class FeedState {
     constructor() {
-        this._filter = FEED_FILTERS.ALL;
+        this._filter = this.loadFeedFilter();
     }
 
     get filter() {
@@ -60,6 +61,25 @@ class FeedState {
             throw new Error(`Invalid filter: ${value}`);
         }
         this._filter = value;
+        this.saveFeedFilter(value);
+    }
+
+    loadFeedFilter() {
+        try {
+            const storedFilter = localStorage.getItem(FEED_FILTER_KEY);
+            return Object.values(FEED_FILTERS).includes(storedFilter) ? storedFilter : FEED_FILTERS.ALL;
+        } catch (e) {
+            console.error("Failed to load feed filter:", e);
+            return FEED_FILTERS.ALL;
+        }
+    }
+
+    saveFeedFilter(value) {
+        try {
+            localStorage.setItem(FEED_FILTER_KEY, value);
+        } catch (e) {
+            console.error("Failed to save feed filter:", e);
+        }
     }
 }
 
@@ -80,6 +100,18 @@ const tableOptions = {
   width: "100%",
   height: "100%",
 };
+
+function initFeedToggle() {
+    const toggle = document.getElementById("feedToggle");
+
+    if (!toggle) {
+        console.error("Feed toggle element not found");
+        return;
+    }
+
+    toggle.checked = feedState.filter === FEED_FILTERS.MINE;
+    toggle.addEventListener("change", () => updateFeedPreference(toggle));
+}
 
 window.addEventListener("load", init);
 
@@ -103,10 +135,10 @@ function init() {
   setCookie("timezone", timezone, 10);
   setCookie("offset", offset, 10);
   handleOptionsBoxState();
-  const feedToggle = document.getElementById('feedToggle');
-  if (feedToggle) {
-      feedToggle.addEventListener('change', function() { updateFeedPreference(this); });
-  }
+  initFeedToggle();
+
+  console.log("Feed filter on load:", feedState.filter);
+  console.log("Options box state on load:", loadOptionsBoxState());
 }
 
 /**

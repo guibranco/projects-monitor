@@ -1,6 +1,6 @@
 # Projects Monitor
 
-:gear: :bell: GitHub projects monitor.
+⚙️ 🔔 GitHub projects monitor.
 
 [![wakatime](https://wakatime.com/badge/github/guibranco/projects-monitor.svg)](https://wakatime.com/badge/github/guibranco/projects-monitor)
 [![Deploy via ftp](https://github.com/guibranco/Projects-Monitor/actions/workflows/deploy.yml/badge.svg)](https://github.com/guibranco/Projects-Monitor/actions/workflows/deploy.yml)
@@ -10,10 +10,10 @@
 
 ---
 
-A dashboard to visualize and monitor my GitHub projects, my personal projects and infrastructure all in one place.
+A dashboard to visualize and monitor my GitHub projects, personal projects, and infrastructure all in one place.
 
 > [!Warning]
 >  
-> Currently a single page, but a UI kit is coming in place to give more life to this page! [#12](https://github.com/guibranco/projects-monitor/issues/12)
+> Currently, it is a single page, but a UI kit is coming in place to give more life to this page! [#12](https://github.com/guibranco/projects-monitor/issues/12)
 
 ![dashboard](projects-monitor-dashboard.png)

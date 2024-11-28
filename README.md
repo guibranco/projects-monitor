@@ -143,8 +143,3 @@ Contributions are welcome! Feel free to fork this repository, submit a pull requ
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
-
----
-```
-
-This revised README.md provides a more comprehensive overview and ensures clarity for potential contributors or future reference.

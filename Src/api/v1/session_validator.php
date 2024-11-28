@@ -34,7 +34,7 @@ function validateIP()
         $_SESSION['ip'] = $_SERVER['REMOTE_ADDR'];
     }
     if ($_SESSION['ip'] !== $_SERVER['REMOTE_ADDR']) {
-        error_log("Potential session hijacking attempt: " . $_SERVER['REMOTE_ADDR']);
+        error_log("Potential session hijacking attempt: ".$_SERVER['REMOTE_ADDR']." in ".$_SERVER["SCRIPT_NAME"]);
         session_destroy();
         sendErrorResponse("Session invalid", 401);
     }
@@ -48,12 +48,12 @@ if (isset($_SERVER['HTTP_HOST']) && $_SERVER["HTTP_HOST"] === "localhost:8000") 
 }
 
 if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
-    error_log("Unauthorized access attempt: " . $_SERVER['REMOTE_ADDR']);
+    error_log("Unauthorized access attempt: " . $_SERVER['REMOTE_ADDR']." in ".$_SERVER["SCRIPT_NAME"]);
     sendErrorResponse("Unauthorized access: User is not logged in.");
 }
 
 if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > SESSION_TIMEOUT) {
-    error_log("Session timeout for user: " . $_SESSION['user_id']);
+    error_log("Session timeout for user: " . $_SESSION['user_id']." in ".$_SERVER["SCRIPT_NAME"]);
     session_unset();
     session_destroy();
     sendErrorResponse("Session expired. Please log in again.", 401);

@@ -65,9 +65,9 @@ class Webhooks
         throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
     }
 
-    public function getDashboard()
+    public function getDashboard($feedOptionsFilter)
     {
-        return $this->doRequest("github", "get", 200);
+        return $this->doRequest("github?feedOptionsFilter={$feedOptionsFilter}", "get", 200);
     }
 
     public function getWebhook($sequence)

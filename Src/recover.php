@@ -113,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = 'No account found with that username or email.';
         try {
             $conn->begin_transaction();
-            
+
             $cleanup = $conn->prepare('DELETE FROM password_recovery_attempts WHERE created_at < DATE_SUB(NOW(), INTERVAL 24 HOUR)');
             $cleanup->execute();
             $cleanup->close();

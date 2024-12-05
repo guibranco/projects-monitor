@@ -102,18 +102,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = 'No account found with that username or email.';
         try {
             $conn->begin_transaction();
-            
+
             // Clean up old attempts (older than 24 hours)
             $cleanup = $conn->prepare('DELETE FROM password_recovery_attempts WHERE created_at < DATE_SUB(NOW(), INTERVAL 24 HOUR)');
             $cleanup->execute();
             $cleanup->close();
-            
+
             // Log new attempt
             $stmt = $conn->prepare('INSERT INTO password_recovery_attempts (ip_address, created_at) VALUES (?, NOW())');
             $stmt->bind_param('s', $ip_address);
             $stmt->execute();
             $stmt->close();
-            
+
             $conn->commit();
         } catch (Exception $e) {
             $conn->rollback();

@@ -17,7 +17,7 @@ $conn = $database->getConnection();
 
 $message = '';
 $ip_address = $_SERVER['REMOTE_ADDR'];
-$stmt = $conn->prepare('SELECT COUNT(*) FROM password_recovery_attempts WHERE ip_address = ? AND timestamp > (NOW() - INTERVAL 1 HOUR)');
+$stmt = $conn->prepare('SELECT COUNT(1) FROM password_recovery_attempts WHERE ip_address = ? AND created_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)');
 $stmt->bind_param('s', $ip_address);
 $stmt->execute();
 $stmt->bind_result($attempt_count);
@@ -25,6 +25,9 @@ $stmt->fetch();
 $stmt->close();
 $max_attempts = 3;
 if ($attempt_count >= $max_attempts) {
+    http_response_code(429);
+    header('Content-Type: text/plain; charset=utf-8');
+    $conn->close();
     die('Too many password recovery attempts. Please try again later.');
 }
 
@@ -89,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             filter_var($_SERVER['REMOTE_ADDR'], FILTER_VALIDATE_IP)
         ));
         $message = 'No account found with that username or email.';
-        $stmt = $conn->prepare('INSERT INTO password_recovery_attempts (ip_address, timestamp) VALUES (?, NOW())');
+        $stmt = $conn->prepare('INSERT INTO password_recovery_attempts (ip_address, created_at) VALUES (?, NOW())');
         $stmt->bind_param('s', $ip_address);
         $stmt->execute();
         $stmt->close();

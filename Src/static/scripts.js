@@ -410,6 +410,10 @@ function showGitHubStats() {
   const statsImg = document.getElementById("gh_stats");
   const streakImg = document.getElementById("gh_streak");
 
+  if (!statsImg || !streakImg) {
+    console.error("GitHub stats image elements not found in the DOM");
+    return;
+  }
 function loadImage(imgElement, url, options = {}) {
   const {
     maxRetries = 10,

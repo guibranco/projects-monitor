@@ -16,7 +16,7 @@ $database = new Database();
 $conn = $database->getConnection();
 
 $message = '';
-$ip_address = isset($_SERVER['HTTP_X_FORWARDED_FOR']) 
+$ip_address = isset($_SERVER['HTTP_X_FORWARDED_FOR'])
     ? trim(explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0])
     : $_SERVER['REMOTE_ADDR'];
 

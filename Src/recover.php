@@ -25,12 +25,23 @@ if (!filter_var($ip_address, FILTER_VALIDATE_IP)) {
     http_response_code(400);
     die('Invalid IP address');
 }
-$stmt = $conn->prepare('SELECT COUNT(1) FROM password_recovery_attempts WHERE ip_address = ? AND created_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)');
-$stmt->bind_param('s', $ip_address);
-$stmt->execute();
-$stmt->bind_result($attempt_count);
-$stmt->fetch();
-$stmt->close();
+try {
+    $stmt = $conn->prepare('SELECT COUNT(1) FROM password_recovery_attempts WHERE ip_address = ? AND created_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)');
+    if (!$stmt) {
+        throw new Exception("Database error: " . $conn->error);
+    }
+    $stmt->bind_param('s', $ip_address);
+    if (!$stmt->execute()) {
+        throw new Exception("Query failed: " . $stmt->error);
+    }
+    $stmt->bind_result($attempt_count);
+    $stmt->fetch();
+    $stmt->close();
+} catch (Exception $e) {
+    error_log("Rate limiting check failed: " . $e->getMessage());
+    http_response_code(500);
+    die('Internal server error');
+}
 $max_attempts = 3;
 if ($attempt_count >= $max_attempts) {
     http_response_code(429);

@@ -395,18 +395,42 @@ function drawChart() {
 function showGitHubStats() {
   const refresh = Math.floor(Math.random() * 100000);
 
-  document.getElementById("gh_stats").src =
+  const statsUrl =
     "https://github-readme-stats-guibranco.vercel.app/api" +
     "?username=guibranco&line_height=28&card_width=490&hide_title=true&hide_border=true" +
     "&show_icons=true&theme=chartreuse-dark&icon_color=7FFF00&include_all_commits=true" +
     "&count_private=true&show=reviews,discussions_started&count_private=true&refresh=" +
     refresh;
 
-  document.getElementById("gh_streak").src =
+  const streakUrl =
     "https://github-readme-streak-stats-guibranco.vercel.app/" +
     "?user=guibranco&theme=github-green-purple&fire=FF6600&refresh=" +
     refresh;
+
+  const statsImg = document.getElementById("gh_stats");
+  const streakImg = document.getElementById("gh_streak");
+  
+  function loadImage(imgElement, url, retries = 10) {
+    imgElement.onload = () => {
+      console.log(`${imgElement.id} loaded successfully.`);
+    };
+
+    imgElement.onerror = () => {
+      if (retries > 0) {
+        console.warn(`${imgElement.id} failed to load. Retrying... (${retries} retries left)`);
+        setTimeout(() => loadImage(imgElement, url, retries - 1), 2000);
+      } else {
+        console.error(`${imgElement.id} failed to load after multiple attempts.`);
+      }
+    };
+
+    imgElement.src = url;
+  }
+
+  loadImage(statsImg, statsUrl);
+  loadImage(streakImg, streakUrl);
 }
+
 
 /**
  * Renders a table displaying project data from AppVeyor using Google Charts.

@@ -16,7 +16,15 @@ $database = new Database();
 $conn = $database->getConnection();
 
 $message = '';
-$ip_address = $_SERVER['REMOTE_ADDR'];
+$ip_address = isset($_SERVER['HTTP_X_FORWARDED_FOR']) 
+    ? trim(explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0])
+    : $_SERVER['REMOTE_ADDR'];
+
+// Validate IP address format
+if (!filter_var($ip_address, FILTER_VALIDATE_IP)) {
+    http_response_code(400);
+    die('Invalid IP address');
+}
 $stmt = $conn->prepare('SELECT COUNT(1) FROM password_recovery_attempts WHERE ip_address = ? AND created_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)');
 $stmt->bind_param('s', $ip_address);
 $stmt->execute();

@@ -5,7 +5,10 @@ require_once '../../vendor/autoload.php';
 
 use GuiBranco\ProjectsMonitor\Library\Webhooks;
 
-$feedOptionsFilter = isset($_GET["feedOptionsFilter"]) ? $_GET["feedOptionsFilter"] : "all";
+$allowedFilters = ['all', 'active', 'completed']; // Define allowed values
+$feedOptionsFilter = isset($_GET["feedOptionsFilter"]) && in_array($_GET["feedOptionsFilter"], $allowedFilters) 
+    ? $_GET["feedOptionsFilter"] 
+    : "all";
 
 $webhooks = new Webhooks();
 $data = $webhooks->getDashboard($feedOptionsFilter);

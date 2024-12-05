@@ -395,18 +395,70 @@ function drawChart() {
 function showGitHubStats() {
   const refresh = Math.floor(Math.random() * 100000);
 
-  document.getElementById("gh_stats").src =
+  const statsUrl =
     "https://github-readme-stats-guibranco.vercel.app/api" +
     "?username=guibranco&line_height=28&card_width=490&hide_title=true&hide_border=true" +
     "&show_icons=true&theme=chartreuse-dark&icon_color=7FFF00&include_all_commits=true" +
     "&count_private=true&show=reviews,discussions_started&count_private=true&refresh=" +
     refresh;
 
-  document.getElementById("gh_streak").src =
+  const streakUrl =
     "https://github-readme-streak-stats-guibranco.vercel.app/" +
     "?user=guibranco&theme=github-green-purple&fire=FF6600&refresh=" +
     refresh;
+
+  const statsImg = document.getElementById("gh_stats");
+  const streakImg = document.getElementById("gh_streak");
+
+  if (!statsImg || !streakImg) {
+    console.error("GitHub stats image elements not found in the DOM");
+    return;
+  }
+function loadImage(imgElement, url, options = {}) {
+  const {
+    maxRetries = 10,
+    retryDelay = 2000,
+    timeout = 30000
+  } = options;
+
+  const startTime = Date.now();
+
+  function cleanup() {
+    imgElement.onload = null;
+    imgElement.onerror = null;
+  }
+
+  imgElement.onload = () => {
+    console.log(`${imgElement.id} loaded successfully.`);
+    cleanup();
+  };
+
+  imgElement.onerror = () => {
+    if (maxRetries > 0 && (Date.now() - startTime) < timeout) {
+      console.warn(
+        `${imgElement.id} failed to load. Retrying... (${maxRetries} retries left)`
+      );
+      setTimeout(
+        () => loadImage(imgElement, url, { ...options, maxRetries: maxRetries - 1 }),
+        retryDelay
+      );
+    } else {
+      console.error(
+        `${imgElement.id} failed to load after ${
+          maxRetries === 0 ? 'maximum retries' : 'timeout'
+        }.`
+      );
+      cleanup();
+    }
+  };
+
+  imgElement.src = url;
 }
+
+  loadImage(statsImg, statsUrl);
+  loadImage(streakImg, streakUrl);
+}
+
 
 /**
  * Renders a table displaying project data from AppVeyor using Google Charts.

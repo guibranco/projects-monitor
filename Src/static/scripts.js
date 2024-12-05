@@ -409,7 +409,7 @@ function showGitHubStats() {
 
   const statsImg = document.getElementById("gh_stats");
   const streakImg = document.getElementById("gh_streak");
-  
+
   function loadImage(imgElement, url, retries = 10) {
     imgElement.onload = () => {
       console.log(`${imgElement.id} loaded successfully.`);

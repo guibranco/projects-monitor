@@ -100,10 +100,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             filter_var($_SERVER['REMOTE_ADDR'], FILTER_VALIDATE_IP)
         ));
         $message = 'No account found with that username or email.';
-        $stmt = $conn->prepare('INSERT INTO password_recovery_attempts (ip_address, created_at) VALUES (?, NOW())');
-        $stmt->bind_param('s', $ip_address);
-        $stmt->execute();
-        $stmt->close();
+        try {
+            $conn->begin_transaction();
+            
+            // Clean up old attempts (older than 24 hours)
+            $cleanup = $conn->prepare('DELETE FROM password_recovery_attempts WHERE created_at < DATE_SUB(NOW(), INTERVAL 24 HOUR)');
+            $cleanup->execute();
+            $cleanup->close();
+            
+            // Log new attempt
+            $stmt = $conn->prepare('INSERT INTO password_recovery_attempts (ip_address, created_at) VALUES (?, NOW())');
+            $stmt->bind_param('s', $ip_address);
+            $stmt->execute();
+            $stmt->close();
+            
+            $conn->commit();
+        } catch (Exception $e) {
+            $conn->rollback();
+            error_log("Failed to log recovery attempt: " . $e->getMessage());
+            // Don't expose database errors to the user
+            $message = 'An error occurred. Please try again later.';
+        }
     }
 }
 $_SESSION['csrf_token'] = bin2hex(random_bytes(32));

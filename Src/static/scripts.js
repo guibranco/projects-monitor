@@ -410,22 +410,46 @@ function showGitHubStats() {
   const statsImg = document.getElementById("gh_stats");
   const streakImg = document.getElementById("gh_streak");
 
-  function loadImage(imgElement, url, retries = 10) {
-    imgElement.onload = () => {
-      console.log(`${imgElement.id} loaded successfully.`);
-    };
+function loadImage(imgElement, url, options = {}) {
+  const {
+    maxRetries = 10,
+    retryDelay = 2000,
+    timeout = 30000
+  } = options;
 
-    imgElement.onerror = () => {
-      if (retries > 0) {
-        console.warn(`${imgElement.id} failed to load. Retrying... (${retries} retries left)`);
-        setTimeout(() => loadImage(imgElement, url, retries - 1), 2000);
-      } else {
-        console.error(`${imgElement.id} failed to load after multiple attempts.`);
-      }
-    };
+  const startTime = Date.now();
 
-    imgElement.src = url;
+  function cleanup() {
+    imgElement.onload = null;
+    imgElement.onerror = null;
   }
+
+  imgElement.onload = () => {
+    console.log(`${imgElement.id} loaded successfully.`);
+    cleanup();
+  };
+
+  imgElement.onerror = () => {
+    if (maxRetries > 0 && (Date.now() - startTime) < timeout) {
+      console.warn(
+        `${imgElement.id} failed to load. Retrying... (${maxRetries} retries left)`
+      );
+      setTimeout(
+        () => loadImage(imgElement, url, { ...options, maxRetries: maxRetries - 1 }),
+        retryDelay
+      );
+    } else {
+      console.error(
+        `${imgElement.id} failed to load after ${
+          maxRetries === 0 ? 'maximum retries' : 'timeout'
+        }.`
+      );
+      cleanup();
+    }
+  };
+
+  imgElement.src = url;
+}
 
   loadImage(statsImg, statsUrl);
   loadImage(streakImg, streakUrl);

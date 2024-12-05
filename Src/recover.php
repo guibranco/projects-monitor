@@ -20,11 +20,12 @@ $ip_address = isset($_SERVER['HTTP_X_FORWARDED_FOR'])
     ? trim(explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0])
     : $_SERVER['REMOTE_ADDR'];
 
-// Validate IP address format
 if (!filter_var($ip_address, FILTER_VALIDATE_IP)) {
     http_response_code(400);
     die('Invalid IP address');
 }
+
+$attempt_count = 0;
 try {
     $stmt = $conn->prepare('SELECT COUNT(1) FROM password_recovery_attempts WHERE ip_address = ? AND created_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)');
     if (!$stmt) {
@@ -49,7 +50,6 @@ if ($attempt_count >= $max_attempts) {
     $conn->close();
     die('Too many password recovery attempts. Please try again later.');
 }
-
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
@@ -113,13 +113,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = 'No account found with that username or email.';
         try {
             $conn->begin_transaction();
-
-            // Clean up old attempts (older than 24 hours)
+            
             $cleanup = $conn->prepare('DELETE FROM password_recovery_attempts WHERE created_at < DATE_SUB(NOW(), INTERVAL 24 HOUR)');
             $cleanup->execute();
             $cleanup->close();
 
-            // Log new attempt
             $stmt = $conn->prepare('INSERT INTO password_recovery_attempts (ip_address, created_at) VALUES (?, NOW())');
             $stmt->bind_param('s', $ip_address);
             $stmt->execute();
@@ -129,7 +127,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } catch (Exception $e) {
             $conn->rollback();
             error_log("Failed to log recovery attempt: " . $e->getMessage());
-            // Don't expose database errors to the user
             $message = 'An error occurred. Please try again later.';
         }
     }

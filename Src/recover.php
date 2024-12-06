@@ -16,6 +16,40 @@ $database = new Database();
 $conn = $database->getConnection();
 
 $message = '';
+$ip_address = isset($_SERVER['HTTP_X_FORWARDED_FOR'])
+    ? trim(explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0])
+    : $_SERVER['REMOTE_ADDR'];
+
+if (!filter_var($ip_address, FILTER_VALIDATE_IP)) {
+    http_response_code(400);
+    die('Invalid IP address');
+}
+
+$attempt_count = 0;
+try {
+    $stmt = $conn->prepare('SELECT COUNT(1) FROM password_recovery_attempts WHERE ip_address = ? AND created_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)');
+    if (!$stmt) {
+        throw new Exception("Database error: " . $conn->error);
+    }
+    $stmt->bind_param('s', $ip_address);
+    if (!$stmt->execute()) {
+        throw new Exception("Query failed: " . $stmt->error);
+    }
+    $stmt->bind_result($attempt_count);
+    $stmt->fetch();
+    $stmt->close();
+} catch (Exception $e) {
+    error_log("Rate limiting check failed: " . $e->getMessage());
+    http_response_code(500);
+    die('Internal server error');
+}
+$max_attempts = 3;
+if ($attempt_count >= $max_attempts) {
+    http_response_code(429);
+    header('Content-Type: text/plain; charset=utf-8');
+    $conn->close();
+    die('Too many password recovery attempts. Please try again later.');
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
@@ -77,6 +111,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             filter_var($_SERVER['REMOTE_ADDR'], FILTER_VALIDATE_IP)
         ));
         $message = 'No account found with that username or email.';
+        try {
+            $conn->begin_transaction();
+
+            $cleanup = $conn->prepare('DELETE FROM password_recovery_attempts WHERE created_at < DATE_SUB(NOW(), INTERVAL 24 HOUR)');
+            $cleanup->execute();
+            $cleanup->close();
+
+            $stmt = $conn->prepare('INSERT INTO password_recovery_attempts (ip_address, created_at) VALUES (?, NOW())');
+            $stmt->bind_param('s', $ip_address);
+            $stmt->execute();
+            $stmt->close();
+
+            $conn->commit();
+        } catch (Exception $e) {
+            $conn->rollback();
+            error_log("Failed to log recovery attempt: " . $e->getMessage());
+            $message = 'An error occurred. Please try again later.';
+        }
     }
 }
 $_SESSION['csrf_token'] = bin2hex(random_bytes(32));

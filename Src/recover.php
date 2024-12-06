@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->execute();
     $result = $stmt->get_result();
 
-    if ($result->num_rows === 1) {
+    if ($result && $result->num_rows === 1) {
         $user = $result->fetch_assoc();
         $reset_token = bin2hex(random_bytes(16));
         $reset_token_expiration = gmdate('Y-m-d H:i:s', strtotime('+1 hour UTC'));

@@ -65,9 +65,14 @@ class Webhooks
         throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
     }
 
-    public function getDashboard()
+    public function getDashboard($feedOptionsFilter)
     {
-        return $this->doRequest("github", "get", 200);
+        $allowedFilters = ['all', 'mine'];
+        if (!in_array($feedOptionsFilter, $allowedFilters)) {
+            throw new \InvalidArgumentException('Invalid filter value provided');
+        }
+        $endpoint = sprintf("github?feedOptionsFilter=%s", urlencode($feedOptionsFilter));
+        return $this->doRequest($endpoint, "get", 200);
     }
 
     public function getWebhook($sequence)

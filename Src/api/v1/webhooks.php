@@ -14,7 +14,7 @@ $workflowsLimiterEnabled = filter_var(
     $_GET["workflowsLimiterEnabled"] ?? false,
     FILTER_VALIDATE_BOOLEAN
 );
-$maxLimit = 100; // Consider making this configurable
+$maxLimit = 10000;
 $workflowsLimiterQuantity = $workflowsLimiterEnabled
     ? filter_var(
         $_GET["workflowsLimiterQuantity"] ?? 0,

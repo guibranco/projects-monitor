@@ -1,5 +1,7 @@
 const OPTIONS_BOX_STATE_KEY = "optionsBoxState";
 const FEED_FILTER_KEY = "feedFilter";
+const WORKFLOW_LIMITER_KEY = "workflowLimiter";
+const WORKFLOW_LIMIT_VALUE_KEY = "workflowLimitValue";
 const VALID_STATES = {
     OPEN: "open",
     COLLAPSED: "collapsed"
@@ -93,13 +95,99 @@ function updateFeedPreference(toggle) {
     feedState.filter = toggle.checked ? FEED_FILTERS.MINE : FEED_FILTERS.ALL;
 }
 
-const tableOptions = {
-  legend: { position: "none" },
-  allowHtml: true,
-  showRowNumber: true,
-  width: "100%",
-  height: "100%",
-};
+class WorkflowLimiterState {
+    constructor() {
+        this._enabled = this.loadLimiterState();
+        this._limitValue = this.loadLimiterValue();
+    }
+
+    get enabled() {
+        return this._enabled;
+    }
+
+    set enabled(value) {
+        this._enabled = Boolean(value);
+        this.saveLimiterState(this._enabled);
+    }
+
+    get limitValue() {
+        return this._limitValue;
+    }
+
+    set limitValue(value) {
+        const limit = parseInt(value, 10);
+        if (isNaN(limit) || limit < 1) {
+            throw new Error("Invalid workflow limit value. Must be a number greater than 0.");
+        }
+        this._limitValue = limit;
+        this.saveLimiterValue(limit);
+    }
+
+    loadLimiterState() {
+        try {
+            return JSON.parse(localStorage.getItem(WORKFLOW_LIMITER_KEY)) || false;
+        } catch (e) {
+            console.error("Failed to load workflow limiter state:", e);
+            return false;
+        }
+    }
+
+    saveLimiterState(state) {
+        try {
+            localStorage.setItem(WORKFLOW_LIMITER_KEY, JSON.stringify(state));
+        } catch (e) {
+            console.error("Failed to save workflow limiter state:", e);
+        }
+    }
+
+    loadLimiterValue() {
+        try {
+            return parseInt(localStorage.getItem(WORKFLOW_LIMIT_VALUE_KEY), 10) || 10;
+        } catch (e) {
+            console.error("Failed to load workflow limit value:", e);
+            return 10;
+        }
+    }
+
+    saveLimiterValue(value) {
+        try {
+            localStorage.setItem(WORKFLOW_LIMIT_VALUE_KEY, value);
+        } catch (e) {
+            console.error("Failed to save workflow limit value:", e);
+        }
+    }
+}
+
+const workflowLimiterState = new WorkflowLimiterState();
+
+function initWorkflowLimiter() {
+    const workflowToggle = document.getElementById("workflowToggle");
+    const workflowLimitContainer = document.getElementById("workflowLimitContainer");
+    const workflowLimitInput = document.getElementById("workflowLimitInput");
+
+    if (!workflowToggle || !workflowLimitContainer || !workflowLimitInput) {
+        console.error("Workflow limiter elements not found");
+        return;
+    }
+
+    workflowToggle.checked = workflowLimiterState.enabled;
+    workflowLimitContainer.style.display = workflowLimiterState.enabled ? "block" : "none";
+
+    workflowLimitInput.value = workflowLimiterState.limitValue;
+
+    workflowToggle.addEventListener("change", () => {
+        workflowLimiterState.enabled = workflowToggle.checked;
+        workflowLimitContainer.style.display = workflowLimiterState.enabled ? "block" : "none";
+    });
+
+    workflowLimitInput.addEventListener("input", () => {
+        try {
+            workflowLimiterState.limitValue = workflowLimitInput.value;
+        } catch (e) {
+            console.error(e.message);
+        }
+    });
+}
 
 function initFeedToggle() {
     const toggle = document.getElementById("feedToggle");
@@ -108,10 +196,18 @@ function initFeedToggle() {
         console.error("Feed toggle element not found");
         return;
     }
-
+    
     toggle.checked = feedState.filter === FEED_FILTERS.MINE;
     toggle.addEventListener("change", () => updateFeedPreference(toggle));
 }
+
+const tableOptions = {
+  legend: { position: "none" },
+  allowHtml: true,
+  showRowNumber: true,
+  width: "100%",
+  height: "100%",
+};
 
 window.addEventListener("load", init);
 
@@ -136,9 +232,12 @@ function init() {
   setCookie("offset", offset, 10);
   handleOptionsBoxState();
   initFeedToggle();
+  initWorkflowLimiter();
 
-  console.log("Feed filter on load:", feedState.filter);
   console.log("Options box state on load:", loadOptionsBoxState());
+  console.log("Feed filter on load:", feedState.filter);
+  console.log("Workflow limiter enabled:", workflowLimiterState.enabled);
+  console.log("Workflow limit value:", workflowLimiterState.limitValue);  
 }
 
 /**

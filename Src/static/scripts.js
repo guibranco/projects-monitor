@@ -401,7 +401,7 @@ function load30Interval() {
   load("api/v1/cpanel", showCPanel);
   load("api/v1/messages", showMessages);
   load("api/v1/queues", showQueues);
-  load(`api/v1/webhooks?feedOptionsFilter=${feedState.filter}`, showWebhook);
+  load(`api/v1/webhooks?feedOptionsFilter=${feedState.filter}&workflowsLimiterEnabled=${workflowLimiterState.enabled}&workflowsLimiterQuantity=${workflowLimiterState.limitValue}`, showWebhook);
 }
 
 /**

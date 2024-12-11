@@ -16,5 +16,4 @@ if (session_status() === PHP_SESSION_NONE) {
         'httponly' => true,
         'samesite' => 'Strict'
     ]);
-    session_start();
 }

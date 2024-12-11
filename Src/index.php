@@ -83,7 +83,20 @@ $configuration = new Configuration();
                   </div>
                   <div id="workflowLimitContainer" class="mb-3" style="display: none;">
                     <label for="workflowLimitInput" class="form-label">Limit Results</label>
-                    <input type="number" class="form-control" id="workflowLimitInput" min="1" max="10000" placeholder="Enter limit" />
+                    <input 
+                      type="number" 
+                      class="form-control" 
+                      id="workflowLimitInput" 
+                      min="1" 
+                      max="10000" 
+                      placeholder="Enter limit (1-10,000)"
+                      required
+                      oninput="this.setCustomValidity('')"
+                      oninvalid="this.setCustomValidity('Please enter a number between 1 and 10,000')"
+                    />
+                    <div class="invalid-feedback">
+                      Please enter a number between 1 and 10,000
+                    </div>
                   </div>
                </div>
             </div>

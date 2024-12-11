@@ -10,6 +10,9 @@ $feedOptionsFilter = isset($_GET["feedOptionsFilter"]) && in_array($_GET["feedOp
     ? $_GET["feedOptionsFilter"]
     : "all";
 
+$workflowsLimiterEnabled = isset($_GET["workflowsLimiterEnabled"]) ? ($_GET["workflowsLimiterEnabled"] === "true") : false;
+$workflowsLimiterQuantity = $workflowsLimiterEnabled && isset($_GET["workflowsLimiterQuantity"]) ? intval($_GET["workflowsLimiterQuantity"]) : 0;
+
 $webhooks = new Webhooks();
-$data = $webhooks->getDashboard($feedOptionsFilter);
+$data = $webhooks->getDashboard($feedOptionsFilter, $workflowsLimiterQuantity);
 echo json_encode($data);

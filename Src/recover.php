@@ -89,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw $e;
         }
 
-        $reset_link = sprintf('%s://%s/projects-monitor/reset.php?token=%s', isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off' ? 'https' : 'http', $_SERVER['HTTP_HOST'], urlencode($reset_token));
+        $reset_link = sprintf('%s://%s/projects-monitor/recover.php?token=%s', isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off' ? 'https' : 'http', $_SERVER['HTTP_HOST'], urlencode($reset_token));
         $to = $user['email'];
         $subject = '=?UTF-8?B?'.base64_encode('Password Reset Request').'?=';
         $message = wordwrap("Click the link below to reset your password:\n\n{$reset_link}\n\nThis link is valid for 1 hour.\n\nIf you didn't request this reset, please ignore this email.", 70);

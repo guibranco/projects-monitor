@@ -1,13 +1,6 @@
 <?php
 
 require_once 'session.php';
-$_SESSION = array();
-
-if (isset($_COOKIE[session_name()])) {
-    setcookie(session_name(), '', time() - 3600, '/');
-}
-
-session_destroy();
 if (!headers_sent()) {
     $token = bin2hex(random_bytes(32));
     $_SESSION['csrf_token'] = $token;

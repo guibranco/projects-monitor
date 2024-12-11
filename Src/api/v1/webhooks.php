@@ -10,8 +10,18 @@ $feedOptionsFilter = isset($_GET["feedOptionsFilter"]) && in_array($_GET["feedOp
     ? $_GET["feedOptionsFilter"]
     : "all";
 
-$workflowsLimiterEnabled = isset($_GET["workflowsLimiterEnabled"]) ? ($_GET["workflowsLimiterEnabled"] === "true") : false;
-$workflowsLimiterQuantity = $workflowsLimiterEnabled && isset($_GET["workflowsLimiterQuantity"]) ? intval($_GET["workflowsLimiterQuantity"]) : 0;
+$workflowsLimiterEnabled = filter_var(
+    $_GET["workflowsLimiterEnabled"] ?? false,
+    FILTER_VALIDATE_BOOLEAN
+);
+$maxLimit = 100; // Consider making this configurable
+$workflowsLimiterQuantity = $workflowsLimiterEnabled
+    ? filter_var(
+        $_GET["workflowsLimiterQuantity"] ?? 0,
+        FILTER_VALIDATE_INT,
+        ["options" => ["min_range" => 1, "max_range" => $maxLimit]]
+    ) ?: 0
+    : 0;
 
 $webhooks = new Webhooks();
 $data = $webhooks->getDashboard($feedOptionsFilter, $workflowsLimiterQuantity);

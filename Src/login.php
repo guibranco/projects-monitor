@@ -1,6 +1,8 @@
 <?php
 require_once 'session.php';
 require_once 'vendor/autoload.php';
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 
 use GuiBranco\ProjectsMonitor\Library\Configuration;
 use GuiBranco\ProjectsMonitor\Library\Database;
@@ -67,14 +69,26 @@ function login()
 
     $user = $result->fetch_assoc();
     if ($user && password_verify($password, $user['password'])) {
-        $_SESSION['user_id'] = $user['id'];
-        $_SESSION['username'] = $user['username'];
-        $_SESSION['email'] = $user['email'];
-        $_SESSION['last_activity'] = time();
-        unset($_SESSION['login_attempts']);
-        unset($_SESSION['last_attempt']);
-        header('Location: index.php');
-        exit;
+        $key = "your_secret_key";
+        $issuedAt = time();
+        $expirationTime = $issuedAt + 3600;  // jwt valid for 1 hour
+        $payload = [
+            'id' => $user['id'],
+            'username' => $user['username'],
+            'email' => $user['email'],
+            'iat' => $issuedAt,
+            'exp' => $expirationTime
+        ];
+
+        $jwt = JWT::encode($payload, $key, 'HS256');
+
+        setcookie('jwt', $jwt, [
+            'expires' => $expirationTime,
+            'path' => '/',
+            'domain' => $_SERVER['HTTP_HOST'],
+            'secure' => true,
+            'httponly' => true,
+            'samesite' => 'Strict'
     } else {
         $error = 'Invalid username or password.';
         $_SESSION['login_attempts'] = $attempts + 1;
@@ -87,7 +101,6 @@ function login()
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     login();
 }
-$_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 ?>
 <!DOCTYPE html>
 <html lang="en">

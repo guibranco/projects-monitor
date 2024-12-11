@@ -58,7 +58,7 @@ class Webhooks
         }
 
         if ($response->statusCode === $expectedStatusCode) {
-            return json_decode($response->body);
+            return json_decode($response->body, true);
         }
 
         $error = $response->statusCode == -1 ? $response->error : $response->body;

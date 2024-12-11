@@ -77,6 +77,14 @@ $configuration = new Configuration();
                      Feed - Show All / Only mine
                      </label>
                   </div>
+                  <div class="form-check form-switch mb-3">
+                    <input type="checkbox" class="form-check-input" id="workflowToggle" />
+                    <label class="form-check-label" for="workflowToggle">Workflow Limiter</label>
+                  </div>
+                  <div id="workflowLimitContainer" class="mb-3" style="display: none;">
+                    <label for="workflowLimitInput" class="form-label">Limit Results</label>
+                    <input type="number" class="form-control" id="workflowLimitInput" min="1" max="10000" placeholder="Enter limit" />
+                  </div>
                </div>
             </div>
          </div>

@@ -10,7 +10,6 @@ if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.cookie_secure', 1);
     ini_set('session.use_strict_mode', 1);
     ini_set('session.cookie_samesite', 'Lax');
-    session_start();
 }
 
 header('X-Content-Type-Options: nosniff');

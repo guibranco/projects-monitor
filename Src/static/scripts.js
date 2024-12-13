@@ -1,3 +1,206 @@
+const OPTIONS_BOX_STATE_KEY = "optionsBoxState";
+const FEED_FILTER_KEY = "feedFilter";
+const WORKFLOW_LIMITER_KEY = "workflowLimiter";
+const WORKFLOW_LIMIT_VALUE_KEY = "workflowLimitValue";
+const VALID_STATES = {
+    OPEN: "open",
+    COLLAPSED: "collapsed"
+};
+const FEED_FILTERS = {
+    ALL: "all",
+    MINE: "mine"
+};
+
+function saveOptionsBoxState(state) {
+    if (!Object.values(VALID_STATES).includes(state)) {
+        console.error(`Invalid state: ${state}. Must be one of ${Object.values(VALID_STATES)}`);
+        return;
+    }
+    try {
+         localStorage.setItem(OPTIONS_BOX_STATE_KEY, state);
+    } catch (e) {
+        console.error('Failed to save options box state:', e);
+    }
+}
+function loadOptionsBoxState() {
+    try {
+        return localStorage.getItem(OPTIONS_BOX_STATE_KEY) || VALID_STATES.OPEN;
+    } catch (e) {
+        console.error('Failed to load options box state:', e);
+        return VALID_STATES.OPEN;
+    }
+}
+function handleOptionsBoxState(){
+    const optionsBoxState = loadOptionsBoxState();
+    const optionsBox = document.getElementById("userMenu");
+
+    if (!optionsBox) {
+        console.error('Options box element not found');
+        return;
+    }
+
+    if (optionsBoxState === VALID_STATES.COLLAPSED) {
+        optionsBox.classList.remove("show");
+    } else {
+        optionsBox.classList.add("show");
+    }
+
+    optionsBox.addEventListener("shown.bs.collapse", () => saveOptionsBoxState(VALID_STATES.OPEN));
+    optionsBox.addEventListener("hidden.bs.collapse", () => saveOptionsBoxState(VALID_STATES.COLLAPSED));
+}
+
+class FeedState {
+    constructor() {
+        this._filter = this.loadFeedFilter();
+    }
+
+    get filter() {
+        return this._filter;
+    }
+
+    set filter(value) {
+        if (!Object.values(FEED_FILTERS).includes(value)) {
+            throw new Error(`Invalid filter: ${value}`);
+        }
+        this._filter = value;
+        this.saveFeedFilter(value);
+    }
+
+    loadFeedFilter() {
+        try {
+            const storedFilter = localStorage.getItem(FEED_FILTER_KEY);
+            return Object.values(FEED_FILTERS).includes(storedFilter) ? storedFilter : FEED_FILTERS.ALL;
+        } catch (e) {
+            console.error("Failed to load feed filter:", e);
+            return FEED_FILTERS.ALL;
+        }
+    }
+
+    saveFeedFilter(value) {
+        try {
+            localStorage.setItem(FEED_FILTER_KEY, value);
+        } catch (e) {
+            console.error("Failed to save feed filter:", e);
+        }
+    }
+}
+
+const feedState = new FeedState();
+
+function updateFeedPreference(toggle) {
+    if (!toggle || typeof toggle.checked !== 'boolean') {
+        console.error('Invalid toggle parameter');
+        return;
+    }
+    feedState.filter = toggle.checked ? FEED_FILTERS.MINE : FEED_FILTERS.ALL;
+}
+
+class WorkflowLimiterState {
+    constructor() {
+        this._enabled = this.loadLimiterState();
+        this._limitValue = this.loadLimiterValue();
+    }
+
+    get enabled() {
+        return this._enabled;
+    }
+
+    set enabled(value) {
+        this._enabled = Boolean(value);
+        this.saveLimiterState(this._enabled);
+    }
+
+    get limitValue() {
+        return this._limitValue;
+    }
+
+    set limitValue(value) {
+        const limit = parseInt(value, 10);
+        if (isNaN(limit) || limit < 1) {
+            throw new Error("Invalid workflow limit value. Must be a number greater than 0.");
+        }
+        this._limitValue = limit;
+        this.saveLimiterValue(limit);
+    }
+
+    loadLimiterState() {
+        try {
+            return JSON.parse(localStorage.getItem(WORKFLOW_LIMITER_KEY)) || false;
+        } catch (e) {
+            console.error("Failed to load workflow limiter state:", e);
+            return false;
+        }
+    }
+
+    saveLimiterState(state) {
+        try {
+            localStorage.setItem(WORKFLOW_LIMITER_KEY, JSON.stringify(state));
+        } catch (e) {
+            console.error("Failed to save workflow limiter state:", e);
+        }
+    }
+
+    loadLimiterValue() {
+        try {
+            return parseInt(localStorage.getItem(WORKFLOW_LIMIT_VALUE_KEY), 10) || 10;
+        } catch (e) {
+            console.error("Failed to load workflow limit value:", e);
+            return 10;
+        }
+    }
+
+    saveLimiterValue(value) {
+        try {
+            localStorage.setItem(WORKFLOW_LIMIT_VALUE_KEY, value);
+        } catch (e) {
+            console.error("Failed to save workflow limit value:", e);
+        }
+    }
+}
+
+const workflowLimiterState = new WorkflowLimiterState();
+
+function initWorkflowLimiter() {
+    const workflowToggle = document.getElementById("workflowToggle");
+    const workflowLimitContainer = document.getElementById("workflowLimitContainer");
+    const workflowLimitInput = document.getElementById("workflowLimitInput");
+
+    if (!workflowToggle || !workflowLimitContainer || !workflowLimitInput) {
+        console.error("Workflow limiter elements not found");
+        return;
+    }
+
+    workflowToggle.checked = workflowLimiterState.enabled;
+    workflowLimitContainer.style.display = workflowLimiterState.enabled ? "block" : "none";
+
+    workflowLimitInput.value = workflowLimiterState.limitValue;
+
+    workflowToggle.addEventListener("change", () => {
+        workflowLimiterState.enabled = workflowToggle.checked;
+        workflowLimitContainer.style.display = workflowLimiterState.enabled ? "block" : "none";
+    });
+
+    workflowLimitInput.addEventListener("input", () => {
+        try {
+            workflowLimiterState.limitValue = workflowLimitInput.value;
+        } catch (e) {
+            console.error(e.message);
+        }
+    });
+}
+
+function initFeedToggle() {
+    const toggle = document.getElementById("feedToggle");
+
+    if (!toggle) {
+        console.error("Feed toggle element not found");
+        return;
+    }
+    
+    toggle.checked = feedState.filter === FEED_FILTERS.MINE;
+    toggle.addEventListener("change", () => updateFeedPreference(toggle));
+}
+
 const tableOptions = {
   legend: { position: "none" },
   allowHtml: true,
@@ -27,6 +230,14 @@ function init() {
   const offset = new Date().toString().match(/([-\+][0-9]+)\s/)[1];
   setCookie("timezone", timezone, 10);
   setCookie("offset", offset, 10);
+  handleOptionsBoxState();
+  initFeedToggle();
+  initWorkflowLimiter();
+
+  console.log("Options box state on load:", loadOptionsBoxState());
+  console.log("Feed filter on load:", feedState.filter);
+  console.log("Workflow limiter enabled:", workflowLimiterState.enabled);
+  console.log("Workflow limit value:", workflowLimiterState.limitValue);  
 }
 
 /**
@@ -52,15 +263,66 @@ function setCookie(name, value, expireDays) {
 google.charts.load("current", { packages: ["corechart", "table", "gauge"] });
 google.charts.setOnLoadCallback(drawChart);
 
+let isSessionInvalid = false;
+
 function load(url, callback) {
+  if (isSessionInvalid) {
+    console.warn("Session is invalid. API call aborted.");
+    return;
+  }
+
   const xhr = new XMLHttpRequest();
   xhr.open("GET", url, true);
   xhr.onreadystatechange = function () {
-    if (this.readyState === 4 && this.status === 200) {
-      callback(JSON.parse(this.responseText));
+    if (this.readyState === 4) {
+      if (this.status === 200) {
+        callback(JSON.parse(this.responseText));
+      } else if (this.status === 401 || this.status === 403) {
+        if (isSessionInvalid === false) {
+            isSessionInvalid = true;
+            showLoginModal();
+        }
+      }
     }
   };
   xhr.send();
+}
+
+function showLoginModal() {
+  const modal = document.createElement("div");
+  modal.style.position = "fixed";
+  modal.style.top = "0";
+  modal.style.left = "0";
+  modal.style.width = "100%";
+  modal.style.height = "100%";
+  modal.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+  modal.style.display = "flex";
+  modal.style.justifyContent = "center";
+  modal.style.alignItems = "center";
+  modal.style.zIndex = "1000";
+
+  const modalContent = document.createElement("div");
+  modalContent.style.backgroundColor = "#fff";
+  modalContent.style.padding = "20px";
+  modalContent.style.borderRadius = "8px";
+  modalContent.style.textAlign = "center";
+  modalContent.innerHTML = `
+    <h2>Session Expired</h2>
+    <p>Your session has expired. Please login again.</p>
+    <button id="cancelBtn" style="margin-right: 10px;">Cancel</button>
+    <button id="loginBtn">Login</button>
+  `;
+
+  modal.appendChild(modalContent);
+  document.body.appendChild(modal);
+
+  document.getElementById("cancelBtn").addEventListener("click", () => {
+    modal.remove();
+  });
+
+  document.getElementById("loginBtn").addEventListener("click", () => {
+    window.location.href = "login.php";
+  });
 }
 
 /**
@@ -139,7 +401,7 @@ function load30Interval() {
   load("api/v1/cpanel", showCPanel);
   load("api/v1/messages", showMessages);
   load("api/v1/queues", showQueues);
-  load("api/v1/webhooks", showWebhook);
+  load(`api/v1/webhooks?feedOptionsFilter=${feedState.filter}&workflowsLimiterEnabled=${workflowLimiterState.enabled}&workflowsLimiterQuantity=${workflowLimiterState.limitValue}`, showWebhook);
 }
 
 /**
@@ -232,18 +494,70 @@ function drawChart() {
 function showGitHubStats() {
   const refresh = Math.floor(Math.random() * 100000);
 
-  document.getElementById("gh_stats").src =
+  const statsUrl =
     "https://github-readme-stats-guibranco.vercel.app/api" +
     "?username=guibranco&line_height=28&card_width=490&hide_title=true&hide_border=true" +
     "&show_icons=true&theme=chartreuse-dark&icon_color=7FFF00&include_all_commits=true" +
     "&count_private=true&show=reviews,discussions_started&count_private=true&refresh=" +
     refresh;
 
-  document.getElementById("gh_streak").src =
+  const streakUrl =
     "https://github-readme-streak-stats-guibranco.vercel.app/" +
     "?user=guibranco&theme=github-green-purple&fire=FF6600&refresh=" +
     refresh;
+
+  const statsImg = document.getElementById("gh_stats");
+  const streakImg = document.getElementById("gh_streak");
+
+  if (!statsImg || !streakImg) {
+    console.error("GitHub stats image elements not found in the DOM");
+    return;
+  }
+function loadImage(imgElement, url, options = {}) {
+  const {
+    maxRetries = 10,
+    retryDelay = 2000,
+    timeout = 30000
+  } = options;
+
+  const startTime = Date.now();
+
+  function cleanup() {
+    imgElement.onload = null;
+    imgElement.onerror = null;
+  }
+
+  imgElement.onload = () => {
+    console.log(`${imgElement.id} loaded successfully.`);
+    cleanup();
+  };
+
+  imgElement.onerror = () => {
+    if (maxRetries > 0 && (Date.now() - startTime) < timeout) {
+      console.warn(
+        `${imgElement.id} failed to load. Retrying... (${maxRetries} retries left)`
+      );
+      setTimeout(
+        () => loadImage(imgElement, url, { ...options, maxRetries: maxRetries - 1 }),
+        retryDelay
+      );
+    } else {
+      console.error(
+        `${imgElement.id} failed to load after ${
+          maxRetries === 0 ? 'maximum retries' : 'timeout'
+        }.`
+      );
+      cleanup();
+    }
+  };
+
+  imgElement.src = url;
 }
+
+  loadImage(statsImg, statsUrl);
+  loadImage(streakImg, streakUrl);
+}
+
 
 /**
  * Renders a table displaying project data from AppVeyor using Google Charts.

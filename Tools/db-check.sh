@@ -40,7 +40,9 @@ if [ "$EXISTS" -eq 1 ]; then
     echo "not_found=false" >>"$GITHUB_OUTPUT"
 else
     MESSAGE="The \`schema version\` table **does not** exist."
-    echo "::warning file=$0,line=$LINENO::$MESSAGE"
+    if [ "$DB_ENV" == "PRD" ]; then
+        echo "::warning file=$0,line=$LINENO::$MESSAGE"
+    fi
     echo ":thumbsdown: $MESSAGE" >>"$GITHUB_STEP_SUMMARY"
     echo "not_found=true" >>"$GITHUB_OUTPUT"
 fi

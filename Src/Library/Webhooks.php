@@ -58,16 +58,29 @@ class Webhooks
         }
 
         if ($response->statusCode === $expectedStatusCode) {
-            return json_decode($response->body);
+            return json_decode($response->body, true);
         }
 
         $error = $response->statusCode == -1 ? $response->error : $response->body;
         throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
     }
 
-    public function getDashboard()
+    public function getDashboard($feedOptionsFilter, $workflowsLimiterQuantity)
     {
-        return $this->doRequest("github", "get", 200);
+        $allowedFilters = ['all', 'mine'];
+        if (!in_array($feedOptionsFilter, $allowedFilters)) {
+            throw new \InvalidArgumentException('Invalid filter value provided');
+        }
+        $endpoint = sprintf("github?feedOptionsFilter=%s", urlencode($feedOptionsFilter));
+        $response = $this->doRequest($endpoint, "get", 200);
+        if ($workflowsLimiterQuantity <= 0) {
+            return $response;
+        }
+
+        $min = min($workflowsLimiterQuantity, count($response["workflow_runs"]));
+        $response["workflow_runs"] = array_slice($response["workflow_runs"], 0, $min);
+
+        return $response;
     }
 
     public function getWebhook($sequence)

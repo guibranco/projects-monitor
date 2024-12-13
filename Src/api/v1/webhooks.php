@@ -4,6 +4,7 @@ require_once 'session_validator.php';
 require_once '../../vendor/autoload.php';
 
 use GuiBranco\ProjectsMonitor\Library\Webhooks;
+use GuiBranco\ProjectsMonitor\Library\GitHub;
 
 $allowedFilters = ['all', 'mine'];
 $feedOptionsFilter = isset($_GET["feedOptionsFilter"]) && in_array($_GET["feedOptionsFilter"], $allowedFilters)

@@ -118,7 +118,9 @@ else
     err=$(mysql -h "$MYSQL_HOST" --protocol tcp "--user=$MYSQL_USER" "--database=$MYSQL_DB" <$WORKING_SQL_FILE 2>&1)
     if [ "$err" != "" ]; then
         echo "::error file=$0,line=$LINENO::$err"
-        echo "error=$err" >>"$GITHUB_OUTPUT"
+        echo "error=true" >>"$GITHUB_OUTPUT"        
+        escaped_error=$(echo "$err" | sed 's/%/%25/g' | sed 's/\r/%0D/g' | sed 's/\n/%0A/g')
+        echo "error_message=$escaped_error" >>"$GITHUB_OUTPUT"
         exit 1
     fi
 fi

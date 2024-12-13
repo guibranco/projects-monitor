@@ -48,7 +48,6 @@ if (isset($_SERVER['HTTP_HOST']) && $_SERVER["HTTP_HOST"] === "localhost:8000") 
 }
 
 if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
-    error_log("Unauthorized access attempt: " . $_SERVER['REMOTE_ADDR']." in ".$_SERVER["SCRIPT_NAME"]);
     sendErrorResponse("Unauthorized access: User is not logged in.");
 }
 

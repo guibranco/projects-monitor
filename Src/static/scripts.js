@@ -490,7 +490,7 @@ function drawChart() {
   setInterval(load30Interval, 30 * 1000);
   setInterval(load60Interval, 60 * 1000);
   setInterval(load300Interval, 300 * 1000);
-  setInterval(showGitHubStats, 60 * 15 * 1000);
+  setInterval(showGitHubStatsAndWakatime, 60 * 15 * 1000);
 }
 
 /**

@@ -124,7 +124,7 @@ class WorkflowLimiterState {
 
   set limitValue(value) {
     const limit = parseInt(value, 10);
-    if (isNaN(limit) || limit < 1) {
+    if (Number.isNaN(limit) || limit < 1) {
       throw new Error(
         "Invalid workflow limit value. Must be a number greater than 0."
       );

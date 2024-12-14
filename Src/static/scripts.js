@@ -643,8 +643,10 @@ function showAppVeyor(response) {
  * showCPanel(response);
  */
 function showCPanel(response) {
-  showCPanelUsage(response["usage"]);
-
+  if (response["usage"] !== null) {
+    showCPanelUsage(response["usage"]);
+  }
+  
   const dataLogFiles = google.visualization.arrayToDataTable(
     response["error_log_files"]
   );

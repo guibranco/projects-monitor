@@ -49,7 +49,7 @@ class CPanel
     /**
      * The function getRequest sends a GET request to a specified module and action with parameters,
      * handling authorization and error responses.
-     * 
+     *
      * @param module The `module` parameter in the `getRequest` function represents the module or
      * endpoint of the API that you want to make a request to. It could be a specific resource or
      * functionality that you are trying to access or interact with. Examples of modules could be
@@ -61,7 +61,7 @@ class CPanel
      * @param parameters The `getRequest` function you provided is used to make a GET request to a
      * specified URL with the given parameters. The parameters are typically key-value pairs that will
      * be appended to the URL as query parameters.
-     * 
+     *
      * @return The function `getRequest` is returning the JSON decoded body of the response if the
      * status code is 200. If the status code is not 200, it throws a `RequestException` with the error
      * details.
@@ -88,7 +88,7 @@ class CPanel
     /**
      * The function `searchFiles` uses cPanel API to search for files matching a regex pattern in a
      * specified directory.
-     * 
+     *
      * @param regex The `regex` parameter in the `searchFiles` function is used to specify a regular
      * expression pattern that will be used to search for files in the specified directory (``).
      * The function sends a request to the cPanel API using the provided regex pattern and directory
@@ -97,7 +97,7 @@ class CPanel
      * you want to search for files. It specifies the directory within which the search operation will
      * be performed. You need to provide the directory path as a string when calling the `searchFiles`
      * function.
-     * 
+     *
      * @return The function `searchFiles` is returning the data obtained from a cPanel API call to
      * search for files matching a specified regex pattern in a specified directory. The function
      * constructs the necessary parameters for the API call, sends the request using the `getRequest`
@@ -119,11 +119,11 @@ class CPanel
     /**
      * The function `loadStats` retrieves file statistics using cPanel's JSON API and returns an array
      * containing information such as file size, creation time, modification time, and file type.
-     * 
+     *
      * @param fullPath The `loadStats` function is used to load statistics (stats) for a file specified
      * by the `fullPath` parameter. The function extracts the directory path and file name from the
      * `fullPath`, then makes a request to the cPanel API to get the stats for that file.
-     * 
+     *
      * @return An array containing information about the file specified by the `` parameter is
      * being returned. The array includes the following keys and corresponding values:
      * - "fullPath": The full path of the file
@@ -164,12 +164,12 @@ class CPanel
     /**
      * The function `loadContent` retrieves the contents of a file using cPanel's Fileman module and
      * returns relevant information about the file.
-     * 
+     *
      * @param fullPath The `loadContent` function you provided is a private function that loads the
      * content of a file specified by the `fullPath` parameter. The function extracts the directory and
      * file name from the full path, constructs parameters for a cPanel API request to view the file,
      * sends the request, and returns
-     * 
+     *
      * @return An array is being returned with the following keys and values:
      * - "fullPath" => the full path of the file
      * - "dirname" => the directory name of the file
@@ -204,7 +204,7 @@ class CPanel
     /**
      * The function `getErrorLogFiles` retrieves information about error log files, excluding those in
      * a ".trash" directory, and returns an array sorted by directory, size, and creation time.
-     * 
+     *
      * @return The function `getErrorLogFiles` returns an array of error log files with their
      * directory, size, and creation time. If no error log files are found, an empty array is returned.
      * The array is sorted in ascending order by directory name. The first element of the array is an
@@ -237,7 +237,7 @@ class CPanel
     /**
      * The function `getErrorLogMessages` retrieves error log messages from files, parses the content,
      * and returns an array of error log details sorted by date.
-     * 
+     *
      * @return The function `getErrorLogMessages` returns an array of error log messages. Each message
      * includes the date, directory, error message, file, and line number where the error occurred. If
      * no error log messages are found, an empty array is returned. The array is sorted by date in
@@ -281,7 +281,7 @@ class CPanel
     /**
      * The function `getCrons` retrieves cron jobs from cPanel, formats them, and returns an array with
      * time expressions and corresponding commands.
-     * 
+     *
      * @return array|null The `getCrons` function returns an array of cron jobs with their
      * corresponding time expressions and commands. The array includes a header row with "Expression"
      * and "Command" labels, followed by each cron job entry consisting of a time expression badge and
@@ -323,7 +323,7 @@ class CPanel
     /**
      * The function `getUsageData` retrieves and formats usage data from a cPanel endpoint for specific
      * resource types.
-     * 
+     *
      * @return array|null The `getUsageData` function returns an array of usage data for specific
      * resources like CPU, memory, processes, etc. The data is fetched from a cPanel endpoint,
      * processed, and then returned as an array containing information such as resource ID,

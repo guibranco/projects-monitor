@@ -692,6 +692,12 @@ function showCPanel(response) {
   cronjobs.draw(dataCronjobs, tableOptions);
 }
 
+/**
+ * The function `showCPanelUsage` processes data to create gauge charts for different usage metrics in
+ * a control panel interface.
+ * @param data - The `showCPanelUsage` function takes in an array of data objects as a parameter. Each
+ * object in the array should have the following structure:
+ */
 function showCPanelUsage(data) {
   const usageData = data.map((item) => ({
     id: item.id,
@@ -719,6 +725,21 @@ function showCPanelUsage(data) {
   }
 }
 
+/**
+ * The function `createGaugeChart` creates a doughnut chart using Chart.js to display a single value
+ * within a specified range.
+ * @param ctx - The `ctx` parameter in the `createGaugeChart` function is the 2D drawing context for
+ * the chart. It is typically obtained by calling `getContext('2d')` on a canvas element. This context
+ * is used to draw the chart on the canvas.
+ * @param label - The `label` parameter is the text that will be displayed on the gauge chart to
+ * represent the value being visualized. It could be something like "Progress", "Sales", "Temperature",
+ * etc.
+ * @param value - The `value` parameter represents the current value that you want to display on the
+ * gauge chart.
+ * @param max - The `max` parameter in the `createGaugeChart` function represents the maximum value
+ * that the gauge chart can display. This value is used to calculate the remaining portion of the chart
+ * based on the `value` provided.
+ */
 function createGaugeChart(ctx, label, value, max) {
   new Chart(ctx, {
     type: "doughnut",

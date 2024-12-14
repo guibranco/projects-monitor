@@ -90,21 +90,20 @@ class CPanel
      * The function `searchFiles` uses cPanel API to search for files matching a regex pattern in a
      * specified directory.
      *
-     * @param regex The `regex` parameter in the `searchFiles` function is used to specify a regular
-     * expression pattern that will be used to search for files in the specified directory (``).
-     * The function sends a request to the cPanel API using the provided regex pattern and directory
-     * path to search for files that match
-     * @param dir The `dir` parameter in the `searchFiles` function represents the directory path where
-     * you want to search for files. It specifies the directory within which the search operation will
-     * be performed. You need to provide the directory path as a string when calling the `searchFiles`
-     * function.
+     * @param string regex The `regex` parameter in the `searchFiles` function is used to specify a
+     * regular expression pattern that will be used to search for files in the specified directory
+     * (``). The function sends a request to the cPanel API using the provided regex pattern and
+     * directory path to search for files that match
+     * @param string dir The `dir` parameter in the `searchFiles` function represents the directory
+     * path where you want to search for files matching the specified regex pattern. This parameter
+     * should be a string that specifies the directory path in which you want to perform the search.
+     * For example, it could be something like "/home/user
      *
-     * @return The function `searchFiles` is returning the data obtained from a cPanel API call to
-     * search for files matching a specified regex pattern in a specified directory. The function
-     * constructs the necessary parameters for the API call, sends the request using the `getRequest`
-     * method, and then returns the data retrieved from the API call.
+     * @return mixed The function `searchFiles` is returning the data obtained from a cPanel API call
+     * to search for files based on the provided regex pattern and directory. The function returns the
+     * data retrieved from the API call, specifically the data within the `cpanelresult` object.
      */
-    private function searchFiles($regex, $dir)
+    private function searchFiles(string $regex, string $dir): mixed
     {
         $parameters = array(
             "cpanel_jsonapi_module" => "Fileman",
@@ -118,22 +117,23 @@ class CPanel
     }
 
     /**
-     * The function `loadStats` retrieves file statistics using cPanel's JSON API and returns an array
-     * containing information such as file size, creation time, modification time, and file type.
+     * The function `loadStats` retrieves file statistics using cPanel's JSON API and returns an
+     * array of relevant information.
      *
-     * @param fullPath The `loadStats` function is used to load statistics (stats) for a file specified
-     * by the `fullPath` parameter. The function extracts the directory path and file name from the
-     * `fullPath`, then makes a request to the cPanel API to get the stats for that file.
+     * @param string fullPath The `fullPath` parameter in the `loadStats` function is a string that
+     * represents the full path of a file for which you want to load statistics. It is used to
+     * extract the directory name and file name from the path to make an API request to get the
+     * file statistics.
      *
-     * @return An array containing information about the file specified by the `` parameter is
-     * being returned. The array includes the following keys and corresponding values:
+     * @return array An array containing information about the file specified by the ``.
+     * The array includes the following keys:
      * - "fullPath": The full path of the file
      * - "dirname": The directory name of the file
      * - "basename": The base name of the file
      * - "size": The size of the file
-     * - "ctime": The creation time
+     * - "ctime": The creation time of the file formatted as "H:i
      */
-    private function loadStats($fullPath)
+    private function loadStats(string $fullPath): array
     {
         $pathInfo = pathinfo($fullPath);
         $parameters = array(
@@ -163,21 +163,22 @@ class CPanel
     }
 
     /**
-     * The function `loadContent` retrieves the contents of a file using cPanel's Fileman module and
-     * returns relevant information about the file.
+     * The function `loadContent` retrieves file content using cPanel JSON API and returns an array
+     * with file information if successful, otherwise null.
      *
-     * @param fullPath The `loadContent` function you provided is a private function that loads the
-     * content of a file specified by the `fullPath` parameter. The function extracts the directory and
-     * file name from the full path, constructs parameters for a cPanel API request to view the file,
-     * sends the request, and returns
+     * @param string fullPath The `fullPath` parameter in the `loadContent` function is a string that
+     * represents the full path to a file. It is used to extract the directory name and the file name
+     * from the path in order to make a request to retrieve the content of the file using cPanel's JSON
+     * API.
      *
-     * @return An array is being returned with the following keys and values:
+     * @return array|null The function `loadContent` returns an array with the following keys and
+     * values:
      * - "fullPath" => the full path of the file
      * - "dirname" => the directory name of the file
      * - "basename" => the base name of the file
-     * - "contents" => the contents of the file obtained from the response
+     * - "contents" => the contents of the file
      */
-    private function loadContent($fullPath)
+    private function loadContent(string $fullPath): array|null
     {
         $pathInfo = pathinfo($fullPath);
         $parameters = array(
@@ -203,15 +204,15 @@ class CPanel
     }
 
     /**
-     * The function `getErrorLogFiles` retrieves information about error log files, excluding those in
-     * a ".trash" directory, and returns an array sorted by directory, size, and creation time.
+     * This PHP function retrieves error log files, excluding those in a ".trash" directory, and
+     * returns an array of directory paths, file sizes, and creation times sorted in ascending order.
      *
-     * @return The function `getErrorLogFiles` returns an array of error log files with their
-     * directory, size, and creation time. If no error log files are found, an empty array is returned.
-     * The array is sorted in ascending order by directory name. The first element of the array is an
-     * array containing column headers: "Directory", "Size", "Creation time".
+     * @return array An array of error log files with their directory, size, and creation time
+     * information is being returned. If no error log files are found, an empty array is returned. The
+     * array is sorted in ascending order based on directory names. The first element of the array
+     * contains column headers for "Directory", "Size", and "Creation time".
      */
-    public function getErrorLogFiles()
+    public function getErrorLogFiles(): array
     {
         $result = array();
         $items = $this->searchFiles("error_log", "/");
@@ -235,16 +236,17 @@ class CPanel
         return $result;
     }
 
+    
     /**
      * The function `getErrorLogMessages` retrieves error log messages from files, parses the content,
-     * and returns an array of error log details sorted by date.
+     * and returns an array of formatted error log entries.
      *
-     * @return The function `getErrorLogMessages` returns an array of error log messages. Each message
-     * includes the date, directory, error message, file, and line number where the error occurred. If
-     * no error log messages are found, an empty array is returned. The array is sorted by date in
-     * ascending order, and the column headers are included at the beginning of the array.
+     * @return array An array of error log messages is being returned. Each error log message includes
+     * the date, directory, error message, file, and line number where the error occurred. The array is
+     * sorted in ascending order by date and includes a header row with column names: "Date", "Error
+     * Log", "Error", "File", "Line". If no error log messages are found, an empty array is returned
      */
-    public function getErrorLogMessages()
+    public function getErrorLogMessages(): array
     {
         $result = array();
         $items = $this->searchFiles("error_log", "/");

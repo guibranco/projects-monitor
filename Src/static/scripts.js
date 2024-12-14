@@ -741,7 +741,7 @@ function showCPanelUsage(data) {
  * based on the `value` provided.
  */
 function createGaugeChart(ctx, label, value, max) {
-  new Chart(ctx, {
+  return new Chart(ctx, {
     type: "doughnut",
     data: {
       labels: [label],

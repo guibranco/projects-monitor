@@ -77,7 +77,7 @@ class CPanel
         if ($parameters !== null && count($parameters) > 0) {
             $url .= "?" . http_build_query($parameters);
         }
-        
+
         $headers = [
             "Authorization: cpanel {$this->username}:{$this->apiToken}",
             "Accept: application/json",

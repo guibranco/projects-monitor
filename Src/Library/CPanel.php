@@ -69,7 +69,15 @@ class CPanel
      */
     private function getRequest(string $module, string $action, array|null $parameters): mixed
     {
-        $url = $this->baseUrl . "/" . $module . "/" . $action . "?" . http_build_query($parameters);
+        $url = $this->baseUrl . "/" . $module;
+        if (!empty($action)) {
+            $url .= "/" . $action;
+        }
+
+        if ($parameters !== null && count($parameters) > 0) {
+            $url .= "?" . http_build_query($parameters);
+        }
+        
         $headers = [
             "Authorization: cpanel {$this->username}:{$this->apiToken}",
             "Accept: application/json",

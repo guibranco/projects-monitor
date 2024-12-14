@@ -236,7 +236,7 @@ class CPanel
         return $result;
     }
 
-    
+
     /**
      * The function `getErrorLogMessages` retrieves error log messages from files, parses the content,
      * and returns an array of formatted error log entries.

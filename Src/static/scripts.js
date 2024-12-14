@@ -368,7 +368,7 @@ function preset() {
   showPreset = false;
   showCPanel(
     JSON.parse(
-      '{"error_log_files":[],"error_log_messages":[],"total_error_messages":0,"cronjobs":[]}'
+      '{"error_log_files":[],"error_log_messages":[],"total_error_messages":0,"cronjobs":[], "usage": []}'
     )
   );
   showGitHub(

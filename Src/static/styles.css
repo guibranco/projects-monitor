@@ -2,10 +2,6 @@ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
     background-color:  rgb(13, 17, 23);
 }
 
@@ -45,13 +41,11 @@ code {
 }
 
 .gauge-container {
-    width: 50%;
+    width: 100%;
     background-color: white;
-    border-radius: 8px;
     padding: 20px;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 20px;
     justify-items: center;
     align-items: center;

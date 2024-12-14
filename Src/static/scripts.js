@@ -3,202 +3,218 @@ const FEED_FILTER_KEY = "feedFilter";
 const WORKFLOW_LIMITER_KEY = "workflowLimiter";
 const WORKFLOW_LIMIT_VALUE_KEY = "workflowLimitValue";
 const VALID_STATES = {
-    OPEN: "open",
-    COLLAPSED: "collapsed"
+  OPEN: "open",
+  COLLAPSED: "collapsed",
 };
 const FEED_FILTERS = {
-    ALL: "all",
-    MINE: "mine"
+  ALL: "all",
+  MINE: "mine",
 };
 
 function saveOptionsBoxState(state) {
-    if (!Object.values(VALID_STATES).includes(state)) {
-        console.error(`Invalid state: ${state}. Must be one of ${Object.values(VALID_STATES)}`);
-        return;
-    }
-    try {
-         localStorage.setItem(OPTIONS_BOX_STATE_KEY, state);
-    } catch (e) {
-        console.error('Failed to save options box state:', e);
-    }
+  if (!Object.values(VALID_STATES).includes(state)) {
+    console.error(
+      `Invalid state: ${state}. Must be one of ${Object.values(VALID_STATES)}`
+    );
+    return;
+  }
+  try {
+    localStorage.setItem(OPTIONS_BOX_STATE_KEY, state);
+  } catch (e) {
+    console.error("Failed to save options box state:", e);
+  }
 }
 function loadOptionsBoxState() {
-    try {
-        return localStorage.getItem(OPTIONS_BOX_STATE_KEY) || VALID_STATES.OPEN;
-    } catch (e) {
-        console.error('Failed to load options box state:', e);
-        return VALID_STATES.OPEN;
-    }
+  try {
+    return localStorage.getItem(OPTIONS_BOX_STATE_KEY) || VALID_STATES.OPEN;
+  } catch (e) {
+    console.error("Failed to load options box state:", e);
+    return VALID_STATES.OPEN;
+  }
 }
-function handleOptionsBoxState(){
-    const optionsBoxState = loadOptionsBoxState();
-    const optionsBox = document.getElementById("userMenu");
+function handleOptionsBoxState() {
+  const optionsBoxState = loadOptionsBoxState();
+  const optionsBox = document.getElementById("userMenu");
 
-    if (!optionsBox) {
-        console.error('Options box element not found');
-        return;
-    }
+  if (!optionsBox) {
+    console.error("Options box element not found");
+    return;
+  }
 
-    if (optionsBoxState === VALID_STATES.COLLAPSED) {
-        optionsBox.classList.remove("show");
-    } else {
-        optionsBox.classList.add("show");
-    }
+  if (optionsBoxState === VALID_STATES.COLLAPSED) {
+    optionsBox.classList.remove("show");
+  } else {
+    optionsBox.classList.add("show");
+  }
 
-    optionsBox.addEventListener("shown.bs.collapse", () => saveOptionsBoxState(VALID_STATES.OPEN));
-    optionsBox.addEventListener("hidden.bs.collapse", () => saveOptionsBoxState(VALID_STATES.COLLAPSED));
+  optionsBox.addEventListener("shown.bs.collapse", () =>
+    saveOptionsBoxState(VALID_STATES.OPEN)
+  );
+  optionsBox.addEventListener("hidden.bs.collapse", () =>
+    saveOptionsBoxState(VALID_STATES.COLLAPSED)
+  );
 }
 
 class FeedState {
-    constructor() {
-        this._filter = this.loadFeedFilter();
-    }
+  constructor() {
+    this._filter = this.loadFeedFilter();
+  }
 
-    get filter() {
-        return this._filter;
-    }
+  get filter() {
+    return this._filter;
+  }
 
-    set filter(value) {
-        if (!Object.values(FEED_FILTERS).includes(value)) {
-            throw new Error(`Invalid filter: ${value}`);
-        }
-        this._filter = value;
-        this.saveFeedFilter(value);
+  set filter(value) {
+    if (!Object.values(FEED_FILTERS).includes(value)) {
+      throw new Error(`Invalid filter: ${value}`);
     }
+    this._filter = value;
+    this.saveFeedFilter(value);
+  }
 
-    loadFeedFilter() {
-        try {
-            const storedFilter = localStorage.getItem(FEED_FILTER_KEY);
-            return Object.values(FEED_FILTERS).includes(storedFilter) ? storedFilter : FEED_FILTERS.ALL;
-        } catch (e) {
-            console.error("Failed to load feed filter:", e);
-            return FEED_FILTERS.ALL;
-        }
+  loadFeedFilter() {
+    try {
+      const storedFilter = localStorage.getItem(FEED_FILTER_KEY);
+      return Object.values(FEED_FILTERS).includes(storedFilter)
+        ? storedFilter
+        : FEED_FILTERS.ALL;
+    } catch (e) {
+      console.error("Failed to load feed filter:", e);
+      return FEED_FILTERS.ALL;
     }
+  }
 
-    saveFeedFilter(value) {
-        try {
-            localStorage.setItem(FEED_FILTER_KEY, value);
-        } catch (e) {
-            console.error("Failed to save feed filter:", e);
-        }
+  saveFeedFilter(value) {
+    try {
+      localStorage.setItem(FEED_FILTER_KEY, value);
+    } catch (e) {
+      console.error("Failed to save feed filter:", e);
     }
+  }
 }
 
 const feedState = new FeedState();
 
 function updateFeedPreference(toggle) {
-    if (!toggle || typeof toggle.checked !== 'boolean') {
-        console.error('Invalid toggle parameter');
-        return;
-    }
-    feedState.filter = toggle.checked ? FEED_FILTERS.MINE : FEED_FILTERS.ALL;
+  if (!toggle || typeof toggle.checked !== "boolean") {
+    console.error("Invalid toggle parameter");
+    return;
+  }
+  feedState.filter = toggle.checked ? FEED_FILTERS.MINE : FEED_FILTERS.ALL;
 }
 
 class WorkflowLimiterState {
-    constructor() {
-        this._enabled = this.loadLimiterState();
-        this._limitValue = this.loadLimiterValue();
-    }
+  constructor() {
+    this._enabled = this.loadLimiterState();
+    this._limitValue = this.loadLimiterValue();
+  }
 
-    get enabled() {
-        return this._enabled;
-    }
+  get enabled() {
+    return this._enabled;
+  }
 
-    set enabled(value) {
-        this._enabled = Boolean(value);
-        this.saveLimiterState(this._enabled);
-    }
+  set enabled(value) {
+    this._enabled = Boolean(value);
+    this.saveLimiterState(this._enabled);
+  }
 
-    get limitValue() {
-        return this._limitValue;
-    }
+  get limitValue() {
+    return this._limitValue;
+  }
 
-    set limitValue(value) {
-        const limit = parseInt(value, 10);
-        if (isNaN(limit) || limit < 1) {
-            throw new Error("Invalid workflow limit value. Must be a number greater than 0.");
-        }
-        this._limitValue = limit;
-        this.saveLimiterValue(limit);
+  set limitValue(value) {
+    const limit = parseInt(value, 10);
+    if (Number.isNaN(limit) || limit < 1) {
+      throw new Error(
+        "Invalid workflow limit value. Must be a number greater than 0."
+      );
     }
+    this._limitValue = limit;
+    this.saveLimiterValue(limit);
+  }
 
-    loadLimiterState() {
-        try {
-            return JSON.parse(localStorage.getItem(WORKFLOW_LIMITER_KEY)) || false;
-        } catch (e) {
-            console.error("Failed to load workflow limiter state:", e);
-            return false;
-        }
+  loadLimiterState() {
+    try {
+      return JSON.parse(localStorage.getItem(WORKFLOW_LIMITER_KEY)) || false;
+    } catch (e) {
+      console.error("Failed to load workflow limiter state:", e);
+      return false;
     }
+  }
 
-    saveLimiterState(state) {
-        try {
-            localStorage.setItem(WORKFLOW_LIMITER_KEY, JSON.stringify(state));
-        } catch (e) {
-            console.error("Failed to save workflow limiter state:", e);
-        }
+  saveLimiterState(state) {
+    try {
+      localStorage.setItem(WORKFLOW_LIMITER_KEY, JSON.stringify(state));
+    } catch (e) {
+      console.error("Failed to save workflow limiter state:", e);
     }
+  }
 
-    loadLimiterValue() {
-        try {
-            return parseInt(localStorage.getItem(WORKFLOW_LIMIT_VALUE_KEY), 10) || 10;
-        } catch (e) {
-            console.error("Failed to load workflow limit value:", e);
-            return 10;
-        }
+  loadLimiterValue() {
+    try {
+      return parseInt(localStorage.getItem(WORKFLOW_LIMIT_VALUE_KEY), 10) || 10;
+    } catch (e) {
+      console.error("Failed to load workflow limit value:", e);
+      return 10;
     }
+  }
 
-    saveLimiterValue(value) {
-        try {
-            localStorage.setItem(WORKFLOW_LIMIT_VALUE_KEY, value);
-        } catch (e) {
-            console.error("Failed to save workflow limit value:", e);
-        }
+  saveLimiterValue(value) {
+    try {
+      localStorage.setItem(WORKFLOW_LIMIT_VALUE_KEY, value);
+    } catch (e) {
+      console.error("Failed to save workflow limit value:", e);
     }
+  }
 }
 
 const workflowLimiterState = new WorkflowLimiterState();
 
 function initWorkflowLimiter() {
-    const workflowToggle = document.getElementById("workflowToggle");
-    const workflowLimitContainer = document.getElementById("workflowLimitContainer");
-    const workflowLimitInput = document.getElementById("workflowLimitInput");
+  const workflowToggle = document.getElementById("workflowToggle");
+  const workflowLimitContainer = document.getElementById(
+    "workflowLimitContainer"
+  );
+  const workflowLimitInput = document.getElementById("workflowLimitInput");
 
-    if (!workflowToggle || !workflowLimitContainer || !workflowLimitInput) {
-        console.error("Workflow limiter elements not found");
-        return;
+  if (!workflowToggle || !workflowLimitContainer || !workflowLimitInput) {
+    console.error("Workflow limiter elements not found");
+    return;
+  }
+
+  workflowToggle.checked = workflowLimiterState.enabled;
+  workflowLimitContainer.style.display = workflowLimiterState.enabled
+    ? "block"
+    : "none";
+
+  workflowLimitInput.value = workflowLimiterState.limitValue;
+
+  workflowToggle.addEventListener("change", () => {
+    workflowLimiterState.enabled = workflowToggle.checked;
+    workflowLimitContainer.style.display = workflowLimiterState.enabled
+      ? "block"
+      : "none";
+  });
+
+  workflowLimitInput.addEventListener("input", () => {
+    try {
+      workflowLimiterState.limitValue = workflowLimitInput.value;
+    } catch (e) {
+      console.error(e.message);
     }
-
-    workflowToggle.checked = workflowLimiterState.enabled;
-    workflowLimitContainer.style.display = workflowLimiterState.enabled ? "block" : "none";
-
-    workflowLimitInput.value = workflowLimiterState.limitValue;
-
-    workflowToggle.addEventListener("change", () => {
-        workflowLimiterState.enabled = workflowToggle.checked;
-        workflowLimitContainer.style.display = workflowLimiterState.enabled ? "block" : "none";
-    });
-
-    workflowLimitInput.addEventListener("input", () => {
-        try {
-            workflowLimiterState.limitValue = workflowLimitInput.value;
-        } catch (e) {
-            console.error(e.message);
-        }
-    });
+  });
 }
 
 function initFeedToggle() {
-    const toggle = document.getElementById("feedToggle");
+  const toggle = document.getElementById("feedToggle");
 
-    if (!toggle) {
-        console.error("Feed toggle element not found");
-        return;
-    }
-    
-    toggle.checked = feedState.filter === FEED_FILTERS.MINE;
-    toggle.addEventListener("change", () => updateFeedPreference(toggle));
+  if (!toggle) {
+    console.error("Feed toggle element not found");
+    return;
+  }
+
+  toggle.checked = feedState.filter === FEED_FILTERS.MINE;
+  toggle.addEventListener("change", () => updateFeedPreference(toggle));
 }
 
 const tableOptions = {
@@ -212,19 +228,19 @@ const tableOptions = {
 window.addEventListener("load", init);
 
 /**
-     * Initializes the application by setting the user's timezone and offset in cookies.
-     * This function retrieves the current timezone and UTC offset of the user's system,
-     * then stores these values in cookies for later use.
-     *
-     * @function init
-     * @returns {void} This function does not return a value.
-     *
-     * @example
-     * // Call the init function to set the timezone and offset cookies
-     * init();
-     *
-     * @throws {Error} Throws an error if there is an issue setting the cookies.
-     */
+ * Initializes the application by setting the user's timezone and offset in cookies.
+ * This function retrieves the current timezone and UTC offset of the user's system,
+ * then stores these values in cookies for later use.
+ *
+ * @function init
+ * @returns {void} This function does not return a value.
+ *
+ * @example
+ * // Call the init function to set the timezone and offset cookies
+ * init();
+ *
+ * @throws {Error} Throws an error if there is an issue setting the cookies.
+ */
 function init() {
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const offset = new Date().toString().match(/([-\+][0-9]+)\s/)[1];
@@ -237,22 +253,22 @@ function init() {
   console.log("Options box state on load:", loadOptionsBoxState());
   console.log("Feed filter on load:", feedState.filter);
   console.log("Workflow limiter enabled:", workflowLimiterState.enabled);
-  console.log("Workflow limit value:", workflowLimiterState.limitValue);  
+  console.log("Workflow limit value:", workflowLimiterState.limitValue);
 }
 
 /**
-     * Sets a cookie in the browser with the specified name, value, and expiration days.
-     *
-     * @param {string} name - The name of the cookie.
-     * @param {string} value - The value to be stored in the cookie.
-     * @param {number} expireDays - The number of days until the cookie expires.
-     * 
-     * @throws {TypeError} Throws an error if the name or value is not a string, or if expireDays is not a number.
-     *
-     * @example
-     * // Set a cookie named "user" with the value "John Doe" that expires in 7 days
-     * setCookie('user', 'John Doe', 7);
-     */
+ * Sets a cookie in the browser with the specified name, value, and expiration days.
+ *
+ * @param {string} name - The name of the cookie.
+ * @param {string} value - The value to be stored in the cookie.
+ * @param {number} expireDays - The number of days until the cookie expires.
+ *
+ * @throws {TypeError} Throws an error if the name or value is not a string, or if expireDays is not a number.
+ *
+ * @example
+ * // Set a cookie named "user" with the value "John Doe" that expires in 7 days
+ * setCookie('user', 'John Doe', 7);
+ */
 function setCookie(name, value, expireDays) {
   const date = new Date();
   date.setTime(date.getTime() + expireDays * 24 * 60 * 60 * 1000);
@@ -279,8 +295,8 @@ function load(url, callback) {
         callback(JSON.parse(this.responseText));
       } else if (this.status === 401 || this.status === 403) {
         if (isSessionInvalid === false) {
-            isSessionInvalid = true;
-            showLoginModal();
+          isSessionInvalid = true;
+          showLoginModal();
         }
       }
     }
@@ -326,25 +342,25 @@ function showLoginModal() {
 }
 
 /**
-     * Initializes and displays preset information if the `showPreset` flag is true.
-     * This function retrieves various data sets in JSON format and displays them
-     * using corresponding display functions.
-     *
-     * The following data is fetched and displayed:
-     * - Error log files and messages
-     * - GitHub API usage and issues
-     * - Application hit statistics
-     * - Queue information
-     * - Webhook event statistics
-     *
-     * If `showPreset` is false, the function will terminate early without performing any actions.
-     *
-     * @throws {Error} Throws an error if JSON parsing fails for any of the data sets.
-     *
-     * @example
-     * // Assuming showPreset is true, calling preset() will display the preset information.
-     * preset();
-     */
+ * Initializes and displays preset information if the `showPreset` flag is true.
+ * This function retrieves various data sets in JSON format and displays them
+ * using corresponding display functions.
+ *
+ * The following data is fetched and displayed:
+ * - Error log files and messages
+ * - GitHub API usage and issues
+ * - Application hit statistics
+ * - Queue information
+ * - Webhook event statistics
+ *
+ * If `showPreset` is false, the function will terminate early without performing any actions.
+ *
+ * @throws {Error} Throws an error if JSON parsing fails for any of the data sets.
+ *
+ * @example
+ * // Assuming showPreset is true, calling preset() will display the preset information.
+ * preset();
+ */
 function preset() {
   if (!showPreset) {
     return;
@@ -374,50 +390,53 @@ function preset() {
 }
 
 /**
-     * Loads data from multiple API endpoints at once.
-     *
-     * This function initiates requests to various API endpoints and processes the responses
-     * using designated callback functions. The endpoints being accessed include:
-     * - AppVeyor
-     * - cPanel
-     * - Messages
-     * - Queues
-     * - Webhooks
-     *
-     * It is assumed that the `load` function is defined elsewhere in the codebase and is responsible
-     * for making the actual API calls and handling the responses.
-     *
-     * @function load30Interval
-     * @returns {void} This function does not return a value.
-     *
-     * @example
-     * // To load data from the specified endpoints, simply call:
-     * load30Interval();
-     *
-     * @throws {Error} Throws an error if any of the API requests fail.
-     */
+ * Loads data from multiple API endpoints at once.
+ *
+ * This function initiates requests to various API endpoints and processes the responses
+ * using designated callback functions. The endpoints being accessed include:
+ * - AppVeyor
+ * - cPanel
+ * - Messages
+ * - Queues
+ * - Webhooks
+ *
+ * It is assumed that the `load` function is defined elsewhere in the codebase and is responsible
+ * for making the actual API calls and handling the responses.
+ *
+ * @function load30Interval
+ * @returns {void} This function does not return a value.
+ *
+ * @example
+ * // To load data from the specified endpoints, simply call:
+ * load30Interval();
+ *
+ * @throws {Error} Throws an error if any of the API requests fail.
+ */
 function load30Interval() {
   load("api/v1/appveyor", showAppVeyor);
   load("api/v1/cpanel", showCPanel);
   load("api/v1/messages", showMessages);
   load("api/v1/queues", showQueues);
-  load(`api/v1/webhooks?feedOptionsFilter=${feedState.filter}&workflowsLimiterEnabled=${workflowLimiterState.enabled}&workflowsLimiterQuantity=${workflowLimiterState.limitValue}`, showWebhook);
+  load(
+    `api/v1/webhooks?feedOptionsFilter=${feedState.filter}&workflowsLimiterEnabled=${workflowLimiterState.enabled}&workflowsLimiterQuantity=${workflowLimiterState.limitValue}`,
+    showWebhook
+  );
 }
 
 /**
-     * Loads data from multiple API endpoints and displays the results using respective callback functions.
-     *
-     * This function is responsible for initiating data retrieval from various services, including domains,
-     * GitHub, health checks, uptime monitoring, and WireGuard configurations. Each API response is processed
-     * by a dedicated function to handle the display of the retrieved data.
-     *
-     * @function load60Interval
-     * @throws {Error} Throws an error if any of the API calls fail to execute properly.
-     *
-     * @example
-     * // Call the function to load data from all specified APIs
-     * load60Interval();
-     */
+ * Loads data from multiple API endpoints and displays the results using respective callback functions.
+ *
+ * This function is responsible for initiating data retrieval from various services, including domains,
+ * GitHub, health checks, uptime monitoring, and WireGuard configurations. Each API response is processed
+ * by a dedicated function to handle the display of the retrieved data.
+ *
+ * @function load60Interval
+ * @throws {Error} Throws an error if any of the API calls fail to execute properly.
+ *
+ * @example
+ * // Call the function to load data from all specified APIs
+ * load60Interval();
+ */
 function load60Interval() {
   load("api/v1/domains", showDomains);
   load("api/v1/github", showGitHub);
@@ -447,24 +466,24 @@ function load300Interval() {
 let showPreset = true;
 
 /**
-     * Initializes and starts the process of drawing the chart by setting up
-     * necessary presets and loading data at specified intervals.
-     *
-     * This function calls several other functions to prepare the chart,
-     * including loading statistics from GitHub and setting up data loading
-     * intervals for different time frames (30 seconds, 60 seconds, and 300 seconds).
-     *
-     * It also sets a longer interval for updating GitHub statistics every 15 minutes.
-     *
-     * @throws {Error} Throws an error if any of the called functions fail to execute.
-     *
-     * @example
-     * // To draw the chart and start data loading
-     * drawChart();
-     */
+ * Initializes and starts the process of drawing the chart by setting up
+ * necessary presets and loading data at specified intervals.
+ *
+ * This function calls several other functions to prepare the chart,
+ * including loading statistics from GitHub and setting up data loading
+ * intervals for different time frames (30 seconds, 60 seconds, and 300 seconds).
+ *
+ * It also sets a longer interval for updating GitHub statistics every 15 minutes.
+ *
+ * @throws {Error} Throws an error if any of the called functions fail to execute.
+ *
+ * @example
+ * // To draw the chart and start data loading
+ * drawChart();
+ */
 function drawChart() {
   preset();
-  showGitHubStats();
+  showGitHubStatsAndWakatime();
   load30Interval();
   load60Interval();
   load300Interval();
@@ -475,23 +494,23 @@ function drawChart() {
 }
 
 /**
-     * Updates the GitHub statistics and streak images displayed on the webpage.
-     * This function generates a random refresh parameter to ensure that the 
-     * images are updated each time the function is called, preventing caching 
-     * issues in the browser.
-     *
-     * It modifies the `src` attributes of two <img> elements with IDs 
-     * "gh_stats" and "gh_streak" to point to the respective GitHub stats 
-     * and streak stats URLs, incorporating the generated refresh parameter.
-     *
-     * @throws {Error} Throws an error if the elements with IDs "gh_stats" 
-     *                 or "gh_streak" do not exist in the document.
-     *
-     * @example
-     * // Call this function to refresh GitHub stats and streaks
-     * showGitHubStats();
-     */
-function showGitHubStats() {
+ * Updates the GitHub statistics, streak, and Wakatime images displayed on the webpage.
+ * This function generates a random refresh parameter to ensure that the
+ * images are updated each time the function is called, preventing caching
+ * issues in the browser.
+ *
+ * It modifies the `src` attributes of two <img> elements with IDs
+ * "gh_stats" and "gh_streak" to point to the respective GitHub stats
+ * and streak stats URLs, incorporating the generated refresh parameter.
+ *
+ * @throws {Error} Throws an error if the elements with IDs "gh_stats"
+ *                 or "gh_streak" do not exist in the document.
+ *
+ * @example
+ * // Call this function to refresh GitHub stats and streaks
+ * showGitHubStatsAndWakatime();
+ */
+function showGitHubStatsAndWakatime() {
   const refresh = Math.floor(Math.random() * 100000);
 
   const statsUrl =
@@ -506,58 +525,64 @@ function showGitHubStats() {
     "?user=guibranco&theme=github-green-purple&fire=FF6600&refresh=" +
     refresh;
 
+  const wakatimeUrl =
+    "https://wakatime.com/badge/user/6be975b7-7258-4475-bc73-9c0fc554430e.svg?style=for-the-badge&refresh=" +
+    refresh;
+
   const statsImg = document.getElementById("gh_stats");
   const streakImg = document.getElementById("gh_streak");
+  const wakatimeImg = document.getElementById("wakatime");
 
-  if (!statsImg || !streakImg) {
-    console.error("GitHub stats image elements not found in the DOM");
+  if (!statsImg || !streakImg || !wakatimeImg) {
+    console.error("GitHub/Wakatime stats image elements not found in the DOM");
     return;
   }
-function loadImage(imgElement, url, options = {}) {
-  const {
-    maxRetries = 10,
-    retryDelay = 2000,
-    timeout = 30000
-  } = options;
 
-  const startTime = Date.now();
+  function loadImage(imgElement, url, options = {}) {
+    const { maxRetries = 10, retryDelay = 2000, timeout = 30000 } = options;
 
-  function cleanup() {
-    imgElement.onload = null;
-    imgElement.onerror = null;
-  }
+    const startTime = Date.now();
 
-  imgElement.onload = () => {
-    console.log(`${imgElement.id} loaded successfully.`);
-    cleanup();
-  };
-
-  imgElement.onerror = () => {
-    if (maxRetries > 0 && (Date.now() - startTime) < timeout) {
-      console.warn(
-        `${imgElement.id} failed to load. Retrying... (${maxRetries} retries left)`
-      );
-      setTimeout(
-        () => loadImage(imgElement, url, { ...options, maxRetries: maxRetries - 1 }),
-        retryDelay
-      );
-    } else {
-      console.error(
-        `${imgElement.id} failed to load after ${
-          maxRetries === 0 ? 'maximum retries' : 'timeout'
-        }.`
-      );
-      cleanup();
+    function cleanup() {
+      imgElement.onload = null;
+      imgElement.onerror = null;
     }
-  };
 
-  imgElement.src = url;
-}
+    imgElement.onload = () => {
+      console.log(`${imgElement.id} loaded successfully.`);
+      cleanup();
+    };
+
+    imgElement.onerror = () => {
+      if (maxRetries > 0 && Date.now() - startTime < timeout) {
+        console.warn(
+          `${imgElement.id} failed to load. Retrying... (${maxRetries} retries left)`
+        );
+        setTimeout(
+          () =>
+            loadImage(imgElement, url, {
+              ...options,
+              maxRetries: maxRetries - 1,
+            }),
+          retryDelay
+        );
+      } else {
+        console.error(
+          `${imgElement.id} failed to load after ${
+            maxRetries === 0 ? "maximum retries" : "timeout"
+          }.`
+        );
+        cleanup();
+      }
+    };
+
+    imgElement.src = url;
+  }
 
   loadImage(statsImg, statsUrl);
   loadImage(streakImg, streakUrl);
+  loadImage(wakatimeImg, wakatimeUrl);
 }
-
 
 /**
  * Renders a table displaying project data from AppVeyor using Google Charts.
@@ -618,6 +643,8 @@ function showAppVeyor(response) {
  * showCPanel(response);
  */
 function showCPanel(response) {
+  showCPanelUsage(response["usage"]);
+
   const dataLogFiles = google.visualization.arrayToDataTable(
     response["error_log_files"]
   );
@@ -666,27 +693,102 @@ function showCPanel(response) {
 }
 
 /**
-     * Renders a table of domains using Google Visualization API.
-     *
-     * This function takes a response object containing domain data,
-     * converts it into a format suitable for visualization, and then
-     * draws the table in the specified HTML element.
-     *
-     * @param {Object} response - The response object containing domain data.
-     * @param {Array} response.domains - An array of domain data to be visualized.
-     *
-     * @throws {Error} Throws an error if the response does not contain the expected data format.
-     *
-     * @example
-     * const response = {
-     *   domains: [
-     *     ['Domain', 'Count'],
-     *     ['example.com', 10],
-     *     ['test.com', 5]
-     *   ]
-     * };
-     * showDomains(response);
-     */
+ * The function `showCPanelUsage` processes data to create gauge charts for different usage metrics in
+ * a control panel interface.
+ * @param data - The `showCPanelUsage` function takes in an array of data objects as a parameter. Each
+ * object in the array should have the following structure:
+ */
+function showCPanelUsage(data) {
+  const usageData = data.map((item) => ({
+    id: item.id,
+    label: item.description,
+    value: item.usage,
+    max: item.maximum || 100,
+  }));
+
+  const ids = {
+    lvecpu: "cpuUsageChart",
+    lvememphy: "memoryUsageChart",
+    lveep: "processCountChart",
+    lvenproc: "processEntryCountChart",
+    ftp_accounts: "ftpAccountsUsageChart",
+    mysql_databases: "databaseUsageChart",
+  };
+
+  for (const item of usageData) {
+    createGaugeChart(
+      document.getElementById(ids[item.id]),
+      item.label,
+      item.value,
+      item.max
+    );
+  }
+}
+
+/**
+ * The function `createGaugeChart` creates a doughnut chart using Chart.js to display a single value
+ * within a specified range.
+ * @param ctx - The `ctx` parameter in the `createGaugeChart` function is the 2D drawing context for
+ * the chart. It is typically obtained by calling `getContext('2d')` on a canvas element. This context
+ * is used to draw the chart on the canvas.
+ * @param label - The `label` parameter is the text that will be displayed on the gauge chart to
+ * represent the value being visualized. It could be something like "Progress", "Sales", "Temperature",
+ * etc.
+ * @param value - The `value` parameter represents the current value that you want to display on the
+ * gauge chart.
+ * @param max - The `max` parameter in the `createGaugeChart` function represents the maximum value
+ * that the gauge chart can display. This value is used to calculate the remaining portion of the chart
+ * based on the `value` provided.
+ */
+function createGaugeChart(ctx, label, value, max) {
+  return new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      labels: [label],
+      datasets: [
+        {
+          data: [value, max - value],
+          backgroundColor: ["#4CAF50", "#E0E0E0"],
+        },
+      ],
+    },
+    options: {
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: () => `${label}: ${value}/${max}`,
+          },
+        },
+      },
+      cutout: "80%",
+      rotation: -90,
+      circumference: 180,
+    },
+  });
+}
+
+/**
+ * Renders a table of domains using Google Visualization API.
+ *
+ * This function takes a response object containing domain data,
+ * converts it into a format suitable for visualization, and then
+ * draws the table in the specified HTML element.
+ *
+ * @param {Object} response - The response object containing domain data.
+ * @param {Array} response.domains - An array of domain data to be visualized.
+ *
+ * @throws {Error} Throws an error if the response does not contain the expected data format.
+ *
+ * @example
+ * const response = {
+ *   domains: [
+ *     ['Domain', 'Count'],
+ *     ['example.com', 10],
+ *     ['test.com', 5]
+ *   ]
+ * };
+ * showDomains(response);
+ */
 function showDomains(response) {
   const dataDomains = google.visualization.arrayToDataTable(
     response["domains"]
@@ -698,69 +800,69 @@ function showDomains(response) {
 }
 
 /**
-     * Displays GitHub statistics and data visualizations based on the provided response object.
-     *
-     * This function processes various metrics related to GitHub issues and pull requests,
-     * converting them into data tables for visualization. It also updates the latest release
-     * information if available.
-     *
-     * @param {Object} response - The response object containing GitHub data.
-     * @param {Object} response.issues - An object containing issue-related data.
-     * @param {number} response.issues.total_count - The total number of issues.
-     * @param {Array} response.issues.assigned - List of assigned issues.
-     * @param {Array} response.issues.authored - List of authored issues.
-     * @param {Array} response.issues.blocked - List of blocked issues.
-     * @param {Array} response.issues.bug - List of bug issues.
-     * @param {Array} response.issues.triage - List of triaged issues.
-     * @param {Array} response.issues.wip - List of work-in-progress issues.
-     * @param {Array} response.issues.others - List of other issues.
-     * @param {Object} response.pull_requests - An object containing pull request-related data.
-     * @param {number} response.pull_requests.total_count - The total number of pull requests.
-     * @param {Array} response.pull_requests.latest - List of latest pull requests.
-     * @param {Array} response.pull_requests.authored - List of authored pull requests.
-     * @param {Array} response.pull_requests.awaiting_triage - List of pull requests awaiting triage.
-     * @param {Array} response.pull_requests.blocked - List of blocked pull requests.
-     * @param {Object} response.latest_release - Information about the latest release.
-     * @param {string} response.latest_release.description - Description of the latest release.
-     * @param {string} response.latest_release.published - Publication date of the latest release.
-     * @param {string} response.latest_release.release_url - URL to the latest release.
-     * @param {string} response.latest_release.title - Title of the latest release.
-     * @param {string} response.latest_release.repository - Repository name for the latest release.
-     * @param {string} response.latest_release.author - Author of the latest release.
-     *
-     * @throws {TypeError} Throws an error if the response object is not valid or does not contain expected properties.
-     *
-     * @example
-     * const githubResponse = {
-     *   issues: {
-     *     total_count: 10,
-     *     assigned: [...],
-     *     authored: [...],
-     *     blocked: [...],
-     *     bug: [...],
-     *     triage: [...],
-     *     wip: [...],
-     *     others: [...]
-     *   },
-     *   pull_requests: {
-     *     total_count: 5,
-     *     latest: [...],
-     *     authored: [...],
-     *     awaiting_triage: [...],
-     *     blocked: [...]
-     *   },
-     *   latest_release: {
-     *     description: "Initial release",
-     *     published: "2023-01-01",
-     *     release_url: "https://github.com/user/repo/releases/tag/v1.0",
-     *     title: "v1.0",
-     *     repository: "user/repo",
-     *     author: "user"
-     *   }
-     * };
-     *
-     * showGitHub(githubResponse);
-     */
+ * Displays GitHub statistics and data visualizations based on the provided response object.
+ *
+ * This function processes various metrics related to GitHub issues and pull requests,
+ * converting them into data tables for visualization. It also updates the latest release
+ * information if available.
+ *
+ * @param {Object} response - The response object containing GitHub data.
+ * @param {Object} response.issues - An object containing issue-related data.
+ * @param {number} response.issues.total_count - The total number of issues.
+ * @param {Array} response.issues.assigned - List of assigned issues.
+ * @param {Array} response.issues.authored - List of authored issues.
+ * @param {Array} response.issues.blocked - List of blocked issues.
+ * @param {Array} response.issues.bug - List of bug issues.
+ * @param {Array} response.issues.triage - List of triaged issues.
+ * @param {Array} response.issues.wip - List of work-in-progress issues.
+ * @param {Array} response.issues.others - List of other issues.
+ * @param {Object} response.pull_requests - An object containing pull request-related data.
+ * @param {number} response.pull_requests.total_count - The total number of pull requests.
+ * @param {Array} response.pull_requests.latest - List of latest pull requests.
+ * @param {Array} response.pull_requests.authored - List of authored pull requests.
+ * @param {Array} response.pull_requests.awaiting_triage - List of pull requests awaiting triage.
+ * @param {Array} response.pull_requests.blocked - List of blocked pull requests.
+ * @param {Object} response.latest_release - Information about the latest release.
+ * @param {string} response.latest_release.description - Description of the latest release.
+ * @param {string} response.latest_release.published - Publication date of the latest release.
+ * @param {string} response.latest_release.release_url - URL to the latest release.
+ * @param {string} response.latest_release.title - Title of the latest release.
+ * @param {string} response.latest_release.repository - Repository name for the latest release.
+ * @param {string} response.latest_release.author - Author of the latest release.
+ *
+ * @throws {TypeError} Throws an error if the response object is not valid or does not contain expected properties.
+ *
+ * @example
+ * const githubResponse = {
+ *   issues: {
+ *     total_count: 10,
+ *     assigned: [...],
+ *     authored: [...],
+ *     blocked: [...],
+ *     bug: [...],
+ *     triage: [...],
+ *     wip: [...],
+ *     others: [...]
+ *   },
+ *   pull_requests: {
+ *     total_count: 5,
+ *     latest: [...],
+ *     authored: [...],
+ *     awaiting_triage: [...],
+ *     blocked: [...]
+ *   },
+ *   latest_release: {
+ *     description: "Initial release",
+ *     published: "2023-01-01",
+ *     release_url: "https://github.com/user/repo/releases/tag/v1.0",
+ *     title: "v1.0",
+ *     repository: "user/repo",
+ *     author: "user"
+ *   }
+ * };
+ *
+ * showGitHub(githubResponse);
+ */
 function showGitHub(response) {
   const dataIssues = google.visualization.arrayToDataTable([
     ["Hits", "Total"],
@@ -1011,21 +1113,21 @@ function showMessages(response) {
 }
 
 /**
-     * Displays the usage information from the provided response object in the HTML element with the ID "postman".
-     *
-     * This function checks if the "usage" property exists in the response object. If it does not exist, the function exits without making any changes to the DOM.
-     *
-     * @param {Object} response - The response object containing usage information.
-     * @param {string} response.usage - The usage information to be displayed.
-     *
-     * @returns {void} This function does not return a value.
-     *
-     * @example
-     * const apiResponse = { usage: 'API usage details here' };
-     * showPostman(apiResponse);
-     *
-     * @throws {TypeError} Throws an error if the response parameter is not an object.
-     */
+ * Displays the usage information from the provided response object in the HTML element with the ID "postman".
+ *
+ * This function checks if the "usage" property exists in the response object. If it does not exist, the function exits without making any changes to the DOM.
+ *
+ * @param {Object} response - The response object containing usage information.
+ * @param {string} response.usage - The usage information to be displayed.
+ *
+ * @returns {void} This function does not return a value.
+ *
+ * @example
+ * const apiResponse = { usage: 'API usage details here' };
+ * showPostman(apiResponse);
+ *
+ * @throws {TypeError} Throws an error if the response parameter is not an object.
+ */
 function showPostman(response) {
   if (typeof response["usage"] === "undefined") {
     return;
@@ -1123,51 +1225,51 @@ function showUpTimeRobot(response) {
 }
 
 /**
-     * Displays various statistics and data visualizations based on the provided webhook response.
-     *
-     * This function processes the response object containing statistics, events, and other relevant data,
-     * converting them into data tables suitable for visualization using Google Charts. It generates line charts,
-     * pie charts, and gauge charts to represent the data visually in the specified HTML elements.
-     *
-     * @param {Object} response - The response object containing webhook statistics and data.
-     * @param {Array} response.statistics - An array of statistics data for webhooks.
-     * @param {Array} response.statistics_github - An array of GitHub webhook statistics data.
-     * @param {Array} response.events - An array of events data.
-     * @param {Array} response.feed - An array of feed data.
-     * @param {Array} response.senders - An array of sender data.
-     * @param {Array} response.repositories - An array of repository data.
-     * @param {Array} response.workflow_runs - An array of workflow run data.
-     * @param {number} response.total - The total number of webhooks received.
-     * @param {number} response.failed - The number of failed webhooks.
-     * @param {number} response.total_workflow_runs - The total number of workflow runs.
-     * @param {number} response.installations - The number of installations.
-     * @param {number} response.installation_repositories_count - The count of installation repositories.
-     * @param {Array} response.installation_repositories - An array of installation repository data.
-     * @param {string} [response.check_hooks_date] - The date when hooks were last checked (optional).
-     *
-     * @throws {Error} Throws an error if the Google Charts library is not loaded or if the response format is invalid.
-     *
-     * @example
-     * const webhookResponse = {
-     *   statistics: [...],
-     *   statistics_github: [...],
-     *   events: [...],
-     *   feed: [...],
-     *   senders: [...],
-     *   repositories: [...],
-     *   workflow_runs: [...],
-     *   total: 100,
-     *   failed: 5,
-     *   total_workflow_runs: 50,
-     *   installations: 10,
-     *   installation_repositories_count: 20,
-     *   installation_repositories: [...],
-     *   check_hooks_date: "2023-10-01T12:00:00Z"
-     * };
-     *
-     * showWebhook(webhookResponse);
-     */
-function showWebhook(response) {  
+ * Displays various statistics and data visualizations based on the provided webhook response.
+ *
+ * This function processes the response object containing statistics, events, and other relevant data,
+ * converting them into data tables suitable for visualization using Google Charts. It generates line charts,
+ * pie charts, and gauge charts to represent the data visually in the specified HTML elements.
+ *
+ * @param {Object} response - The response object containing webhook statistics and data.
+ * @param {Array} response.statistics - An array of statistics data for webhooks.
+ * @param {Array} response.statistics_github - An array of GitHub webhook statistics data.
+ * @param {Array} response.events - An array of events data.
+ * @param {Array} response.feed - An array of feed data.
+ * @param {Array} response.senders - An array of sender data.
+ * @param {Array} response.repositories - An array of repository data.
+ * @param {Array} response.workflow_runs - An array of workflow run data.
+ * @param {number} response.total - The total number of webhooks received.
+ * @param {number} response.failed - The number of failed webhooks.
+ * @param {number} response.total_workflow_runs - The total number of workflow runs.
+ * @param {number} response.installations - The number of installations.
+ * @param {number} response.installation_repositories_count - The count of installation repositories.
+ * @param {Array} response.installation_repositories - An array of installation repository data.
+ * @param {string} [response.check_hooks_date] - The date when hooks were last checked (optional).
+ *
+ * @throws {Error} Throws an error if the Google Charts library is not loaded or if the response format is invalid.
+ *
+ * @example
+ * const webhookResponse = {
+ *   statistics: [...],
+ *   statistics_github: [...],
+ *   events: [...],
+ *   feed: [...],
+ *   senders: [...],
+ *   repositories: [...],
+ *   workflow_runs: [...],
+ *   total: 100,
+ *   failed: 5,
+ *   total_workflow_runs: 50,
+ *   installations: 10,
+ *   installation_repositories_count: 20,
+ *   installation_repositories: [...],
+ *   check_hooks_date: "2023-10-01T12:00:00Z"
+ * };
+ *
+ * showWebhook(webhookResponse);
+ */
+function showWebhook(response) {
   const dataStatistics = google.visualization.arrayToDataTable(
     response["statistics"]
   );
@@ -1201,12 +1303,13 @@ function showWebhook(response) {
     ["Hits", "GH App"],
     ["GH App", response["installations"]],
   ]);
-  const dataInstallationRepositoriesCount = google.visualization.arrayToDataTable([
-    ["Hits", "GH Repos"],
-    ["GH Repos", response["installation_repositories_count"]],
-  ]);
+  const dataInstallationRepositoriesCount =
+    google.visualization.arrayToDataTable([
+      ["Hits", "GH Repos"],
+      ["GH Repos", response["installation_repositories_count"]],
+    ]);
   const dataInstallationRepositories = google.visualization.arrayToDataTable(
-     response["installation_repositories"]
+    response["installation_repositories"]
   );
 
   const optionsStatistics = {
@@ -1333,7 +1436,7 @@ function showWebhook(response) {
     document.getElementById("workflow_runs")
   );
   workflowRuns.draw(dataWorkflowRuns, tableOptions);
-    const feed = new google.visualization.Table(document.getElementById("feed"));
+  const feed = new google.visualization.Table(document.getElementById("feed"));
   feed.draw(dataFeed, tableOptions);
   const senders = new google.visualization.Table(
     document.getElementById("senders")
@@ -1363,27 +1466,27 @@ function showWebhook(response) {
 }
 
 /**
-     * Renders a WireGuard visualization table using the provided response data.
-     *
-     * This function takes a response object containing WireGuard data, converts it 
-     * into a format suitable for visualization, and then draws the table in the 
-     * specified HTML element.
-     *
-     * @param {Object} response - The response object containing WireGuard data.
-     * @param {Array} response.wireguard - An array of data to be visualized in the table.
-     *
-     * @throws {Error} Throws an error if the response does not contain the expected 
-     *                 wireguard data or if the visualization fails to render.
-     *
-     * @example
-     * const response = {
-     *   wireguard: [
-     *     ['Column1', 'Column2'],
-     *     ['Data1', 'Data2'],
-     *   ]
-     * };
-     * showWireGuard(response);
-     */
+ * Renders a WireGuard visualization table using the provided response data.
+ *
+ * This function takes a response object containing WireGuard data, converts it
+ * into a format suitable for visualization, and then draws the table in the
+ * specified HTML element.
+ *
+ * @param {Object} response - The response object containing WireGuard data.
+ * @param {Array} response.wireguard - An array of data to be visualized in the table.
+ *
+ * @throws {Error} Throws an error if the response does not contain the expected
+ *                 wireguard data or if the visualization fails to render.
+ *
+ * @example
+ * const response = {
+ *   wireguard: [
+ *     ['Column1', 'Column2'],
+ *     ['Data1', 'Data2'],
+ *   ]
+ * };
+ * showWireGuard(response);
+ */
 function showWireGuard(response) {
   const dataWireGuard = google.visualization.arrayToDataTable(
     response["wireguard"]

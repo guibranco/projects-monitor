@@ -185,7 +185,7 @@ class CPanel
         return $result;
     }
 
-    public function getCrons()
+    public function getCrons(): array|null
     {
         $result = array();
         $parameters = array(
@@ -194,6 +194,12 @@ class CPanel
             "cpanel_jsonapi_apiversion" => "2"
         );
         $response = $this->getRequest("json-api", "cpanel", $parameters);
+
+        if ($response === null || !isset($response->cpanelresult->data)) {
+            error_log("Error getting crons from cPanel");
+            return null;
+        }
+
         $lines = $response->cpanelresult->data;
         $badge = new ShieldsIo();
         foreach ($lines as $line) {
@@ -209,6 +215,37 @@ class CPanel
 
         sort($result, SORT_ASC);
         array_unshift($result, array("Expression", "Command"));
+        return $result;
+    }
+
+    public function getUsageData(): array|null
+    {
+        $endpoint = 'execute/ResourceUsage/get_usages';
+        $response = $this->getRequest($endpoint, '', []);
+
+        if ($response === null || empty($response->data)) {
+            error_log("Error getting usage data from cPanel");
+            return null;
+        }
+
+        $result = [];
+        foreach ($response->data as $item) {
+            if (in_array($item->id, ['lvecpu', 'lvememphy', 'lvenproc', 'lveep', 'ftp_accounts', 'mysql_databases'])) {
+
+                if ($item->formatter === "format_bytes") {
+                    $item->usage = $item->usage / 1024 / 1024;
+                    $item->maximum = $item->maximum / 1024 / 1024;
+                }
+
+                $result[] = [
+                    'id' => $item->id,
+                    'description' => $item->description,
+                    'usage' => $item->usage,
+                    'maximum' => $item->maximum
+                ];
+            }
+        }
+
         return $result;
     }
 }

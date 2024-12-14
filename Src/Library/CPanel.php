@@ -16,11 +16,17 @@ class CPanel
 
     private $request;
 
+    /* The above code is defining a private constant in PHP with the name `REGEX_PATTERN` and assigning
+    it a multi-line string value enclosed in triple hash symbols (` */
     private const REGEX_PATTERN =
         "/\[(?<date>\d{2}-[A-Za-z]{3}-\d{4}\s\d{2}:\d{2}:\d{2}\s[A-Za-z\/_]+?)\]\s(?<error>.+?)" .
         "(?:(?<multilineError>\n(?:.|\n)+?)\sin\s(?<file>.+?\.php)(?:\son\sline\s|:)(?<line>\d+))?" .
         "(?<stackTrace>\nStack\strace:\n(?<stackTraceDetails>(?:#\d+\s.+?\n)*)\s+thrown\sin\s.+?\.php\son\sline\s\d+)?$/m";
 
+    /**
+     * The constructor initializes configuration settings and loads cPanel API credentials from a
+     * secrets file.
+     */
     public function __construct()
     {
         $config = new Configuration();
@@ -40,7 +46,28 @@ class CPanel
         $this->request = new Request();
     }
 
-    private function getRequest($module, $action, $parameters)
+    /**
+     * The function getRequest sends a HTTP GET request with specified module, action, and parameters,
+     * handling errors and returning the JSON response.
+     *
+     * @param string module The `module` parameter in the `getRequest` function represents the module
+     * or endpoint of the API that you want to make a request to. It is typically a string that
+     * specifies the specific functionality or resource you are interacting with. For example, it could
+     * be "users", "products", "orders",
+     * @param string action The `action` parameter in the `getRequest` function represents the specific
+     * action or operation that you want to perform within the specified module. It could be a CRUD
+     * operation like create, read, update, or delete, or any other action that the module supports.
+     * This parameter helps in constructing the URL for
+     * @param array parameters The `getRequest` function you provided is a private function that sends
+     * a GET request to a specified URL with the given parameters. The function constructs the URL
+     * using the base URL, module, action, and parameters provided. It then sets the necessary headers
+     * including Authorization, Accept, and User-Agent. The function
+     *
+     * @return mixed The function `getRequest` is returning the decoded JSON response body from a GET
+     * request made to a specific URL with the provided headers. If the response status code is not
+     * 200, it will throw a `RequestException` with details about the error.
+     */
+    private function getRequest(string $module, string $action, array|null $parameters): mixed
     {
         $url = $this->baseUrl . "/" . $module . "/" . $action . "?" . http_build_query($parameters);
         $headers = [
@@ -59,7 +86,24 @@ class CPanel
         return json_decode($response->body);
     }
 
-    private function searchFiles($regex, $dir)
+    /**
+     * The function `searchFiles` uses cPanel API to search for files matching a regex pattern in a
+     * specified directory.
+     *
+     * @param string regex The `regex` parameter in the `searchFiles` function is used to specify a
+     * regular expression pattern that will be used to search for files in the specified directory
+     * (``). The function sends a request to the cPanel API using the provided regex pattern and
+     * directory path to search for files that match
+     * @param string dir The `dir` parameter in the `searchFiles` function represents the directory
+     * path where you want to search for files matching the specified regex pattern. This parameter
+     * should be a string that specifies the directory path in which you want to perform the search.
+     * For example, it could be something like "/home/user
+     *
+     * @return mixed The function `searchFiles` is returning the data obtained from a cPanel API call
+     * to search for files based on the provided regex pattern and directory. The function returns the
+     * data retrieved from the API call, specifically the data within the `cpanelresult` object.
+     */
+    private function searchFiles(string $regex, string $dir): mixed
     {
         $parameters = array(
             "cpanel_jsonapi_module" => "Fileman",
@@ -72,7 +116,24 @@ class CPanel
         return $result->cpanelresult->data;
     }
 
-    private function loadStats($fullPath)
+    /**
+     * The function `loadStats` retrieves file statistics using cPanel's JSON API and returns an
+     * array of relevant information.
+     *
+     * @param string fullPath The `fullPath` parameter in the `loadStats` function is a string that
+     * represents the full path of a file for which you want to load statistics. It is used to
+     * extract the directory name and file name from the path to make an API request to get the
+     * file statistics.
+     *
+     * @return array An array containing information about the file specified by the ``.
+     * The array includes the following keys:
+     * - "fullPath": The full path of the file
+     * - "dirname": The directory name of the file
+     * - "basename": The base name of the file
+     * - "size": The size of the file
+     * - "ctime": The creation time of the file formatted as "H:i
+     */
+    private function loadStats(string $fullPath): array
     {
         $pathInfo = pathinfo($fullPath);
         $parameters = array(
@@ -101,7 +162,23 @@ class CPanel
         );
     }
 
-    private function loadContent($fullPath)
+    /**
+     * The function `loadContent` retrieves file content using cPanel JSON API and returns an array
+     * with file information if successful, otherwise null.
+     *
+     * @param string fullPath The `fullPath` parameter in the `loadContent` function is a string that
+     * represents the full path to a file. It is used to extract the directory name and the file name
+     * from the path in order to make a request to retrieve the content of the file using cPanel's JSON
+     * API.
+     *
+     * @return array|null The function `loadContent` returns an array with the following keys and
+     * values:
+     * - "fullPath" => the full path of the file
+     * - "dirname" => the directory name of the file
+     * - "basename" => the base name of the file
+     * - "contents" => the contents of the file
+     */
+    private function loadContent(string $fullPath): array|null
     {
         $pathInfo = pathinfo($fullPath);
         $parameters = array(
@@ -126,7 +203,16 @@ class CPanel
         );
     }
 
-    public function getErrorLogFiles()
+    /**
+     * This PHP function retrieves error log files, excluding those in a ".trash" directory, and
+     * returns an array of directory paths, file sizes, and creation times sorted in ascending order.
+     *
+     * @return array An array of error log files with their directory, size, and creation time
+     * information is being returned. If no error log files are found, an empty array is returned. The
+     * array is sorted in ascending order based on directory names. The first element of the array
+     * contains column headers for "Directory", "Size", and "Creation time".
+     */
+    public function getErrorLogFiles(): array
     {
         $result = array();
         $items = $this->searchFiles("error_log", "/");
@@ -150,7 +236,17 @@ class CPanel
         return $result;
     }
 
-    public function getErrorLogMessages()
+
+    /**
+     * The function `getErrorLogMessages` retrieves error log messages from files, parses the content,
+     * and returns an array of formatted error log entries.
+     *
+     * @return array An array of error log messages is being returned. Each error log message includes
+     * the date, directory, error message, file, and line number where the error occurred. The array is
+     * sorted in ascending order by date and includes a header row with column names: "Date", "Error
+     * Log", "Error", "File", "Line". If no error log messages are found, an empty array is returned
+     */
+    public function getErrorLogMessages(): array
     {
         $result = array();
         $items = $this->searchFiles("error_log", "/");
@@ -185,7 +281,16 @@ class CPanel
         return $result;
     }
 
-    public function getCrons()
+    /**
+     * The function `getCrons` retrieves cron jobs from cPanel, formats them, and returns an array with
+     * time expressions and corresponding commands.
+     *
+     * @return array|null The `getCrons` function returns an array of cron jobs with their
+     * corresponding time expressions and commands. The array includes a header row with "Expression"
+     * and "Command" labels, followed by each cron job entry consisting of a time expression badge and
+     * the associated command.
+     */
+    public function getCrons(): array|null
     {
         $result = array();
         $parameters = array(
@@ -194,6 +299,12 @@ class CPanel
             "cpanel_jsonapi_apiversion" => "2"
         );
         $response = $this->getRequest("json-api", "cpanel", $parameters);
+
+        if ($response === null || !isset($response->cpanelresult->data)) {
+            error_log("Error getting crons from cPanel");
+            return null;
+        }
+
         $lines = $response->cpanelresult->data;
         $badge = new ShieldsIo();
         foreach ($lines as $line) {
@@ -209,6 +320,47 @@ class CPanel
 
         sort($result, SORT_ASC);
         array_unshift($result, array("Expression", "Command"));
+        return $result;
+    }
+
+    /**
+     * The function `getUsageData` retrieves and formats usage data from a cPanel endpoint for specific
+     * resource types.
+     *
+     * @return array|null The `getUsageData` function returns an array of usage data for specific
+     * resources like CPU, memory, processes, etc. The data is fetched from a cPanel endpoint,
+     * processed, and then returned as an array containing information such as resource ID,
+     * description, current usage, and maximum usage. If there is an error in fetching the data or if
+     * the response is empty, the function returns `null
+     */
+    public function getUsageData(): array|null
+    {
+        $endpoint = 'execute/ResourceUsage/get_usages';
+        $response = $this->getRequest($endpoint, '', []);
+
+        if ($response === null || empty($response->data)) {
+            error_log("Error getting usage data from cPanel");
+            return null;
+        }
+
+        $result = [];
+        foreach ($response->data as $item) {
+            if (in_array($item->id, ['lvecpu', 'lvememphy', 'lvenproc', 'lveep', 'ftp_accounts', 'mysql_databases'])) {
+
+                if ($item->formatter === "format_bytes") {
+                    $item->usage = $item->usage / 1024 / 1024;
+                    $item->maximum = $item->maximum / 1024 / 1024;
+                }
+
+                $result[] = [
+                    'id' => $item->id,
+                    'description' => $item->description,
+                    'usage' => $item->usage,
+                    'maximum' => $item->maximum
+                ];
+            }
+        }
+
         return $result;
     }
 }

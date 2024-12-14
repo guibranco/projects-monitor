@@ -28,3 +28,11 @@ code {
   font-size: 2em;
   text-align: center;
 }
+
+.floating-box {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  max-width: 300px;
+  z-index: 1050;
+}

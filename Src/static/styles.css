@@ -1,5 +1,8 @@
 body {
-  background: rgb(13, 17, 23);
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color:  rgb(13, 17, 23);
 }
 
 code {
@@ -35,4 +38,26 @@ code {
   right: 20px;
   max-width: 300px;
   z-index: 1050;
+}
+
+.gauge-container {
+    width: 100%;
+    background-color: white;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    justify-items: center;
+    align-items: center;
+}
+
+.gauge-container .gauge {
+    width: 100%;
+    max-width: 150px;
+    text-align: center;
+}
+
+.gauge-container .gauge canvas {
+    width: 100% !important;
+    height: auto !important;
 }

@@ -368,7 +368,7 @@ function preset() {
   showPreset = false;
   showCPanel(
     JSON.parse(
-      '{"error_log_files":[],"error_log_messages":[],"total_error_messages":0,"cronjobs":[]}'
+      '{"error_log_files":[],"error_log_messages":[],"total_error_messages":0,"cronjobs":[], "usage": []}'
     )
   );
   showGitHub(
@@ -490,7 +490,7 @@ function drawChart() {
   setInterval(load30Interval, 30 * 1000);
   setInterval(load60Interval, 60 * 1000);
   setInterval(load300Interval, 300 * 1000);
-  setInterval(showGitHubStats, 60 * 15 * 1000);
+  setInterval(showGitHubStatsAndWakatime, 60 * 15 * 1000);
 }
 
 /**
@@ -643,8 +643,10 @@ function showAppVeyor(response) {
  * showCPanel(response);
  */
 function showCPanel(response) {
-  showCPanelUsage(response["usage"]);
-
+  if (response["usage"] !== null) {
+    showCPanelUsage(response["usage"]);
+  }
+  
   const dataLogFiles = google.visualization.arrayToDataTable(
     response["error_log_files"]
   );

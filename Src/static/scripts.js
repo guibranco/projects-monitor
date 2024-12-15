@@ -721,8 +721,8 @@ function showCPanelUsage(data) {
     createGaugeChart(
       document.getElementById(ids[item.id]),
       item.label,
-      item.value,
-      item.max
+      parseFloat(item.value),
+      parseFloat(item.max)
     );
   }
 }

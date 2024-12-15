@@ -743,30 +743,49 @@ function showCPanelUsage(data) {
  * based on the `value` provided.
  */
 function createGaugeChart(ctx, label, value, max) {
+    const percentage = (value / max) * 100;
+    const greenEnd = 50;
+    const yellowEnd = 75;
+
+    const backgroundColor = [
+        percentage <= greenEnd
+            ? 'green'
+            : percentage <= yellowEnd
+            ? 'yellow'
+            : 'red',
+        '#E5E5E5'
+    ];
+
+    const data = {
+        datasets: [
+            {
+                data: [value, max - value],
+                backgroundColor: backgroundColor,
+                borderWidth: 0,
+            }
+        ],
+        labels: [label]
+    };
+
+    const options = {
+        responsive: true,
+        rotation: 1 * Math.PI,
+        circumference: 1 * Math.PI,
+        cutout: '80%',
+        plugins: {
+            tooltip: {
+                enabled: false
+            },
+            legend: {
+                display: false
+            }
+        }
+    };
   return new Chart(ctx, {
-    type: "doughnut",
-    data: {
-      labels: [label],
-      datasets: [
-        {
-          data: [value, max - value],
-          backgroundColor: ["#4CAF50", "#E0E0E0"],
-        },
-      ],
-    },
-    options: {
-      plugins: {
-        tooltip: {
-          callbacks: {
-            label: () => `${label}: ${value}/${max}`,
-          },
-        },
-      },
-      cutout: "80%",
-      rotation: -90,
-      circumference: 180,
-    },
-  });
+        type: 'doughnut',
+        data: data,
+        options: options
+    });
 }
 
 /**

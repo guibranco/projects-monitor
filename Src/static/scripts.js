@@ -646,7 +646,7 @@ function showCPanel(response) {
   if (response["usage"] !== null) {
     showCPanelUsage(response["usage"]);
   }
-  
+
   const dataLogFiles = google.visualization.arrayToDataTable(
     response["error_log_files"]
   );
@@ -728,44 +728,73 @@ function showCPanelUsage(data) {
 }
 
 /**
- * The function `createGaugeChart` creates a doughnut chart using Chart.js to display a single value
- * within a specified range.
- * @param ctx - The `ctx` parameter in the `createGaugeChart` function is the 2D drawing context for
- * the chart. It is typically obtained by calling `getContext('2d')` on a canvas element. This context
- * is used to draw the chart on the canvas.
- * @param label - The `label` parameter is the text that will be displayed on the gauge chart to
- * represent the value being visualized. It could be something like "Progress", "Sales", "Temperature",
- * etc.
- * @param value - The `value` parameter represents the current value that you want to display on the
- * gauge chart.
- * @param max - The `max` parameter in the `createGaugeChart` function represents the maximum value
- * that the gauge chart can display. This value is used to calculate the remaining portion of the chart
- * based on the `value` provided.
+ * Creates a gauge chart using Chart.js
+ * @param {HTMLCanvasElement} ctx - The canvas context
+ * @param {string} label - The chart label
+ * @param {number} value - The current value
+ * @param {number} max - The maximum value
+ * @param {Object} [options] - Optional configuration
+ * @param {number} [options.greenThreshold=50] - Threshold for green color (percentage)
+ * @param {number} [options.yellowThreshold=75] - Threshold for yellow color (percentage)
+ * @returns {Chart} The created chart instance
+ * @throws {Error} If parameters are invalid
  */
 function createGaugeChart(ctx, label, value, max) {
+  if (!ctx || !(ctx instanceof HTMLCanvasElement)) {
+    throw new Error("Invalid canvas context");
+  }
+  if (typeof value !== "number" || typeof max !== "number") {
+    throw new Error("Value and max must be numbers");
+  }
+  if (value < 0 || max <= 0 || value > max) {
+    throw new Error("Invalid value or max");
+  }
+
+  const thresholds = {
+    green: 50,
+    yellow: 75,
+  };
+
+  const percentage = (value / max) * 100;
+
+  const backgroundColor = [
+    percentage <= thresholds.green
+      ? "green"
+      : percentage <= thresholds.yellow
+      ? "yellow"
+      : "red",
+    "#E5E5E5",
+  ];
+
+  const data = {
+    datasets: [
+      {
+        data: [value, max - value],
+        backgroundColor: backgroundColor,
+        borderWidth: 0,
+      },
+    ],
+    labels: [label],
+  };
+
+  const options = {
+    responsive: true,
+    rotation: 1 * Math.PI,
+    circumference: 1 * Math.PI,
+    cutout: "80%",
+    plugins: {
+      tooltip: {
+        enabled: false,
+      },
+      legend: {
+        display: false,
+      },
+    },
+  };
   return new Chart(ctx, {
     type: "doughnut",
-    data: {
-      labels: [label],
-      datasets: [
-        {
-          data: [value, max - value],
-          backgroundColor: ["#4CAF50", "#E0E0E0"],
-        },
-      ],
-    },
-    options: {
-      plugins: {
-        tooltip: {
-          callbacks: {
-            label: () => `${label}: ${value}/${max}`,
-          },
-        },
-      },
-      cutout: "80%",
-      rotation: -90,
-      circumference: 180,
-    },
+    data: data,
+    options: options,
   });
 }
 

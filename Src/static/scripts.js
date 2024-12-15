@@ -727,78 +727,76 @@ function showCPanelUsage(data) {
   }
 }
 
-+(
-  /**
-+ * Creates a gauge chart using Chart.js
-+ * @param {HTMLCanvasElement} ctx - The canvas context
-+ * @param {string} label - The chart label
-+ * @param {number} value - The current value
-+ * @param {number} max - The maximum value
-+ * @param {Object} [options] - Optional configuration
-+ * @param {number} [options.greenThreshold=50] - Threshold for green color (percentage)
-+ * @param {number} [options.yellowThreshold=75] - Threshold for yellow color (percentage)
-+ * @returns {Chart} The created chart instance
-+ * @throws {Error} If parameters are invalid
-+ */
-  function createGaugeChart(ctx, label, value, max) {
-    if (!ctx || !(ctx instanceof HTMLCanvasElement)) {
-      throw new Error("Invalid canvas context");
-    }
-    if (typeof value !== "number" || typeof max !== "number") {
-      throw new Error("Value and max must be numbers");
-    }
-    if (value < 0 || max <= 0 || value > max) {
-      throw new Error("Invalid value or max");
-    }
-
-    const thresholds = {
-      green: 50,
-      yellow: 75,
-    };
-
-    const percentage = (value / max) * 100;
-
-    const backgroundColor = [
-      percentage <= thresholds.green
-        ? "green"
-        : percentage <= thresholds.yellow
-        ? "yellow"
-        : "red",
-      "#E5E5E5",
-    ];
-
-    const data = {
-      datasets: [
-        {
-          data: [value, max - value],
-          backgroundColor: backgroundColor,
-          borderWidth: 0,
-        },
-      ],
-      labels: [label],
-    };
-
-    const options = {
-      responsive: true,
-      rotation: 1 * Math.PI,
-      circumference: 1 * Math.PI,
-      cutout: "80%",
-      plugins: {
-        tooltip: {
-          enabled: false,
-        },
-        legend: {
-          display: false,
-        },
-      },
-    };
-    return new Chart(ctx, {
-      type: "doughnut",
-      data: data,
-      options: options,
-    });
+/**
+ * Creates a gauge chart using Chart.js
+ * @param {HTMLCanvasElement} ctx - The canvas context
+ * @param {string} label - The chart label
+ * @param {number} value - The current value
+ * @param {number} max - The maximum value
+ * @param {Object} [options] - Optional configuration
+ * @param {number} [options.greenThreshold=50] - Threshold for green color (percentage)
+ * @param {number} [options.yellowThreshold=75] - Threshold for yellow color (percentage)
+ * @returns {Chart} The created chart instance
+ * @throws {Error} If parameters are invalid
+ */
+function createGaugeChart(ctx, label, value, max) {
+  if (!ctx || !(ctx instanceof HTMLCanvasElement)) {
+    throw new Error("Invalid canvas context");
   }
-);
+  if (typeof value !== "number" || typeof max !== "number") {
+    throw new Error("Value and max must be numbers");
+  }
+  if (value < 0 || max <= 0 || value > max) {
+    throw new Error("Invalid value or max");
+  }
+
+  const thresholds = {
+    green: 50,
+    yellow: 75,
+  };
+
+  const percentage = (value / max) * 100;
+
+  const backgroundColor = [
+    percentage <= thresholds.green
+      ? "green"
+      : percentage <= thresholds.yellow
+      ? "yellow"
+      : "red",
+    "#E5E5E5",
+  ];
+
+  const data = {
+    datasets: [
+      {
+        data: [value, max - value],
+        backgroundColor: backgroundColor,
+        borderWidth: 0,
+      },
+    ],
+    labels: [label],
+  };
+
+  const options = {
+    responsive: true,
+    rotation: 1 * Math.PI,
+    circumference: 1 * Math.PI,
+    cutout: "80%",
+    plugins: {
+      tooltip: {
+        enabled: false,
+      },
+      legend: {
+        display: false,
+      },
+    },
+  };
+  return new Chart(ctx, {
+    type: "doughnut",
+    data: data,
+    options: options,
+  });
+}
 
 /**
  * Renders a table of domains using Google Visualization API.

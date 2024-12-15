@@ -779,8 +779,8 @@ function createGaugeChart(ctx, label, value, max) {
 
   const options = {
     responsive: true,
-    rotation: 1 * Math.PI,
-    circumference: 1 * Math.PI,
+    rotation: -90,
+    circumference: 180,
     cutout: "80%",
     plugins: {
       tooltip: {

@@ -668,7 +668,7 @@ function showCPanel(response) {
   }));
 
   for (const item of usageData) {
-    drawGaugeChart(item.label, item.value, item.elementId, gaugeOptions);
+    drawGaugeChart(item.label, item.value, item.elementId, { ...gaugeOptions, max: item.maximum, redTo: item.maximum });
   }
 }
 

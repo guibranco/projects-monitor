@@ -45,5 +45,6 @@
         "viewfile",
         "wakatime",
         "zerocool"
-    ]
+    ],
+    "sarif-viewer.connectToGithubCodeScanning": "on"
 }

@@ -599,10 +599,6 @@ function showGitHubStatsAndWakatime() {
  * showAppVeyor(response);
  */
 function showAppVeyor(response) {
-  if (!google.visualization) {
-    throw new Error("Google Charts library not loaded");
-  }
-
   drawDataTable(response["projects"], "appveyor", tableOptions);
 }
 
@@ -992,10 +988,6 @@ function showQueues(response) {
  * showUpTimeRobot(response);
  */
 function showUpTimeRobot(response) {
-  if (!google.visualization) {
-    throw new Error("Google Charts library not loaded");
-  }
-
   drawDataTable(response["monitors"], "uptimerobot", tableOptions);
 }
 
@@ -1181,10 +1173,6 @@ function showWebhook(response) {
  * showWireGuard(response);
  */
 function showWireGuard(response) {
-  if (!google.visualization) {
-    throw new Error("Google Charts library not loaded");
-  }
-
   drawDataTable(response["wireguard"], "wireguard", tableOptions);
 }
 

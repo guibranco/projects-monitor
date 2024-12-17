@@ -307,11 +307,14 @@ function load(url, callback) {
 function showLoginModal() {
   const modal = document.createElement("div");
   modal.classList.add("modal-backdrop");
+  modal.setAttribute("role", "dialog");
+  modal.setAttribute("aria-modal", "true");
+  modal.setAttribute("aria-labelledby", "modalTitle");  
 
   const modalContent = document.createElement("div");
   modalContent.classList.add("modal-content");
   modalContent.innerHTML = `
-    <h2>Session Expired</h2>
+    <h2 id="modalTitle">Session Expired</h2>
     <p>Your session has expired. Please login again.</p>
     <button id="cancelBtn">Cancel</button>
     <button id="loginBtn">Login</button>

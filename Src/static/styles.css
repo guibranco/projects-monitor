@@ -39,25 +39,3 @@ code {
   max-width: 300px;
   z-index: 1050;
 }
-
-.gauge-container {
-    width: 100%;
-    background-color: white;
-    padding: 20px;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    justify-items: center;
-    align-items: center;
-}
-
-.gauge-container .gauge {
-    width: 100%;
-    max-width: 250px;
-    text-align: center;
-}
-
-.gauge-container .gauge canvas {
-    width: 100% !important;
-    height: auto !important;
-}

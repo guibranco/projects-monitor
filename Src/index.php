@@ -74,26 +74,12 @@ $configuration = new Configuration();
       <div id="webhooks_statistics_github" style="width: 100%; height: 400px;"></div>
       <div style="clear:both;"></div>
       <div style="width: 50%; float: left;">
-         <div class="gauge-container">
-            <div class="gauge">
-               <canvas id="cpuUsageChart"></canvas>
-            </div>
-            <div class="gauge">
-               <canvas id="memoryUsageChart"></canvas>
-            </div>
-            <div class="gauge">
-               <canvas id="processCountChart"></canvas>
-            </div>
-            <div class="gauge">
-               <canvas id="processEntryCountChart"></canvas>
-            </div>
-            <div class="gauge">
-               <canvas id="ftpAccountsUsageChart"></canvas>
-            </div>
-            <div class="gauge">
-               <canvas id="databaseUsageChart"></canvas>
-            </div>
-         </div>
+         <div id="gauge_chart_cpu" class="gauge"></div>
+         <div id="gauge_chart_memory" class="gauge"></div>
+         <div id="gauge_chart_entry_process" class="gauge"></div>
+         <div id="gauge_chart_process" class="gauge"></div>
+         <div id="gauge_chart_databases" class="gauge"></div>
+         <div id="gauge_chart_ftp_accounts" class="gauge"></div>
          <div id="gauge_chart_1" class="gauge"></div>
          <div id="gauge_chart_5" class="gauge"></div>
          <div id="gauge_chart_6" class="gauge"></div>
@@ -195,7 +181,6 @@ $configuration = new Configuration();
    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
       integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
    <script src="https://www.gstatic.com/charts/loader.js"></script>
-   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
    <script src="static/scripts.js?<?php echo filemtime("static/scripts.js"); ?>"></script>
    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
    <script>

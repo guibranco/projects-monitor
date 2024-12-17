@@ -306,26 +306,14 @@ function load(url, callback) {
 
 function showLoginModal() {
   const modal = document.createElement("div");
-  modal.style.position = "fixed";
-  modal.style.top = "0";
-  modal.style.left = "0";
-  modal.style.width = "100%";
-  modal.style.height = "100%";
-  modal.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
-  modal.style.display = "flex";
-  modal.style.justifyContent = "center";
-  modal.style.alignItems = "center";
-  modal.style.zIndex = "1000";
+  modal.classList.add("modal-backdrop");
 
   const modalContent = document.createElement("div");
-  modalContent.style.backgroundColor = "#fff";
-  modalContent.style.padding = "20px";
-  modalContent.style.borderRadius = "8px";
-  modalContent.style.textAlign = "center";
+  modalContent.classList.add("modal-content");
   modalContent.innerHTML = `
     <h2>Session Expired</h2>
     <p>Your session has expired. Please login again.</p>
-    <button id="cancelBtn" style="margin-right: 10px;">Cancel</button>
+    <button id="cancelBtn">Cancel</button>
     <button id="loginBtn">Login</button>
   `;
 
@@ -718,84 +706,13 @@ function showCPanelUsage(data) {
   };
 
   for (const item of usageData) {
-    createGaugeChart(
-      document.getElementById(ids[item.id]),
-      item.label,
-      parseFloat(item.value),
-      parseFloat(item.max)
-    );
+    // createGaugeChart(
+    //   document.getElementById(ids[item.id]),
+    //   item.label,
+    //   parseFloat(item.value),
+    //   parseFloat(item.max)
+    // );
   }
-}
-
-/**
- * Creates a gauge chart using Chart.js
- * @param {HTMLCanvasElement} ctx - The canvas context
- * @param {string} label - The chart label
- * @param {number} value - The current value
- * @param {number} max - The maximum value
- * @param {Object} [options] - Optional configuration
- * @param {number} [options.greenThreshold=50] - Threshold for green color (percentage)
- * @param {number} [options.yellowThreshold=75] - Threshold for yellow color (percentage)
- * @returns {Chart} The created chart instance
- * @throws {Error} If parameters are invalid
- */
-function createGaugeChart(ctx, label, value, max) {
-  if (!ctx || !(ctx instanceof HTMLCanvasElement)) {
-    throw new Error("Invalid canvas context");
-  }
-  if (typeof value !== "number" || typeof max !== "number") {
-    throw new Error("Value and max must be numbers");
-  }
-  if (value < 0 || max <= 0 || value > max) {
-    throw new Error("Invalid value or max");
-  }
-
-  const thresholds = {
-    green: 50,
-    yellow: 75,
-  };
-
-  const percentage = (value / max) * 100;
-
-  const backgroundColor = [
-    percentage <= thresholds.green
-      ? "green"
-      : percentage <= thresholds.yellow
-      ? "yellow"
-      : "red",
-    "#E5E5E5",
-  ];
-
-  const data = {
-    datasets: [
-      {
-        data: [value, max - value],
-        backgroundColor: backgroundColor,
-        borderWidth: 0,
-      },
-    ],
-    labels: [label],
-  };
-
-  const options = {
-    responsive: true,
-    rotation: -90,
-    circumference: 180,
-    cutout: "80%",
-    plugins: {
-      tooltip: {
-        enabled: false,
-      },
-      legend: {
-        display: false,
-      },
-    },
-  };
-  return new Chart(ctx, {
-    type: "doughnut",
-    data: data,
-    options: options,
-  });
 }
 
 /**

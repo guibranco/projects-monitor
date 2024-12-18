@@ -1198,7 +1198,7 @@ function drawChartByType(data, chartType, elementId, options, useView = false) {
   const dataTable = google.visualization.arrayToDataTable(data);
 
   if(useView) {
-    const view = new google.visualization.DataView(data);
+    const view = new google.visualization.DataView(dataTable);
     view.setColumns([0, 4]);
     chart.draw(view, options);
 

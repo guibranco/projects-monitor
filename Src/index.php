@@ -83,7 +83,7 @@ $configuration = new Configuration();
          <div id="gauge_chart_webhooks" class="gauge"></div>
          <div id="gauge_chart_issues" class="gauge"></div>
          <div id="gauge_chart_pull_requests" class="gauge"></div>
-         <div id="gauge_chart_workflows_runs" class="gauge"></div>
+         <div id="gauge_chart_gauge_chart_workflows_runs" class="gauge"></div>
          <div id="gauge_chart_installed_apps" class="gauge"></div>
          <div id="gauge_chart_webhooks_failed" class="gauge"></div>
          <div id="gauge_chart_queues" class="gauge"></div>
@@ -128,7 +128,7 @@ $configuration = new Configuration();
       <div style="clear:both;"></div>
       <div style="width: 50%; float: left; background-color: white;">
          <div class="topping">Issues Blocked</div>
-         <div id="issues_blocked"></div>
+         <div id="blocked"></div>
          <div class="topping">Pull Requests Blocked</div>
          <div id="pull_requests_blocked"></div>
          <div class="topping">Feed</div>

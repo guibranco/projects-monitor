@@ -1221,8 +1221,8 @@ function drawChartByType(data, chartType, elementId, options, useView = false) {
 }
 
 
-function drawDataTable(data, elementId, options) {
-  return drawChartByType(data, "table", elementId, options);
+function drawDataTable(data, elementId, options, useView = false) {
+  return drawChartByType(data, "table", elementId, options, useView);
 }
 
 function drawLineChart(data, elementId, options) {

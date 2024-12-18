@@ -658,26 +658,39 @@ function showCPanel(response) {
     mysql_databases: "gauge_chart_databases",
   };
 
+  const labels = {
+    lvecpu: "CPU",
+    lvememphy: "Memory",
+    lveep: "Entry Processes",
+    lvenproc: "Processes",
+    ftp_accounts: "FTPs",
+    mysql_databases: "Databases",
+  };
+
   const usageData = response["usage"].map((item) => ({
     elementId: ids[item.id],
-    label: item.description,
+    label: labels[item.id],
     value: parseFloat(item.usage),
     maximum: item.maximum || 100,
   }));
 
-  const gaugeOptionsUsage = {
-    width: "100%",
-    height: "100%",
-    min: 0,
-    greenFrom: 0,
-    greenTo: 50,
-    yellowFrom: 50,
-    yellowTo: 75,
-    redFrom: 75,
-  };
-
   for (const item of usageData) {
-    drawGaugeChart(item.label, item.value, item.elementId, { ...gaugeOptionsUsage, max: item.maximum, redTo: item.maximum });
+    const greenTo = parseInt(item.maximum * 0.5);
+    const yellowTo = parseInt(item.maximum * 0.75);
+    
+    const gaugeOptionsUsage = {
+      width: "100%",
+      height: "100%",
+      min: 0,
+      max: item.maximum,
+      greenFrom: 0,
+      greenTo: greenTo,
+      yellowFrom: greenTo,
+      yellowTo: yellowTo,
+      redFrom: yellowTo,
+      redTo: item.maximum,
+    };
+    drawGaugeChart(item.label, item.value, item.elementId, gaugeOptionsUsage);
   }
 }
 

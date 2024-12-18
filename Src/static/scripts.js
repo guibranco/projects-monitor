@@ -1176,47 +1176,52 @@ function drawChartByType(data, chartType, elementId, options, useView = false) {
     return;
   }
 
-  let chart;
+  const result = {
+    chartType,
+    elementId,
+    useView,
+  };
+
   switch (chartType) {
     case "table":
-      chart = new google.visualization.Table(element);
+      result.chart = new google.visualization.Table(element);
       break;
     case "line":
-      chart = new google.visualization.LineChart(element);
+      result.chart = new google.visualization.LineChart(element);
       break;
     case "pie":
-      chart = new google.visualization.PieChart(element);
+      result.chart = new google.visualization.PieChart(element);
       break;
     case "gauge":
-      chart = new google.visualization.Gauge(element);
+      result.chart = new google.visualization.Gauge(element);
       break;
     default:
       console.error(`Invalid chart type: ${chartType}`);
       return;
   }
 
-  const dataTable = google.visualization.arrayToDataTable(data);
+  result.dataTable = google.visualization.arrayToDataTable(data);
 
   if(useView) {
-    const view = new google.visualization.DataView(dataTable);
-    view.setColumns([0, 4]);
-    chart.draw(view, options);
+    result.view = new google.visualization.DataView(result.dataTable);
+    result.view.setColumns([0, 4]);
+    result.chart.draw(result.view, options);
 
-    google.visualization.events.addListener(chart, 'select', function () {
-        const selection = chart.getSelection();
+    google.visualization.events.addListener(result.chart, 'select', function () {
+        const selection = result.chart.getSelection();
         if (selection.length > 0) {
           const row = selection[0].row;
-          const item = data.getValue(row, 0);
-          const value = data.getValue(row, 1);
-          const hiddenInfo = data.getValue(row, 2);
+          const item = result.dataTable.getValue(row, 0);
+          const value = result.dataTable.getValue(row, 1);
+          const hiddenInfo = result.dataTable.getValue(row, 2);
           alert(`You clicked on ${item} (Value: ${value}).\nHidden Info: ${hiddenInfo}`);
         }
     });  
   } else {
-    chart.draw(dataTable, options);
+    result.chart.draw(result.dataTable, options);
   }
   
-  return chart;
+  return result;
 }
 
 

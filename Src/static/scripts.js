@@ -1123,7 +1123,7 @@ function showWebhook(response) {
   drawDataTable(response["repositories"], "repositories", tableOptions);
   drawDataTable(response["installation_repositories"], "installed_repositories", tableOptions);
   drawDataTable(response["workflow_runs"], "workflow_runs", tableOptions);
-  drawDataTable(response["feed"], "feed", tableOptions);
+  drawDataTable(response["feed"], "feed", tableOptions, true);
   drawPieChart(response["events"], "pie_chart_1", optionsEvents);
   drawGaugeChart("GH WH", response["total"], "gauge_chart_webhooks", gaugeOptionsTotal);
   drawGaugeChart("WH Failed", response["failed"], "gauge_chart_webhooks_failed", gaugeOptions);
@@ -1158,7 +1158,7 @@ function showWireGuard(response) {
   drawDataTable(response["wireguard"], "wireguard", tableOptions);
 }
 
-function drawChartByType(data, chartType, elementId, options) {
+function drawChartByType(data, chartType, elementId, options, useView = false) {
 
   if (!google.visualization) {
     console.error("Google Visualization API not loaded");
@@ -1176,32 +1176,57 @@ function drawChartByType(data, chartType, elementId, options) {
     return;
   }
 
-  let chart;
+  const result = {
+    chartType,
+    elementId,
+    useView,
+  };
+
   switch (chartType) {
     case "table":
-      chart = new google.visualization.Table(element);
+      result.chart = new google.visualization.Table(element);
       break;
     case "line":
-      chart = new google.visualization.LineChart(element);
+      result.chart = new google.visualization.LineChart(element);
       break;
     case "pie":
-      chart = new google.visualization.PieChart(element);
+      result.chart = new google.visualization.PieChart(element);
       break;
     case "gauge":
-      chart = new google.visualization.Gauge(element);
+      result.chart = new google.visualization.Gauge(element);
       break;
     default:
       console.error(`Invalid chart type: ${chartType}`);
       return;
   }
 
-  const dataTable = google.visualization.arrayToDataTable(data);
-  chart.draw(dataTable, options);
+  result.dataTable = google.visualization.arrayToDataTable(data);
+
+  if(useView) {
+    result.view = new google.visualization.DataView(result.dataTable);
+    result.view.setColumns([0, 4]);
+    result.chart.draw(result.view, options);
+
+    google.visualization.events.addListener(result.chart, 'select', function () {
+        const selection = result.chart.getSelection();
+        if (selection.length > 0) {
+          const row = selection[0].row;
+          const item = result.dataTable.getValue(row, 0);
+          const value = result.dataTable.getValue(row, 1);
+          const hiddenInfo = result.dataTable.getValue(row, 2);
+          alert(`You clicked on ${item} (Value: ${value}).\nHidden Info: ${hiddenInfo}`);
+        }
+    });  
+  } else {
+    result.chart.draw(result.dataTable, options);
+  }
+  
+  return result;
 }
 
 
-function drawDataTable(data, elementId, options) {
-  return drawChartByType(data, "table", elementId, options);
+function drawDataTable(data, elementId, options, useView = false) {
+  return drawChartByType(data, "table", elementId, options, useView);
 }
 
 function drawLineChart(data, elementId, options) {

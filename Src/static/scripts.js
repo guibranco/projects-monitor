@@ -642,7 +642,7 @@ function showCPanel(response) {
     redTo: 1000,
   };
 
-  drawGaugeChart("Log errors", response["total_error_messages"], "gauge_chart_7", gaugeOptions);
+  drawGaugeChart("Log errors", response["total_error_messages"], "gauge_chart_log_errors", gaugeOptions);
   drawDataTable(response["error_log_files"], "error_log_files", tableOptions);
   drawDataTable(
     response["error_log_messages"],
@@ -808,8 +808,8 @@ function showGitHub(response) {
     redTo: 1000,
   };
   
-  drawGaugeChart("GH Issues", response["issues"]["total_count"], "gauge_chart_5", gaugeOptions);
-  drawGaugeChart("GH PRs", response["pull_requests"]["total_count"], "gauge_chart_6", gaugeOptions);
+  drawGaugeChart("GH Issues", response["issues"]["total_count"], "gauge_chart_issues", gaugeOptions);
+  drawGaugeChart("GH PRs", response["pull_requests"]["total_count"], "gauge_chart_pull_requests", gaugeOptions);
 
   drawDataTable(response["pull_requests"]["awaiting_triage"], "pull_requests_triage", tableOptions);
   drawDataTable(response["pull_requests"]["latest"], "pull_requests_latest", tableOptions);
@@ -893,7 +893,7 @@ function showMessages(response) {
   };
 
   drawDataTable(response["grouped"], "messages_grouped", tableOptions);
-  drawGaugeChart("PM Errors", response["total"], "gauge_chart_3", optionsTotal);
+  drawGaugeChart("PM Errors", response["total"], "gauge_chart_pm_errors", optionsTotal);
   drawPieChart(response["byApplications"], "pie_chart_2", optionsByApplications);
 }
 
@@ -961,7 +961,7 @@ function showQueues(response) {
   };
 
   drawDataTable(response["queues"], "queues", tableOptions);
-  drawGaugeChart("Queues", response["total"], "gauge_chart_8", optionsTotal);
+  drawGaugeChart("Queues", response["total"], "gauge_chart_queues", optionsTotal);
 }
 
 /**
@@ -1143,10 +1143,10 @@ function showWebhook(response) {
   drawDataTable(response["workflow_runs"], "workflow_runs", tableOptions);
   drawDataTable(response["feed"], "feed", tableOptions);
   drawPieChart(response["events"], "pie_chart_1", optionsEvents);
-  drawGaugeChart("GH WH", response["total"], "gauge_chart_1", optionsTotal);
-  drawGaugeChart("WH Failed", response["failed"], "gauge_chart_2", optionsFailed);
-  drawGaugeChart("GH WRs", response["total_workflow_runs"], "gauge_chart_8", optionsTotalWorkflowRuns);
-  drawGaugeChart("GH App", response["installations"], "gauge_chart_9", optionsInstallations);
+  drawGaugeChart("GH WH", response["total"], "gauge_chart_webhooks", optionsTotal);
+  drawGaugeChart("WH Failed", response["failed"], "gauge_chart_webhooks_failed", optionsFailed);
+  drawGaugeChart("GH WRs", response["total_workflow_runs"], "gauge_chart_workflows_runs", optionsTotalWorkflowRuns);
+  drawGaugeChart("GH App", response["installations"], "gauge_chart_installed_apps", optionsInstallations);
   drawGaugeChart("GH Repos", response["installation_repositories_count"], "gauge_chart_installation_repositories", optionsInstallations);
 }
 
@@ -1177,28 +1177,53 @@ function showWireGuard(response) {
 }
 
 function drawDataTable(data, elementId, options) {
+  if (!data || !elementId || !options) {
+    console.error('Invalid parameters passed to drawDataTable');
+    return;
+  }
+  const element = document.getElementById(elementId);
+  if (!element) {
+    console.error(`Element with id ${elementId} not found`);
+    return;
+  }
   const dataTable = google.visualization.arrayToDataTable(data);
-  const table = new google.visualization.Table(
-    document.getElementById(elementId)
-  );
+  const table = new google.visualization.Table(element);
   table.draw(dataTable, options);
 }
 
 function drawPieChart(data, elementId, options) {
+  if (!data || !elementId || !options) {
+    console.error('Invalid parameters passed to drawPieChart');
+    return;
+  }
+  const element = document.getElementById(elementId);
+  if (!element) {
+    console.error(`Element with id ${elementId} not found`);
+    return;
+  }
   const dataTable = google.visualization.arrayToDataTable(data);
-  const chart = new google.visualization.PieChart(
-    document.getElementById(elementId)
-  );
+  const chart = new google.visualization.PieChart(element);
   chart.draw(dataTable, options);
 }
 
 function drawGaugeChart(label, value, elementId, options) {
-  const dataTable = google.visualization.arrayToDataTable([
+  if (!label || value === undefined || !elementId || !options) {
+    console.error('Invalid parameters passed to drawGaugeChart');
+    return;
+  }
+
+  const element = document.getElementById(elementId);
+
+  if (!element) {
+    console.error(`Element with id ${elementId} not found`);
+    return;
+  }
+
+  const data = [
     ["", ""],
     [label, value],
-  ]);
-  const chart = new google.visualization.Gauge(
-    document.getElementById(elementId)
-  );
+  ];
+  const dataTable = google.visualization.arrayToDataTable(data);
+  const chart = new google.visualization.Gauge(element);
   chart.draw(dataTable, options);
 }

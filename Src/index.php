@@ -80,15 +80,15 @@ $configuration = new Configuration();
          <div id="gauge_chart_process" class="gauge"></div>
          <div id="gauge_chart_databases" class="gauge"></div>
          <div id="gauge_chart_ftp_accounts" class="gauge"></div>
-         <div id="gauge_chart_1" class="gauge"></div>
-         <div id="gauge_chart_5" class="gauge"></div>
-         <div id="gauge_chart_6" class="gauge"></div>
-         <div id="gauge_chart_8" class="gauge"></div>
-         <div id="gauge_chart_9" class="gauge"></div>
-         <div id="gauge_chart_2" class="gauge"></div>
-         <div id="gauge_chart_4" class="gauge"></div>
-         <div id="gauge_chart_3" class="gauge"></div>
-         <div id="gauge_chart_7" class="gauge"></div>
+         <div id="gauge_chart_webhooks" class="gauge"></div>
+         <div id="gauge_chart_issues" class="gauge"></div>
+         <div id="gauge_chart_pull_requests" class="gauge"></div>
+         <div id="gauge_chart_gauge_chart_workflows_runs" class="gauge"></div>
+         <div id="gauge_chart_installed_apps" class="gauge"></div>
+         <div id="gauge_chart_webhooks_failed" class="gauge"></div>
+         <div id="gauge_chart_queues" class="gauge"></div>
+         <div id="gauge_chart_pm_errors" class="gauge"></div>
+         <div id="gauge_chart_log_errors" class="gauge"></div>
          <div id="gauge_chart_installation_repositories" class="gauge"></div>
       </div>
       <div style="width: 50%; float: left;">

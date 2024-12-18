@@ -1123,7 +1123,7 @@ function showWebhook(response) {
   drawDataTable(response["repositories"], "repositories", tableOptions);
   drawDataTable(response["installation_repositories"], "installed_repositories", tableOptions);
   drawDataTable(response["workflow_runs"], "workflow_runs", tableOptions);
-  drawDataTable(response["feed"], "feed", tableOptions, true);
+  drawDataTable(response["feed"], "feed", tableOptions, 5);
   drawPieChart(response["events"], "pie_chart_1", optionsEvents);
   drawGaugeChart("GH WH", response["total"], "gauge_chart_webhooks", gaugeOptionsTotal);
   drawGaugeChart("WH Failed", response["failed"], "gauge_chart_webhooks_failed", gaugeOptions);
@@ -1158,7 +1158,7 @@ function showWireGuard(response) {
   drawDataTable(response["wireguard"], "wireguard", tableOptions);
 }
 
-function drawChartByType(data, chartType, elementId, options, useView = false) {
+function drawChartByType(data, chartType, elementId, options, hideColumn = -1) {
 
   if (!google.visualization) {
     console.error("Google Visualization API not loaded");
@@ -1202,9 +1202,9 @@ function drawChartByType(data, chartType, elementId, options, useView = false) {
 
   result.dataTable = google.visualization.arrayToDataTable(data);
 
-  if(useView && data.length > 0) {
+  if(hideColumn > 0 && data.length > 0) {
     result.view = new google.visualization.DataView(result.dataTable);
-    result.view.setColumns([0, 4]);
+    result.view.hideColumns([hideColumn]);
     result.chart.draw(result.view, options);
 
     google.visualization.events.addListener(result.chart, 'select', function () {
@@ -1214,7 +1214,7 @@ function drawChartByType(data, chartType, elementId, options, useView = false) {
           const item = result.dataTable.getValue(row, 0);
           const value = result.dataTable.getValue(row, 1);
           const hiddenInfo = result.dataTable.getValue(row, 2);
-          alert(`You clicked on ${item} (Value: ${value}).\nHidden Info: ${hiddenInfo}`);
+          console.log(`You clicked on ${item} (Value: ${value}).\nHidden Info: ${hiddenInfo}`);
         }
     });  
   } else {
@@ -1225,8 +1225,8 @@ function drawChartByType(data, chartType, elementId, options, useView = false) {
 }
 
 
-function drawDataTable(data, elementId, options, useView = false) {
-  return drawChartByType(data, "table", elementId, options, useView);
+function drawDataTable(data, elementId, options, hideColumn = -1) {
+  return drawChartByType(data, "table", elementId, options, hideColumn);
 }
 
 function drawLineChart(data, elementId, options) {

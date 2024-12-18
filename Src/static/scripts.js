@@ -652,12 +652,12 @@ function showCPanel(response) {
   drawDataTable(response["cronjobs"], "cronjobs", tableOptions);
 
   const ids = {
-    lvecpu: "cpuUsageChart",
-    lvememphy: "memoryUsageChart",
-    lveep: "processCountChart",
-    lvenproc: "processEntryCountChart",
-    ftp_accounts: "ftpAccountsUsageChart",
-    mysql_databases: "databaseUsageChart",
+    lvecpu: "gauge_chart_cpu",
+    lvememphy: "gauge_chart_memory",
+    lveep: "gauge_chart_process",
+    lvenproc: "gauge_chart_entry_process",
+    ftp_accounts: "gauge_chart_ftp_accounts",
+    mysql_databases: "gauge_chart_databases",
   };
 
   const usageData = response["usage"].map((item) => ({

@@ -662,8 +662,8 @@ function showCPanel(response) {
 
   const usageData = response["usage"].map((item) => ({
     elementId: ids[item.id],
-    label: item.label,
-    value: item.usage,
+    label: item.description,
+    value: parseFloat(item.usage),
     maximum: item.maximum || 100,
   }));
 

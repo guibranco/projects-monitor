@@ -1202,7 +1202,7 @@ function drawChartByType(data, chartType, elementId, options, useView = false) {
 
   result.dataTable = google.visualization.arrayToDataTable(data);
 
-  if(useView) {
+  if(useView && data.length > 0) {
     result.view = new google.visualization.DataView(result.dataTable);
     result.view.setColumns([0, 4]);
     result.chart.draw(result.view, options);

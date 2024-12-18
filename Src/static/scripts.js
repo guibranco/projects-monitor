@@ -667,10 +667,21 @@ function showCPanel(response) {
     maximum: item.maximum || 100,
   }));
 
-  console.log(usageData);
+  const gaugeOptionsUsage = {
+    legend: { position: "none" },
+    showRowNumber: true,
+    width: "100%",
+    height: "100%",
+    min: 0,
+    greenFrom: 0,
+    greenTo: 50,
+    yellowFrom: 50,
+    yellowTo: 75,
+    redFrom: 75,
+  };
 
   for (const item of usageData) {
-    drawGaugeChart(item.label, item.value, item.elementId, { ...gaugeOptions, max: item.maximum, redTo: item.maximum });
+    drawGaugeChart(item.label, item.value, item.elementId, { ...gaugeOptionsUsage, max: item.maximum, redTo: item.maximum });
   }
 }
 

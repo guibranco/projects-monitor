@@ -661,9 +661,9 @@ function showCPanel(response) {
   const labels = {
     lvecpu: "CPU",
     lvememphy: "Memory",
-    lveep: "Entry Process",
-    lvenproc: "Process",
-    ftp_accounts: "FTP",
+    lveep: "Entry Processes",
+    lvenproc: "Processes",
+    ftp_accounts: "FTPs",
     mysql_databases: "Databases",
   };
 

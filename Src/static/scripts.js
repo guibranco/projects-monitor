@@ -1184,7 +1184,7 @@ function drawChartByType(data, chartType, elementId, options) {
   }
 
   if (!data || !elementId || !options) {
-    console.error('Invalid parameters passed to drawDataTable');
+    console.error('Invalid parameters passed to drawChartByType');
     return;
   }
 

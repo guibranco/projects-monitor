@@ -674,10 +674,6 @@ function showCPanel(response) {
     maximum: item.maximum || 100,
   }));
 
-  
-
-  
-
   for (const item of usageData) {
     const greenTo = parseInt(item.maximum * 0.5);
     const yellowTo = parseInt(item.maximum * 0.75);
@@ -692,7 +688,7 @@ function showCPanel(response) {
       yellowFrom: greenTo,
       yellowTo: yellowTo,
       redFrom: yellowTo,
-      redTo: item.maximum
+      redTo: item.maximum,
     };
     drawGaugeChart(item.label, item.value, item.elementId, gaugeOptionsUsage);
   }

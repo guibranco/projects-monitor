@@ -1202,9 +1202,11 @@ function drawChartByType(data, chartType, elementId, options, hideColumn = -1) {
 
   result.dataTable = google.visualization.arrayToDataTable(data);
 
-  if(hideColumn > 0 && data.length > 0) {
+  if(hideColumn >= 0 && data.length > 0) {
     result.view = new google.visualization.DataView(result.dataTable);
-    result.view.hideColumns([hideColumn]);
+    if (data[0].length > hideColumn) {
+      result.view.hideColumns([hideColumn]);
+    }
     result.chart.draw(result.view, options);
 
     google.visualization.events.addListener(result.chart, 'select', function () {

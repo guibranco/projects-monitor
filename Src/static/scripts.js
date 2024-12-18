@@ -1187,8 +1187,8 @@ function drawDataTable(data, elementId, options) {
     return;
   }
   const dataTable = google.visualization.arrayToDataTable(data);
-  const table = new google.visualization.Table(element);
-  table.draw(dataTable, options);
+  const chart = new google.visualization.Table(element);
+  chart.draw(dataTable, options);
 }
 
 function drawPieChart(data, elementId, options) {

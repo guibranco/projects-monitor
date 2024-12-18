@@ -1179,7 +1179,6 @@ function drawChartByType(data, chartType, elementId, options, hideColumn = -1) {
   const result = {
     chartType,
     elementId,
-    useView,
   };
 
   switch (chartType) {
@@ -1207,6 +1206,7 @@ function drawChartByType(data, chartType, elementId, options, hideColumn = -1) {
     if (data[0].length > hideColumn) {
       result.view.hideColumns([hideColumn]);
     }
+    
     result.chart.draw(result.view, options);
 
     google.visualization.events.addListener(result.chart, 'select', function () {
@@ -1214,9 +1214,8 @@ function drawChartByType(data, chartType, elementId, options, hideColumn = -1) {
         if (selection.length > 0) {
           const row = selection[0].row;
           const item = result.dataTable.getValue(row, 0);
-          const value = result.dataTable.getValue(row, 1);
-          const hiddenInfo = result.dataTable.getValue(row, 2);
-          console.log(`You clicked on ${item} (Value: ${value}).\nHidden Info: ${hiddenInfo}`);
+          const hiddenInfo = result.dataTable.getValue(row, data[0].length > hideColumn ? hideColumn : 0);
+          console.log(`You clicked on ${item}\nHidden Info: ${hiddenInfo}`);
         }
     });  
   } else {

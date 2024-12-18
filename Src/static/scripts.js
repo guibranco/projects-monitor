@@ -1129,7 +1129,7 @@ function showWebhook(response) {
   drawGaugeChart("WH Failed", response["failed"], "gauge_chart_webhooks_failed", gaugeOptions);
   drawGaugeChart("GH WRs", response["total_workflow_runs"], "gauge_chart_workflows_runs", gaugeOptions);
   drawGaugeChart("GH App", response["installations"], "gauge_chart_installed_apps", gaugeOptions);
-  drawGaugeChart("GH Repos", response["installation_repositories_count"], "gauge_chart_installation_repositories", gaugeOptions);  
+  drawGaugeChart("GH Repos", response["installation_repositories_count"], "gauge_chart_installation_repositories", gaugeOptions);
 }
 
 /**

@@ -1123,13 +1123,25 @@ function showWebhook(response) {
   drawDataTable(response["repositories"], "repositories", tableOptions);
   drawDataTable(response["installation_repositories"], "installed_repositories", tableOptions);
   drawDataTable(response["workflow_runs"], "workflow_runs", tableOptions);
-  drawDataTable(response["feed"], "feed", tableOptions);
+  const feedChart = drawDataTable(response["feed"], "feed", tableOptions, true);
   drawPieChart(response["events"], "pie_chart_1", optionsEvents);
   drawGaugeChart("GH WH", response["total"], "gauge_chart_webhooks", gaugeOptionsTotal);
   drawGaugeChart("WH Failed", response["failed"], "gauge_chart_webhooks_failed", gaugeOptions);
   drawGaugeChart("GH WRs", response["total_workflow_runs"], "gauge_chart_workflows_runs", gaugeOptions);
   drawGaugeChart("GH App", response["installations"], "gauge_chart_installed_apps", gaugeOptions);
   drawGaugeChart("GH Repos", response["installation_repositories_count"], "gauge_chart_installation_repositories", gaugeOptions);
+
+  google.visualization.events.addListener(feedChart, 'select', function () {
+        const selection = chart.getSelection();
+        if (selection.length > 0) {
+          const row = selection[0].row;
+          const item = data.getValue(row, 0);
+          const value = data.getValue(row, 1);
+          const hiddenInfo = data.getValue(row, 2);
+          alert(`You clicked on ${item} (Value: ${value}).\nHidden Info: ${hiddenInfo}`);
+        }
+      });
+  
 }
 
 /**
@@ -1158,7 +1170,7 @@ function showWireGuard(response) {
   drawDataTable(response["wireguard"], "wireguard", tableOptions);
 }
 
-function drawChartByType(data, chartType, elementId, options) {
+function drawChartByType(data, chartType, elementId, options, useView = false) {
 
   if (!google.visualization) {
     console.error("Google Visualization API not loaded");
@@ -1196,7 +1208,16 @@ function drawChartByType(data, chartType, elementId, options) {
   }
 
   const dataTable = google.visualization.arrayToDataTable(data);
-  chart.draw(dataTable, options);
+
+  if(useView) {
+    const view = new google.visualization.DataView(data);
+    view.setColumns([0, 4]);
+    chart.draw(view, options);
+  } else {
+    chart.draw(dataTable, options);
+  }
+  
+  return chart;
 }
 
 

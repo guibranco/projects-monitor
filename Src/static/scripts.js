@@ -628,8 +628,6 @@ function showAppVeyor(response) {
  */
 function showCPanel(response) {
   const gaugeOptions = {
-    legend: { position: "none" },
-    showRowNumber: true,
     width: "100%",
     height: "100%",
     min: 0,
@@ -667,10 +665,19 @@ function showCPanel(response) {
     maximum: item.maximum || 100,
   }));
 
-  console.log(usageData);
+  const gaugeOptionsUsage = {
+    width: "100%",
+    height: "100%",
+    min: 0,
+    greenFrom: 0,
+    greenTo: 50,
+    yellowFrom: 50,
+    yellowTo: 75,
+    redFrom: 75,
+  };
 
   for (const item of usageData) {
-    drawGaugeChart(item.label, item.value, item.elementId, { ...gaugeOptions, max: item.maximum, redTo: item.maximum });
+    drawGaugeChart(item.label, item.value, item.elementId, { ...gaugeOptionsUsage, max: item.maximum, redTo: item.maximum });
   }
 }
 
@@ -796,8 +803,6 @@ function showGitHub(response) {
   }
 
   const gaugeOptions = {
-    legend: { position: "none" },
-    showRowNumber: true,
     width: "100%",
     height: "100%",
     min: 0,
@@ -874,9 +879,7 @@ function showHealthChecksIo(response) {
  * showMessages(response);
  */
 function showMessages(response) {
-  const optionsTotal = {
-    legend: { position: "none" },
-    showRowNumber: true,
+  const gaugeOptions = {
     width: "100%",
     height: "100%",
     min: 0,
@@ -895,7 +898,7 @@ function showMessages(response) {
   };
 
   drawDataTable(response["grouped"], "messages_grouped", tableOptions);
-  drawGaugeChart("PM Errors", response["total"], "gauge_chart_pm_errors", optionsTotal);
+  drawGaugeChart("PM Errors", response["total"], "gauge_chart_pm_errors", gaugeOptions);
   drawPieChart(response["byApplications"], "pie_chart_2", optionsByApplications);
 }
 
@@ -947,9 +950,7 @@ function showPostman(response) {
  * showQueues(response);
  */
 function showQueues(response) {
-  const optionsTotal = {
-    legend: { position: "none" },
-    showRowNumber: true,
+  const gaugeOptions = {
     width: "100%",
     height: "100%",
     min: 0,
@@ -963,7 +964,7 @@ function showQueues(response) {
   };
 
   drawDataTable(response["queues"], "queues", tableOptions);
-  drawGaugeChart("Queues", response["total"], "gauge_chart_queues", optionsTotal);
+  drawGaugeChart("Queues", response["total"], "gauge_chart_queues", gaugeOptions);
 }
 
 /**
@@ -1071,9 +1072,7 @@ function showWebhook(response) {
     legend: { position: "right" },
   };
 
-  const optionsTotal = {
-    legend: { position: "none" },
-    showRowNumber: true,
+  const gaugeOptionsTotal = {
     width: "100%",
     height: "100%",
     min: 0,
@@ -1085,40 +1084,8 @@ function showWebhook(response) {
     redFrom: 700000,
     redTo: 1000000,
   };
-
-  const optionsFailed = {
-    legend: { position: "none" },
-    showRowNumber: true,
-    width: "100%",
-    height: "100%",
-    min: 0,
-    max: 1000,
-    greenFrom: 0,
-    greenTo: 50,
-    yellowFrom: 50,
-    yellowTo: 100,
-    redFrom: 100,
-    redTo: 1000,
-  };
-
-  const optionsTotalWorkflowRuns = {
-    legend: { position: "none" },
-    showRowNumber: true,
-    width: "100%",
-    height: "100%",
-    min: 0,
-    max: 1000,
-    greenFrom: 0,
-    greenTo: 50,
-    yellowFrom: 50,
-    yellowTo: 100,
-    redFrom: 100,
-    redTo: 1000,
-  };
-
-  const optionsInstallations = {
-    legend: { position: "none" },
-    showRowNumber: true,
+  
+  const gaugeOptions = {
     width: "100%",
     height: "100%",
     min: 0,
@@ -1145,11 +1112,11 @@ function showWebhook(response) {
   drawDataTable(response["workflow_runs"], "workflow_runs", tableOptions);
   drawDataTable(response["feed"], "feed", tableOptions);
   drawPieChart(response["events"], "pie_chart_1", optionsEvents);
-  drawGaugeChart("GH WH", response["total"], "gauge_chart_webhooks", optionsTotal);
-  drawGaugeChart("WH Failed", response["failed"], "gauge_chart_webhooks_failed", optionsFailed);
-  drawGaugeChart("GH WRs", response["total_workflow_runs"], "gauge_chart_workflows_runs", optionsTotalWorkflowRuns);
-  drawGaugeChart("GH App", response["installations"], "gauge_chart_installed_apps", optionsInstallations);
-  drawGaugeChart("GH Repos", response["installation_repositories_count"], "gauge_chart_installation_repositories", optionsInstallations);
+  drawGaugeChart("GH WH", response["total"], "gauge_chart_webhooks", gaugeOptionsTotal);
+  drawGaugeChart("WH Failed", response["failed"], "gauge_chart_webhooks_failed", gaugeOptions);
+  drawGaugeChart("GH WRs", response["total_workflow_runs"], "gauge_chart_workflows_runs", gaugeOptions);
+  drawGaugeChart("GH App", response["installations"], "gauge_chart_installed_apps", gaugeOptions);
+  drawGaugeChart("GH Repos", response["installation_repositories_count"], "gauge_chart_installation_repositories", gaugeOptions);
 }
 
 /**

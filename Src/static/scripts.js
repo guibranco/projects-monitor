@@ -1135,8 +1135,8 @@ function showWebhook(response) {
       "<b>Date: </b> " + checkHooksDate.toString();
   }
 
-  drawDataTable(response["statistics"], "webhooks_statistics", optionsStatistics);
-  drawDataTable(response["statistics_github"], "webhooks_statistics_github", optionsStatisticsGitHub);
+  drawLineChart(response["statistics"], "webhooks_statistics", optionsStatistics);
+  drawLineChart(response["statistics_github"], "webhooks_statistics_github", optionsStatisticsGitHub);
   drawDataTable(response["senders"], "senders", tableOptions);
   drawDataTable(response["repositories"], "repositories", tableOptions);
   drawDataTable(response["installation_repositories"], "installed_repositories", tableOptions);
@@ -1176,54 +1176,60 @@ function showWireGuard(response) {
   drawDataTable(response["wireguard"], "wireguard", tableOptions);
 }
 
-function drawDataTable(data, elementId, options) {
+function drawChartByType(data, chartType, elementId, options) {
+
+  if (!google.visualization) {
+    console.error("Google Visualization API not loaded");
+    return;
+  }
+
   if (!data || !elementId || !options) {
     console.error('Invalid parameters passed to drawDataTable');
     return;
   }
+
   const element = document.getElementById(elementId);
   if (!element) {
     console.error(`Element with id ${elementId} not found`);
     return;
   }
+
+  let chart;
+  switch (chartType) {
+    case "table":
+      chart = new google.visualization.Table(element);
+      break;
+    case "line":
+      chart = new google.visualization.LineChart(element);
+      break;
+    case "pie":
+      chart = new google.visualization.PieChart(element);
+      break;
+    case "gauge":
+      chart = new google.visualization.Gauge(element);
+      break;
+    default:
+      console.error(`Invalid chart type: ${chartType}`);
+      return;
+  }
+
   const dataTable = google.visualization.arrayToDataTable(data);
-  const chart = new google.visualization.Table(element);
   chart.draw(dataTable, options);
+}
+
+
+function drawDataTable(data, elementId, options) {
+  return drawChartByType(data, "table", elementId, options);
+}
+
+function drawLineChart(data, elementId, options) {
+  return drawChartByType(data, "line", elementId, options);
 }
 
 function drawPieChart(data, elementId, options) {
-  if (!data || !elementId || !options) {
-    console.error('Invalid parameters passed to drawPieChart');
-    return;
-  }
-  const element = document.getElementById(elementId);
-  if (!element) {
-    console.error(`Element with id ${elementId} not found`);
-    return;
-  }
-  const dataTable = google.visualization.arrayToDataTable(data);
-  const chart = new google.visualization.PieChart(element);
-  chart.draw(dataTable, options);
+  return drawChartByType(data, "pie", elementId, options);
 }
 
 function drawGaugeChart(label, value, elementId, options) {
-  if (!label || value === undefined || !elementId || !options) {
-    console.error('Invalid parameters passed to drawGaugeChart');
-    return;
-  }
-
-  const element = document.getElementById(elementId);
-
-  if (!element) {
-    console.error(`Element with id ${elementId} not found`);
-    return;
-  }
-
-  const data = [
-    ["", ""],
-    [label, value],
-  ];
-  const dataTable = google.visualization.arrayToDataTable(data);
-  const chart = new google.visualization.Gauge(element);
-  chart.draw(dataTable, options);
+  return drawChartByType([["", ""],[label, value]], "gauge", elementId, options);
 }

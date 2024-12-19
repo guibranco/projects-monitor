@@ -356,8 +356,8 @@ class CPanel
             if (in_array($item->id, ['lvecpu', 'lvememphy', 'lvenproc', 'lveep', 'ftp_accounts', 'mysql_databases'])) {
 
                 if ($item->formatter === "format_bytes") {
-                    $item->usage = $item->usage / 1024 / 1024;
-                    $item->maximum = $item->maximum / 1024 / 1024;
+                    $item->usage = number_format($item->usage / 1024 / 1024, 2, '.', '');
+                    $item->maximum = number_format($item->maximum / 1024 / 1024, 2, '.', '');
                 }
 
                 $result[] = [

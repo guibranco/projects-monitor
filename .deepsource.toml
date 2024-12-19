@@ -1,16 +1,16 @@
 version = 1
 
 [[analyzers]]
-name = "sql"
-
-[[analyzers]]
-name = "secrets"
+name = "docker"
 
 [[analyzers]]
 name = "php"
 
 [[analyzers]]
-name = "docker"
+name = "secrets"
+
+[[analyzers]]
+name = "sql"
 
 [[transformers]]
 name = "php-cs-fixer"

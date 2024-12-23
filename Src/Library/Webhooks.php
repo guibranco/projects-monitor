@@ -94,13 +94,10 @@ class Webhooks
     {
         return $this->doRequest("github/workflow", "post", 201, ["sequence" => $sequence]);
     }
-    {
-        return $this->doRequest("github/workflow", "post", 201, array("sequence", $sequence));
-    }
 
     public function requestUpdate($sequence): mixed
     {
-        return $this->doRequest("github/workflow", "put", 202, array("sequence", $sequence));
+        return $this->doRequest("github/workflow", "put", 202, ["sequence" => $sequence]);
     }
 
     public function requestDelete($sequence): mixed

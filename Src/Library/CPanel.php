@@ -353,7 +353,7 @@ class CPanel
 
         $result = [];
         foreach ($response->data as $item) {
-            if (in_array($item->id, ['lvecpu', 'lvememphy', 'lvenproc', 'lveep', 'ftp_accounts', 'mysql_databases'])) {
+            if (in_array($item->id, ['lvecpu', 'lvememphy', 'lvenproc', 'lveep'])) {
 
                 if ($item->formatter === "format_bytes") {
                     $item->usage = number_format($item->usage / 1024 / 1024, 2, '.', '');

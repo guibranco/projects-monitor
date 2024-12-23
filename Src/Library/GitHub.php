@@ -10,6 +10,17 @@ class GitHub
 {
     private const GITHUB_API_URL = "https://api.github.com/";
 
+    private const DATE_TIME_FORMAT = "H:i:s d/m/Y";
+
+    private const ISSUE_TEXT = "issue";
+    private const PR_TEXT = "pr";
+
+    private const BLOCKED_TEXT_LABEL = "blocked";
+    private const BLOCKED_LABEL = "\"🚷blocked\"";
+    private const BLOCKED_SPACE_LABEL = "\"🚷 blocked\"";
+    private const WIP_TEXT_LABEL = "WIP";
+    private const WIP_SPACE_LABEL = "\"🛠 WIP\""
+    ;
     private $request;
 
     private $headers;
@@ -54,7 +65,7 @@ class GitHub
         $response = $this->request->get($url, $this->headers);
 
         if ($response->getStatusCode() !== -1 || $isRetry) {
-            $this->processHeaders($response->headers);
+            $this->processHeaders($response->getHeaders());
             return $response;
         }
 
@@ -165,27 +176,27 @@ class GitHub
         $vacanciesUsers = ["rustdevbr", "pydevbr", "dotnetdevbr", "nodejsdevbr", "rubydevbr", "frontend-ao", "frontend-pt", "backend-ao", "backend-pt", "developersRJ"];
         $allUsers = array_merge($users, $vacanciesUsers);
 
-        $resultAll = $this->getWithLabel($users, "issue");
-        $resultOthers = $this->getWithLabel($users, "issue", null, ["WIP", "\"🛠 WIP\"", "bug", "\"🐛 bug\"", "triage", "\"🚦awaiting triage\"", "\"🚦 awaiting triage\"", "blocked", "\"🚷blocked\"", "\"🚷 blocked\""]);
-        $resultWip1 = $this->getWithLabel($users, "issue", "WIP", ["blocked", "\"🚷 blocked\""]);
-        $resultWip2 = $this->getWithLabel($users, "issue", "\"🛠 WIP\"", ["blocked", "\"🚷 blocked\""]);
-        $resultBlocked1 = $this->getWithLabel($users, "issue", "blocked");
-        $resultBlocked2 = $this->getWithLabel($users, "issue", "\"🚷blocked\"");
-        $resultBlocked3 = $this->getWithLabel($users, "issue", "\"🚷 blocked\"");
-        $resultBug1 = $this->getWithLabel($users, "issue", "bug", ["blocked", "\"🚷 blocked\""]);
-        $resultBug2 = $this->getWithLabel($users, "issue", "\"🐛 bug\"", ["blocked", "\"🚷 blocked\""]);
-        $resultTriage1 = $this->getWithLabel($allUsers, "issue", "awaiting triage");
-        $resultTriage2 = $this->getWithLabel($allUsers, "issue", "\"🚦awaiting triage\"");
-        $resultTriage3 = $this->getWithLabel($allUsers, "issue", "\"🚦 awaiting triage\"");
-        $resultTriage4 = $this->getWithLabel($allUsers, "issue", "triage");
-        $resultAssigned = $this->getWithUserExclusion("issue", "assignee", array_slice($users, 0, 1)[0], $users);
-        $resultAuthored = $this->getWithUserExclusion("issue", "author", array_slice($users, 0, 1)[0], $users);
+        $resultAll = $this->getWithLabel($users, self::ISSUE_TEXT);
+        $resultOthers = $this->getWithLabel($users, self::ISSUE_TEXT, null, [self::WIP_TEXT_LABEL, self::WIP_SPACE_LABEL, "bug", "\"🐛 bug\"", "triage", "\"🚦awaiting triage\"", "\"🚦 awaiting triage\"", self::BLOCKED_TEXT_LABEL, self::BLOCKED_LABEL, self::BLOCKED_SPACE_LABEL]);
+        $resultWip1 = $this->getWithLabel($users, self::ISSUE_TEXT, self::WIP_TEXT_LABEL, [self::BLOCKED_TEXT_LABEL, self::BLOCKED_SPACE_LABEL]);
+        $resultWip2 = $this->getWithLabel($users, self::ISSUE_TEXT, self::WIP_SPACE_LABEL, [self::BLOCKED_TEXT_LABEL, self::BLOCKED_SPACE_LABEL]);
+        $resultBlocked1 = $this->getWithLabel($users, self::ISSUE_TEXT, self::BLOCKED_TEXT_LABEL);
+        $resultBlocked2 = $this->getWithLabel($users, self::ISSUE_TEXT, self::BLOCKED_LABEL);
+        $resultBlocked3 = $this->getWithLabel($users, self::ISSUE_TEXT, self::BLOCKED_SPACE_LABEL);
+        $resultBug1 = $this->getWithLabel($users, self::ISSUE_TEXT, "bug", [self::BLOCKED_TEXT_LABEL, self::BLOCKED_LABEL, self::BLOCKED_SPACE_LABEL]);
+        $resultBug2 = $this->getWithLabel($users, self::ISSUE_TEXT, "\"🐛 bug\"", [self::BLOCKED_TEXT_LABEL, self::BLOCKED_LABEL, self::BLOCKED_SPACE_LABEL]);
+        $resultTriage1 = $this->getWithLabel($allUsers, self::ISSUE_TEXT, "awaiting triage");
+        $resultTriage2 = $this->getWithLabel($allUsers, self::ISSUE_TEXT, "\"🚦awaiting triage\"");
+        $resultTriage3 = $this->getWithLabel($allUsers, self::ISSUE_TEXT, "\"🚦 awaiting triage\"");
+        $resultTriage4 = $this->getWithLabel($allUsers, self::ISSUE_TEXT, "triage");
+        $resultAssigned = $this->getWithUserExclusion(self::ISSUE_TEXT, "assignee", array_slice($users, 0, 1)[0], $users);
+        $resultAuthored = $this->getWithUserExclusion(self::ISSUE_TEXT, "author", array_slice($users, 0, 1)[0], $users);
 
         $data = array();
         $data["total_count"] = $resultAll->total_count;
         $data["others"] = $this->mapItems($resultOthers->items);
-        $data["wip"] = array_merge($this->mapItems($resultWip1->items), $this->mapItems($resultWip2->items));
-        $data["blocked"] = array_merge($this->mapItems($resultBlocked1->items), $this->mapItems($resultBlocked2->items), $this->mapItems($resultBlocked3->items));
+        $data[self::WIP_TEXT_LABEL] = array_merge($this->mapItems($resultWip1->items), $this->mapItems($resultWip2->items));
+        $data[self::BLOCKED_TEXT_LABEL] = array_merge($this->mapItems($resultBlocked1->items), $this->mapItems($resultBlocked2->items), $this->mapItems($resultBlocked3->items));
         $data["bug"] = array_merge($this->mapItems($resultBug1->items), $this->mapItems($resultBug2->items));
         $data["triage"] = array_merge($this->mapItems($resultTriage1->items), $this->mapItems($resultTriage2->items), $this->mapItems($resultTriage3->items), $this->mapItems($resultTriage4->items));
         $data["assigned"] = $this->mapItems($resultAssigned->items);
@@ -200,22 +211,21 @@ class GitHub
     {
         $users = ["guibranco", "ApiBR", "GuilhermeStracini", "InovacaoMediaBrasil", "rustdevbr", "pythondevbr", "pydevbr", "dotnetdevbr", "nodejsdevbr", "rubydevbr", "frontend-ao", "frontend-pt", "backend-ao", "backend-pt", "developersRJ"];
 
-        $result = $this->getWithLabel($users, "pr");
-
-        $resultNotBlocked = $this->getWithLabel($users, "pr", null, ["triage", "\"🚦awaiting triage\"", "\"🚦 awaiting triage\"", "blocked", "\"🚷blocked\"", "\"🚷 blocked\""]);
-        $resultBlocked1 = $this->getWithLabel($users, "pr", "blocked");
-        $resultBlocked2 = $this->getWithLabel($users, "pr", "\"🚷blocked\"");
-        $resultBlocked3 = $this->getWithLabel($users, "pr", "\"🚷 blocked\"");
-        $resultAuthored = $this->getWithUserExclusion("pr", "author", array_slice($users, 0, 1)[0], $users);
-        $resultTriage1 = $this->getWithLabel($users, "pr", "triage");
-        $resultTriage2 = $this->getWithLabel($users, "pr", "awaiting triage");
-        $resultTriage3 = $this->getWithLabel($users, "pr", "\"🚦awaiting triage\"");
-        $resultTriage4 = $this->getWithLabel($users, "pr", "\"🚦 awaiting triage\"");
+        $result = $this->getWithLabel($users, self::PR_TEXT);
+        $resultNotBlocked = $this->getWithLabel($users, self::PR_TEXT, null, ["triage", "\"🚦awaiting triage\"", "\"🚦 awaiting triage\"", self::BLOCKED_TEXT_LABEL, self::BLOCKED_LABEL, self::BLOCKED_SPACE_LABEL]);
+        $resultBlocked1 = $this->getWithLabel($users, self::PR_TEXT, self::BLOCKED_TEXT_LABEL);
+        $resultBlocked2 = $this->getWithLabel($users, self::PR_TEXT, self::BLOCKED_LABEL);
+        $resultBlocked3 = $this->getWithLabel($users, self::PR_TEXT, self::BLOCKED_SPACE_LABEL);
+        $resultAuthored = $this->getWithUserExclusion(self::PR_TEXT, "author", array_slice($users, 0, 1)[0], $users);
+        $resultTriage1 = $this->getWithLabel($users, self::PR_TEXT, "triage");
+        $resultTriage2 = $this->getWithLabel($users, self::PR_TEXT, "awaiting triage");
+        $resultTriage3 = $this->getWithLabel($users, self::PR_TEXT, "\"🚦awaiting triage\"");
+        $resultTriage4 = $this->getWithLabel($users, self::PR_TEXT, "\"🚦 awaiting triage\"");
 
         $data = array();
         $data["total_count"] = $result->total_count;
         $data["latest"] = $this->mapItems($resultNotBlocked->items);
-        $data["blocked"] = array_merge($this->mapItems($resultBlocked1->items), $this->mapItems($resultBlocked2->items), $this->mapItems($resultBlocked3->items));
+        $data[self::BLOCKED_TEXT_LABEL] = array_merge($this->mapItems($resultBlocked1->items), $this->mapItems($resultBlocked2->items), $this->mapItems($resultBlocked3->items));
         $data["authored"] = $this->mapItems($resultAuthored->items);
         $data["awaiting_triage"] = array_merge($this->mapItems($resultTriage1->items), $this->mapItems($resultTriage2->items), $this->mapItems($resultTriage3->items), $this->mapItems($resultTriage4->items));
 
@@ -249,8 +259,8 @@ class GitHub
         $mkd = Markdown::new();
         $mkd->setContent($body->body);
         $data = array();
-        $data["created"] = date("H:i:s d/m/Y", strtotime($body->created_at));
-        $data["published"] = date("H:i:s d/m/Y", strtotime($body->published_at));
+        $data["created"] = date(self::DATE_TIME_FORMAT, strtotime($body->created_at));
+        $data["published"] = date(self::DATE_TIME_FORMAT, strtotime($body->published_at));
         $data["title"] = $body->name;
         $data["description"] = $mkd->toHtml();
         $data["release_url"] = $body->html_url;
@@ -351,8 +361,8 @@ class GitHub
         }
         $data = array();
         $data[] = ["Resource", "Limit", "Remaining", "Used", "Reset"];
-        foreach($this->apiUsage as $resource => $item) {
-            $data[] = [$resource, $item["limit"], $item["remaining"], $item["used"], date("H:i:s d/m/Y", $item["reset"])];
+        foreach ($this->apiUsage as $resource => $item) {
+            $data[] = [$resource, $item["limit"], $item["remaining"], $item["used"], date(self::DATE_TIME_FORMAT, $item["reset"])];
         }
         file_put_contents($cache, json_encode($data));
         return $data;

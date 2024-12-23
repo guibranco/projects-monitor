@@ -77,17 +77,13 @@ class GitHub
         $hash = md5($queryString);
         $cache = "cache/github_search_{$hash}.json";
 
-        if (file_exists($cache) && filemtime($cache) > strtotime("-3 minute")) {
+        if (file_exists($cache) && filemtime($cache) > strtotime("-10 minute")) {
             return json_decode(file_get_contents($cache));
         }
 
         $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode(preg_replace('!\s+!', ' ', "is:open archived:false is:{$queryString}")) . "&per_page=100";
         $response = $this->requestInternal($url);
-        if ($response->getStatusCode() !== 200) {
-            $error = $response->getStatusCode() === -1 ? $response->getMessage() : $response->getBody();
-            throw new RequestException("Code: {$response->getStatusCode()} - Error: {$error}");
-        }
-
+        $response->ensureSuccessStatus();
         file_put_contents($cache, $response->getBody());
         return json_decode($response->getBody());
     }
@@ -237,19 +233,14 @@ class GitHub
     private function getLatestRelease($owner, $repository)
     {
         $cache = "cache/github_latest_release_{$owner}_{$repository}.json";
-        if (file_exists($cache) && filemtime($cache) > strtotime("-1 hour")) {
-            $response = json_decode(file_get_contents($cache));
-        } else {
-            $url = self::GITHUB_API_URL . "repos/" . $owner . "/" . $repository . "/releases/latest";
-            $response = $this->requestInternal($url);
-            if ($response->getStatusCode() !== 200) {
-                $error = $response->getStatusCode() === -1 ? $response->getMessage() : $response->getBody();
-                throw new RequestException("Code: {$response->getStatusCode()} - Error: {$error}");
-            }
-
-            file_put_contents($cache, json_encode($response));
+        if (file_exists($cache) && filemtime($cache) > strtotime("-3 hour")) {
+            return json_decode(file_get_contents($cache));
         }
 
+        $url = self::GITHUB_API_URL . "repos/" . $owner . "/" . $repository . "/releases/latest";
+        $response = $this->requestInternal($url);
+        $response->ensureSuccessStatus();
+        file_put_contents($cache, json_encode($response->getBody()));
         return json_decode($response->getBody());
     }
 
@@ -283,11 +274,7 @@ class GitHub
         } else {
             $url = self::GITHUB_API_URL . "{$accountType}/{$account}/settings/billing/{$type}";
             $response = $this->requestInternal($url);
-            if ($response->getStatusCode() !== 200) {
-                $error = $response->getStatusCode() === -1 ? $response->getMessage() : $response->getBody();
-                throw new RequestException("Code: {$response->getStatusCode()} - Error: {$error}");
-            }
-
+            $response->ensureSuccessStatus();
             file_put_contents($cache, json_encode($response));
         }
 

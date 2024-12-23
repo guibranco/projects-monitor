@@ -49,6 +49,9 @@ class Webhooks
             case "post":
                 $response = $this->request->post("{$this->apiUrl}{$endpoint}", json_encode($data), $this->headers);
                 break;
+            case "put":
+                $response = $this->request->put("{$this->apiUrl}{$endpoint}", json_encode($data), $this->headers);
+                break;
             case "delete":
                 $response = $this->request->delete("{$this->apiUrl}{$endpoint}", $this->headers);
                 break;
@@ -82,17 +85,22 @@ class Webhooks
         return $response;
     }
 
-    public function getWebhook($sequence)
+    public function getWebhook($sequence): mixed
     {
         return $this->doRequest("github/{$sequence}", "get", 200);
     }
 
-    public function requestRerun($sequence)
+    public function requestRerun($sequence): mixed
     {
-        return $this->doRequest("github/workflow", "post", 201, array("sequence", $sequence));
+        return $this->doRequest("github/workflow", "post", 201, ["sequence" => $sequence]);
     }
 
-    public function requestDelete($sequence)
+    public function requestUpdate($sequence): mixed
+    {
+        return $this->doRequest("github/workflow", "put", 202, ["sequence" => $sequence]);
+    }
+
+    public function requestDelete($sequence): mixed
     {
         return $this->doRequest("github/workflow/{$sequence}", "delete", 202);
     }

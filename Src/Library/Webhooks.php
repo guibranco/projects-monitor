@@ -92,6 +92,9 @@ class Webhooks
 
     public function requestRerun($sequence): mixed
     {
+        return $this->doRequest("github/workflow", "post", 201, ["sequence" => $sequence]);
+    }
+    {
         return $this->doRequest("github/workflow", "post", 201, array("sequence", $sequence));
     }
 

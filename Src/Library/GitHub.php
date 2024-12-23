@@ -73,12 +73,12 @@ class GitHub
         $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode(preg_replace('!\s+!', ' ', "is:open archived:false is:{$queryString}")) . "&per_page=100";
         $response = $this->requestInternal($url);
         if ($response->getStatusCode() !== 200) {
-            $error = $response->getStatusCode() === -1 ? $response->getMessage() : $response->body;
+            $error = $response->getStatusCode() === -1 ? $response->getMessage() : $response->getBody();
             throw new RequestException("Code: {$response->getStatusCode()} - Error: {$error}");
         }
 
-        file_put_contents($cache, $response->body);
-        return json_decode($response->body);
+        file_put_contents($cache, $response->getBody());
+        return json_decode($response->getBody());
     }
 
     private function getWithLabel($users, $type, $label = null, $labelsToRemove = null)
@@ -233,14 +233,14 @@ class GitHub
             $url = self::GITHUB_API_URL . "repos/" . $owner . "/" . $repository . "/releases/latest";
             $response = $this->requestInternal($url);
             if ($response->getStatusCode() !== 200) {
-                $error = $response->getStatusCode() === -1 ? $response->getMessage() : $response->body;
+                $error = $response->getStatusCode() === -1 ? $response->getMessage() : $response->getBody();
                 throw new RequestException("Code: {$response->getStatusCode()} - Error: {$error}");
             }
 
             file_put_contents($cache, json_encode($response));
         }
 
-        return json_decode($response->body);
+        return json_decode($response->getBody());
     }
 
     private function getLatestReleaseDetails($account, $repository)
@@ -274,14 +274,14 @@ class GitHub
             $url = self::GITHUB_API_URL . "{$accountType}/{$account}/settings/billing/{$type}";
             $response = $this->requestInternal($url);
             if ($response->getStatusCode() !== 200) {
-                $error = $response->getStatusCode() === -1 ? $response->getMessage() : $response->body;
+                $error = $response->getStatusCode() === -1 ? $response->getMessage() : $response->getBody();
                 throw new RequestException("Code: {$response->getStatusCode()} - Error: {$error}");
             }
 
             file_put_contents($cache, json_encode($response));
         }
 
-        return json_decode($response->body);
+        return json_decode($response->getBody());
     }
 
     private function getBilling($type, $items)

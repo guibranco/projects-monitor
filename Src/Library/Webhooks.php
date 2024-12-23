@@ -54,14 +54,13 @@ class Webhooks
                 break;
             default:
                 throw new RequestException("Method not mapped: {$method}");
-                break;
         }
 
         if ($response->getStatusCode() === $expectedStatusCode) {
-            return json_decode($response->body, true);
+            return json_decode($response->getBody(), true);
         }
 
-        $error = $response->getStatusCode() == -1 ? $response->getMessage() : $response->body;
+        $error = $response->getStatusCode() == -1 ? $response->getMessage() : $response->getBody();
         throw new RequestException("Code: {$response->getStatusCode()} - Error: {$error}");
     }
 

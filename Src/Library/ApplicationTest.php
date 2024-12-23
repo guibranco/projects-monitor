@@ -1,10 +1,9 @@
+<?php
+
 use PHPUnit\Framework\TestCase;
 use GuiBranco\ProjectsMonitor\Library\Application;
 use GuiBranco\ProjectsMonitor\Library\Configuration;
 use GuiBranco\ProjectsMonitor\Library\Database;
-
-<?php
-
 
 class ApplicationTest extends TestCase
 {

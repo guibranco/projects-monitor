@@ -112,10 +112,10 @@ class RabbitMq
             $headers = array("Authorization: Basic " . base64_encode($server["user"] . ":" . $server["password"]));
             $url = "https://" . $server["host"] . "/api/queues/" . $server["vhost"] . "/";
             $response = $this->request->get($url, $headers);
-            if ($response->statusCode !== 200) {
+            if ($response->getStatusCode() !== 200) {
                 continue;
             }
-            $node = json_decode($response->body, true);
+            $node = json_decode($response->getBody(), true);
             foreach ($node as $queue) {
                 $result = $this->parseQueue($server["host"], $queue, $shieldsIo);
 

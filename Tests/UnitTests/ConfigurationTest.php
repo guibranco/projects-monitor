@@ -25,7 +25,7 @@ class ConfigurationTest extends TestCase
     {
         $this->assertTrue(defined("USER_AGENT_VENDOR"));
         $this->assertTrue(defined("USER_AGENT"));
-        $this->assertStringContainsString("projects-monitor", USER_AGENT_VENDOR);
+        $this->assertStringContainsString("projects-monitor", constant("USER_AGENT_VENDOR"));
     }
 
     public function testGetTimeZone()

@@ -359,7 +359,7 @@ function preset() {
   showPreset = false;
   showCPanel(
     JSON.parse(
-      '{"error_log_files":[],"error_log_messages":[],"total_error_messages":0,"cronjobs":[],"usage":[{"id":"ftp_accounts","description":"FTP Accounts","usage":0,"maximum":100},{"id":"mysql_databases","description":"Databases","usage":0,"maximum":100},{"id":"lvecpu","description":"CPU Usage","usage":0,"maximum":100},{"id":"lveep","description":"Entry Processes","usage":0,"maximum":20},{"id":"lvememphy","description":"Physical Memory Usage","usage":0,"maximum":512},{"id":"lvenproc","description":"Number of Processes","usage":0,"maximum":100}]}'
+      '{"error_log_files":[],"error_log_messages":[],"total_error_messages":0,"cronjobs":[],"usage":[{"id":"lvecpu","description":"CPU Usage","usage":0,"maximum":100},{"id":"lveep","description":"Entry Processes","usage":0,"maximum":20},{"id":"lvememphy","description":"Physical Memory Usage","usage":0,"maximum":512},{"id":"lvenproc","description":"Number of Processes","usage":0,"maximum":100}]}'
     )
   );
   showGitHub(
@@ -653,9 +653,7 @@ function showCPanel(response) {
     lvecpu: "gauge_chart_cpu",
     lvememphy: "gauge_chart_memory",
     lveep: "gauge_chart_entry_process",
-    lvenproc: "gauge_chart_process",
-    ftp_accounts: "gauge_chart_ftp_accounts",
-    mysql_databases: "gauge_chart_databases",
+    lvenproc: "gauge_chart_process",   
   };
 
   const labels = {
@@ -663,8 +661,6 @@ function showCPanel(response) {
     lvememphy: "Memory",
     lveep: "Entry Processes",
     lvenproc: "Processes",
-    ftp_accounts: "FTPs",
-    mysql_databases: "Databases",
   };
 
   const usageData = response["usage"].map((item) => ({

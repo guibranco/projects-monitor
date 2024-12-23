@@ -115,7 +115,7 @@ class RabbitMq
             if ($response->getStatusCode() !== 200) {
                 continue;
             }
-            $node = json_decode($response->getBody(), true);
+            $node = json_decode($response->body, true);
             foreach ($node as $queue) {
                 $result = $this->parseQueue($server["host"], $queue, $shieldsIo);
 

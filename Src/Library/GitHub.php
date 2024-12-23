@@ -53,7 +53,7 @@ class GitHub
     {
         $response = $this->request->get($url, $this->headers);
 
-        if ($response->statusCode !== -1 || $isRetry) {
+        if ($response->getStatusCode() !== -1 || $isRetry) {
             $this->processHeaders($response->headers);
             return $response;
         }
@@ -72,13 +72,13 @@ class GitHub
 
         $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode(preg_replace('!\s+!', ' ', "is:open archived:false is:{$queryString}")) . "&per_page=100";
         $response = $this->requestInternal($url);
-        if ($response->statusCode !== 200) {
-            $error = $response->statusCode === -1 ? $response->error : $response->body;
-            throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
+        if ($response->getStatusCode() !== 200) {
+            $error = $response->getStatusCode() === -1 ? $response->getMessage() : $response->getBody();
+            throw new RequestException("Code: {$response->getStatusCode()} - Error: {$error}");
         }
 
-        file_put_contents($cache, $response->body);
-        return json_decode($response->body);
+        file_put_contents($cache, $response->getBody());
+        return json_decode($response->getBody());
     }
 
     private function getWithLabel($users, $type, $label = null, $labelsToRemove = null)
@@ -232,15 +232,15 @@ class GitHub
         } else {
             $url = self::GITHUB_API_URL . "repos/" . $owner . "/" . $repository . "/releases/latest";
             $response = $this->requestInternal($url);
-            if ($response->statusCode !== 200) {
-                $error = $response->statusCode === -1 ? $response->error : $response->body;
-                throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
+            if ($response->getStatusCode() !== 200) {
+                $error = $response->getStatusCode() === -1 ? $response->getMessage() : $response->getBody();
+                throw new RequestException("Code: {$response->getStatusCode()} - Error: {$error}");
             }
 
             file_put_contents($cache, json_encode($response));
         }
 
-        return json_decode($response->body);
+        return json_decode($response->getBody());
     }
 
     private function getLatestReleaseDetails($account, $repository)
@@ -273,15 +273,15 @@ class GitHub
         } else {
             $url = self::GITHUB_API_URL . "{$accountType}/{$account}/settings/billing/{$type}";
             $response = $this->requestInternal($url);
-            if ($response->statusCode !== 200) {
-                $error = $response->statusCode === -1 ? $response->error : $response->body;
-                throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
+            if ($response->getStatusCode() !== 200) {
+                $error = $response->getStatusCode() === -1 ? $response->getMessage() : $response->getBody();
+                throw new RequestException("Code: {$response->getStatusCode()} - Error: {$error}");
             }
 
             file_put_contents($cache, json_encode($response));
         }
 
-        return json_decode($response->body);
+        return json_decode($response->getBody());
     }
 
     private function getBilling($type, $items)

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "9b9eb9e95b19966c1120587ebad409ae",
+    "content-hash": "f15e5bc1750ae76eb1cff18e14b535d4",
     "packages": [
         {
             "name": "amphp/amp",
@@ -1046,16 +1046,16 @@
         },
         {
             "name": "guibranco/pancake",
-            "version": "v0.14.28",
+            "version": "v1.0.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guibranco/pancake.git",
-                "reference": "cfad055baeab541945d5c7eb61f05284df3f0f6b"
+                "reference": "f1c4888ea2f6e5c585e626f2cfaee3e30c044394"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guibranco/pancake/zipball/cfad055baeab541945d5c7eb61f05284df3f0f6b",
-                "reference": "cfad055baeab541945d5c7eb61f05284df3f0f6b",
+                "url": "https://api.github.com/repos/guibranco/pancake/zipball/f1c4888ea2f6e5c585e626f2cfaee3e30c044394",
+                "reference": "f1c4888ea2f6e5c585e626f2cfaee3e30c044394",
                 "shasum": ""
             },
             "require-dev": {
@@ -1080,9 +1080,9 @@
             "description": "The Pancake project, a toolkit for PHP projects",
             "support": {
                 "issues": "https://github.com/guibranco/pancake/issues",
-                "source": "https://github.com/guibranco/pancake/tree/v0.14.28"
+                "source": "https://github.com/guibranco/pancake/tree/v1.0.2"
             },
-            "time": "2024-12-16T03:57:40+00:00"
+            "time": "2024-12-23T03:45:39+00:00"
         },
         {
             "name": "kelunik/certificate",

@@ -57,12 +57,12 @@ class Webhooks
                 break;
         }
 
-        if ($response->statusCode === $expectedStatusCode) {
+        if ($response->getStatusCode() === $expectedStatusCode) {
             return json_decode($response->body, true);
         }
 
-        $error = $response->statusCode == -1 ? $response->error : $response->body;
-        throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
+        $error = $response->getStatusCode() == -1 ? $response->getMessage() : $response->body;
+        throw new RequestException("Code: {$response->getStatusCode()} - Error: {$error}");
     }
 
     public function getDashboard($feedOptionsFilter, $workflowsLimiterQuantity)

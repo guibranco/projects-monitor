@@ -47,9 +47,9 @@ class UpTimeRobot
 
         $response = $this->request->post($url, $headers, $data);
 
-        if ($response->statusCode != 200) {
-            $error = $response->statusCode == -1 ? $response->error : $response->body;
-            throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
+        if ($response->getStatusCode() != 200) {
+            $error = $response->getStatusCode() == -1 ? $response->getMessage() : $response->body;
+            throw new RequestException("Code: {$response->getStatusCode()} - Error: {$error}");
         }
 
         return json_decode($response->body);

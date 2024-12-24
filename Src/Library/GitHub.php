@@ -240,14 +240,21 @@ class GitHub
         $url = self::GITHUB_API_URL . "repos/" . $owner . "/" . $repository . "/releases/latest";
         $response = $this->requestInternal($url);
         $response->ensureSuccessStatus();
-        file_put_contents($cache, json_encode($response->getBody()));
-        return json_decode($response->getBody());
+        $body = $response->getBody();
+        file_put_contents($cache, $body);
+        return json_decode($body);
     }
 
     private function getLatestReleaseDetails($account, $repository)
     {
         $body = $this->getLatestRelease($account, $repository);
         $mkd = Markdown::new();
+
+        if (!isset($body->body)) {
+            error_log("Unable to get latest release details. " . print_r($body, true));
+            return array();
+        }
+        
         $mkd->setContent($body->body);
         $data = array();
         $data["created"] = date(self::DATE_TIME_FORMAT, strtotime($body->created_at));

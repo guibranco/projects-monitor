@@ -280,7 +280,7 @@ class GitHub
         if (file_exists($cache) && filemtime($cache) > strtotime("-5 minute")) {
             return json_decode(file_get_contents($cache));
         }
-        
+
         $url = self::GITHUB_API_URL . "{$accountType}/{$account}/settings/billing/{$type}";
         $response = $this->requestInternal($url);
         $response->ensureSuccessStatus();

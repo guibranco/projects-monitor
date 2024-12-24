@@ -84,8 +84,9 @@ class GitHub
         $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode(preg_replace('!\s+!', ' ', "is:open archived:false is:{$queryString}")) . "&per_page=100";
         $response = $this->requestInternal($url);
         $response->ensureSuccessStatus();
-        file_put_contents($cache, $response->getBody());
-        return json_decode($response->getBody());
+        $body = $response->getBody();
+        file_put_contents($cache, $body);
+        return json_decode($body);
     }
 
     private function getWithLabel($users, $type, $label = null, $labelsToRemove = null)
@@ -240,14 +241,21 @@ class GitHub
         $url = self::GITHUB_API_URL . "repos/" . $owner . "/" . $repository . "/releases/latest";
         $response = $this->requestInternal($url);
         $response->ensureSuccessStatus();
-        file_put_contents($cache, json_encode($response->getBody()));
-        return json_decode($response->getBody());
+        $body = $response->getBody();
+        file_put_contents($cache, $body);
+        return json_decode($body);
     }
 
     private function getLatestReleaseDetails($account, $repository)
     {
         $body = $this->getLatestRelease($account, $repository);
         $mkd = Markdown::new();
+
+        if (!isset($body->body)) {
+            error_log("Unable to get latest release details for repository {$account}/{$repository} - 'body' field missing from response. Response: " . print_r($body, true));
+            return array();
+        }
+
         $mkd->setContent($body->body);
         $data = array();
         $data["created"] = date(self::DATE_TIME_FORMAT, strtotime($body->created_at));
@@ -270,15 +278,15 @@ class GitHub
     {
         $cache = "cache/github_billing_{$accountType}_{$account}_{$type}.json";
         if (file_exists($cache) && filemtime($cache) > strtotime("-5 minute")) {
-            $response = json_decode(file_get_contents($cache));
-        } else {
-            $url = self::GITHUB_API_URL . "{$accountType}/{$account}/settings/billing/{$type}";
-            $response = $this->requestInternal($url);
-            $response->ensureSuccessStatus();
-            file_put_contents($cache, json_encode($response));
+            return json_decode(file_get_contents($cache));
         }
 
-        return json_decode($response->getBody());
+        $url = self::GITHUB_API_URL . "{$accountType}/{$account}/settings/billing/{$type}";
+        $response = $this->requestInternal($url);
+        $response->ensureSuccessStatus();
+        $body = $response->getBody();
+        file_put_contents($cache, $body);
+        return json_decode($body);
     }
 
     private function getBilling($type, $items)

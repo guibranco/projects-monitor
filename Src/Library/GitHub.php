@@ -192,8 +192,8 @@ class GitHub
         $data = array();
         $data["total_count"] = $resultAll->total_count;
         $data["others"] = $this->mapItems($resultOthers->items);
-        $data[self::WIP_TEXT_LABEL] = array_merge($this->mapItems($resultWip1->items), $this->mapItems($resultWip2->items));
-        $data[self::BLOCKED_TEXT_LABEL] = array_merge($this->mapItems($resultBlocked1->items), $this->mapItems($resultBlocked2->items), $this->mapItems($resultBlocked3->items));
+        $data[strtolower(self::WIP_TEXT_LABEL)] = array_merge($this->mapItems($resultWip1->items), $this->mapItems($resultWip2->items));
+        $data[strtolower(self::BLOCKED_TEXT_LABEL)] = array_merge($this->mapItems($resultBlocked1->items), $this->mapItems($resultBlocked2->items), $this->mapItems($resultBlocked3->items));
         $data["bug"] = array_merge($this->mapItems($resultBug1->items), $this->mapItems($resultBug2->items));
         $data["triage"] = array_merge($this->mapItems($resultTriage1->items), $this->mapItems($resultTriage2->items), $this->mapItems($resultTriage3->items), $this->mapItems($resultTriage4->items));
         $data["assigned"] = $this->mapItems($resultAssigned->items);
@@ -222,7 +222,7 @@ class GitHub
         $data = array();
         $data["total_count"] = $result->total_count;
         $data["latest"] = $this->mapItems($resultNotBlocked->items);
-        $data[self::BLOCKED_TEXT_LABEL] = array_merge($this->mapItems($resultBlocked1->items), $this->mapItems($resultBlocked2->items), $this->mapItems($resultBlocked3->items));
+        $data[strtolower(self::BLOCKED_TEXT_LABEL)] = array_merge($this->mapItems($resultBlocked1->items), $this->mapItems($resultBlocked2->items), $this->mapItems($resultBlocked3->items));
         $data["authored"] = $this->mapItems($resultAuthored->items);
         $data["awaiting_triage"] = array_merge($this->mapItems($resultTriage1->items), $this->mapItems($resultTriage2->items), $this->mapItems($resultTriage3->items), $this->mapItems($resultTriage4->items));
 

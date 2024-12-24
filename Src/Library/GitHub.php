@@ -254,7 +254,7 @@ class GitHub
             error_log("Unable to get latest release details. " . print_r($body, true));
             return array();
         }
-        
+
         $mkd->setContent($body->body);
         $data = array();
         $data["created"] = date(self::DATE_TIME_FORMAT, strtotime($body->created_at));

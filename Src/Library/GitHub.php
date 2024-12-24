@@ -251,7 +251,7 @@ class GitHub
         $mkd = Markdown::new();
 
         if (!isset($body->body)) {
-            error_log("Unable to get latest release details. " . print_r($body, true));
+            error_log("Unable to get latest release details for repository {$account}/{$repository} - 'body' field missing from response. Response: " . print_r($body, true));
             return array();
         }
 

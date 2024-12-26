@@ -179,6 +179,7 @@ $configuration = new Configuration();
    <div style="clear:both;"></div>
 </body>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha256-CDOy6cOibCWEdsRiZuaHf8dSGGJRYuBGC+mjoJimHGw=" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/charts/loader.js"></script>
 <script src="static/scripts.js?<?php echo filemtime("static/scripts.js"); ?>"></script>
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>

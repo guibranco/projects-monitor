@@ -118,6 +118,7 @@ $configuration = new Configuration();
    <div style="width: 100%; height: 300px; float: left; background-color: white;">
       <div id="pie_chart_1" style="height: 300px; float: left;"></div>
       <div id="pie_chart_2" style="height: 300px; float: left;"></div>
+      <div id="messages_by_applications" style="height: 300px; float: left;"></div>
    </div>
    <div style="clear:both;"></div>
    <div id="messages_grouped" style="width: 50%; height: 500px; float: left; background-color: white;"></div>

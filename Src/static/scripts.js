@@ -928,18 +928,59 @@ function showMessages(response) {
     legend: { position: "right" },
   };
 
-  drawDataTable(response["grouped"], "messages_grouped", tableOptions);
+  drawDataTable(response.grouped, "messages_grouped", tableOptions);
   drawGaugeChart(
     "PM Errors",
-    response["total"],
+    response.total,
     "gauge_chart_pm_errors",
     gaugeOptions
   );
-  drawPieChart(
-    response["byApplications"],
-    "pie_chart_2",
-    optionsByApplications
-  );
+  drawPieChart(response.byApplications, "pie_chart_2", optionsByApplications);
+
+  if (response.byApplications.length > 1) {
+    const byApplicationsTableData = response.byApplications;
+    byApplicationsTableData[0].unshift("Delete");
+    for (let i = 1; i < byApplicationsTableData.length; i++) {
+      byApplicationsTableData[i].unshift(
+        `<button onclick="deleteMessageByApplication('${byApplicationsTableData[i][0]}')">❌</button>`
+      );
+    }
+    drawDataTable(
+      byApplicationsTableData,
+      "messages_by_applications",
+      tableOptions
+    );
+  }
+}
+
+/**
+ * Deletes a message by application.
+ *
+ * Sends a POST request to the server to delete a message associated with the specified application.
+ *
+ * @param {string} application - The name or identifier of the application whose message is to be deleted.
+ * @returns {void}
+ */
+function deleteMessageByApplication(application) {
+  fetch("/api/v1/messages/delete", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ application }),
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      return response.json();
+    })
+    .then((data) => {
+      console.log("Delete successful:", data);
+    })
+    .catch((error) => {
+      console.error("There was a problem with the fetch operation:", error);
+    });
 }
 
 /**
@@ -963,7 +1004,7 @@ function showPostman(response) {
     return;
   }
 
-  document.getElementById("postman").innerHTML = response["usage"];
+  document.getElementById("postman").innerHTML = response.usage;
 }
 
 /**

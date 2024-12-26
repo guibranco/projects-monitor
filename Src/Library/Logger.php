@@ -191,4 +191,16 @@ class Logger
 
         return $data;
     }
+
+    public function deleteMessagesByApplication($applicationName): bool
+    {
+        $sql = "DELETE m FROM messages as m INNER JOIN applications as a ON m.application_id = a.id ";
+        $sql .= "WHERE a.name = ?;";
+        $stmt = $this->connection->prepare($sql);
+        $stmt->bind_param("s", $applicationName);
+        $result = $stmt->execute();
+        $stmt->close();
+
+        return $result;
+    }
 }

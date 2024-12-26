@@ -135,7 +135,7 @@ class Logger
     public function getGroupedMessages()
     {
         $sql = "SELECT `name`, `message`, `user_agent`, `messages_count`, ";
-        $sql .= "CONVERT_TZ(`created_at_most_recent`, '-03:00', '+01:00') AS `created_at_most_recent` ";
+        $sql .= "CONVERT_TZ(`created_at_most_recent`, '-03:00', '+00:00') AS `created_at_most_recent` ";
         $sql .= "FROM `messages_view` ORDER BY `messages_count` DESC";
         $stmt = $this->connection->prepare($sql);
         $stmt->execute();

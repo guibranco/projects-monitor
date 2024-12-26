@@ -123,55 +123,55 @@ $configuration = new Configuration();
    <div id="messages_grouped" style="width: 50%; height: 500px; float: left; background-color: white;"></div>
    <div id="error_log_messages" style="width: 50%; height: 500px; float: left; background-color: white;"></div>
    <div style="clear:both;"></div>
-   <div class="topping">Workflow Runs</div>
+   <div class="topping">Workflow Runs <span id="counter_workflow_runs" class="badge text-bg-warning rounded-pill"></span></div>
    <div id="workflow_runs" style="width: 100%; float: left; background-color: white;"></div>
    <div style="clear:both;"></div>
    <div style="width: 50%; float: left; background-color: white;">
-      <div class="topping">Issues Blocked</div>
+      <div class="topping">Issues Blocked <span id="counter_issues_blocked" class="badge text-bg-warning rounded-pill"></span></div>
       <div id="issues_blocked"></div>
-      <div class="topping">Pull Requests Blocked</div>
+      <div class="topping">Pull Requests Blocked <span id="counter_pull_requests_blocked" class="badge text-bg-warning rounded-pill"></span></div>
       <div id="pull_requests_blocked"></div>
-      <div class="topping">Feed</div>
+      <div class="topping">Feed <span id="counter_feed" class="badge text-bg-warning rounded-pill"></span></div>
       <div id="feed"></div>
-      <div class="topping">WireGuard</div>
+      <div class="topping">WireGuard <span id="counter_wireguard" class="badge text-bg-warning rounded-pill"></span></div>
       <div id="wireguard"></div>
-      <div class="topping">HealthChecksIo</div>
+      <div class="topping">HealthChecksIo <span id="counter_healthchecksio" class="badge text-bg-warning rounded-pill"></span></div>
       <div id="healthchecksio"></div>
-      <div class="topping">UpTimeRobot</div>
+      <div class="topping">UpTimeRobot <span id="counter_uptimerobot" class="badge text-bg-warning rounded-pill"></span></div>
       <div id="uptimerobot"></div>
-      <div class="topping">Domains</div>
+      <div class="topping">Domains <span id="counter_domains" class="badge text-bg-warning rounded-pill"></span></div>
       <div id="domains"></div>
-      <div class="topping">Pull Requests Authored</div>
+      <div class="topping">Pull Requests Authored <span id="counter_pull_requests_authored" class="badge text-bg-warning rounded-pill"></span></div>
       <div id="pull_requests_authored"></div>
-      <div class="topping">Issues Authored</div>
+      <div class="topping">Issues Authored <span id="counter_issues_authored" class="badge text-bg-warning rounded-pill"></span></div>
       <div id="issues_authored"></div>
-      <div class="topping">Repositories</div>
+      <div class="topping">Repositories <span id="counter_repositories" class="badge text-bg-warning rounded-pill"></span></div>
       <div id="repositories"></div>
-      <div class="topping">GitHub API Usage</div>
+      <div class="topping">GitHub API Usage <span id="counter_api_usage" class="badge text-bg-warning rounded-pill"></span></div>
       <div id="api_usage"></div>
-      <div class="topping">Installed Repositories</div>
+      <div class="topping">Installed Repositories <span id="counter_installed_repositories" class="badge text-bg-warning rounded-pill"></span></div>
       <div id="installed_repositories"></div>
    </div>
    <div style="width: 50%; float: left; background-color: white;">
-      <div class="topping">Issues Awaiting Triage</div>
+      <div class="topping">Issues Awaiting Triage <span id="counter_triage" class="badge text-bg-warning rounded-pill"></span></div>
       <div id="triage"></div>
-      <div class="topping">Pull Requests Awaiting Triage</div>
+      <div class="topping">Pull Requests Awaiting Triage <span id="counter_pull_requests_triage" class="badge text-bg-warning rounded-pill"></span></div>
       <div id="pull_requests_triage"></div>
-      <div class="topping">Pull Requests</div>
+      <div class="topping">Pull Requests <span id="counter_pull_requests_latest" class="badge text-bg-warning rounded-pill"></span></div>
       <div id="pull_requests_latest"></div>
-      <div class="topping">Issues Assigned</div>
+      <div class="topping">Issues Assigned <span id="counter_assigned" class="badge text-bg-warning rounded-pill"></span></div>
       <div id="assigned"></div>
-      <div class="topping">Issues WIP</div>
+      <div class="topping">Issues WIP <span id="counter_wip" class="badge text-bg-warning rounded-pill"></span></div>
       <div id="wip"></div>
-      <div class="topping">Issues Bug</div>
+      <div class="topping">Issues Bug <span id="counter_bug" class="badge text-bg-warning rounded-pill"></span></div>
       <div id="bug"></div>
-      <div class="topping">Issues</div>
+      <div class="topping">Issues <span id="counter_issues" class="badge text-bg-warning rounded-pill"></span></div>
       <div id="issues"></div>
-      <div class="topping">Cronjobs</div>
+      <div class="topping">Cronjobs <span id="counter_cronjobs" class="badge text-bg-warning rounded-pill"></span></div>
       <div id="cronjobs"></div>
-      <div class="topping">Senders</div>
+      <div class="topping">Senders <span id="counter_senders" class="badge text-bg-warning rounded-pill"></span></div>
       <div id="senders"></div>
-      <div class="topping">AppVeyor</div>
+      <div class="topping">AppVeyor <span id="counter_appveyor" class="badge text-bg-warning rounded-pill"></span></div>
       <div id="appveyor"></div>
    </div>
    <div style="clear:both;"></div>

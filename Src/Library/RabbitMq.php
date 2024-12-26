@@ -90,6 +90,10 @@ class RabbitMq
             return null;
         }
 
+        if ($messages === 0 && $consumers === 0) {
+            return null;
+        }
+
         $colorMessages = $this->getColorByThreshold($messages, 100, 50, 1);
         $badgeMessage = $shieldsIo->generateBadgeUrl($messages, $name, $colorMessages, "for-the-badge", "black", null);
         $imgMessages = "<img alt='{$messages} message in queue' src='{$badgeMessage}' />";

@@ -178,7 +178,7 @@ class Logger
     {
         $sql = "SELECT m.id, a.name, m.class, m.function, m.file, m.line, m.object, ";
         $sql .= "m.type, m.args, m.message, m.details, m.correlation_id, m.user_agent, ";
-        $sql .= "CONVERT_TZ(m.created_at, '-03:00', '+01:00') AS `created_at` ";
+        $sql .= "CONVERT_TZ(m.created_at, '-03:00', '+00:00') AS `created_at` ";
         $sql .= "FROM messages as m INNER JOIN applications as a ON m.application_id = a.id ";
         $sql .= "WHERE m.id = ?;";
         $stmt = $this->connection->prepare($sql);

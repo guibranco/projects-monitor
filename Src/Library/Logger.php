@@ -126,7 +126,7 @@ class Logger
 
     private function getQuery()
     {
-        $sql = "SELECT a.name, m.message, m.correlation_id, m.user_agent, CONVERT_TZ(m.created_at, '-03:00', '+01:00') AS `created_at`";
+        $sql = "SELECT a.name, m.message, m.correlation_id, m.user_agent, CONVERT_TZ(m.created_at, '-03:00', '+00:00') AS `created_at`";
         $sql .= "FROM messages as m INNER JOIN applications as a ON m.application_id = a.id ";
         $sql .= "ORDER BY m.id DESC LIMIT 0, ?;";
         return $sql;

@@ -126,7 +126,7 @@ class Logger
 
     private function getQuery()
     {
-        $sql = "SELECT a.name, m.message, m.correlation_id, m.user_agent, CONVERT_TZ(m.created_at, '-03:00', '+00:00') AS `created_at`";
+        $sql = "SELECT a.name, m.message, m.correlation_id, m.user_agent, CONVERT_TZ(m.created_at, '-03:00', '+00:00') AS `created_at` ";
         $sql .= "FROM messages as m INNER JOIN applications as a ON m.application_id = a.id ";
         $sql .= "ORDER BY m.id DESC LIMIT 0, ?;";
         return $sql;
@@ -135,7 +135,7 @@ class Logger
     public function getGroupedMessages()
     {
         $sql = "SELECT `name`, `message`, `user_agent`, `messages_count`, ";
-        $sql .= "CONVERT_TZ(`created_at_most_recent`, '-03:00', '+01:00') AS `created_at_most_recent` ";
+        $sql .= "CONVERT_TZ(`created_at_most_recent`, '-03:00', '+00:00') AS `created_at_most_recent` ";
         $sql .= "FROM `messages_view` ORDER BY `messages_count` DESC";
         $stmt = $this->connection->prepare($sql);
         $stmt->execute();
@@ -178,7 +178,7 @@ class Logger
     {
         $sql = "SELECT m.id, a.name, m.class, m.function, m.file, m.line, m.object, ";
         $sql .= "m.type, m.args, m.message, m.details, m.correlation_id, m.user_agent, ";
-        $sql .= "CONVERT_TZ(m.created_at, '-03:00', '+01:00') AS `created_at` ";
+        $sql .= "CONVERT_TZ(m.created_at, '-03:00', '+00:00') AS `created_at` ";
         $sql .= "FROM messages as m INNER JOIN applications as a ON m.application_id = a.id ";
         $sql .= "WHERE m.id = ?;";
         $stmt = $this->connection->prepare($sql);

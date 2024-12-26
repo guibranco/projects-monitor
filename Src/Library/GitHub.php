@@ -93,6 +93,7 @@ class GitHub
         } catch (RequestException $ex) {
             $debug = $response === null ? "" : $response->toJson();
             error_log("{$ex->getMessage()} {$ex->getCode()} - {$debug}");
+            throw $ex;
         }
     }
 
@@ -256,6 +257,7 @@ class GitHub
         } catch (RequestException $ex) {
             $debug = $response === null ? "" : $response->toJson();
             error_log("{$ex->getMessage()} {$ex->getCode()} - {$debug}");
+            throw $ex;
         }
     }
 
@@ -305,6 +307,7 @@ class GitHub
         } catch (RequestException $ex) {
             $debug = $response === null ? "" : $response->toJson();
             error_log("{$ex->getMessage()} {$ex->getCode()} - {$debug}");
+            throw $ex;
         }
     }
 

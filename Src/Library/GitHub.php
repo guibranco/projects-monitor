@@ -84,7 +84,7 @@ class GitHub
 
         $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode(preg_replace('!\s+!', ' ', "is:open archived:false is:{$queryString}")) . "&per_page=100";
         $response = null;
-        try {            
+        try {
             $response = $this->requestInternal($url);
             $response->ensureSuccessStatus();
             $body = $response->getBody();

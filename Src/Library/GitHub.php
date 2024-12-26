@@ -3,6 +3,7 @@
 namespace GuiBranco\ProjectsMonitor\Library;
 
 use GuiBranco\Pancake\Request;
+use GuiBranco\Pancake\RequestException;
 use GuiBranco\ProjectsMonitor\Library\Configuration;
 use FastVolt\Helper\Markdown;
 
@@ -81,12 +82,18 @@ class GitHub
             return json_decode(file_get_contents($cache));
         }
 
-        $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode(preg_replace('!\s+!', ' ', "is:open archived:false is:{$queryString}")) . "&per_page=100";
-        $response = $this->requestInternal($url);
-        $response->ensureSuccessStatus();
-        $body = $response->getBody();
-        file_put_contents($cache, $body);
-        return json_decode($body);
+        $response = null;
+        try {
+            $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode(preg_replace('!\s+!', ' ', "is:open archived:false is:{$queryString}")) . "&per_page=100";
+            $response = $this->requestInternal($url);
+            $response->ensureSuccessStatus();
+            $body = $response->getBody();
+            file_put_contents($cache, $body);
+            return json_decode($body);
+        } catch (RequestException $ex) {
+            $debug = $response === null ? "" : $response->toJson();
+            error_log("{$ex->getMessage()} {$ex->getCode()} - {$debug}");
+        }
     }
 
     private function getWithLabel($users, $type, $label = null, $labelsToRemove = null)
@@ -238,12 +245,18 @@ class GitHub
             return json_decode(file_get_contents($cache));
         }
 
-        $url = self::GITHUB_API_URL . "repos/" . $owner . "/" . $repository . "/releases/latest";
-        $response = $this->requestInternal($url);
-        $response->ensureSuccessStatus();
-        $body = $response->getBody();
-        file_put_contents($cache, $body);
-        return json_decode($body);
+        $response = null;
+        try {
+            $url = self::GITHUB_API_URL . "repos/" . $owner . "/" . $repository . "/releases/latest";
+            $response = $this->requestInternal($url);
+            $response->ensureSuccessStatus();
+            $body = $response->getBody();
+            file_put_contents($cache, $body);
+            return json_decode($body);
+        } catch (RequestException $ex) {
+            $debug = $response === null ? "" : $response->toJson();
+            error_log("{$ex->getMessage()} {$ex->getCode()} - {$debug}");
+        }
     }
 
     private function getLatestReleaseDetails($account, $repository)
@@ -281,12 +294,18 @@ class GitHub
             return json_decode(file_get_contents($cache));
         }
 
-        $url = self::GITHUB_API_URL . "{$accountType}/{$account}/settings/billing/{$type}";
-        $response = $this->requestInternal($url);
-        $response->ensureSuccessStatus();
-        $body = $response->getBody();
-        file_put_contents($cache, $body);
-        return json_decode($body);
+        $response = null;
+        try {
+            $url = self::GITHUB_API_URL . "{$accountType}/{$account}/settings/billing/{$type}";
+            $response = $this->requestInternal($url);
+            $response->ensureSuccessStatus();
+            $body = $response->getBody();
+            file_put_contents($cache, $body);
+            return json_decode($body);
+        } catch (RequestException $ex) {
+            $debug = $response === null ? "" : $response->toJson();
+            error_log("{$ex->getMessage()} {$ex->getCode()} - {$debug}");
+        }
     }
 
     private function getBilling($type, $items)

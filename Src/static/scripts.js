@@ -1324,9 +1324,8 @@ function drawDataTable(data, elementId, options, hideColumn = -1) {
   const counterElement = document.getElementById(counterElementId);
 
   if (counterElement) {
-    counterElement.innerHTML = data.length;
+    counterElement.innerHTML = Math.max(0, data.length - 1);
   }
-  
   return drawChartByType(data, "table", elementId, options, hideColumn);
 }
 

@@ -504,21 +504,9 @@ function drawChart() {
 function showGitHubStatsAndWakatime() {
   const refresh = Math.floor(Math.random() * 100000);
 
-  const statsUrl =
-    "https://github-readme-stats-guibranco.vercel.app/api" +
-    "?username=guibranco&line_height=28&card_width=490&hide_title=true&hide_border=true" +
-    "&show_icons=true&theme=chartreuse-dark&icon_color=7FFF00&include_all_commits=true" +
-    "&count_private=true&show=reviews,discussions_started&count_private=true&refresh=" +
-    refresh;
-
-  const streakUrl =
-    "https://github-readme-streak-stats-guibranco.vercel.app/" +
-    "?user=guibranco&theme=github-green-purple&fire=FF6600&refresh=" +
-    refresh;
-
-  const wakatimeUrl =
-    "https://wakatime.com/badge/user/6be975b7-7258-4475-bc73-9c0fc554430e.svg?style=for-the-badge&refresh=" +
-    refresh;
+  const statsUrl = `https://github-readme-stats-guibranco.vercel.app/api?username=guibranco&line_height=28&card_width=490&hide_title=true&hide_border=true&show_icons=true&theme=chartreuse-dark&icon_color=7FFF00&include_all_commits=true&count_private=true&show=reviews,discussions_started&count_private=true&refresh=${refresh}`;
+  const streakUrl = `https://github-readme-streak-stats-guibranco.vercel.app/?user=guibranco&theme=github-green-purple&fire=FF6600&refresh=${refresh}`;
+  const wakatimeUrl = `https://wakatime.com/badge/user/6be975b7-7258-4475-bc73-9c0fc554430e.svg?style=for-the-badge&refresh=${refresh}`;
 
   const statsImg = document.getElementById("gh_stats");
   const streakImg = document.getElementById("gh_streak");
@@ -531,7 +519,6 @@ function showGitHubStatsAndWakatime() {
 
   function loadImage(imgElement, url, options = {}) {
     const { maxRetries = 10, retryDelay = 2000, timeout = 30000 } = options;
-
     const startTime = Date.now();
 
     function cleanup() {
@@ -640,7 +627,12 @@ function showCPanel(response) {
     redTo: 1000,
   };
 
-  drawGaugeChart("Log errors", response["total_error_messages"], "gauge_chart_log_errors", gaugeOptions);
+  drawGaugeChart(
+    "Log errors",
+    response["total_error_messages"],
+    "gauge_chart_log_errors",
+    gaugeOptions
+  );
   drawDataTable(response["error_log_files"], "error_log_files", tableOptions);
   drawDataTable(
     response["error_log_messages"],
@@ -653,7 +645,7 @@ function showCPanel(response) {
     lvecpu: "gauge_chart_cpu",
     lvememphy: "gauge_chart_memory",
     lveep: "gauge_chart_entry_process",
-    lvenproc: "gauge_chart_process",   
+    lvenproc: "gauge_chart_process",
   };
 
   const labels = {
@@ -673,7 +665,7 @@ function showCPanel(response) {
   for (const item of usageData) {
     const greenTo = parseInt(item.maximum * 0.5);
     const yellowTo = parseInt(item.maximum * 0.75);
-    
+
     const gaugeOptionsUsage = {
       width: "100%",
       height: "100%",
@@ -823,16 +815,46 @@ function showGitHub(response) {
     redFrom: 500,
     redTo: 1000,
   };
-  
-  drawGaugeChart("GH Issues", response["issues"]["total_count"], "gauge_chart_issues", gaugeOptions);
-  drawGaugeChart("GH PRs", response["pull_requests"]["total_count"], "gauge_chart_pull_requests", gaugeOptions);
 
-  drawDataTable(response["pull_requests"]["awaiting_triage"], "pull_requests_triage", tableOptions);
-  drawDataTable(response["pull_requests"]["latest"], "pull_requests_latest", tableOptions);
-  drawDataTable(response["pull_requests"]["authored"], "pull_requests_authored", tableOptions);
-  drawDataTable(response["pull_requests"]["blocked"], "pull_requests_blocked", tableOptions);
+  drawGaugeChart(
+    "GH Issues",
+    response["issues"]["total_count"],
+    "gauge_chart_issues",
+    gaugeOptions
+  );
+  drawGaugeChart(
+    "GH PRs",
+    response["pull_requests"]["total_count"],
+    "gauge_chart_pull_requests",
+    gaugeOptions
+  );
+
+  drawDataTable(
+    response["pull_requests"]["awaiting_triage"],
+    "pull_requests_triage",
+    tableOptions
+  );
+  drawDataTable(
+    response["pull_requests"]["latest"],
+    "pull_requests_latest",
+    tableOptions
+  );
+  drawDataTable(
+    response["pull_requests"]["authored"],
+    "pull_requests_authored",
+    tableOptions
+  );
+  drawDataTable(
+    response["pull_requests"]["blocked"],
+    "pull_requests_blocked",
+    tableOptions
+  );
   drawDataTable(response["issues"]["assigned"], "assigned", tableOptions);
-  drawDataTable(response["issues"]["authored"], "issues_authored", tableOptions);
+  drawDataTable(
+    response["issues"]["authored"],
+    "issues_authored",
+    tableOptions
+  );
   drawDataTable(response["issues"]["bug"], "bug", tableOptions);
   drawDataTable(response["issues"]["blocked"], "issues_blocked", tableOptions);
   drawDataTable(response["issues"]["triage"], "triage", tableOptions);
@@ -907,8 +929,17 @@ function showMessages(response) {
   };
 
   drawDataTable(response["grouped"], "messages_grouped", tableOptions);
-  drawGaugeChart("PM Errors", response["total"], "gauge_chart_pm_errors", gaugeOptions);
-  drawPieChart(response["byApplications"], "pie_chart_2", optionsByApplications);
+  drawGaugeChart(
+    "PM Errors",
+    response["total"],
+    "gauge_chart_pm_errors",
+    gaugeOptions
+  );
+  drawPieChart(
+    response["byApplications"],
+    "pie_chart_2",
+    optionsByApplications
+  );
 }
 
 /**
@@ -973,7 +1004,12 @@ function showQueues(response) {
   };
 
   drawDataTable(response["queues"], "queues", tableOptions);
-  drawGaugeChart("Queues", response["total"], "gauge_chart_queues", gaugeOptions);
+  drawGaugeChart(
+    "Queues",
+    response["total"],
+    "gauge_chart_queues",
+    gaugeOptions
+  );
 }
 
 /**
@@ -1093,7 +1129,7 @@ function showWebhook(response) {
     redFrom: 700000,
     redTo: 1000000,
   };
-  
+
   const gaugeOptions = {
     width: "100%",
     height: "100%",
@@ -1113,19 +1149,56 @@ function showWebhook(response) {
       "<b>Date: </b> " + checkHooksDate.toString();
   }
 
-  drawLineChart(response["statistics"], "webhooks_statistics", optionsStatistics);
-  drawLineChart(response["statistics_github"], "webhooks_statistics_github", optionsStatisticsGitHub);
+  drawLineChart(
+    response["statistics"],
+    "webhooks_statistics",
+    optionsStatistics
+  );
+  drawLineChart(
+    response["statistics_github"],
+    "webhooks_statistics_github",
+    optionsStatisticsGitHub
+  );
   drawDataTable(response["senders"], "senders", tableOptions);
   drawDataTable(response["repositories"], "repositories", tableOptions);
-  drawDataTable(response["installation_repositories"], "installed_repositories", tableOptions);
+  drawDataTable(
+    response["installation_repositories"],
+    "installed_repositories",
+    tableOptions
+  );
   drawDataTable(response["workflow_runs"], "workflow_runs", tableOptions);
   drawDataTable(response["feed"], "feed", tableOptions, 5);
   drawPieChart(response["events"], "pie_chart_1", optionsEvents);
-  drawGaugeChart("GH WH", response["total"], "gauge_chart_webhooks", gaugeOptionsTotal);
-  drawGaugeChart("WH Failed", response["failed"], "gauge_chart_webhooks_failed", gaugeOptions);
-  drawGaugeChart("GH WRs", response["total_workflow_runs"], "gauge_chart_workflows_runs", gaugeOptions);
-  drawGaugeChart("GH App", response["installations"], "gauge_chart_installed_apps", gaugeOptions);
-  drawGaugeChart("GH Repos", response["installation_repositories_count"], "gauge_chart_installation_repositories", gaugeOptions);
+  drawGaugeChart(
+    "GH WH",
+    response["total"],
+    "gauge_chart_webhooks",
+    gaugeOptionsTotal
+  );
+  drawGaugeChart(
+    "WH Failed",
+    response["failed"],
+    "gauge_chart_webhooks_failed",
+    gaugeOptions
+  );
+  drawGaugeChart(
+    "GH WRs",
+    response["total_workflow_runs"],
+    "gauge_chart_workflows_runs",
+    gaugeOptions
+  );
+  drawGaugeChart(
+    "GH App",
+    response["installations"],
+    "gauge_chart_installed_apps",
+    gaugeOptions
+  );
+  drawGaugeChart(
+    "GH Repos",
+    response["installation_repositories_count"],
+    "gauge_chart_installation_repositories",
+    gaugeOptions
+  );
 }
 
 /**
@@ -1154,15 +1227,24 @@ function showWireGuard(response) {
   drawDataTable(response["wireguard"], "wireguard", tableOptions);
 }
 
+/**
+ * Draws a Google Visualization chart of the specified type.
+ *
+ * @param {Array} data - The data to be visualized, in the format accepted by google.visualization.arrayToDataTable.
+ * @param {string} chartType - The type of chart to draw. Valid values are "table", "line", "pie", and "gauge".
+ * @param {string} elementId - The ID of the HTML element where the chart will be drawn.
+ * @param {Object} options - The options for the chart, as accepted by the specific chart type.
+ * @param {number} [hideColumn=-1] - The index of the column to hide. If -1, no column will be hidden.
+ * @returns {Object} An object containing the chart type, element ID, chart instance, and optionally the data view.
+ */
 function drawChartByType(data, chartType, elementId, options, hideColumn = -1) {
-
   if (!google.visualization) {
     console.error("Google Visualization API not loaded");
     return;
   }
 
   if (!data || !elementId || !options) {
-    console.error('Invalid parameters passed to drawChartByType');
+    console.error("Invalid parameters passed to drawChartByType");
     return;
   }
 
@@ -1197,43 +1279,98 @@ function drawChartByType(data, chartType, elementId, options, hideColumn = -1) {
 
   result.dataTable = google.visualization.arrayToDataTable(data);
 
-  if(hideColumn >= 0 && data.length > 0) {
+  if (hideColumn >= 0 && data.length > 0) {
     result.view = new google.visualization.DataView(result.dataTable);
     if (data[0].length > hideColumn) {
       result.view.hideColumns([hideColumn]);
     }
-    
+
     result.chart.draw(result.view, options);
 
-    google.visualization.events.addListener(result.chart, 'select', function () {
+    google.visualization.events.addListener(
+      result.chart,
+      "select",
+      function () {
         const selection = result.chart.getSelection();
         if (selection.length > 0) {
           const row = selection[0].row;
           const item = result.dataTable.getValue(row, 0);
-          const hiddenInfo = result.dataTable.getValue(row, data[0].length > hideColumn ? hideColumn : 0);
+          const hiddenInfo = result.dataTable.getValue(
+            row,
+            data[0].length > hideColumn ? hideColumn : 0
+          );
           console.log(`You clicked on ${item}\nHidden Info: ${hiddenInfo}`);
         }
-    });  
+      }
+    );
   } else {
     result.chart.draw(result.dataTable, options);
   }
-  
+
   return result;
 }
 
-
+/**
+ * Draws a data table chart in the specified HTML element.
+ *
+ * @param {Object} data - The data to be displayed in the table.
+ * @param {string} elementId - The ID of the HTML element where the table will be drawn.
+ * @param {Object} options - Configuration options for the table.
+ * @param {number} [hideColumn=-1] - The index of the column to hide (optional). Default is -1, which means no column will be hidden.
+ * @returns {Object} The chart object created.
+ */
 function drawDataTable(data, elementId, options, hideColumn = -1) {
+  const counterElementId = `counter_${elementId}`;
+  const counterElement = document.getElementById(counterElementId);
+
+  if (counterElement) {
+    counterElement.innerHTML = data.length;
+  }
+  
   return drawChartByType(data, "table", elementId, options, hideColumn);
 }
 
+/**
+ * Draws a line chart using the provided data and options.
+ *
+ * @param {Array} data - The data to be used for the chart.
+ * @param {string} elementId - The ID of the HTML element where the chart will be rendered.
+ * @param {Object} options - Additional options for customizing the chart.
+ * @returns {Object} The chart instance.
+ */
 function drawLineChart(data, elementId, options) {
   return drawChartByType(data, "line", elementId, options);
 }
 
+/**
+ * Draws a pie chart using the provided data and options.
+ *
+ * @param {Object} data - The data to be used for the pie chart.
+ * @param {string} elementId - The ID of the HTML element where the chart will be rendered.
+ * @param {Object} options - Additional options for customizing the chart.
+ * @returns {Object} The chart instance.
+ */
 function drawPieChart(data, elementId, options) {
   return drawChartByType(data, "pie", elementId, options);
 }
 
+/**
+ * Draws a gauge chart with the specified label, value, and options.
+ *
+ * @param {string} label - The label for the gauge chart.
+ * @param {number} value - The value to be displayed on the gauge chart.
+ * @param {string} elementId - The ID of the HTML element where the chart will be rendered.
+ * @param {Object} options - Additional options for customizing the gauge chart.
+ * @returns {Object} The chart object created by the drawChartByType function.
+ */
 function drawGaugeChart(label, value, elementId, options) {
-  return drawChartByType([["", ""],[label, value]], "gauge", elementId, options);
+  return drawChartByType(
+    [
+      ["", ""],
+      [label, value],
+    ],
+    "gauge",
+    elementId,
+    options
+  );
 }

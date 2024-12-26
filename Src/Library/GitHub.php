@@ -82,18 +82,23 @@ class GitHub
             return json_decode(file_get_contents($cache));
         }
 
+        $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode(preg_replace('!\s+!', ' ', "is:open archived:false is:{$queryString}")) . "&per_page=100";
         $response = null;
-        try {
-            $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode(preg_replace('!\s+!', ' ', "is:open archived:false is:{$queryString}")) . "&per_page=100";
+        try {            
             $response = $this->requestInternal($url);
             $response->ensureSuccessStatus();
             $body = $response->getBody();
             file_put_contents($cache, $body);
             return json_decode($body);
         } catch (RequestException $ex) {
-            $debug = $response === null ? "" : $response->toJson();
-            error_log("{$ex->getMessage()} {$ex->getCode()} - {$debug}");
-            throw $ex;
+            error_log(sprintf(
+                "GitHub search request failed - URL: %s, Error: %s, Code: %d, Response: %s",
+                $url,
+                $ex->getMessage(),
+                $ex->getCode(),
+                $response === null ? "null" : $response->toJson()
+            ));
+            return (object)['total_count' => 0, 'items' => []];
         }
     }
 
@@ -115,7 +120,6 @@ class GitHub
             return "user:{$user}";
         }, $users));
         $queryString = "{$type} {$labels} {$labelsRemove} {$usersList}";
-
         return $this->getSearch($queryString);
     }
 
@@ -126,7 +130,6 @@ class GitHub
             return "-user:{$user}";
         }, $usersToExclude));
         $queryString = "{$type} {$filterString} {$usersToRemove}";
-
         return $this->getSearch($queryString);
     }
 
@@ -255,9 +258,22 @@ class GitHub
             file_put_contents($cache, $body);
             return json_decode($body);
         } catch (RequestException $ex) {
-            $debug = $response === null ? "" : $response->toJson();
-            error_log("{$ex->getMessage()} {$ex->getCode()} - {$debug}");
-            throw $ex;
+            error_log(sprintf(
+                "GitHub latest release request failed - Owner: %s, Repo: %s, Error: %s, Code: %d, Response: %s",
+                $owner,
+                $repository,
+                $ex->getMessage(),
+                $ex->getCode(),
+                $response === null ? "null" : $response->toJson()
+            ));
+            return (object)[
+                'created_at' => null,
+                'published_at' => null,
+                'name' => 'N/A',
+                'body' => '',
+                'html_url' => '',
+                'author' => (object)['login' => 'N/A']
+            ];
         }
     }
 
@@ -305,9 +321,20 @@ class GitHub
             file_put_contents($cache, $body);
             return json_decode($body);
         } catch (RequestException $ex) {
-            $debug = $response === null ? "" : $response->toJson();
-            error_log("{$ex->getMessage()} {$ex->getCode()} - {$debug}");
-            throw $ex;
+            error_log(sprintf(
+                "GitHub billing request failed - Type: %s, Account: %s, BillingType: %s, Error: %s, Code: %d, Response: %s",
+                $accountType,
+                $account,
+                $type,
+                $ex->getMessage(),
+                $ex->getCode(),
+                $response === null ? "null" : $response->toJson()
+            ));
+            return (object)[
+                'total_minutes_used' => 0,
+                'included_minutes' => 0,
+                'days_left_in_billing_cycle' => 0
+            ];
         }
     }
 

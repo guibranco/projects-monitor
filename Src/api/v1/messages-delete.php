@@ -5,8 +5,15 @@ require_once '../../vendor/autoload.php';
 
 use GuiBranco\ProjectsMonitor\Library\Logger;
 
+if (isset($_POST["application"]) === false) {
+    http_response_code(400);
+    echo json_encode(["error" => "Application name is required"]);
+    exit;
+}
+
 $log = new Logger();
-$log->deleteMessagesByApplication($_POST["application"]);
+$applicationName = filter_input(INPUT_POST, 'application', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+$log->deleteMessagesByApplication($applicationName);
 
 $total = $log->getTotal();
 $byApplications = $log->getTotalByApplications();

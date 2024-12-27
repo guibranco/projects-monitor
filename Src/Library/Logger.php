@@ -197,8 +197,7 @@ class Logger
         try {
             $this->connection->begin_transaction();
 
-            $sql = "DELETE m FROM messages as m INNER JOIN applications as a ON m.application_id = a.id ";
-            $sql .= "WHERE a.name = ?;";
+            $sql = "DELETE m FROM messages as m INNER JOIN applications as a ON m.application_id = a.id WHERE a.name = ?";
             $stmt = $this->connection->prepare($sql);
             $stmt->bind_param("s", $applicationName);
             $result = $stmt->execute();

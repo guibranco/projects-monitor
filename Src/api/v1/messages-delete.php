@@ -5,14 +5,27 @@ require_once '../../vendor/autoload.php';
 
 use GuiBranco\ProjectsMonitor\Library\Logger;
 
-if (isset($_POST["application"]) === false) {
+$requestBody = file_get_contents("php://input");
+$input = json_decode($requestBody, true);
+
+if (json_last_error() !== JSON_ERROR_NONE) {
+    http_response_code(400);
+    echo json_encode([
+        "error" => "Invalid JSON provided",
+        "details" => json_last_error_msg()
+    ]);
+    exit;
+}
+
+if (isset($input['application']) === false) {
     http_response_code(400);
     echo json_encode(["error" => "Application name is required"]);
     exit;
 }
 
+$applicationName = filter_var($input['application'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
 $log = new Logger();
-$applicationName = filter_input(INPUT_POST, 'application', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 $log->deleteMessagesByApplication($applicationName);
 
 $total = $log->getTotal();
@@ -24,4 +37,5 @@ $data = [
     "byApplications" => $byApplications,
     "grouped" => $grouped
 ];
+
 echo json_encode($data);

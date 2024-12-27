@@ -954,14 +954,17 @@ function showMessages(response) {
   }
 }
 
+/**
+ * Prompts the user for confirmation before deleting messages for a specified application.
+ *
+ * @param {string} application - The name of the application whose messages are to be deleted.
+ */
 function confirmDelete(application) {
-  if (
-    confirm(
-      `Are you sure you want to delete messages for ${decodeURIComponent(
-        application
-      )}?`
-    )
-  ) {
+  const message = `Are you sure you want to delete messages for ${decodeURIComponent(
+    application
+  )}?`;
+
+  if (window.confirm(message)) {
     deleteMessageByApplication(application);
   }
 }

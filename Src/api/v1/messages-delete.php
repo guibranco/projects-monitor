@@ -23,10 +23,15 @@ if (isset($input['application']) === false) {
     exit;
 }
 
-$applicationName = filter_var($input['application'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-
+$applicationName = filter_var(urldecode($input['application']), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 $log = new Logger();
-$log->deleteMessagesByApplication($applicationName);
+$result = $log->deleteMessagesByApplication($applicationName);
+
+if ($result === false) {
+    http_response_code(500);
+    echo json_encode(["error" => "An error occurred while deleting the messages"]);
+    exit;
+}
 
 $total = $log->getTotal();
 $byApplications = $log->getTotalByApplications();

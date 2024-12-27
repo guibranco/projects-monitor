@@ -942,11 +942,7 @@ function showMessages(response) {
   drawPieChart(response.byApplications, "pie_chart_2", optionsByApplications);
 
   if (response.byApplications.length === 1) {
-    drawDataTable(
-      response.byApplications,
-      "messages_by_applications",
-      tableOptions
-    );
+    drawDataTable([[]], "messages_by_applications", tableOptions);
     return;
   }
 

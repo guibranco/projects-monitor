@@ -964,7 +964,7 @@ function showMessages(response) {
     newElement.addEventListener("click", (e) => {
       const deleteButton = e.target.closest('[data-action="delete"]');
       if (deleteButton) {
-        const application = deleteButton.dataset.application;
+        const {application} = deleteButton.dataset;
         confirmDelete(application);
       }
     });

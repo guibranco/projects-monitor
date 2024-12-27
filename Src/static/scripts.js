@@ -773,34 +773,15 @@ function showDomains(response) {
  * showGitHub(githubResponse);
  */
 function showGitHub(response) {
-  if (typeof response["latest_release"] !== "undefined") {
-    const latestRelease = response["latest_release"];
+  if (typeof response.latest_release !== "undefined") {
+    const latestRelease = response.latest_release;
     document.getElementById("latest_release").innerHTML =
-      "<b>Release Notes:</b> " +
-      latestRelease["description"] +
-      "<b>Date:</b> " +
-      latestRelease["published"] +
-      " | " +
-      "<b>Version:</b> " +
-      "<a href='" +
-      latestRelease["release_url"] +
-      "'>" +
-      latestRelease["title"] +
-      "</a>" +
-      " | " +
-      "<a href='https://github.com/" +
-      latestRelease["repository"] +
-      "' target='_blank' rel='noopener noreferrer'>" +
-      "<img alt='Static Badge' src='https://img.shields.io/badge/" +
-      latestRelease["repository"] +
-      "-black?style=flat&amp;logo=github'></a>" +
-      " | " +
-      "<a href='https://github.com/" +
-      latestRelease["author"] +
-      "' target='_blank' rel='noopener noreferrer'>" +
-      "<img alt='author' src='https://img.shields.io/badge/" +
-      latestRelease["author"] +
-      "-black?style=social&amp;logo=github'></a>";
+      `<b>Release Notes:</b> ${latestRelease.description}<b>Date:</b> ${latestRelease.published} | ` +
+      `<b>Version:</b> <a href='${latestRelease.release_url}'>${latestRelease.title}</a> | ` +
+      `<a href='https://github.com/${latestRelease.repository}' target='_blank' rel='noopener noreferrer'>` +
+      `<img alt='Static Badge' src='https://img.shields.io/badge/${latestRelease.repository}-black?style=flat&amp;logo=github'></a> | ` +
+      `<a href='https://github.com/${latestRelease.author}' target='_blank' rel='noopener noreferrer'>` +
+      `<img alt='author' src='https://img.shields.io/badge/${latestRelease.author}-black?style=social&amp;logo=github'></a>`;
   }
 
   const gaugeOptions = {
@@ -816,52 +797,73 @@ function showGitHub(response) {
     redTo: 1000,
   };
 
+  let coreApiUsage = response.api_usage.find((item) => item[0] === "core");
+
+  if (coreApiUsage === undefined) {
+    coreApiUsage = [0, 0, 0, 0];
+  }
+
+  const apiUsageGaugeOptions = {
+    width: "100%",
+    height: "100%",
+    min: 0,
+    max: coreApiUsage[1],
+    greenFrom: 0,
+    greenTo: coreApiUsage[1] * 0.25,
+    yellowFrom: coreApiUsage[1] * 0.25,
+    yellowTo: coreApiUsage[1] * 0.5,
+    redFrom: coreApiUsage[1] * 0.5,
+    redTo: coreApiUsage[1],
+  };
+  drawGaugeChart(
+    "GH API Usage",
+    coreApiUsage[3],
+    "gauge_chart_github_usage",
+    apiUsageGaugeOptions
+  );
+
   drawGaugeChart(
     "GH Issues",
-    response["issues"]["total_count"],
+    response.issues.total_count,
     "gauge_chart_issues",
     gaugeOptions
   );
   drawGaugeChart(
     "GH PRs",
-    response["pull_requests"]["total_count"],
+    response.pull_requests.total_count,
     "gauge_chart_pull_requests",
     gaugeOptions
   );
 
   drawDataTable(
-    response["pull_requests"]["awaiting_triage"],
+    response.pull_requests.awaiting_triage,
     "pull_requests_triage",
     tableOptions
   );
   drawDataTable(
-    response["pull_requests"]["latest"],
+    response.pull_requests.latest,
     "pull_requests_latest",
     tableOptions
   );
   drawDataTable(
-    response["pull_requests"]["authored"],
+    response.pull_requests.authored,
     "pull_requests_authored",
     tableOptions
   );
   drawDataTable(
-    response["pull_requests"]["blocked"],
+    response.pull_requests.blocked,
     "pull_requests_blocked",
     tableOptions
   );
-  drawDataTable(response["issues"]["assigned"], "assigned", tableOptions);
-  drawDataTable(
-    response["issues"]["authored"],
-    "issues_authored",
-    tableOptions
-  );
-  drawDataTable(response["issues"]["bug"], "bug", tableOptions);
-  drawDataTable(response["issues"]["blocked"], "issues_blocked", tableOptions);
-  drawDataTable(response["issues"]["triage"], "triage", tableOptions);
-  drawDataTable(response["issues"]["wip"], "wip", tableOptions);
-  drawDataTable(response["issues"]["others"], "issues", tableOptions);
-  drawDataTable(response["accounts_usage"], "accounts_usage", tableOptions);
-  drawDataTable(response["api_usage"], "api_usage", tableOptions);
+  drawDataTable(response.issues.assigned, "assigned", tableOptions);
+  drawDataTable(response.issues.authored, "issues_authored", tableOptions);
+  drawDataTable(response.issues.bug, "bug", tableOptions);
+  drawDataTable(response.issues.blocked, "issues_blocked", tableOptions);
+  drawDataTable(response.issues.triage, "triage", tableOptions);
+  drawDataTable(response.issues.wip, "wip", tableOptions);
+  drawDataTable(response.issues.others, "issues", tableOptions);
+  drawDataTable(response.accounts_usage, "accounts_usage", tableOptions);
+  drawDataTable(response.api_usage, "api_usage", tableOptions);
 }
 
 /**
@@ -947,7 +949,7 @@ function showMessages(response) {
     );
     return;
   }
-  
+
   if (response.byApplications.length > 1) {
     const byApplicationsTableData = response.byApplications;
     byApplicationsTableData[0].unshift("Actions");
@@ -970,13 +972,15 @@ function showMessages(response) {
 
     if (eventAssigned === false) {
       eventAssigned = true;
-      document.getElementById("messages_by_applications").addEventListener("click", (e) => {
-        const deleteButton = e.target.closest('[data-action="delete"]');
-        if (deleteButton) {
-          const {application} = deleteButton.dataset;
-          confirmDelete(application);
-        }
-      });
+      document
+        .getElementById("messages_by_applications")
+        .addEventListener("click", (e) => {
+          const deleteButton = e.target.closest('[data-action="delete"]');
+          if (deleteButton) {
+            const { application } = deleteButton.dataset;
+            confirmDelete(application);
+          }
+        });
     }
   }
 }

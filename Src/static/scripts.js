@@ -941,8 +941,9 @@ function showMessages(response) {
     const byApplicationsTableData = response.byApplications;
     byApplicationsTableData[0].unshift("Delete");
     for (let i = 1; i < byApplicationsTableData.length; i++) {
+      const safeAppName = encodeURIComponent(byApplicationsTableData[i][0]);
       byApplicationsTableData[i].unshift(
-        `<button onclick="deleteMessageByApplication('${byApplicationsTableData[i][0]}')">❌</button>`
+        `<button onclick="confirmDelete('${safeAppName}')">❌</button>`
       );
     }
     drawDataTable(
@@ -950,6 +951,18 @@ function showMessages(response) {
       "messages_by_applications",
       tableOptions
     );
+  }
+}
+
+function confirmDelete(application) {
+  if (
+    confirm(
+      `Are you sure you want to delete messages for ${decodeURIComponent(
+        application
+      )}?`
+    )
+  ) {
+    deleteMessageByApplication(application);
   }
 }
 
@@ -993,12 +1006,16 @@ function deleteMessageByApplication(application) {
  *
  * @param {string} title - The title of the notification.
  * @param {string} message - The message content of the notification.
- * @param {string} type - The type of the notification, which determines the styling. 
+ * @param {string} type - The type of the notification, which determines the styling.
  *                        Possible values are "success", "error", "warning", and "info".
  */
 function showNotification(title, message, type) {
   const toastContainer = document.getElementById("toast-container");
-e
+  if (!toastContainer) {
+    console.error("Toast container not found");
+    return;
+  }
+
   const typeClass = {
     success: "bg-success text-white",
     error: "bg-danger text-white",

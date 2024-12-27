@@ -58,20 +58,22 @@ class Webhooks
             case "post":
                 $response = $this->request->post("{$this->apiUrl}{$endpoint}", json_encode($data), $this->headers);
                 break;
+            case "put":
+                $response = $this->request->put("{$this->apiUrl}{$endpoint}", json_encode($data), $this->headers);
+                break;
             case "delete":
                 $response = $this->request->delete("{$this->apiUrl}{$endpoint}", $this->headers);
                 break;
             default:
                 throw new RequestException("Method not mapped: {$method}");
-                break;
         }
 
-        if ($response->statusCode === $expectedStatusCode) {
-            return json_decode($response->body, true);
+        if ($response->getStatusCode() === $expectedStatusCode) {
+            return json_decode($response->getBody(), true);
         }
 
-        $error = $response->statusCode == -1 ? $response->error : $response->body;
-        throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
+        $error = $response->getStatusCode() == -1 ? $response->getMessage() : $response->getBody();
+        throw new RequestException("Code: {$response->getStatusCode()} - Error: {$error}");
     }
 
     public function getDashboard($feedOptionsFilter, $workflowsLimiterQuantity)
@@ -92,17 +94,22 @@ class Webhooks
         return $response;
     }
 
-    public function getWebhook($sequence)
+    public function getWebhook($sequence): mixed
     {
         return $this->doRequest("github/{$sequence}", "get", 200);
     }
 
-    public function requestRerun($sequence)
+    public function requestRerun($sequence): mixed
     {
-        return $this->doRequest("github/workflow", "post", 201, array("sequence", $sequence));
+        return $this->doRequest("github/workflow", "post", 201, ["sequence" => $sequence]);
     }
 
-    public function requestDelete($sequence)
+    public function requestUpdate($sequence): mixed
+    {
+        return $this->doRequest("github/workflow", "put", 202, ["sequence" => $sequence]);
+    }
+
+    public function requestDelete($sequence): mixed
     {
         return $this->doRequest("github/workflow/{$sequence}", "delete", 202);
     }

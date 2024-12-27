@@ -35,18 +35,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $confirm_password = $_POST['confirm_password'];
     $token = $_POST['token'];
 
-    if (strlen($new_password) < 8 ||
+    if (
+        strlen($new_password) < 8 ||
         !preg_match('/[A-Z]/', $new_password) ||
         !preg_match('/[a-z]/', $new_password) ||
-        !preg_match('/[0-9]/', $new_password)) {
+        !preg_match('/[0-9]/', $new_password)
+    ) {
         $message = 'Password must be at least 8 characters and contain uppercase, lowercase, and numbers';
         exit;
     }
-    // Check if passwords match
     if ($new_password !== $confirm_password) {
         $message = 'Passwords do not match.';
     } else {
-        // Validate token
         $stmt = $conn->prepare("SELECT id FROM users WHERE reset_token = ? AND reset_token_expiration > NOW()");
         $stmt->bind_param('s', $token);
         $stmt->execute();
@@ -56,7 +56,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $user = $result->fetch_assoc();
             $hashed_password = password_hash($new_password, PASSWORD_BCRYPT);
 
-            // Update the password and clear the reset token
             $update_stmt = $conn->prepare("UPDATE users SET password = ?, reset_token = NULL, reset_token_expiration = NULL WHERE id = ?");
             $update_stmt->bind_param('si', $hashed_password, $user['id']);
             $update_stmt->execute();
@@ -71,11 +70,50 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
+    <title>Projects Monitor | Reset Password</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reset Password</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+
+<body class="bg-light">
+    <div class="container">
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h3 class="card-title text-center">Reset Password</h3>
+                        <?php if ($message): ?>
+                            <div class="alert alert-info"><?php echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8'); ?>
+                            </div>
+                        <?php endif; ?>
+                        <?php if (!$message): ?>
+                            <form method="POST" action="" onsubmit="return validatePasswords()">
+                                <input type="hidden" name="csrf_token"
+                                    value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
+                                <input type="hidden" name="token" value="<?php echo htmlspecialchars($token); ?>">
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">New Password</label>
+                                    <input type="password" class="form-control" id="password" name="password" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="confirm_password" class="form-label">Confirm Password</label>
+                                    <input type="password" class="form-control" id="confirm_password"
+                                        name="confirm_password" required>
+                                    <div id="password-error" class="text-danger mt-2"></div>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Reset Password</button>
+                            </form>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <script>
         function validatePasswords() {
             const password = document.getElementById('password').value;
@@ -89,37 +127,6 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
             return true;
         }
     </script>
-</head>
-<body class="bg-light">
-    <div class="container">
-        <div class="row justify-content-center mt-5">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-body">
-                        <h3 class="card-title text-center">Reset Password</h3>
-                        <?php if ($message): ?>
-                            <div class="alert alert-info"><?php echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8'); ?></div>
-                        <?php endif; ?>
-                        <?php if (!$message): ?>
-                            <form method="POST" action="" onsubmit="return validatePasswords()">
-                                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
-                                <input type="hidden" name="token" value="<?php echo htmlspecialchars($token); ?>">
-                                <div class="mb-3">
-                                    <label for="password" class="form-label">New Password</label>
-                                    <input type="password" class="form-control" id="password" name="password" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="confirm_password" class="form-label">Confirm Password</label>
-                                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
-                                    <div id="password-error" class="text-danger mt-2"></div>
-                                </div>
-                                <button type="submit" class="btn btn-primary w-100">Reset Password</button>
-                            </form>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </body>
+
 </html>

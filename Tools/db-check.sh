@@ -35,7 +35,6 @@ echo "" >>"$GITHUB_STEP_SUMMARY"
 
 if [ "$EXISTS" -eq 1 ]; then
     MESSAGE="The \`schema version\` table **does** exist."
-    echo "::notice file=$0,line=$LINENO::$MESSAGE"
     echo ":thumbsup: $MESSAGE" >>"$GITHUB_STEP_SUMMARY"
     echo "not_found=false" >>"$GITHUB_OUTPUT"
 else

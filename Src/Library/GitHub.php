@@ -3,18 +3,27 @@
 namespace GuiBranco\ProjectsMonitor\Library;
 
 use GuiBranco\Pancake\Request;
+use GuiBranco\Pancake\Response;
+use GuiBranco\Pancake\RequestException;
 use GuiBranco\ProjectsMonitor\Library\Configuration;
 use FastVolt\Helper\Markdown;
 
 class GitHub
 {
     private const GITHUB_API_URL = "https://api.github.com/";
+    private const DATE_TIME_FORMAT = "H:i:s d/m/Y";
+    private const ISSUE_TEXT = "issue";
+    private const PR_TEXT = "pr";
 
-    private $request;
+    private const BLOCKED_TEXT_LABEL = "blocked";
+    private const BLOCKED_LABEL = "\"🚷blocked\"";
+    private const BLOCKED_SPACE_LABEL = "\"🚷 blocked\"";
+    private const WIP_TEXT_LABEL = "WIP";
+    private const WIP_SPACE_LABEL = "\"🛠 WIP\""
+    ;
+    private Request $request;
 
-    private $headers;
-
-    private $apiUsage;
+    private array $headers;
 
     public function __construct()
     {
@@ -29,7 +38,6 @@ class GitHub
 
         require_once __DIR__ . "/../secrets/gitHub.secrets.php";
 
-        $this->apiUsage = array();
         $this->request = new Request();
         $this->headers = [
             "Authorization: token {$gitHubToken}",
@@ -39,49 +47,47 @@ class GitHub
         ];
     }
 
-    private function processHeaders($headers): void
-    {
-        $limit = $headers["X-RateLimit-Limit"];
-        $remaining = $headers["X-RateLimit-Remaining"];
-        $reset = $headers["X-RateLimit-Reset"];
-        $used = $headers["X-RateLimit-Used"];
-        $resource = $headers["X-RateLimit-Resource"];
-        $this->apiUsage[$resource] = array("limit" => $limit, "remaining" => $remaining, "reset" => $reset, "used" => $used);
-    }
-
-    private function requestInternal($url, $isRetry = false)
+    private function requestInternal(string $url, bool $isRetry = false): Response
     {
         $response = $this->request->get($url, $this->headers);
 
-        if ($response->statusCode !== -1 || $isRetry) {
-            $this->processHeaders($response->headers);
+        if ($response->getStatusCode() !== -1 || $isRetry) {
             return $response;
         }
 
         return $this->requestInternal($url, true);
     }
 
-    private function getSearch($queryString)
+    private function getSearch($queryString): mixed
     {
         $hash = md5($queryString);
         $cache = "cache/github_search_{$hash}.json";
 
-        if (file_exists($cache) && filemtime($cache) > strtotime("-3 minute")) {
+        if (file_exists($cache) && filemtime($cache) > strtotime("-10 minute")) {
             return json_decode(file_get_contents($cache));
         }
 
         $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode(preg_replace('!\s+!', ' ', "is:open archived:false is:{$queryString}")) . "&per_page=100";
-        $response = $this->requestInternal($url);
-        if ($response->statusCode !== 200) {
-            $error = $response->statusCode === -1 ? $response->error : $response->body;
-            throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
+        $response = null;
+        try {
+            $response = $this->requestInternal($url);
+            $response->ensureSuccessStatus();
+            $body = $response->getBody();
+            file_put_contents($cache, $body);
+            return json_decode($body);
+        } catch (RequestException $ex) {
+            error_log(sprintf(
+                "GitHub search request failed - URL: %s, Error: %s, Code: %d, Response: %s",
+                $url,
+                $ex->getMessage(),
+                $ex->getCode(),
+                $response === null ? "null" : $response->toJson()
+            ));
+            return (object) ['total_count' => 0, 'items' => []];
         }
-
-        file_put_contents($cache, $response->body);
-        return json_decode($response->body);
     }
 
-    private function getWithLabel($users, $type, $label = null, $labelsToRemove = null)
+    private function getWithLabel($users, $type, $label = null, $labelsToRemove = null): mixed
     {
         $labels = "";
         if ($label !== null) {
@@ -99,22 +105,20 @@ class GitHub
             return "user:{$user}";
         }, $users));
         $queryString = "{$type} {$labels} {$labelsRemove} {$usersList}";
-
         return $this->getSearch($queryString);
     }
 
-    private function getWithUserExclusion($type, $filter, $user, $usersToExclude)
+    private function getWithUserExclusion($type, $filter, $user, $usersToExclude): mixed
     {
         $filterString = "{$filter}:{$user}";
         $usersToRemove = implode(" ", array_map(function ($user) {
             return "-user:{$user}";
         }, $usersToExclude));
         $queryString = "{$type} {$filterString} {$usersToRemove}";
-
         return $this->getSearch($queryString);
     }
 
-    private function addHeader(&$items)
+    private function addHeader(&$items): void
     {
         $keys = array_keys($items);
         foreach ($keys as $key) {
@@ -124,7 +128,7 @@ class GitHub
         }
     }
 
-    private function mapItems($items)
+    private function mapItems($items): array
     {
         if (count($items) == 0) {
             return array();
@@ -159,33 +163,33 @@ class GitHub
         return $result;
     }
 
-    public function getIssues()
+    public function getIssues(): array
     {
         $users = ["guibranco", "ApiBR", "GuilhermeStracini", "InovacaoMediaBrasil"];
         $vacanciesUsers = ["rustdevbr", "pydevbr", "dotnetdevbr", "nodejsdevbr", "rubydevbr", "frontend-ao", "frontend-pt", "backend-ao", "backend-pt", "developersRJ"];
         $allUsers = array_merge($users, $vacanciesUsers);
 
-        $resultAll = $this->getWithLabel($users, "issue");
-        $resultOthers = $this->getWithLabel($users, "issue", null, ["WIP", "\"🛠 WIP\"", "bug", "\"🐛 bug\"", "triage", "\"🚦awaiting triage\"", "\"🚦 awaiting triage\"", "blocked", "\"🚷blocked\"", "\"🚷 blocked\""]);
-        $resultWip1 = $this->getWithLabel($users, "issue", "WIP", ["blocked", "\"🚷 blocked\""]);
-        $resultWip2 = $this->getWithLabel($users, "issue", "\"🛠 WIP\"", ["blocked", "\"🚷 blocked\""]);
-        $resultBlocked1 = $this->getWithLabel($users, "issue", "blocked");
-        $resultBlocked2 = $this->getWithLabel($users, "issue", "\"🚷blocked\"");
-        $resultBlocked3 = $this->getWithLabel($users, "issue", "\"🚷 blocked\"");
-        $resultBug1 = $this->getWithLabel($users, "issue", "bug", ["blocked", "\"🚷 blocked\""]);
-        $resultBug2 = $this->getWithLabel($users, "issue", "\"🐛 bug\"", ["blocked", "\"🚷 blocked\""]);
-        $resultTriage1 = $this->getWithLabel($allUsers, "issue", "awaiting triage");
-        $resultTriage2 = $this->getWithLabel($allUsers, "issue", "\"🚦awaiting triage\"");
-        $resultTriage3 = $this->getWithLabel($allUsers, "issue", "\"🚦 awaiting triage\"");
-        $resultTriage4 = $this->getWithLabel($allUsers, "issue", "triage");
-        $resultAssigned = $this->getWithUserExclusion("issue", "assignee", array_slice($users, 0, 1)[0], $users);
-        $resultAuthored = $this->getWithUserExclusion("issue", "author", array_slice($users, 0, 1)[0], $users);
+        $resultAll = $this->getWithLabel($users, self::ISSUE_TEXT);
+        $resultOthers = $this->getWithLabel($users, self::ISSUE_TEXT, null, [self::WIP_TEXT_LABEL, self::WIP_SPACE_LABEL, "bug", "\"🐛 bug\"", "triage", "\"🚦awaiting triage\"", "\"🚦 awaiting triage\"", self::BLOCKED_TEXT_LABEL, self::BLOCKED_LABEL, self::BLOCKED_SPACE_LABEL]);
+        $resultWip1 = $this->getWithLabel($users, self::ISSUE_TEXT, self::WIP_TEXT_LABEL, [self::BLOCKED_TEXT_LABEL, self::BLOCKED_SPACE_LABEL]);
+        $resultWip2 = $this->getWithLabel($users, self::ISSUE_TEXT, self::WIP_SPACE_LABEL, [self::BLOCKED_TEXT_LABEL, self::BLOCKED_SPACE_LABEL]);
+        $resultBlocked1 = $this->getWithLabel($users, self::ISSUE_TEXT, self::BLOCKED_TEXT_LABEL);
+        $resultBlocked2 = $this->getWithLabel($users, self::ISSUE_TEXT, self::BLOCKED_LABEL);
+        $resultBlocked3 = $this->getWithLabel($users, self::ISSUE_TEXT, self::BLOCKED_SPACE_LABEL);
+        $resultBug1 = $this->getWithLabel($users, self::ISSUE_TEXT, "bug", [self::BLOCKED_TEXT_LABEL, self::BLOCKED_LABEL, self::BLOCKED_SPACE_LABEL]);
+        $resultBug2 = $this->getWithLabel($users, self::ISSUE_TEXT, "\"🐛 bug\"", [self::BLOCKED_TEXT_LABEL, self::BLOCKED_LABEL, self::BLOCKED_SPACE_LABEL]);
+        $resultTriage1 = $this->getWithLabel($allUsers, self::ISSUE_TEXT, "awaiting triage");
+        $resultTriage2 = $this->getWithLabel($allUsers, self::ISSUE_TEXT, "\"🚦awaiting triage\"");
+        $resultTriage3 = $this->getWithLabel($allUsers, self::ISSUE_TEXT, "\"🚦 awaiting triage\"");
+        $resultTriage4 = $this->getWithLabel($allUsers, self::ISSUE_TEXT, "triage");
+        $resultAssigned = $this->getWithUserExclusion(self::ISSUE_TEXT, "assignee", array_slice($users, 0, 1)[0], $users);
+        $resultAuthored = $this->getWithUserExclusion(self::ISSUE_TEXT, "author", array_slice($users, 0, 1)[0], $users);
 
         $data = array();
         $data["total_count"] = $resultAll->total_count;
         $data["others"] = $this->mapItems($resultOthers->items);
-        $data["wip"] = array_merge($this->mapItems($resultWip1->items), $this->mapItems($resultWip2->items));
-        $data["blocked"] = array_merge($this->mapItems($resultBlocked1->items), $this->mapItems($resultBlocked2->items), $this->mapItems($resultBlocked3->items));
+        $data[strtolower(self::WIP_TEXT_LABEL)] = array_merge($this->mapItems($resultWip1->items), $this->mapItems($resultWip2->items));
+        $data[strtolower(self::BLOCKED_TEXT_LABEL)] = array_merge($this->mapItems($resultBlocked1->items), $this->mapItems($resultBlocked2->items), $this->mapItems($resultBlocked3->items));
         $data["bug"] = array_merge($this->mapItems($resultBug1->items), $this->mapItems($resultBug2->items));
         $data["triage"] = array_merge($this->mapItems($resultTriage1->items), $this->mapItems($resultTriage2->items), $this->mapItems($resultTriage3->items), $this->mapItems($resultTriage4->items));
         $data["assigned"] = $this->mapItems($resultAssigned->items);
@@ -196,26 +200,25 @@ class GitHub
         return $data;
     }
 
-    public function getPullRequests()
+    public function getPullRequests(): array
     {
         $users = ["guibranco", "ApiBR", "GuilhermeStracini", "InovacaoMediaBrasil", "rustdevbr", "pythondevbr", "pydevbr", "dotnetdevbr", "nodejsdevbr", "rubydevbr", "frontend-ao", "frontend-pt", "backend-ao", "backend-pt", "developersRJ"];
 
-        $result = $this->getWithLabel($users, "pr");
-
-        $resultNotBlocked = $this->getWithLabel($users, "pr", null, ["triage", "\"🚦awaiting triage\"", "\"🚦 awaiting triage\"", "blocked", "\"🚷blocked\"", "\"🚷 blocked\""]);
-        $resultBlocked1 = $this->getWithLabel($users, "pr", "blocked");
-        $resultBlocked2 = $this->getWithLabel($users, "pr", "\"🚷blocked\"");
-        $resultBlocked3 = $this->getWithLabel($users, "pr", "\"🚷 blocked\"");
-        $resultAuthored = $this->getWithUserExclusion("pr", "author", array_slice($users, 0, 1)[0], $users);
-        $resultTriage1 = $this->getWithLabel($users, "pr", "triage");
-        $resultTriage2 = $this->getWithLabel($users, "pr", "awaiting triage");
-        $resultTriage3 = $this->getWithLabel($users, "pr", "\"🚦awaiting triage\"");
-        $resultTriage4 = $this->getWithLabel($users, "pr", "\"🚦 awaiting triage\"");
+        $result = $this->getWithLabel($users, self::PR_TEXT);
+        $resultNotBlocked = $this->getWithLabel($users, self::PR_TEXT, null, ["triage", "\"🚦awaiting triage\"", "\"🚦 awaiting triage\"", self::BLOCKED_TEXT_LABEL, self::BLOCKED_LABEL, self::BLOCKED_SPACE_LABEL]);
+        $resultBlocked1 = $this->getWithLabel($users, self::PR_TEXT, self::BLOCKED_TEXT_LABEL);
+        $resultBlocked2 = $this->getWithLabel($users, self::PR_TEXT, self::BLOCKED_LABEL);
+        $resultBlocked3 = $this->getWithLabel($users, self::PR_TEXT, self::BLOCKED_SPACE_LABEL);
+        $resultAuthored = $this->getWithUserExclusion(self::PR_TEXT, "author", array_slice($users, 0, 1)[0], $users);
+        $resultTriage1 = $this->getWithLabel($users, self::PR_TEXT, "triage");
+        $resultTriage2 = $this->getWithLabel($users, self::PR_TEXT, "awaiting triage");
+        $resultTriage3 = $this->getWithLabel($users, self::PR_TEXT, "\"🚦awaiting triage\"");
+        $resultTriage4 = $this->getWithLabel($users, self::PR_TEXT, "\"🚦 awaiting triage\"");
 
         $data = array();
         $data["total_count"] = $result->total_count;
         $data["latest"] = $this->mapItems($resultNotBlocked->items);
-        $data["blocked"] = array_merge($this->mapItems($resultBlocked1->items), $this->mapItems($resultBlocked2->items), $this->mapItems($resultBlocked3->items));
+        $data[strtolower(self::BLOCKED_TEXT_LABEL)] = array_merge($this->mapItems($resultBlocked1->items), $this->mapItems($resultBlocked2->items), $this->mapItems($resultBlocked3->items));
         $data["authored"] = $this->mapItems($resultAuthored->items);
         $data["awaiting_triage"] = array_merge($this->mapItems($resultTriage1->items), $this->mapItems($resultTriage2->items), $this->mapItems($resultTriage3->items), $this->mapItems($resultTriage4->items));
 
@@ -224,33 +227,55 @@ class GitHub
         return $data;
     }
 
-    private function getLatestRelease($owner, $repository)
+    private function getLatestRelease($owner, $repository): mixed
     {
         $cache = "cache/github_latest_release_{$owner}_{$repository}.json";
-        if (file_exists($cache) && filemtime($cache) > strtotime("-1 hour")) {
-            $response = json_decode(file_get_contents($cache));
-        } else {
-            $url = self::GITHUB_API_URL . "repos/" . $owner . "/" . $repository . "/releases/latest";
-            $response = $this->requestInternal($url);
-            if ($response->statusCode !== 200) {
-                $error = $response->statusCode === -1 ? $response->error : $response->body;
-                throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
-            }
-
-            file_put_contents($cache, json_encode($response));
+        if (file_exists($cache) && filemtime($cache) > strtotime("-3 hour")) {
+            return json_decode(file_get_contents($cache));
         }
 
-        return json_decode($response->body);
+        $response = null;
+        try {
+            $url = self::GITHUB_API_URL . "repos/" . $owner . "/" . $repository . "/releases/latest";
+            $response = $this->requestInternal($url);
+            $response->ensureSuccessStatus();
+            $body = $response->getBody();
+            file_put_contents($cache, $body);
+            return json_decode($body);
+        } catch (RequestException $ex) {
+            error_log(sprintf(
+                "GitHub latest release request failed - Owner: %s, Repo: %s, Error: %s, Code: %d, Response: %s",
+                $owner,
+                $repository,
+                $ex->getMessage(),
+                $ex->getCode(),
+                $response === null ? "null" : $response->toJson()
+            ));
+            return (object) [
+                'created_at' => null,
+                'published_at' => null,
+                'name' => 'N/A',
+                'body' => '',
+                'html_url' => '',
+                'author' => (object) ['login' => 'N/A']
+            ];
+        }
     }
 
-    private function getLatestReleaseDetails($account, $repository)
+    private function getLatestReleaseDetails($account, $repository): array
     {
         $body = $this->getLatestRelease($account, $repository);
         $mkd = Markdown::new();
+
+        if (!isset($body->body)) {
+            error_log("Unable to get latest release details for repository {$account}/{$repository} - 'body' field missing from response. Response: " . print_r($body, true));
+            return array();
+        }
+
         $mkd->setContent($body->body);
         $data = array();
-        $data["created"] = date("H:i:s d/m/Y", strtotime($body->created_at));
-        $data["published"] = date("H:i:s d/m/Y", strtotime($body->published_at));
+        $data["created"] = date(self::DATE_TIME_FORMAT, strtotime($body->created_at));
+        $data["published"] = date(self::DATE_TIME_FORMAT, strtotime($body->published_at));
         $data["title"] = $body->name;
         $data["description"] = $mkd->toHtml();
         $data["release_url"] = $body->html_url;
@@ -260,31 +285,45 @@ class GitHub
         return $data;
     }
 
-    public function getLatestReleaseOfBancosBrasileiros()
+    public function getLatestReleaseOfBancosBrasileiros(): array
     {
         return $this->getLatestReleaseDetails("guibranco", "bancosbrasileiros");
     }
 
-    private function getBillingInternal($accountType, $account, $type)
+    private function getBillingInternal($accountType, $account, $type): mixed
     {
         $cache = "cache/github_billing_{$accountType}_{$account}_{$type}.json";
         if (file_exists($cache) && filemtime($cache) > strtotime("-5 minute")) {
-            $response = json_decode(file_get_contents($cache));
-        } else {
-            $url = self::GITHUB_API_URL . "{$accountType}/{$account}/settings/billing/{$type}";
-            $response = $this->requestInternal($url);
-            if ($response->statusCode !== 200) {
-                $error = $response->statusCode === -1 ? $response->error : $response->body;
-                throw new RequestException("Code: {$response->statusCode} - Error: {$error}");
-            }
-
-            file_put_contents($cache, json_encode($response));
+            return json_decode(file_get_contents($cache));
         }
 
-        return json_decode($response->body);
+        $response = null;
+        try {
+            $url = self::GITHUB_API_URL . "{$accountType}/{$account}/settings/billing/{$type}";
+            $response = $this->requestInternal($url);
+            $response->ensureSuccessStatus();
+            $body = $response->getBody();
+            file_put_contents($cache, $body);
+            return json_decode($body);
+        } catch (RequestException $ex) {
+            error_log(sprintf(
+                "GitHub billing request failed - Type: %s, Account: %s, BillingType: %s, Error: %s, Code: %d, Response: %s",
+                $accountType,
+                $account,
+                $type,
+                $ex->getMessage(),
+                $ex->getCode(),
+                $response === null ? "null" : $response->toJson()
+            ));
+            return (object) [
+                'total_minutes_used' => 0,
+                'included_minutes' => 0,
+                'days_left_in_billing_cycle' => 0
+            ];
+        }
     }
 
-    private function getBilling($type, $items)
+    private function getBilling($type, $items): array
     {
         $data = array();
 
@@ -326,7 +365,7 @@ class GitHub
         return $data;
     }
 
-    public function getAccountUsage()
+    public function getAccountUsage(): array
     {
         $orgs = array("ApiBR", "GuilhermeStracini", "InovacaoMediaBrasil");
 
@@ -342,19 +381,22 @@ class GitHub
 
     public function getApiUsage(): array
     {
-        $cache = "cache/github_api_usage.json";
-        if (count($this->apiUsage) === 0) {
-            if (file_exists($cache)) {
-                return json_decode(file_get_contents($cache));
-            }
-            return array();
-        }
         $data = array();
         $data[] = ["Resource", "Limit", "Remaining", "Used", "Reset"];
-        foreach($this->apiUsage as $resource => $item) {
-            $data[] = [$resource, $item["limit"], $item["remaining"], $item["used"], date("H:i:s d/m/Y", $item["reset"])];
+
+        $response = $this->requestInternal(self::GITHUB_API_URL . "rate_limit");
+
+        if ($response->getStatusCode() !== 200) {
+            return $data;
         }
-        file_put_contents($cache, json_encode($data));
+
+        $body = $response->getBody();
+        $json = json_decode($body);
+
+        foreach ($json->resources as $resource => $item) {
+            $data[] = [$resource, $item->limit, $item->remaining, $item->used, date(self::DATE_TIME_FORMAT, $item->reset)];
+        }
+
         return $data;
     }
 }

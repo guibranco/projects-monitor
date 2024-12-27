@@ -76,12 +76,6 @@ if (!isset($_SESSION['request_count'])) {
 }
 
 $_SESSION['last_activity'] = time();
-
 $userId = $_SESSION['user_id'];
 
-if (isset($_SESSION['user_data'])) {
-    $userData = $_SESSION['user_data'];
-} else {
-    $userData = null;
-}
 session_write_close();

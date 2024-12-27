@@ -91,13 +91,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $reset_link = sprintf('%s://%s/projects-monitor/reset.php?token=%s', isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off' ? 'https' : 'http', $_SERVER['HTTP_HOST'], urlencode($reset_token));
         $to = $user['email'];
-        $subject = '=?UTF-8?B?'.base64_encode('Password Reset Request').'?=';
+        $subject = '=?UTF-8?B?' . base64_encode('Password Reset Request') . '?=';
         $message = wordwrap("Click the link below to reset your password:\n\n{$reset_link}\n\nThis link is valid for 1 hour.\n\nIf you didn't request this reset, please ignore this email.", 70);
         $headers = [
             'MIME-Version: 1.0',
             'Content-Type: text/plain; charset=UTF-8; format=flowed',
             'Content-Transfer-Encoding: 8bit',
-            'From: '.sprintf('=?UTF-8?B?%s?= <noreply@%s>', base64_encode("Projects Monitor"), $_SERVER['HTTP_HOST'])
+            'From: ' . sprintf('=?UTF-8?B?%s?= <noreply@%s>', base64_encode("Projects Monitor"), $_SERVER['HTTP_HOST'])
         ];
         if (mail($to, $subject, $message, implode("\r\n", $headers))) {
             $message = 'A password reset link has been sent to your email.';
@@ -135,12 +135,16 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
+    <title>Projects Monitor | Password Recovery</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Password Recovery</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
+
 <body class="bg-light">
     <div class="container">
         <div class="row justify-content-center mt-5">
@@ -149,13 +153,17 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                     <div class="card-body">
                         <h3 class="card-title text-center">Recover Password</h3>
                         <?php if ($message): ?>
-                            <div class="alert alert-info"><?php echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8'); ?></div>
+                            <div class="alert alert-info"><?php echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8'); ?>
+                            </div>
                         <?php endif; ?>
                         <form method="POST" action="">
-                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
+                            <input type="hidden" name="csrf_token"
+                                value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
                             <div class="mb-3">
                                 <label for="identifier" class="form-label">Username or Email</label>
-                                <input type="text" class="form-control" id="identifier" name="identifier" pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$|^[a-zA-Z0-9_]{3,}$" required maxlength="255" autocomplete="username">
+                                <input type="text" class="form-control" id="identifier" name="identifier"
+                                    pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$|^[a-zA-Z0-9_]{3,}$"
+                                    required maxlength="255" autocomplete="username">
                             </div>
                             <button type="submit" class="btn btn-primary w-100">Send Recovery Email</button>
                         </form>
@@ -165,4 +173,5 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         </div>
     </div>
 </body>
+
 </html>

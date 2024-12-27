@@ -90,6 +90,10 @@ class RabbitMq
             return null;
         }
 
+        if ($messages === 0 && $consumers === 0) {
+            return null;
+        }
+
         $colorMessages = $this->getColorByThreshold($messages, 100, 50, 1);
         $badgeMessage = $shieldsIo->generateBadgeUrl($messages, $name, $colorMessages, "for-the-badge", "black", null);
         $imgMessages = "<img alt='{$messages} message in queue' src='{$badgeMessage}' />";
@@ -112,10 +116,10 @@ class RabbitMq
             $headers = array("Authorization: Basic " . base64_encode($server["user"] . ":" . $server["password"]));
             $url = "https://" . $server["host"] . "/api/queues/" . $server["vhost"] . "/";
             $response = $this->request->get($url, $headers);
-            if ($response->statusCode !== 200) {
+            if ($response->getStatusCode() !== 200) {
                 continue;
             }
-            $node = json_decode($response->body, true);
+            $node = json_decode($response->getBody(), true);
             foreach ($node as $queue) {
                 $result = $this->parseQueue($server["host"], $queue, $shieldsIo);
 

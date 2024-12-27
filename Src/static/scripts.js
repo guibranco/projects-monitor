@@ -3,202 +3,218 @@ const FEED_FILTER_KEY = "feedFilter";
 const WORKFLOW_LIMITER_KEY = "workflowLimiter";
 const WORKFLOW_LIMIT_VALUE_KEY = "workflowLimitValue";
 const VALID_STATES = {
-    OPEN: "open",
-    COLLAPSED: "collapsed"
+  OPEN: "open",
+  COLLAPSED: "collapsed",
 };
 const FEED_FILTERS = {
-    ALL: "all",
-    MINE: "mine"
+  ALL: "all",
+  MINE: "mine",
 };
 
 function saveOptionsBoxState(state) {
-    if (!Object.values(VALID_STATES).includes(state)) {
-        console.error(`Invalid state: ${state}. Must be one of ${Object.values(VALID_STATES)}`);
-        return;
-    }
-    try {
-         localStorage.setItem(OPTIONS_BOX_STATE_KEY, state);
-    } catch (e) {
-        console.error('Failed to save options box state:', e);
-    }
+  if (!Object.values(VALID_STATES).includes(state)) {
+    console.error(
+      `Invalid state: ${state}. Must be one of ${Object.values(VALID_STATES)}`
+    );
+    return;
+  }
+  try {
+    localStorage.setItem(OPTIONS_BOX_STATE_KEY, state);
+  } catch (e) {
+    console.error("Failed to save options box state:", e);
+  }
 }
 function loadOptionsBoxState() {
-    try {
-        return localStorage.getItem(OPTIONS_BOX_STATE_KEY) || VALID_STATES.OPEN;
-    } catch (e) {
-        console.error('Failed to load options box state:', e);
-        return VALID_STATES.OPEN;
-    }
+  try {
+    return localStorage.getItem(OPTIONS_BOX_STATE_KEY) || VALID_STATES.OPEN;
+  } catch (e) {
+    console.error("Failed to load options box state:", e);
+    return VALID_STATES.OPEN;
+  }
 }
-function handleOptionsBoxState(){
-    const optionsBoxState = loadOptionsBoxState();
-    const optionsBox = document.getElementById("userMenu");
+function handleOptionsBoxState() {
+  const optionsBoxState = loadOptionsBoxState();
+  const optionsBox = document.getElementById("userMenu");
 
-    if (!optionsBox) {
-        console.error('Options box element not found');
-        return;
-    }
+  if (!optionsBox) {
+    console.error("Options box element not found");
+    return;
+  }
 
-    if (optionsBoxState === VALID_STATES.COLLAPSED) {
-        optionsBox.classList.remove("show");
-    } else {
-        optionsBox.classList.add("show");
-    }
+  if (optionsBoxState === VALID_STATES.COLLAPSED) {
+    optionsBox.classList.remove("show");
+  } else {
+    optionsBox.classList.add("show");
+  }
 
-    optionsBox.addEventListener("shown.bs.collapse", () => saveOptionsBoxState(VALID_STATES.OPEN));
-    optionsBox.addEventListener("hidden.bs.collapse", () => saveOptionsBoxState(VALID_STATES.COLLAPSED));
+  optionsBox.addEventListener("shown.bs.collapse", () =>
+    saveOptionsBoxState(VALID_STATES.OPEN)
+  );
+  optionsBox.addEventListener("hidden.bs.collapse", () =>
+    saveOptionsBoxState(VALID_STATES.COLLAPSED)
+  );
 }
 
 class FeedState {
-    constructor() {
-        this._filter = this.loadFeedFilter();
-    }
+  constructor() {
+    this._filter = this.loadFeedFilter();
+  }
 
-    get filter() {
-        return this._filter;
-    }
+  get filter() {
+    return this._filter;
+  }
 
-    set filter(value) {
-        if (!Object.values(FEED_FILTERS).includes(value)) {
-            throw new Error(`Invalid filter: ${value}`);
-        }
-        this._filter = value;
-        this.saveFeedFilter(value);
+  set filter(value) {
+    if (!Object.values(FEED_FILTERS).includes(value)) {
+      throw new Error(`Invalid filter: ${value}`);
     }
+    this._filter = value;
+    this.saveFeedFilter(value);
+  }
 
-    loadFeedFilter() {
-        try {
-            const storedFilter = localStorage.getItem(FEED_FILTER_KEY);
-            return Object.values(FEED_FILTERS).includes(storedFilter) ? storedFilter : FEED_FILTERS.ALL;
-        } catch (e) {
-            console.error("Failed to load feed filter:", e);
-            return FEED_FILTERS.ALL;
-        }
+  loadFeedFilter() {
+    try {
+      const storedFilter = localStorage.getItem(FEED_FILTER_KEY);
+      return Object.values(FEED_FILTERS).includes(storedFilter)
+        ? storedFilter
+        : FEED_FILTERS.ALL;
+    } catch (e) {
+      console.error("Failed to load feed filter:", e);
+      return FEED_FILTERS.ALL;
     }
+  }
 
-    saveFeedFilter(value) {
-        try {
-            localStorage.setItem(FEED_FILTER_KEY, value);
-        } catch (e) {
-            console.error("Failed to save feed filter:", e);
-        }
+  saveFeedFilter(value) {
+    try {
+      localStorage.setItem(FEED_FILTER_KEY, value);
+    } catch (e) {
+      console.error("Failed to save feed filter:", e);
     }
+  }
 }
 
 const feedState = new FeedState();
 
 function updateFeedPreference(toggle) {
-    if (!toggle || typeof toggle.checked !== 'boolean') {
-        console.error('Invalid toggle parameter');
-        return;
-    }
-    feedState.filter = toggle.checked ? FEED_FILTERS.MINE : FEED_FILTERS.ALL;
+  if (!toggle || typeof toggle.checked !== "boolean") {
+    console.error("Invalid toggle parameter");
+    return;
+  }
+  feedState.filter = toggle.checked ? FEED_FILTERS.MINE : FEED_FILTERS.ALL;
 }
 
 class WorkflowLimiterState {
-    constructor() {
-        this._enabled = this.loadLimiterState();
-        this._limitValue = this.loadLimiterValue();
-    }
+  constructor() {
+    this._enabled = this.loadLimiterState();
+    this._limitValue = this.loadLimiterValue();
+  }
 
-    get enabled() {
-        return this._enabled;
-    }
+  get enabled() {
+    return this._enabled;
+  }
 
-    set enabled(value) {
-        this._enabled = Boolean(value);
-        this.saveLimiterState(this._enabled);
-    }
+  set enabled(value) {
+    this._enabled = Boolean(value);
+    this.saveLimiterState(this._enabled);
+  }
 
-    get limitValue() {
-        return this._limitValue;
-    }
+  get limitValue() {
+    return this._limitValue;
+  }
 
-    set limitValue(value) {
-        const limit = parseInt(value, 10);
-        if (isNaN(limit) || limit < 1) {
-            throw new Error("Invalid workflow limit value. Must be a number greater than 0.");
-        }
-        this._limitValue = limit;
-        this.saveLimiterValue(limit);
+  set limitValue(value) {
+    const limit = parseInt(value, 10);
+    if (Number.isNaN(limit) || limit < 1) {
+      throw new Error(
+        "Invalid workflow limit value. Must be a number greater than 0."
+      );
     }
+    this._limitValue = limit;
+    this.saveLimiterValue(limit);
+  }
 
-    loadLimiterState() {
-        try {
-            return JSON.parse(localStorage.getItem(WORKFLOW_LIMITER_KEY)) || false;
-        } catch (e) {
-            console.error("Failed to load workflow limiter state:", e);
-            return false;
-        }
+  loadLimiterState() {
+    try {
+      return JSON.parse(localStorage.getItem(WORKFLOW_LIMITER_KEY)) || false;
+    } catch (e) {
+      console.error("Failed to load workflow limiter state:", e);
+      return false;
     }
+  }
 
-    saveLimiterState(state) {
-        try {
-            localStorage.setItem(WORKFLOW_LIMITER_KEY, JSON.stringify(state));
-        } catch (e) {
-            console.error("Failed to save workflow limiter state:", e);
-        }
+  saveLimiterState(state) {
+    try {
+      localStorage.setItem(WORKFLOW_LIMITER_KEY, JSON.stringify(state));
+    } catch (e) {
+      console.error("Failed to save workflow limiter state:", e);
     }
+  }
 
-    loadLimiterValue() {
-        try {
-            return parseInt(localStorage.getItem(WORKFLOW_LIMIT_VALUE_KEY), 10) || 10;
-        } catch (e) {
-            console.error("Failed to load workflow limit value:", e);
-            return 10;
-        }
+  loadLimiterValue() {
+    try {
+      return parseInt(localStorage.getItem(WORKFLOW_LIMIT_VALUE_KEY), 10) || 10;
+    } catch (e) {
+      console.error("Failed to load workflow limit value:", e);
+      return 10;
     }
+  }
 
-    saveLimiterValue(value) {
-        try {
-            localStorage.setItem(WORKFLOW_LIMIT_VALUE_KEY, value);
-        } catch (e) {
-            console.error("Failed to save workflow limit value:", e);
-        }
+  saveLimiterValue(value) {
+    try {
+      localStorage.setItem(WORKFLOW_LIMIT_VALUE_KEY, value);
+    } catch (e) {
+      console.error("Failed to save workflow limit value:", e);
     }
+  }
 }
 
 const workflowLimiterState = new WorkflowLimiterState();
 
 function initWorkflowLimiter() {
-    const workflowToggle = document.getElementById("workflowToggle");
-    const workflowLimitContainer = document.getElementById("workflowLimitContainer");
-    const workflowLimitInput = document.getElementById("workflowLimitInput");
+  const workflowToggle = document.getElementById("workflowToggle");
+  const workflowLimitContainer = document.getElementById(
+    "workflowLimitContainer"
+  );
+  const workflowLimitInput = document.getElementById("workflowLimitInput");
 
-    if (!workflowToggle || !workflowLimitContainer || !workflowLimitInput) {
-        console.error("Workflow limiter elements not found");
-        return;
+  if (!workflowToggle || !workflowLimitContainer || !workflowLimitInput) {
+    console.error("Workflow limiter elements not found");
+    return;
+  }
+
+  workflowToggle.checked = workflowLimiterState.enabled;
+  workflowLimitContainer.style.display = workflowLimiterState.enabled
+    ? "block"
+    : "none";
+
+  workflowLimitInput.value = workflowLimiterState.limitValue;
+
+  workflowToggle.addEventListener("change", () => {
+    workflowLimiterState.enabled = workflowToggle.checked;
+    workflowLimitContainer.style.display = workflowLimiterState.enabled
+      ? "block"
+      : "none";
+  });
+
+  workflowLimitInput.addEventListener("input", () => {
+    try {
+      workflowLimiterState.limitValue = workflowLimitInput.value;
+    } catch (e) {
+      console.error(e.message);
     }
-
-    workflowToggle.checked = workflowLimiterState.enabled;
-    workflowLimitContainer.style.display = workflowLimiterState.enabled ? "block" : "none";
-
-    workflowLimitInput.value = workflowLimiterState.limitValue;
-
-    workflowToggle.addEventListener("change", () => {
-        workflowLimiterState.enabled = workflowToggle.checked;
-        workflowLimitContainer.style.display = workflowLimiterState.enabled ? "block" : "none";
-    });
-
-    workflowLimitInput.addEventListener("input", () => {
-        try {
-            workflowLimiterState.limitValue = workflowLimitInput.value;
-        } catch (e) {
-            console.error(e.message);
-        }
-    });
+  });
 }
 
 function initFeedToggle() {
-    const toggle = document.getElementById("feedToggle");
+  const toggle = document.getElementById("feedToggle");
 
-    if (!toggle) {
-        console.error("Feed toggle element not found");
-        return;
-    }
-    
-    toggle.checked = feedState.filter === FEED_FILTERS.MINE;
-    toggle.addEventListener("change", () => updateFeedPreference(toggle));
+  if (!toggle) {
+    console.error("Feed toggle element not found");
+    return;
+  }
+
+  toggle.checked = feedState.filter === FEED_FILTERS.MINE;
+  toggle.addEventListener("change", () => updateFeedPreference(toggle));
 }
 
 const tableOptions = {
@@ -212,19 +228,19 @@ const tableOptions = {
 window.addEventListener("load", init);
 
 /**
-     * Initializes the application by setting the user's timezone and offset in cookies.
-     * This function retrieves the current timezone and UTC offset of the user's system,
-     * then stores these values in cookies for later use.
-     *
-     * @function init
-     * @returns {void} This function does not return a value.
-     *
-     * @example
-     * // Call the init function to set the timezone and offset cookies
-     * init();
-     *
-     * @throws {Error} Throws an error if there is an issue setting the cookies.
-     */
+ * Initializes the application by setting the user's timezone and offset in cookies.
+ * This function retrieves the current timezone and UTC offset of the user's system,
+ * then stores these values in cookies for later use.
+ *
+ * @function init
+ * @returns {void} This function does not return a value.
+ *
+ * @example
+ * // Call the init function to set the timezone and offset cookies
+ * init();
+ *
+ * @throws {Error} Throws an error if there is an issue setting the cookies.
+ */
 function init() {
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const offset = new Date().toString().match(/([-\+][0-9]+)\s/)[1];
@@ -237,22 +253,22 @@ function init() {
   console.log("Options box state on load:", loadOptionsBoxState());
   console.log("Feed filter on load:", feedState.filter);
   console.log("Workflow limiter enabled:", workflowLimiterState.enabled);
-  console.log("Workflow limit value:", workflowLimiterState.limitValue);  
+  console.log("Workflow limit value:", workflowLimiterState.limitValue);
 }
 
 /**
-     * Sets a cookie in the browser with the specified name, value, and expiration days.
-     *
-     * @param {string} name - The name of the cookie.
-     * @param {string} value - The value to be stored in the cookie.
-     * @param {number} expireDays - The number of days until the cookie expires.
-     * 
-     * @throws {TypeError} Throws an error if the name or value is not a string, or if expireDays is not a number.
-     *
-     * @example
-     * // Set a cookie named "user" with the value "John Doe" that expires in 7 days
-     * setCookie('user', 'John Doe', 7);
-     */
+ * Sets a cookie in the browser with the specified name, value, and expiration days.
+ *
+ * @param {string} name - The name of the cookie.
+ * @param {string} value - The value to be stored in the cookie.
+ * @param {number} expireDays - The number of days until the cookie expires.
+ *
+ * @throws {TypeError} Throws an error if the name or value is not a string, or if expireDays is not a number.
+ *
+ * @example
+ * // Set a cookie named "user" with the value "John Doe" that expires in 7 days
+ * setCookie('user', 'John Doe', 7);
+ */
 function setCookie(name, value, expireDays) {
   const date = new Date();
   date.setTime(date.getTime() + expireDays * 24 * 60 * 60 * 1000);
@@ -279,8 +295,8 @@ function load(url, callback) {
         callback(JSON.parse(this.responseText));
       } else if (this.status === 401 || this.status === 403) {
         if (isSessionInvalid === false) {
-            isSessionInvalid = true;
-            showLoginModal();
+          isSessionInvalid = true;
+          showLoginModal();
         }
       }
     }
@@ -290,26 +306,17 @@ function load(url, callback) {
 
 function showLoginModal() {
   const modal = document.createElement("div");
-  modal.style.position = "fixed";
-  modal.style.top = "0";
-  modal.style.left = "0";
-  modal.style.width = "100%";
-  modal.style.height = "100%";
-  modal.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
-  modal.style.display = "flex";
-  modal.style.justifyContent = "center";
-  modal.style.alignItems = "center";
-  modal.style.zIndex = "1000";
+  modal.classList.add("modal-backdrop");
+  modal.setAttribute("role", "dialog");
+  modal.setAttribute("aria-modal", "true");
+  modal.setAttribute("aria-labelledby", "modalTitle");
 
   const modalContent = document.createElement("div");
-  modalContent.style.backgroundColor = "#fff";
-  modalContent.style.padding = "20px";
-  modalContent.style.borderRadius = "8px";
-  modalContent.style.textAlign = "center";
+  modalContent.classList.add("modal-content");
   modalContent.innerHTML = `
-    <h2>Session Expired</h2>
+    <h2 id="modalTitle">Session Expired</h2>
     <p>Your session has expired. Please login again.</p>
-    <button id="cancelBtn" style="margin-right: 10px;">Cancel</button>
+    <button id="cancelBtn">Cancel</button>
     <button id="loginBtn">Login</button>
   `;
 
@@ -326,25 +333,25 @@ function showLoginModal() {
 }
 
 /**
-     * Initializes and displays preset information if the `showPreset` flag is true.
-     * This function retrieves various data sets in JSON format and displays them
-     * using corresponding display functions.
-     *
-     * The following data is fetched and displayed:
-     * - Error log files and messages
-     * - GitHub API usage and issues
-     * - Application hit statistics
-     * - Queue information
-     * - Webhook event statistics
-     *
-     * If `showPreset` is false, the function will terminate early without performing any actions.
-     *
-     * @throws {Error} Throws an error if JSON parsing fails for any of the data sets.
-     *
-     * @example
-     * // Assuming showPreset is true, calling preset() will display the preset information.
-     * preset();
-     */
+ * Initializes and displays preset information if the `showPreset` flag is true.
+ * This function retrieves various data sets in JSON format and displays them
+ * using corresponding display functions.
+ *
+ * The following data is fetched and displayed:
+ * - Error log files and messages
+ * - GitHub API usage and issues
+ * - Application hit statistics
+ * - Queue information
+ * - Webhook event statistics
+ *
+ * If `showPreset` is false, the function will terminate early without performing any actions.
+ *
+ * @throws {Error} Throws an error if JSON parsing fails for any of the data sets.
+ *
+ * @example
+ * // Assuming showPreset is true, calling preset() will display the preset information.
+ * preset();
+ */
 function preset() {
   if (!showPreset) {
     return;
@@ -352,7 +359,7 @@ function preset() {
   showPreset = false;
   showCPanel(
     JSON.parse(
-      '{"error_log_files":[],"error_log_messages":[],"total_error_messages":0,"cronjobs":[]}'
+      '{"error_log_files":[],"error_log_messages":[],"total_error_messages":0,"cronjobs":[],"usage":[{"id":"lvecpu","description":"CPU Usage","usage":0,"maximum":100},{"id":"lveep","description":"Entry Processes","usage":0,"maximum":20},{"id":"lvememphy","description":"Physical Memory Usage","usage":0,"maximum":512},{"id":"lvenproc","description":"Number of Processes","usage":0,"maximum":100}]}'
     )
   );
   showGitHub(
@@ -374,50 +381,53 @@ function preset() {
 }
 
 /**
-     * Loads data from multiple API endpoints at once.
-     *
-     * This function initiates requests to various API endpoints and processes the responses
-     * using designated callback functions. The endpoints being accessed include:
-     * - AppVeyor
-     * - cPanel
-     * - Messages
-     * - Queues
-     * - Webhooks
-     *
-     * It is assumed that the `load` function is defined elsewhere in the codebase and is responsible
-     * for making the actual API calls and handling the responses.
-     *
-     * @function load30Interval
-     * @returns {void} This function does not return a value.
-     *
-     * @example
-     * // To load data from the specified endpoints, simply call:
-     * load30Interval();
-     *
-     * @throws {Error} Throws an error if any of the API requests fail.
-     */
+ * Loads data from multiple API endpoints at once.
+ *
+ * This function initiates requests to various API endpoints and processes the responses
+ * using designated callback functions. The endpoints being accessed include:
+ * - AppVeyor
+ * - cPanel
+ * - Messages
+ * - Queues
+ * - Webhooks
+ *
+ * It is assumed that the `load` function is defined elsewhere in the codebase and is responsible
+ * for making the actual API calls and handling the responses.
+ *
+ * @function load30Interval
+ * @returns {void} This function does not return a value.
+ *
+ * @example
+ * // To load data from the specified endpoints, simply call:
+ * load30Interval();
+ *
+ * @throws {Error} Throws an error if any of the API requests fail.
+ */
 function load30Interval() {
   load("api/v1/appveyor", showAppVeyor);
   load("api/v1/cpanel", showCPanel);
   load("api/v1/messages", showMessages);
   load("api/v1/queues", showQueues);
-  load(`api/v1/webhooks?feedOptionsFilter=${feedState.filter}&workflowsLimiterEnabled=${workflowLimiterState.enabled}&workflowsLimiterQuantity=${workflowLimiterState.limitValue}`, showWebhook);
+  load(
+    `api/v1/webhooks?feedOptionsFilter=${feedState.filter}&workflowsLimiterEnabled=${workflowLimiterState.enabled}&workflowsLimiterQuantity=${workflowLimiterState.limitValue}`,
+    showWebhook
+  );
 }
 
 /**
-     * Loads data from multiple API endpoints and displays the results using respective callback functions.
-     *
-     * This function is responsible for initiating data retrieval from various services, including domains,
-     * GitHub, health checks, uptime monitoring, and WireGuard configurations. Each API response is processed
-     * by a dedicated function to handle the display of the retrieved data.
-     *
-     * @function load60Interval
-     * @throws {Error} Throws an error if any of the API calls fail to execute properly.
-     *
-     * @example
-     * // Call the function to load data from all specified APIs
-     * load60Interval();
-     */
+ * Loads data from multiple API endpoints and displays the results using respective callback functions.
+ *
+ * This function is responsible for initiating data retrieval from various services, including domains,
+ * GitHub, health checks, uptime monitoring, and WireGuard configurations. Each API response is processed
+ * by a dedicated function to handle the display of the retrieved data.
+ *
+ * @function load60Interval
+ * @throws {Error} Throws an error if any of the API calls fail to execute properly.
+ *
+ * @example
+ * // Call the function to load data from all specified APIs
+ * load60Interval();
+ */
 function load60Interval() {
   load("api/v1/domains", showDomains);
   load("api/v1/github", showGitHub);
@@ -447,117 +457,110 @@ function load300Interval() {
 let showPreset = true;
 
 /**
-     * Initializes and starts the process of drawing the chart by setting up
-     * necessary presets and loading data at specified intervals.
-     *
-     * This function calls several other functions to prepare the chart,
-     * including loading statistics from GitHub and setting up data loading
-     * intervals for different time frames (30 seconds, 60 seconds, and 300 seconds).
-     *
-     * It also sets a longer interval for updating GitHub statistics every 15 minutes.
-     *
-     * @throws {Error} Throws an error if any of the called functions fail to execute.
-     *
-     * @example
-     * // To draw the chart and start data loading
-     * drawChart();
-     */
+ * Initializes and starts the process of drawing the chart by setting up
+ * necessary presets and loading data at specified intervals.
+ *
+ * This function calls several other functions to prepare the chart,
+ * including loading statistics from GitHub and setting up data loading
+ * intervals for different time frames (30 seconds, 60 seconds, and 300 seconds).
+ *
+ * It also sets a longer interval for updating GitHub statistics every 15 minutes.
+ *
+ * @throws {Error} Throws an error if any of the called functions fail to execute.
+ *
+ * @example
+ * // To draw the chart and start data loading
+ * drawChart();
+ */
 function drawChart() {
   preset();
-  showGitHubStats();
+  showGitHubStatsAndWakatime();
   load30Interval();
   load60Interval();
   load300Interval();
   setInterval(load30Interval, 30 * 1000);
   setInterval(load60Interval, 60 * 1000);
   setInterval(load300Interval, 300 * 1000);
-  setInterval(showGitHubStats, 60 * 15 * 1000);
+  setInterval(showGitHubStatsAndWakatime, 60 * 15 * 1000);
 }
 
 /**
-     * Updates the GitHub statistics and streak images displayed on the webpage.
-     * This function generates a random refresh parameter to ensure that the 
-     * images are updated each time the function is called, preventing caching 
-     * issues in the browser.
-     *
-     * It modifies the `src` attributes of two <img> elements with IDs 
-     * "gh_stats" and "gh_streak" to point to the respective GitHub stats 
-     * and streak stats URLs, incorporating the generated refresh parameter.
-     *
-     * @throws {Error} Throws an error if the elements with IDs "gh_stats" 
-     *                 or "gh_streak" do not exist in the document.
-     *
-     * @example
-     * // Call this function to refresh GitHub stats and streaks
-     * showGitHubStats();
-     */
-function showGitHubStats() {
+ * Updates the GitHub statistics, streak, and Wakatime images displayed on the webpage.
+ * This function generates a random refresh parameter to ensure that the
+ * images are updated each time the function is called, preventing caching
+ * issues in the browser.
+ *
+ * It modifies the `src` attributes of two <img> elements with IDs
+ * "gh_stats" and "gh_streak" to point to the respective GitHub stats
+ * and streak stats URLs, incorporating the generated refresh parameter.
+ *
+ * @throws {Error} Throws an error if the elements with IDs "gh_stats"
+ *                 or "gh_streak" do not exist in the document.
+ *
+ * @example
+ * // Call this function to refresh GitHub stats and streaks
+ * showGitHubStatsAndWakatime();
+ */
+function showGitHubStatsAndWakatime() {
   const refresh = Math.floor(Math.random() * 100000);
 
-  const statsUrl =
-    "https://github-readme-stats-guibranco.vercel.app/api" +
-    "?username=guibranco&line_height=28&card_width=490&hide_title=true&hide_border=true" +
-    "&show_icons=true&theme=chartreuse-dark&icon_color=7FFF00&include_all_commits=true" +
-    "&count_private=true&show=reviews,discussions_started&count_private=true&refresh=" +
-    refresh;
-
-  const streakUrl =
-    "https://github-readme-streak-stats-guibranco.vercel.app/" +
-    "?user=guibranco&theme=github-green-purple&fire=FF6600&refresh=" +
-    refresh;
+  const statsUrl = `https://github-readme-stats-guibranco.vercel.app/api?username=guibranco&line_height=28&card_width=490&hide_title=true&hide_border=true&show_icons=true&theme=chartreuse-dark&icon_color=7FFF00&include_all_commits=true&count_private=true&show=reviews,discussions_started&count_private=true&refresh=${refresh}`;
+  const streakUrl = `https://github-readme-streak-stats-guibranco.vercel.app/?user=guibranco&theme=github-green-purple&fire=FF6600&refresh=${refresh}`;
+  const wakatimeUrl = `https://wakatime.com/badge/user/6be975b7-7258-4475-bc73-9c0fc554430e.svg?style=for-the-badge&refresh=${refresh}`;
 
   const statsImg = document.getElementById("gh_stats");
   const streakImg = document.getElementById("gh_streak");
+  const wakatimeImg = document.getElementById("wakatime");
 
-  if (!statsImg || !streakImg) {
-    console.error("GitHub stats image elements not found in the DOM");
+  if (!statsImg || !streakImg || !wakatimeImg) {
+    console.error("GitHub/Wakatime stats image elements not found in the DOM");
     return;
   }
-function loadImage(imgElement, url, options = {}) {
-  const {
-    maxRetries = 10,
-    retryDelay = 2000,
-    timeout = 30000
-  } = options;
 
-  const startTime = Date.now();
+  function loadImage(imgElement, url, options = {}) {
+    const { maxRetries = 10, retryDelay = 2000, timeout = 30000 } = options;
+    const startTime = Date.now();
 
-  function cleanup() {
-    imgElement.onload = null;
-    imgElement.onerror = null;
-  }
-
-  imgElement.onload = () => {
-    console.log(`${imgElement.id} loaded successfully.`);
-    cleanup();
-  };
-
-  imgElement.onerror = () => {
-    if (maxRetries > 0 && (Date.now() - startTime) < timeout) {
-      console.warn(
-        `${imgElement.id} failed to load. Retrying... (${maxRetries} retries left)`
-      );
-      setTimeout(
-        () => loadImage(imgElement, url, { ...options, maxRetries: maxRetries - 1 }),
-        retryDelay
-      );
-    } else {
-      console.error(
-        `${imgElement.id} failed to load after ${
-          maxRetries === 0 ? 'maximum retries' : 'timeout'
-        }.`
-      );
-      cleanup();
+    function cleanup() {
+      imgElement.onload = null;
+      imgElement.onerror = null;
     }
-  };
 
-  imgElement.src = url;
-}
+    imgElement.onload = () => {
+      console.log(`${imgElement.id} loaded successfully.`);
+      cleanup();
+    };
+
+    imgElement.onerror = () => {
+      if (maxRetries > 0 && Date.now() - startTime < timeout) {
+        console.warn(
+          `${imgElement.id} failed to load. Retrying... (${maxRetries} retries left)`
+        );
+        setTimeout(
+          () =>
+            loadImage(imgElement, url, {
+              ...options,
+              maxRetries: maxRetries - 1,
+            }),
+          retryDelay
+        );
+      } else {
+        console.error(
+          `${imgElement.id} failed to load after ${
+            maxRetries === 0 ? "maximum retries" : "timeout"
+          }.`
+        );
+        cleanup();
+      }
+    };
+
+    imgElement.src = url;
+  }
 
   loadImage(statsImg, statsUrl);
   loadImage(streakImg, streakUrl);
+  loadImage(wakatimeImg, wakatimeUrl);
 }
-
 
 /**
  * Renders a table displaying project data from AppVeyor using Google Charts.
@@ -583,14 +586,7 @@ function loadImage(imgElement, url, options = {}) {
  * showAppVeyor(response);
  */
 function showAppVeyor(response) {
-  const dataProjects = google.visualization.arrayToDataTable(
-    response["projects"]
-  );
-
-  const projects = new google.visualization.Table(
-    document.getElementById("appveyor")
-  );
-  projects.draw(dataProjects, tableOptions);
+  drawDataTable(response["projects"], "appveyor", tableOptions);
 }
 
 /**
@@ -618,23 +614,7 @@ function showAppVeyor(response) {
  * showCPanel(response);
  */
 function showCPanel(response) {
-  const dataLogFiles = google.visualization.arrayToDataTable(
-    response["error_log_files"]
-  );
-  const dataLogMessages = google.visualization.arrayToDataTable(
-    response["error_log_messages"]
-  );
-  const dataCronjobs = google.visualization.arrayToDataTable(
-    response["cronjobs"]
-  );
-  const totalLogMessages = google.visualization.arrayToDataTable([
-    ["Hits", "Total"],
-    ["Log errors", response["total_error_messages"]],
-  ]);
-
   const gaugeOptions = {
-    legend: { position: "none" },
-    showRowNumber: true,
     width: "100%",
     height: "100%",
     min: 0,
@@ -647,169 +627,152 @@ function showCPanel(response) {
     redTo: 1000,
   };
 
-  const gaugeChart7 = new google.visualization.Gauge(
-    document.getElementById("gauge_chart_7")
+  drawGaugeChart(
+    "Log errors",
+    response["total_error_messages"],
+    "gauge_chart_log_errors",
+    gaugeOptions
   );
-  gaugeChart7.draw(totalLogMessages, gaugeOptions);
-  const logFiles = new google.visualization.Table(
-    document.getElementById("error_log_files")
+  drawDataTable(response["error_log_files"], "error_log_files", tableOptions);
+  drawDataTable(
+    response["error_log_messages"],
+    "error_log_messages",
+    tableOptions
   );
-  logFiles.draw(dataLogFiles, tableOptions);
-  const logMessages = new google.visualization.Table(
-    document.getElementById("error_log_messages")
-  );
-  logMessages.draw(dataLogMessages, tableOptions);
-  const cronjobs = new google.visualization.Table(
-    document.getElementById("cronjobs")
-  );
-  cronjobs.draw(dataCronjobs, tableOptions);
+  drawDataTable(response["cronjobs"], "cronjobs", tableOptions);
+
+  const ids = {
+    lvecpu: "gauge_chart_cpu",
+    lvememphy: "gauge_chart_memory",
+    lveep: "gauge_chart_entry_process",
+    lvenproc: "gauge_chart_process",
+  };
+
+  const labels = {
+    lvecpu: "CPU",
+    lvememphy: "Memory",
+    lveep: "Entry Processes",
+    lvenproc: "Processes",
+  };
+
+  const usageData = response["usage"].map((item) => ({
+    elementId: ids[item.id],
+    label: labels[item.id],
+    value: parseFloat(item.usage),
+    maximum: item.maximum || 100,
+  }));
+
+  for (const item of usageData) {
+    const greenTo = parseInt(item.maximum * 0.5);
+    const yellowTo = parseInt(item.maximum * 0.75);
+
+    const gaugeOptionsUsage = {
+      width: "100%",
+      height: "100%",
+      min: 0,
+      max: item.maximum,
+      greenFrom: 0,
+      greenTo: greenTo,
+      yellowFrom: greenTo,
+      yellowTo: yellowTo,
+      redFrom: yellowTo,
+      redTo: item.maximum,
+    };
+    drawGaugeChart(item.label, item.value, item.elementId, gaugeOptionsUsage);
+  }
 }
 
 /**
-     * Renders a table of domains using Google Visualization API.
-     *
-     * This function takes a response object containing domain data,
-     * converts it into a format suitable for visualization, and then
-     * draws the table in the specified HTML element.
-     *
-     * @param {Object} response - The response object containing domain data.
-     * @param {Array} response.domains - An array of domain data to be visualized.
-     *
-     * @throws {Error} Throws an error if the response does not contain the expected data format.
-     *
-     * @example
-     * const response = {
-     *   domains: [
-     *     ['Domain', 'Count'],
-     *     ['example.com', 10],
-     *     ['test.com', 5]
-     *   ]
-     * };
-     * showDomains(response);
-     */
+ * Renders a table of domains using Google Visualization API.
+ *
+ * This function takes a response object containing domain data,
+ * converts it into a format suitable for visualization, and then
+ * draws the table in the specified HTML element.
+ *
+ * @param {Object} response - The response object containing domain data.
+ * @param {Array} response.domains - An array of domain data to be visualized.
+ *
+ * @throws {Error} Throws an error if the response does not contain the expected data format.
+ *
+ * @example
+ * const response = {
+ *   domains: [
+ *     ['Domain', 'Count'],
+ *     ['example.com', 10],
+ *     ['test.com', 5]
+ *   ]
+ * };
+ * showDomains(response);
+ */
 function showDomains(response) {
-  const dataDomains = google.visualization.arrayToDataTable(
-    response["domains"]
-  );
-  const domains = new google.visualization.Table(
-    document.getElementById("domains")
-  );
-  domains.draw(dataDomains, tableOptions);
+  drawDataTable(response["domains"], "domains", tableOptions);
 }
 
 /**
-     * Displays GitHub statistics and data visualizations based on the provided response object.
-     *
-     * This function processes various metrics related to GitHub issues and pull requests,
-     * converting them into data tables for visualization. It also updates the latest release
-     * information if available.
-     *
-     * @param {Object} response - The response object containing GitHub data.
-     * @param {Object} response.issues - An object containing issue-related data.
-     * @param {number} response.issues.total_count - The total number of issues.
-     * @param {Array} response.issues.assigned - List of assigned issues.
-     * @param {Array} response.issues.authored - List of authored issues.
-     * @param {Array} response.issues.blocked - List of blocked issues.
-     * @param {Array} response.issues.bug - List of bug issues.
-     * @param {Array} response.issues.triage - List of triaged issues.
-     * @param {Array} response.issues.wip - List of work-in-progress issues.
-     * @param {Array} response.issues.others - List of other issues.
-     * @param {Object} response.pull_requests - An object containing pull request-related data.
-     * @param {number} response.pull_requests.total_count - The total number of pull requests.
-     * @param {Array} response.pull_requests.latest - List of latest pull requests.
-     * @param {Array} response.pull_requests.authored - List of authored pull requests.
-     * @param {Array} response.pull_requests.awaiting_triage - List of pull requests awaiting triage.
-     * @param {Array} response.pull_requests.blocked - List of blocked pull requests.
-     * @param {Object} response.latest_release - Information about the latest release.
-     * @param {string} response.latest_release.description - Description of the latest release.
-     * @param {string} response.latest_release.published - Publication date of the latest release.
-     * @param {string} response.latest_release.release_url - URL to the latest release.
-     * @param {string} response.latest_release.title - Title of the latest release.
-     * @param {string} response.latest_release.repository - Repository name for the latest release.
-     * @param {string} response.latest_release.author - Author of the latest release.
-     *
-     * @throws {TypeError} Throws an error if the response object is not valid or does not contain expected properties.
-     *
-     * @example
-     * const githubResponse = {
-     *   issues: {
-     *     total_count: 10,
-     *     assigned: [...],
-     *     authored: [...],
-     *     blocked: [...],
-     *     bug: [...],
-     *     triage: [...],
-     *     wip: [...],
-     *     others: [...]
-     *   },
-     *   pull_requests: {
-     *     total_count: 5,
-     *     latest: [...],
-     *     authored: [...],
-     *     awaiting_triage: [...],
-     *     blocked: [...]
-     *   },
-     *   latest_release: {
-     *     description: "Initial release",
-     *     published: "2023-01-01",
-     *     release_url: "https://github.com/user/repo/releases/tag/v1.0",
-     *     title: "v1.0",
-     *     repository: "user/repo",
-     *     author: "user"
-     *   }
-     * };
-     *
-     * showGitHub(githubResponse);
-     */
+ * Displays GitHub statistics and data visualizations based on the provided response object.
+ *
+ * This function processes various metrics related to GitHub issues and pull requests,
+ * converting them into data tables for visualization. It also updates the latest release
+ * information if available.
+ *
+ * @param {Object} response - The response object containing GitHub data.
+ * @param {Object} response.issues - An object containing issue-related data.
+ * @param {number} response.issues.total_count - The total number of issues.
+ * @param {Array} response.issues.assigned - List of assigned issues.
+ * @param {Array} response.issues.authored - List of authored issues.
+ * @param {Array} response.issues.blocked - List of blocked issues.
+ * @param {Array} response.issues.bug - List of bug issues.
+ * @param {Array} response.issues.triage - List of triaged issues.
+ * @param {Array} response.issues.wip - List of work-in-progress issues.
+ * @param {Array} response.issues.others - List of other issues.
+ * @param {Object} response.pull_requests - An object containing pull request-related data.
+ * @param {number} response.pull_requests.total_count - The total number of pull requests.
+ * @param {Array} response.pull_requests.latest - List of latest pull requests.
+ * @param {Array} response.pull_requests.authored - List of authored pull requests.
+ * @param {Array} response.pull_requests.awaiting_triage - List of pull requests awaiting triage.
+ * @param {Array} response.pull_requests.blocked - List of blocked pull requests.
+ * @param {Object} response.latest_release - Information about the latest release.
+ * @param {string} response.latest_release.description - Description of the latest release.
+ * @param {string} response.latest_release.published - Publication date of the latest release.
+ * @param {string} response.latest_release.release_url - URL to the latest release.
+ * @param {string} response.latest_release.title - Title of the latest release.
+ * @param {string} response.latest_release.repository - Repository name for the latest release.
+ * @param {string} response.latest_release.author - Author of the latest release.
+ *
+ * @throws {TypeError} Throws an error if the response object is not valid or does not contain expected properties.
+ *
+ * @example
+ * const githubResponse = {
+ *   issues: {
+ *     total_count: 10,
+ *     assigned: [...],
+ *     authored: [...],
+ *     blocked: [...],
+ *     bug: [...],
+ *     triage: [...],
+ *     wip: [...],
+ *     others: [...]
+ *   },
+ *   pull_requests: {
+ *     total_count: 5,
+ *     latest: [...],
+ *     authored: [...],
+ *     awaiting_triage: [...],
+ *     blocked: [...]
+ *   },
+ *   latest_release: {
+ *     description: "Initial release",
+ *     published: "2023-01-01",
+ *     release_url: "https://github.com/user/repo/releases/tag/v1.0",
+ *     title: "v1.0",
+ *     repository: "user/repo",
+ *     author: "user"
+ *   }
+ * };
+ *
+ * showGitHub(githubResponse);
+ */
 function showGitHub(response) {
-  const dataIssues = google.visualization.arrayToDataTable([
-    ["Hits", "Total"],
-    ["GH Issues", response["issues"]["total_count"]],
-  ]);
-  const dataPullRequests = google.visualization.arrayToDataTable([
-    ["Hits", "Total"],
-    ["GH PRs", response["pull_requests"]["total_count"]],
-  ]);
-  const dataPullRequestsTable = google.visualization.arrayToDataTable(
-    response["pull_requests"]["latest"]
-  );
-  const dataPullRequestsAuthoredTable = google.visualization.arrayToDataTable(
-    response["pull_requests"]["authored"]
-  );
-  const dataPullRequestsTriageTable = google.visualization.arrayToDataTable(
-    response["pull_requests"]["awaiting_triage"]
-  );
-  const dataPullRequestsBlockedTable = google.visualization.arrayToDataTable(
-    response["pull_requests"]["blocked"]
-  );
-  const dataAssignedTable = google.visualization.arrayToDataTable(
-    response["issues"]["assigned"]
-  );
-  const dataAuthoredTable = google.visualization.arrayToDataTable(
-    response["issues"]["authored"]
-  );
-  const dataBlockedTable = google.visualization.arrayToDataTable(
-    response["issues"]["blocked"]
-  );
-  const dataBugsTable = google.visualization.arrayToDataTable(
-    response["issues"]["bug"]
-  );
-  const dataTriageTable = google.visualization.arrayToDataTable(
-    response["issues"]["triage"]
-  );
-  const dataWipTable = google.visualization.arrayToDataTable(
-    response["issues"]["wip"]
-  );
-  const dataIssuesTable = google.visualization.arrayToDataTable(
-    response["issues"]["others"]
-  );
-  const dataAccountsUsage = google.visualization.arrayToDataTable(
-    response["accounts_usage"]
-  );
-  const dataApiUsage = google.visualization.arrayToDataTable(
-    response["api_usage"]
-  );
-
   if (typeof response["latest_release"] !== "undefined") {
     const latestRelease = response["latest_release"];
     document.getElementById("latest_release").innerHTML =
@@ -841,8 +804,6 @@ function showGitHub(response) {
   }
 
   const gaugeOptions = {
-    legend: { position: "none" },
-    showRowNumber: true,
     width: "100%",
     height: "100%",
     min: 0,
@@ -855,62 +816,52 @@ function showGitHub(response) {
     redTo: 1000,
   };
 
-  const gaugeChart5 = new google.visualization.Gauge(
-    document.getElementById("gauge_chart_5")
+  drawGaugeChart(
+    "GH Issues",
+    response["issues"]["total_count"],
+    "gauge_chart_issues",
+    gaugeOptions
   );
-  gaugeChart5.draw(dataIssues, gaugeOptions);
-  const gaugeChart6 = new google.visualization.Gauge(
-    document.getElementById("gauge_chart_6")
+  drawGaugeChart(
+    "GH PRs",
+    response["pull_requests"]["total_count"],
+    "gauge_chart_pull_requests",
+    gaugeOptions
   );
-  gaugeChart6.draw(dataPullRequests, gaugeOptions);
-  const pullRequestsTriage = new google.visualization.Table(
-    document.getElementById("pull_requests_triage")
+
+  drawDataTable(
+    response["pull_requests"]["awaiting_triage"],
+    "pull_requests_triage",
+    tableOptions
   );
-  pullRequestsTriage.draw(dataPullRequestsTriageTable, tableOptions);
-  const pullRequests = new google.visualization.Table(
-    document.getElementById("pull_requests_latest")
+  drawDataTable(
+    response["pull_requests"]["latest"],
+    "pull_requests_latest",
+    tableOptions
   );
-  pullRequests.draw(dataPullRequestsTable, tableOptions);
-  const pullRequestsAuthored = new google.visualization.Table(
-    document.getElementById("pull_requests_authored")
+  drawDataTable(
+    response["pull_requests"]["authored"],
+    "pull_requests_authored",
+    tableOptions
   );
-  pullRequestsAuthored.draw(dataPullRequestsAuthoredTable, tableOptions);
-  const pullRequestsBlocked = new google.visualization.Table(
-    document.getElementById("pull_requests_blocked")
+  drawDataTable(
+    response["pull_requests"]["blocked"],
+    "pull_requests_blocked",
+    tableOptions
   );
-  pullRequestsBlocked.draw(dataPullRequestsBlockedTable, tableOptions);
-  const assigned = new google.visualization.Table(
-    document.getElementById("assigned")
+  drawDataTable(response["issues"]["assigned"], "assigned", tableOptions);
+  drawDataTable(
+    response["issues"]["authored"],
+    "issues_authored",
+    tableOptions
   );
-  assigned.draw(dataAssignedTable, tableOptions);
-  const authored = new google.visualization.Table(
-    document.getElementById("issues_authored")
-  );
-  authored.draw(dataAuthoredTable, tableOptions);
-  const bug = new google.visualization.Table(document.getElementById("bug"));
-  bug.draw(dataBugsTable, tableOptions);
-  const blocked = new google.visualization.Table(
-    document.getElementById("blocked")
-  );
-  blocked.draw(dataBlockedTable, tableOptions);
-  const triage = new google.visualization.Table(
-    document.getElementById("triage")
-  );
-  triage.draw(dataTriageTable, tableOptions);
-  const wip = new google.visualization.Table(document.getElementById("wip"));
-  wip.draw(dataWipTable, tableOptions);
-  const issues = new google.visualization.Table(
-    document.getElementById("issues")
-  );
-  issues.draw(dataIssuesTable, tableOptions);
-  const accountsUsage = new google.visualization.Table(
-    document.getElementById("accounts_usage")
-  );
-  accountsUsage.draw(dataAccountsUsage, tableOptions);
-  const apiUsage = new google.visualization.Table(
-    document.getElementById("api_usage")
-  );
-  apiUsage.draw(dataApiUsage, tableOptions);
+  drawDataTable(response["issues"]["bug"], "bug", tableOptions);
+  drawDataTable(response["issues"]["blocked"], "issues_blocked", tableOptions);
+  drawDataTable(response["issues"]["triage"], "triage", tableOptions);
+  drawDataTable(response["issues"]["wip"], "wip", tableOptions);
+  drawDataTable(response["issues"]["others"], "issues", tableOptions);
+  drawDataTable(response["accounts_usage"], "accounts_usage", tableOptions);
+  drawDataTable(response["api_usage"], "api_usage", tableOptions);
 }
 
 /**
@@ -935,14 +886,10 @@ function showGitHub(response) {
  * showHealthChecksIo(response);
  */
 function showHealthChecksIo(response) {
-  const dataHealthChecksIo = google.visualization.arrayToDataTable(
-    response["checks"]
-  );
-  const healthChecksIo = new google.visualization.Table(
-    document.getElementById("healthchecksio")
-  );
-  healthChecksIo.draw(dataHealthChecksIo, tableOptions);
+  drawDataTable(response["checks"], "healthchecksio", tableOptions);
 }
+
+let eventAssigned = false;
 
 /**
  * Displays various visualizations based on the provided response data.
@@ -965,20 +912,7 @@ function showHealthChecksIo(response) {
  * showMessages(response);
  */
 function showMessages(response) {
-  const dataGrouped = google.visualization.arrayToDataTable(
-    response["grouped"]
-  );
-  const dataTotal = google.visualization.arrayToDataTable([
-    ["Items", "Total"],
-    ["PM Errors", response["total"]],
-  ]);
-  const dataByApplications = google.visualization.arrayToDataTable(
-    response["byApplications"]
-  );
-
-  const optionsTotal = {
-    legend: { position: "none" },
-    showRowNumber: true,
+  const gaugeOptions = {
     width: "100%",
     height: "100%",
     min: 0,
@@ -996,42 +930,177 @@ function showMessages(response) {
     legend: { position: "right" },
   };
 
-  const grouped = new google.visualization.Table(
-    document.getElementById("messages_grouped")
+  drawDataTable(response.grouped, "messages_grouped", tableOptions);
+  drawGaugeChart(
+    "PM Errors",
+    response.total,
+    "gauge_chart_pm_errors",
+    gaugeOptions
   );
-  grouped.draw(dataGrouped, tableOptions);
-  const gaugeChart3 = new google.visualization.Gauge(
-    document.getElementById("gauge_chart_3")
-  );
-  gaugeChart3.draw(dataTotal, optionsTotal);
-  const pieChart2 = new google.visualization.PieChart(
-    document.getElementById("pie_chart_2")
-  );
-  pieChart2.draw(dataByApplications, optionsByApplications);
+  drawPieChart(response.byApplications, "pie_chart_2", optionsByApplications);
+
+  if (response.byApplications.length > 1) {
+    const byApplicationsTableData = response.byApplications;
+    byApplicationsTableData[0].unshift("Actions");
+    for (let i = 1; i < byApplicationsTableData.length; i++) {
+      const safeAppName = encodeURIComponent(byApplicationsTableData[i][0]);
+      byApplicationsTableData[i].unshift(
+        `<button 
+           class="btn btn-danger btn-sm" 
+           data-action="delete" 
+           data-application="${safeAppName}"
+           aria-label="Delete messages for ${safeAppName}">Delete</button>`
+      );
+    }
+
+    drawDataTable(
+      byApplicationsTableData,
+      "messages_by_applications",
+      tableOptions
+    );
+
+    if (eventAssigned === false) {
+      eventAssigned = true;
+      document.getElementById("messages_by_applications").addEventListener("click", (e) => {
+        const deleteButton = e.target.closest('[data-action="delete"]');
+        if (deleteButton) {
+          const {application} = deleteButton.dataset;
+          confirmDelete(application);
+        }
+      });
+    }
+  }
 }
 
 /**
-     * Displays the usage information from the provided response object in the HTML element with the ID "postman".
-     *
-     * This function checks if the "usage" property exists in the response object. If it does not exist, the function exits without making any changes to the DOM.
-     *
-     * @param {Object} response - The response object containing usage information.
-     * @param {string} response.usage - The usage information to be displayed.
-     *
-     * @returns {void} This function does not return a value.
-     *
-     * @example
-     * const apiResponse = { usage: 'API usage details here' };
-     * showPostman(apiResponse);
-     *
-     * @throws {TypeError} Throws an error if the response parameter is not an object.
-     */
+ * Prompts the user for confirmation before deleting messages for a specified application.
+ *
+ * @param {string} application - The name of the application whose messages are to be deleted.
+ */
+function confirmDelete(application) {
+  const message = `Are you sure you want to delete messages for ${decodeURIComponent(
+    application
+  )}?`;
+
+  if (window.confirm(message)) {
+    deleteMessageByApplication(application);
+  }
+}
+
+/**
+ * Deletes a message by application.
+ *
+ * Sends a POST request to the server to delete a message associated with the specified application.
+ *
+ * @param {string} application - The name or identifier of the application whose message is to be deleted.
+ * @returns {void}
+ */
+function deleteMessageByApplication(application) {
+  fetch("api/v1/messages/delete", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ application }),
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      return response.json();
+    })
+    .then((data) => {
+      showNotification("Success", "Item was successfully deleted", "success");
+      showMessages(data);
+    })
+    .catch((error) => {
+      showNotification(
+        "Error",
+        `Failed to delete item: ${error.message}`,
+        "error"
+      );
+    });
+}
+
+/**
+ * Displays a notification toast with the specified title, message, and type.
+ *
+ * @param {string} title - The title of the notification.
+ * @param {string} message - The message content of the notification.
+ * @param {string} type - The type of the notification, which determines the styling.
+ *                        Possible values are "success", "error", "warning", and "info".
+ */
+function showNotification(title, message, type) {
+  const toastContainer = document.getElementById("toast-container");
+  if (!toastContainer) {
+    console.error("Toast container not found");
+    return;
+  }
+
+  const validTypes = ["success", "error", "warning", "info"];
+  if (!validTypes.includes(type)) {
+    console.warn(`Invalid notification type: ${type}. Defaulting to 'info'`);
+    type = "info";
+  }
+
+  const typeClass = {
+    success: "bg-success text-white",
+    error: "bg-danger text-white",
+    warning: "bg-warning text-dark",
+    info: "bg-info text-dark",
+  };
+
+  if (typeof bootstrap === "undefined") {
+    console.error("Bootstrap is not loaded");
+    alert(`${title}: ${message}`);
+    return;
+  }
+
+  const toast = document.createElement("div");
+  toast.className = `toast ${typeClass[type]}`;
+  toast.setAttribute("role", "alert");
+  toast.setAttribute("aria-live", "assertive");
+  toast.setAttribute("aria-atomic", "true");
+  toast.innerHTML = `
+    <div class="toast-header">
+      <strong class="me-auto">${title}</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body">${message}</div>
+  `;
+
+  toastContainer.appendChild(toast);
+
+  const bootstrapToast = new bootstrap.Toast(toast, { delay: 3000 });
+  bootstrapToast.show();
+
+  toast.addEventListener("hidden.bs.toast", () => {
+    toast.remove();
+  });
+}
+
+/**
+ * Displays the usage information from the provided response object in the HTML element with the ID "postman".
+ *
+ * This function checks if the "usage" property exists in the response object. If it does not exist, the function exits without making any changes to the DOM.
+ *
+ * @param {Object} response - The response object containing usage information.
+ * @param {string} response.usage - The usage information to be displayed.
+ *
+ * @returns {void} This function does not return a value.
+ *
+ * @example
+ * const apiResponse = { usage: 'API usage details here' };
+ * showPostman(apiResponse);
+ *
+ * @throws {TypeError} Throws an error if the response parameter is not an object.
+ */
 function showPostman(response) {
   if (typeof response["usage"] === "undefined") {
     return;
   }
 
-  document.getElementById("postman").innerHTML = response["usage"];
+  document.getElementById("postman").innerHTML = response.usage;
 }
 
 /**
@@ -1058,15 +1127,7 @@ function showPostman(response) {
  * showQueues(response);
  */
 function showQueues(response) {
-  const dataTotal = google.visualization.arrayToDataTable([
-    ["Items", "Total"],
-    ["Queues", response["total"]],
-  ]);
-  const dataQueues = google.visualization.arrayToDataTable(response["queues"]);
-
-  const optionsTotal = {
-    legend: { position: "none" },
-    showRowNumber: true,
+  const gaugeOptions = {
     width: "100%",
     height: "100%",
     min: 0,
@@ -1079,14 +1140,13 @@ function showQueues(response) {
     redTo: 10000,
   };
 
-  const queues = new google.visualization.Table(
-    document.getElementById("queues")
+  drawDataTable(response["queues"], "queues", tableOptions);
+  drawGaugeChart(
+    "Queues",
+    response["total"],
+    "gauge_chart_queues",
+    gaugeOptions
   );
-  queues.draw(dataQueues, tableOptions);
-  const gaugeChart4 = new google.visualization.Gauge(
-    document.getElementById("gauge_chart_4")
-  );
-  gaugeChart4.draw(dataTotal, optionsTotal);
 }
 
 /**
@@ -1113,102 +1173,55 @@ function showQueues(response) {
  * showUpTimeRobot(response);
  */
 function showUpTimeRobot(response) {
-  const dataUpTimeRobot = google.visualization.arrayToDataTable(
-    response["monitors"]
-  );
-  const upTimeRobot = new google.visualization.Table(
-    document.getElementById("uptimerobot")
-  );
-  upTimeRobot.draw(dataUpTimeRobot, tableOptions);
+  drawDataTable(response["monitors"], "uptimerobot", tableOptions);
 }
 
 /**
-     * Displays various statistics and data visualizations based on the provided webhook response.
-     *
-     * This function processes the response object containing statistics, events, and other relevant data,
-     * converting them into data tables suitable for visualization using Google Charts. It generates line charts,
-     * pie charts, and gauge charts to represent the data visually in the specified HTML elements.
-     *
-     * @param {Object} response - The response object containing webhook statistics and data.
-     * @param {Array} response.statistics - An array of statistics data for webhooks.
-     * @param {Array} response.statistics_github - An array of GitHub webhook statistics data.
-     * @param {Array} response.events - An array of events data.
-     * @param {Array} response.feed - An array of feed data.
-     * @param {Array} response.senders - An array of sender data.
-     * @param {Array} response.repositories - An array of repository data.
-     * @param {Array} response.workflow_runs - An array of workflow run data.
-     * @param {number} response.total - The total number of webhooks received.
-     * @param {number} response.failed - The number of failed webhooks.
-     * @param {number} response.total_workflow_runs - The total number of workflow runs.
-     * @param {number} response.installations - The number of installations.
-     * @param {number} response.installation_repositories_count - The count of installation repositories.
-     * @param {Array} response.installation_repositories - An array of installation repository data.
-     * @param {string} [response.check_hooks_date] - The date when hooks were last checked (optional).
-     *
-     * @throws {Error} Throws an error if the Google Charts library is not loaded or if the response format is invalid.
-     *
-     * @example
-     * const webhookResponse = {
-     *   statistics: [...],
-     *   statistics_github: [...],
-     *   events: [...],
-     *   feed: [...],
-     *   senders: [...],
-     *   repositories: [...],
-     *   workflow_runs: [...],
-     *   total: 100,
-     *   failed: 5,
-     *   total_workflow_runs: 50,
-     *   installations: 10,
-     *   installation_repositories_count: 20,
-     *   installation_repositories: [...],
-     *   check_hooks_date: "2023-10-01T12:00:00Z"
-     * };
-     *
-     * showWebhook(webhookResponse);
-     */
-function showWebhook(response) {  
-  const dataStatistics = google.visualization.arrayToDataTable(
-    response["statistics"]
-  );
-  const dataStatisticsGitHub = google.visualization.arrayToDataTable(
-    response["statistics_github"]
-  );
-  const dataEvents = google.visualization.arrayToDataTable(response["events"]);
-  const dataFeed = google.visualization.arrayToDataTable(response["feed"]);
-  const dataSenders = google.visualization.arrayToDataTable(
-    response["senders"]
-  );
-  const dataRepositories = google.visualization.arrayToDataTable(
-    response["repositories"]
-  );
-  const dataWorkflowRuns = google.visualization.arrayToDataTable(
-    response["workflow_runs"]
-  );
-  const dataTotal = google.visualization.arrayToDataTable([
-    ["Hits", "Total"],
-    ["GH WH", response["total"]],
-  ]);
-  const dataFailed = google.visualization.arrayToDataTable([
-    ["Hits", "Failed"],
-    ["WH Failed", response["failed"]],
-  ]);
-  const dataTotalWorkflowRuns = google.visualization.arrayToDataTable([
-    ["Hits", "GH WRs"],
-    ["GH WRs", response["total_workflow_runs"]],
-  ]);
-  const dataInstallations = google.visualization.arrayToDataTable([
-    ["Hits", "GH App"],
-    ["GH App", response["installations"]],
-  ]);
-  const dataInstallationRepositoriesCount = google.visualization.arrayToDataTable([
-    ["Hits", "GH Repos"],
-    ["GH Repos", response["installation_repositories_count"]],
-  ]);
-  const dataInstallationRepositories = google.visualization.arrayToDataTable(
-     response["installation_repositories"]
-  );
-
+ * Displays various statistics and data visualizations based on the provided webhook response.
+ *
+ * This function processes the response object containing statistics, events, and other relevant data,
+ * converting them into data tables suitable for visualization using Google Charts. It generates line charts,
+ * pie charts, and gauge charts to represent the data visually in the specified HTML elements.
+ *
+ * @param {Object} response - The response object containing webhook statistics and data.
+ * @param {Array} response.statistics - An array of statistics data for webhooks.
+ * @param {Array} response.statistics_github - An array of GitHub webhook statistics data.
+ * @param {Array} response.events - An array of events data.
+ * @param {Array} response.feed - An array of feed data.
+ * @param {Array} response.senders - An array of sender data.
+ * @param {Array} response.repositories - An array of repository data.
+ * @param {Array} response.workflow_runs - An array of workflow run data.
+ * @param {number} response.total - The total number of webhooks received.
+ * @param {number} response.failed - The number of failed webhooks.
+ * @param {number} response.total_workflow_runs - The total number of workflow runs.
+ * @param {number} response.installations - The number of installations.
+ * @param {number} response.installation_repositories_count - The count of installation repositories.
+ * @param {Array} response.installation_repositories - An array of installation repository data.
+ * @param {string} [response.check_hooks_date] - The date when hooks were last checked (optional).
+ *
+ * @throws {Error} Throws an error if the Google Charts library is not loaded or if the response format is invalid.
+ *
+ * @example
+ * const webhookResponse = {
+ *   statistics: [...],
+ *   statistics_github: [...],
+ *   events: [...],
+ *   feed: [...],
+ *   senders: [...],
+ *   repositories: [...],
+ *   workflow_runs: [...],
+ *   total: 100,
+ *   failed: 5,
+ *   total_workflow_runs: 50,
+ *   installations: 10,
+ *   installation_repositories_count: 20,
+ *   installation_repositories: [...],
+ *   check_hooks_date: "2023-10-01T12:00:00Z"
+ * };
+ *
+ * showWebhook(webhookResponse);
+ */
+function showWebhook(response) {
   const optionsStatistics = {
     title: "Webhooks by date",
     legend: { position: "right" },
@@ -1241,9 +1254,7 @@ function showWebhook(response) {
     legend: { position: "right" },
   };
 
-  const optionsTotal = {
-    legend: { position: "none" },
-    showRowNumber: true,
+  const gaugeOptionsTotal = {
     width: "100%",
     height: "100%",
     min: 0,
@@ -1256,39 +1267,7 @@ function showWebhook(response) {
     redTo: 1000000,
   };
 
-  const optionsFailed = {
-    legend: { position: "none" },
-    showRowNumber: true,
-    width: "100%",
-    height: "100%",
-    min: 0,
-    max: 1000,
-    greenFrom: 0,
-    greenTo: 50,
-    yellowFrom: 50,
-    yellowTo: 100,
-    redFrom: 100,
-    redTo: 1000,
-  };
-
-  const optionsTotalWorkflowRuns = {
-    legend: { position: "none" },
-    showRowNumber: true,
-    width: "100%",
-    height: "100%",
-    min: 0,
-    max: 1000,
-    greenFrom: 0,
-    greenTo: 50,
-    yellowFrom: 50,
-    yellowTo: 100,
-    redFrom: 100,
-    redTo: 1000,
-  };
-
-  const optionsInstallations = {
-    legend: { position: "none" },
-    showRowNumber: true,
+  const gaugeOptions = {
     width: "100%",
     height: "100%",
     min: 0,
@@ -1307,89 +1286,227 @@ function showWebhook(response) {
       "<b>Date: </b> " + checkHooksDate.toString();
   }
 
-  const statisticsChart = new google.visualization.LineChart(
-    document.getElementById("webhooks_statistics")
+  drawLineChart(
+    response["statistics"],
+    "webhooks_statistics",
+    optionsStatistics
   );
-  statisticsChart.draw(dataStatistics, optionsStatistics);
-  const statisticsGitHubChart = new google.visualization.LineChart(
-    document.getElementById("webhooks_statistics_github")
+  drawLineChart(
+    response["statistics_github"],
+    "webhooks_statistics_github",
+    optionsStatisticsGitHub
   );
-  statisticsGitHubChart.draw(dataStatisticsGitHub, optionsStatisticsGitHub);
-
-  const pieChart1 = new google.visualization.PieChart(
-    document.getElementById("pie_chart_1")
+  drawDataTable(response["senders"], "senders", tableOptions);
+  drawDataTable(response["repositories"], "repositories", tableOptions);
+  drawDataTable(
+    response["installation_repositories"],
+    "installed_repositories",
+    tableOptions
   );
-  pieChart1.draw(dataEvents, optionsEvents);
-
-  const repositories = new google.visualization.Table(
-    document.getElementById("repositories")
+  drawDataTable(response["workflow_runs"], "workflow_runs", tableOptions);
+  drawDataTable(response["feed"], "feed", tableOptions, 5);
+  drawPieChart(response["events"], "pie_chart_1", optionsEvents);
+  drawGaugeChart(
+    "GH WH",
+    response["total"],
+    "gauge_chart_webhooks",
+    gaugeOptionsTotal
   );
-  repositories.draw(dataRepositories, tableOptions);
-  const installationRepositories = new google.visualization.Table(
-    document.getElementById("installed_repositories")
+  drawGaugeChart(
+    "WH Failed",
+    response["failed"],
+    "gauge_chart_webhooks_failed",
+    gaugeOptions
   );
-  installationRepositories.draw(dataInstallationRepositories, tableOptions);
-  const workflowRuns = new google.visualization.Table(
-    document.getElementById("workflow_runs")
+  drawGaugeChart(
+    "GH WRs",
+    response["total_workflow_runs"],
+    "gauge_chart_workflows_runs",
+    gaugeOptions
   );
-  workflowRuns.draw(dataWorkflowRuns, tableOptions);
-    const feed = new google.visualization.Table(document.getElementById("feed"));
-  feed.draw(dataFeed, tableOptions);
-  const senders = new google.visualization.Table(
-    document.getElementById("senders")
+  drawGaugeChart(
+    "GH App",
+    response["installations"],
+    "gauge_chart_installed_apps",
+    gaugeOptions
   );
-  senders.draw(dataSenders, tableOptions);
-
-  const gaugeChart1 = new google.visualization.Gauge(
-    document.getElementById("gauge_chart_1")
+  drawGaugeChart(
+    "GH Repos",
+    response["installation_repositories_count"],
+    "gauge_chart_installation_repositories",
+    gaugeOptions
   );
-  gaugeChart1.draw(dataTotal, optionsTotal);
-  const gaugeChart2 = new google.visualization.Gauge(
-    document.getElementById("gauge_chart_2")
-  );
-  gaugeChart2.draw(dataFailed, optionsFailed);
-  const gaugeChart8 = new google.visualization.Gauge(
-    document.getElementById("gauge_chart_8")
-  );
-  gaugeChart8.draw(dataTotalWorkflowRuns, optionsTotalWorkflowRuns);
-  const gaugeChart9 = new google.visualization.Gauge(
-    document.getElementById("gauge_chart_9")
-  );
-  gaugeChart9.draw(dataInstallations, optionsInstallations);
-  const gaugeChart10 = new google.visualization.Gauge(
-    document.getElementById("gauge_chart_installation_repositories")
-  );
-  gaugeChart10.draw(dataInstallationRepositoriesCount, optionsInstallations);
 }
 
 /**
-     * Renders a WireGuard visualization table using the provided response data.
-     *
-     * This function takes a response object containing WireGuard data, converts it 
-     * into a format suitable for visualization, and then draws the table in the 
-     * specified HTML element.
-     *
-     * @param {Object} response - The response object containing WireGuard data.
-     * @param {Array} response.wireguard - An array of data to be visualized in the table.
-     *
-     * @throws {Error} Throws an error if the response does not contain the expected 
-     *                 wireguard data or if the visualization fails to render.
-     *
-     * @example
-     * const response = {
-     *   wireguard: [
-     *     ['Column1', 'Column2'],
-     *     ['Data1', 'Data2'],
-     *   ]
-     * };
-     * showWireGuard(response);
-     */
+ * Renders a WireGuard visualization table using the provided response data.
+ *
+ * This function takes a response object containing WireGuard data, converts it
+ * into a format suitable for visualization, and then draws the table in the
+ * specified HTML element.
+ *
+ * @param {Object} response - The response object containing WireGuard data.
+ * @param {Array} response.wireguard - An array of data to be visualized in the table.
+ *
+ * @throws {Error} Throws an error if the response does not contain the expected
+ *                 wireguard data or if the visualization fails to render.
+ *
+ * @example
+ * const response = {
+ *   wireguard: [
+ *     ['Column1', 'Column2'],
+ *     ['Data1', 'Data2'],
+ *   ]
+ * };
+ * showWireGuard(response);
+ */
 function showWireGuard(response) {
-  const dataWireGuard = google.visualization.arrayToDataTable(
-    response["wireguard"]
+  drawDataTable(response["wireguard"], "wireguard", tableOptions);
+}
+
+/**
+ * Draws a Google Visualization chart of the specified type.
+ *
+ * @param {Array} data - The data to be visualized, in the format accepted by google.visualization.arrayToDataTable.
+ * @param {string} chartType - The type of chart to draw. Valid values are "table", "line", "pie", and "gauge".
+ * @param {string} elementId - The ID of the HTML element where the chart will be drawn.
+ * @param {Object} options - The options for the chart, as accepted by the specific chart type.
+ * @param {number} [hideColumn=-1] - The index of the column to hide. If -1, no column will be hidden.
+ * @returns {Object} An object containing the chart type, element ID, chart instance, and optionally the data view.
+ */
+function drawChartByType(data, chartType, elementId, options, hideColumn = -1) {
+  if (!google.visualization) {
+    console.error("Google Visualization API not loaded");
+    return;
+  }
+
+  if (!data || !elementId || !options) {
+    console.error("Invalid parameters passed to drawChartByType");
+    return;
+  }
+
+  const element = document.getElementById(elementId);
+  if (!element) {
+    console.error(`Element with id ${elementId} not found`);
+    return;
+  }
+
+  const result = {
+    chartType,
+    elementId,
+  };
+
+  switch (chartType) {
+    case "table":
+      result.chart = new google.visualization.Table(element);
+      break;
+    case "line":
+      result.chart = new google.visualization.LineChart(element);
+      break;
+    case "pie":
+      result.chart = new google.visualization.PieChart(element);
+      break;
+    case "gauge":
+      result.chart = new google.visualization.Gauge(element);
+      break;
+    default:
+      console.error(`Invalid chart type: ${chartType}`);
+      return;
+  }
+
+  result.dataTable = google.visualization.arrayToDataTable(data);
+
+  if (hideColumn >= 0 && data.length > 0) {
+    result.view = new google.visualization.DataView(result.dataTable);
+    if (data[0].length > hideColumn) {
+      result.view.hideColumns([hideColumn]);
+    }
+
+    result.chart.draw(result.view, options);
+
+    google.visualization.events.addListener(
+      result.chart,
+      "select",
+      function () {
+        const selection = result.chart.getSelection();
+        if (selection.length > 0) {
+          const row = selection[0].row;
+          const item = result.dataTable.getValue(row, 0);
+          const hiddenInfo = result.dataTable.getValue(
+            row,
+            data[0].length > hideColumn ? hideColumn : 0
+          );
+          console.log(`You clicked on ${item}\nHidden Info: ${hiddenInfo}`);
+        }
+      }
+    );
+  } else {
+    result.chart.draw(result.dataTable, options);
+  }
+
+  return result;
+}
+
+/**
+ * Draws a data table chart in the specified HTML element.
+ *
+ * @param {Object} data - The data to be displayed in the table.
+ * @param {string} elementId - The ID of the HTML element where the table will be drawn.
+ * @param {Object} options - Configuration options for the table.
+ * @param {number} [hideColumn=-1] - The index of the column to hide (optional). Default is -1, which means no column will be hidden.
+ * @returns {Object} The chart object created.
+ */
+function drawDataTable(data, elementId, options, hideColumn = -1) {
+  const counterElementId = `counter_${elementId}`;
+  const counterElement = document.getElementById(counterElementId);
+
+  if (counterElement) {
+    counterElement.innerHTML = Math.max(0, data.length - 1);
+  }
+  return drawChartByType(data, "table", elementId, options, hideColumn);
+}
+
+/**
+ * Draws a line chart using the provided data and options.
+ *
+ * @param {Array} data - The data to be used for the chart.
+ * @param {string} elementId - The ID of the HTML element where the chart will be rendered.
+ * @param {Object} options - Additional options for customizing the chart.
+ * @returns {Object} The chart instance.
+ */
+function drawLineChart(data, elementId, options) {
+  return drawChartByType(data, "line", elementId, options);
+}
+
+/**
+ * Draws a pie chart using the provided data and options.
+ *
+ * @param {Object} data - The data to be used for the pie chart.
+ * @param {string} elementId - The ID of the HTML element where the chart will be rendered.
+ * @param {Object} options - Additional options for customizing the chart.
+ * @returns {Object} The chart instance.
+ */
+function drawPieChart(data, elementId, options) {
+  return drawChartByType(data, "pie", elementId, options);
+}
+
+/**
+ * Draws a gauge chart with the specified label, value, and options.
+ *
+ * @param {string} label - The label for the gauge chart.
+ * @param {number} value - The value to be displayed on the gauge chart.
+ * @param {string} elementId - The ID of the HTML element where the chart will be rendered.
+ * @param {Object} options - Additional options for customizing the gauge chart.
+ * @returns {Object} The chart object created by the drawChartByType function.
+ */
+function drawGaugeChart(label, value, elementId, options) {
+  return drawChartByType(
+    [
+      ["", ""],
+      [label, value],
+    ],
+    "gauge",
+    elementId,
+    options
   );
-  const wireGuard = new google.visualization.Table(
-    document.getElementById("wireguard")
-  );
-  wireGuard.draw(dataWireGuard, tableOptions);
 }

@@ -889,6 +889,8 @@ function showHealthChecksIo(response) {
   drawDataTable(response["checks"], "healthchecksio", tableOptions);
 }
 
+let eventAssigned = false;
+
 /**
  * Displays various visualizations based on the provided response data.
  * This function processes the response to create a grouped data table,
@@ -951,23 +953,22 @@ function showMessages(response) {
       );
     }
 
-    const element = document.getElementById("messages_by_applications");
-    const newElement = element.cloneNode(true);
-    element.parentNode.replaceChild(newElement, element);
-
     drawDataTable(
       byApplicationsTableData,
       "messages_by_applications",
       tableOptions
     );
 
-    newElement.addEventListener("click", (e) => {
-      const deleteButton = e.target.closest('[data-action="delete"]');
-      if (deleteButton) {
-        const {application} = deleteButton.dataset;
-        confirmDelete(application);
-      }
-    });
+    if (eventAssigned === false) {
+      eventAssigned = true;
+      document.getElementById("messages_by_applications").addEventListener("click", (e) => {
+        const deleteButton = e.target.closest('[data-action="delete"]');
+        if (deleteButton) {
+          const {application} = deleteButton.dataset;
+          confirmDelete(application);
+        }
+      });
+    }
   }
 }
 

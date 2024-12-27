@@ -939,13 +939,30 @@ function showMessages(response) {
 
   if (response.byApplications.length > 1) {
     const byApplicationsTableData = response.byApplications;
-    byApplicationsTableData[0].unshift("Delete");
+    byApplicationsTableData[0].unshift("Actions");
     for (let i = 1; i < byApplicationsTableData.length; i++) {
       const safeAppName = encodeURIComponent(byApplicationsTableData[i][0]);
       byApplicationsTableData[i].unshift(
-        `<button onclick="confirmDelete('${safeAppName}')">❌</button>`
+        `<button 
+           class="btn btn-danger btn-sm" 
+           data-action="delete" 
+           data-application="${safeAppName}"
+           aria-label="Delete messages for ${safeAppName}">
+           ❌
+         </button>`
       );
     }
+
+    // Add event delegation for delete buttons
+    document.getElementById('messages_by_applications')
+      .addEventListener('click', (e) => {
+        const deleteButton = e.target.closest('[data-action="delete"]');
+        if (deleteButton) {
+          const application = deleteButton.dataset.application;
+          confirmDelete(application);
+        }
+    });
+    
     drawDataTable(
       byApplicationsTableData,
       "messages_by_applications",

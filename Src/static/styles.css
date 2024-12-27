@@ -22,8 +22,8 @@ code {
   background-color: white;
 }
 
-.gauge svg:first-child > g > text[text-anchor~=middle]{
-    font-size: 0.8em;
+.gauge svg:first-child > g > text[text-anchor~="middle"] {
+  font-size: 0.8em;
 }
 
 .topping {
@@ -34,6 +34,13 @@ code {
   font-weight: bold;
   font-size: 2em;
   text-align: center;
+}
+
+#toast-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1055;
 }
 
 .floating-box {

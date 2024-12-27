@@ -81,16 +81,16 @@ $configuration = new Configuration();
       <div id="gauge_chart_memory" class="gauge"></div>
       <div id="gauge_chart_entry_process" class="gauge"></div>
       <div id="gauge_chart_process" class="gauge"></div>
+      <div id="gauge_chart_log_errors" class="gauge"></div>
       <div id="gauge_chart_github_usage" class="gauge"></div>
       <div id="gauge_chart_webhooks" class="gauge"></div>
       <div id="gauge_chart_issues" class="gauge"></div>
       <div id="gauge_chart_pull_requests" class="gauge"></div>
-      <div id="gauge_chart_workflows_runs" class="gauge"></div>
-      <div id="gauge_chart_installed_apps" class="gauge"></div>
+      <div id="gauge_chart_workflows_runs" class="gauge"></div>      
       <div id="gauge_chart_webhooks_failed" class="gauge"></div>
       <div id="gauge_chart_queues" class="gauge"></div>
       <div id="gauge_chart_pm_errors" class="gauge"></div>
-      <div id="gauge_chart_log_errors" class="gauge"></div>
+      <div id="gauge_chart_installed_apps" class="gauge"></div>
       <div id="gauge_chart_installation_repositories" class="gauge"></div>
    </div>
    <div style="width: 50%; float: left;">

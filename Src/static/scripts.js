@@ -800,7 +800,7 @@ function showGitHub(response) {
   let coreApiUsage = response.api_usage.find((item) => item[0] === "core");
 
   if (coreApiUsage === undefined) {
-    coreApiUsage = [0, 0, 0, 0];
+    coreApiUsage = ["core", 5000, 0, 0];
   }
 
   const apiUsageGaugeOptions = {

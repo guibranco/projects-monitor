@@ -953,21 +953,21 @@ function showMessages(response) {
       );
     }
 
-    // Add event delegation for delete buttons
-    document.getElementById('messages_by_applications')
-      .addEventListener('click', (e) => {
-        const deleteButton = e.target.closest('[data-action="delete"]');
-        if (deleteButton) {
-          const application = deleteButton.dataset.application;
-          confirmDelete(application);
-        }
-    });
-    
     drawDataTable(
       byApplicationsTableData,
       "messages_by_applications",
       tableOptions
     );
+
+    document
+      .getElementById("messages_by_applications")
+      .addEventListener("click", (e) => {
+        const deleteButton = e.target.closest('[data-action="delete"]');
+        if (deleteButton) {
+          const application = deleteButton.dataset.application;
+          confirmDelete(application);
+        }
+      });
   }
 }
 

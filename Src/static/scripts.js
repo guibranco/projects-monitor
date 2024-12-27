@@ -928,18 +928,154 @@ function showMessages(response) {
     legend: { position: "right" },
   };
 
-  drawDataTable(response["grouped"], "messages_grouped", tableOptions);
+  drawDataTable(response.grouped, "messages_grouped", tableOptions);
   drawGaugeChart(
     "PM Errors",
-    response["total"],
+    response.total,
     "gauge_chart_pm_errors",
     gaugeOptions
   );
-  drawPieChart(
-    response["byApplications"],
-    "pie_chart_2",
-    optionsByApplications
-  );
+  drawPieChart(response.byApplications, "pie_chart_2", optionsByApplications);
+
+  if (response.byApplications.length > 1) {
+    const byApplicationsTableData = response.byApplications;
+    byApplicationsTableData[0].unshift("Actions");
+    for (let i = 1; i < byApplicationsTableData.length; i++) {
+      const safeAppName = encodeURIComponent(byApplicationsTableData[i][0]);
+      byApplicationsTableData[i].unshift(
+        `<button 
+           class="btn btn-danger btn-sm" 
+           data-action="delete" 
+           data-application="${safeAppName}"
+           aria-label="Delete messages for ${safeAppName}">
+           ❌
+         </button>`
+      );
+    }
+
+    drawDataTable(
+      byApplicationsTableData,
+      "messages_by_applications",
+      tableOptions
+    );
+
+    document
+      .getElementById("messages_by_applications")
+      .addEventListener("click", (e) => {
+        const deleteButton = e.target.closest('[data-action="delete"]');
+        if (deleteButton) {
+          const application = deleteButton.dataset.application;
+          confirmDelete(application);
+        }
+      });
+  }
+}
+
+/**
+ * Prompts the user for confirmation before deleting messages for a specified application.
+ *
+ * @param {string} application - The name of the application whose messages are to be deleted.
+ */
+function confirmDelete(application) {
+  const message = `Are you sure you want to delete messages for ${decodeURIComponent(
+    application
+  )}?`;
+
+  if (window.confirm(message)) {
+    deleteMessageByApplication(application);
+  }
+}
+
+/**
+ * Deletes a message by application.
+ *
+ * Sends a POST request to the server to delete a message associated with the specified application.
+ *
+ * @param {string} application - The name or identifier of the application whose message is to be deleted.
+ * @returns {void}
+ */
+function deleteMessageByApplication(application) {
+  fetch("/api/v1/messages/delete", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ application }),
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      return response.json();
+    })
+    .then((data) => {
+      showNotification("Success", "Item was successfully deleted", "success");
+      showMessages(data);
+    })
+    .catch((error) => {
+      showNotification(
+        "Error",
+        `Failed to delete item: ${error.message}`,
+        "error"
+      );
+    });
+}
+
+/**
+ * Displays a notification toast with the specified title, message, and type.
+ *
+ * @param {string} title - The title of the notification.
+ * @param {string} message - The message content of the notification.
+ * @param {string} type - The type of the notification, which determines the styling.
+ *                        Possible values are "success", "error", "warning", and "info".
+ */
+function showNotification(title, message, type) {
+  const toastContainer = document.getElementById("toast-container");
+  if (!toastContainer) {
+    console.error("Toast container not found");
+    return;
+  }
+
+  const validTypes = ["success", "error", "warning", "info"];
+  if (!validTypes.includes(type)) {
+    console.warn(`Invalid notification type: ${type}. Defaulting to 'info'`);
+    type = "info";
+  }
+
+  const typeClass = {
+    success: "bg-success text-white",
+    error: "bg-danger text-white",
+    warning: "bg-warning text-dark",
+    info: "bg-info text-dark",
+  };
+
+  if (typeof bootstrap === "undefined") {
+    console.error("Bootstrap is not loaded");
+    alert(`${title}: ${message}`);
+    return;
+  }
+
+  const toast = document.createElement("div");
+  toast.className = `toast ${typeClass[type]}`;
+  toast.setAttribute("role", "alert");
+  toast.setAttribute("aria-live", "assertive");
+  toast.setAttribute("aria-atomic", "true");
+  toast.innerHTML = `
+    <div class="toast-header">
+      <strong class="me-auto">${title}</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body">${message}</div>
+  `;
+
+  toastContainer.appendChild(toast);
+
+  const bootstrapToast = new bootstrap.Toast(toast, { delay: 3000 });
+  bootstrapToast.show();
+
+  toast.addEventListener("hidden.bs.toast", () => {
+    toast.remove();
+  });
 }
 
 /**
@@ -963,7 +1099,7 @@ function showPostman(response) {
     return;
   }
 
-  document.getElementById("postman").innerHTML = response["usage"];
+  document.getElementById("postman").innerHTML = response.usage;
 }
 
 /**

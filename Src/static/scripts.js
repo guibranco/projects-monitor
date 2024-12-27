@@ -976,11 +976,57 @@ function deleteMessageByApplication(application) {
       return response.json();
     })
     .then((data) => {
-      console.log("Delete successful:", data);
+      showNotification("Success", "Item was successfully deleted", "success");
+      showMessages(data);
     })
     .catch((error) => {
-      console.error("There was a problem with the fetch operation:", error);
+      showNotification(
+        "Error",
+        `Failed to delete item: ${error.message}`,
+        "error"
+      );
     });
+}
+
+/**
+ * Displays a notification toast with the specified title, message, and type.
+ *
+ * @param {string} title - The title of the notification.
+ * @param {string} message - The message content of the notification.
+ * @param {string} type - The type of the notification, which determines the styling. 
+ *                        Possible values are "success", "error", "warning", and "info".
+ */
+function showNotification(title, message, type) {
+  const toastContainer = document.getElementById("toast-container");
+e
+  const typeClass = {
+    success: "bg-success text-white",
+    error: "bg-danger text-white",
+    warning: "bg-warning text-dark",
+    info: "bg-info text-dark",
+  };
+
+  const toast = document.createElement("div");
+  toast.className = `toast ${typeClass[type] || "bg-secondary text-white"}`;
+  toast.setAttribute("role", "alert");
+  toast.setAttribute("aria-live", "assertive");
+  toast.setAttribute("aria-atomic", "true");
+  toast.innerHTML = `
+    <div class="toast-header">
+      <strong class="me-auto">${title}</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body">${message}</div>
+  `;
+
+  toastContainer.appendChild(toast);
+
+  const bootstrapToast = new bootstrap.Toast(toast, { delay: 3000 });
+  bootstrapToast.show();
+
+  toast.addEventListener("hidden.bs.toast", () => {
+    toast.remove();
+  });
 }
 
 /**

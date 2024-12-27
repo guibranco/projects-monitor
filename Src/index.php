@@ -90,8 +90,8 @@ $configuration = new Configuration();
       <div id="gauge_chart_webhooks_failed" class="gauge"></div>
       <div id="gauge_chart_queues" class="gauge"></div>
       <div id="gauge_chart_pm_messages" class="gauge"></div>
-      <div id="gauge_chart_installed_apps" class="gauge"></div>
-      <div id="gauge_chart_installation_repositories" class="gauge"></div>
+      <div id="gauge_chart_bot_installations" class="gauge"></div>
+      <div id="gauge_chart_bot_repositories" class="gauge"></div>
    </div>
    <div style="width: 50%; float: left;">
       <div style="width: 100%;">

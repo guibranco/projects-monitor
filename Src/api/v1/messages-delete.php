@@ -8,6 +8,15 @@ use GuiBranco\ProjectsMonitor\Library\Logger;
 $requestBody = file_get_contents("php://input");
 $input = json_decode($requestBody, true);
 
+if (json_last_error() !== JSON_ERROR_NONE) {
+    http_response_code(400);
+    echo json_encode([
+        "error" => "Invalid JSON provided",
+        "details" => json_last_error_msg()
+    ]);
+    exit;
+}
+
 if (isset($input['application']) === false) {
     http_response_code(400);
     echo json_encode(["error" => "Application name is required"]);

@@ -802,7 +802,7 @@ function showGitHub(response) {
   if (coreApiUsage === undefined) {
     coreApiUsage = [0, 0, 0, 0];
   }
-  
+
   const apiUsageGaugeOptions = {
     width: "100%",
     height: "100%",
@@ -818,7 +818,7 @@ function showGitHub(response) {
   drawGaugeChart(
     "GH API Usage",
     coreApiUsage[3],
-    "gauge_chart_api_usage",
+    "gauge_chart_github_usage",
     apiUsageGaugeOptions
   );
 

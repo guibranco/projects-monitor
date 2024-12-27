@@ -23,7 +23,7 @@ if (isset($input['application']) === false) {
     exit;
 }
 
-$applicationName = urldecode(filter_var($input['application'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+$applicationName = filter_var(urldecode($input['application']), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 $log = new Logger();
 $result = $log->deleteMessagesByApplication($applicationName);
 

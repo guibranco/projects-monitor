@@ -947,9 +947,7 @@ function showMessages(response) {
            class="btn btn-danger btn-sm" 
            data-action="delete" 
            data-application="${safeAppName}"
-           aria-label="Delete messages for ${safeAppName}">
-           ❌
-         </button>`
+           aria-label="Delete messages for ${safeAppName}">Delete</button>`
       );
     }
 
@@ -995,7 +993,7 @@ function confirmDelete(application) {
  * @returns {void}
  */
 function deleteMessageByApplication(application) {
-  fetch("/api/v1/messages/delete", {
+  fetch("api/v1/messages/delete", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

@@ -81,6 +81,7 @@ $configuration = new Configuration();
       <div id="gauge_chart_memory" class="gauge"></div>
       <div id="gauge_chart_entry_process" class="gauge"></div>
       <div id="gauge_chart_process" class="gauge"></div>
+      <div id="gauge_chart_github_usage" class="gauge"></div>
       <div id="gauge_chart_webhooks" class="gauge"></div>
       <div id="gauge_chart_issues" class="gauge"></div>
       <div id="gauge_chart_pull_requests" class="gauge"></div>

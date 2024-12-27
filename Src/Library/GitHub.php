@@ -3,6 +3,7 @@
 namespace GuiBranco\ProjectsMonitor\Library;
 
 use GuiBranco\Pancake\Request;
+use GuiBranco\Pancake\Response;
 use GuiBranco\Pancake\RequestException;
 use GuiBranco\ProjectsMonitor\Library\Configuration;
 use FastVolt\Helper\Markdown;
@@ -10,9 +11,7 @@ use FastVolt\Helper\Markdown;
 class GitHub
 {
     private const GITHUB_API_URL = "https://api.github.com/";
-
     private const DATE_TIME_FORMAT = "H:i:s d/m/Y";
-
     private const ISSUE_TEXT = "issue";
     private const PR_TEXT = "pr";
 
@@ -22,11 +21,9 @@ class GitHub
     private const WIP_TEXT_LABEL = "WIP";
     private const WIP_SPACE_LABEL = "\"🛠 WIP\""
     ;
-    private $request;
+    private Request $request;
 
-    private $headers;
-
-    private $apiUsage;
+    private array $headers;
 
     public function __construct()
     {
@@ -41,7 +38,6 @@ class GitHub
 
         require_once __DIR__ . "/../secrets/gitHub.secrets.php";
 
-        $this->apiUsage = array();
         $this->request = new Request();
         $this->headers = [
             "Authorization: token {$gitHubToken}",
@@ -51,29 +47,18 @@ class GitHub
         ];
     }
 
-    private function processHeaders($headers): void
-    {
-        $limit = $headers["X-RateLimit-Limit"];
-        $remaining = $headers["X-RateLimit-Remaining"];
-        $reset = $headers["X-RateLimit-Reset"];
-        $used = $headers["X-RateLimit-Used"];
-        $resource = $headers["X-RateLimit-Resource"];
-        $this->apiUsage[$resource] = array("limit" => $limit, "remaining" => $remaining, "reset" => $reset, "used" => $used);
-    }
-
-    private function requestInternal($url, $isRetry = false)
+    private function requestInternal(string $url, bool $isRetry = false): Response
     {
         $response = $this->request->get($url, $this->headers);
 
         if ($response->getStatusCode() !== -1 || $isRetry) {
-            $this->processHeaders($response->getHeaders());
             return $response;
         }
 
         return $this->requestInternal($url, true);
     }
 
-    private function getSearch($queryString)
+    private function getSearch($queryString): mixed
     {
         $hash = md5($queryString);
         $cache = "cache/github_search_{$hash}.json";
@@ -98,11 +83,11 @@ class GitHub
                 $ex->getCode(),
                 $response === null ? "null" : $response->toJson()
             ));
-            return (object)['total_count' => 0, 'items' => []];
+            return (object) ['total_count' => 0, 'items' => []];
         }
     }
 
-    private function getWithLabel($users, $type, $label = null, $labelsToRemove = null)
+    private function getWithLabel($users, $type, $label = null, $labelsToRemove = null): mixed
     {
         $labels = "";
         if ($label !== null) {
@@ -123,7 +108,7 @@ class GitHub
         return $this->getSearch($queryString);
     }
 
-    private function getWithUserExclusion($type, $filter, $user, $usersToExclude)
+    private function getWithUserExclusion($type, $filter, $user, $usersToExclude): mixed
     {
         $filterString = "{$filter}:{$user}";
         $usersToRemove = implode(" ", array_map(function ($user) {
@@ -133,7 +118,7 @@ class GitHub
         return $this->getSearch($queryString);
     }
 
-    private function addHeader(&$items)
+    private function addHeader(&$items): void
     {
         $keys = array_keys($items);
         foreach ($keys as $key) {
@@ -143,7 +128,7 @@ class GitHub
         }
     }
 
-    private function mapItems($items)
+    private function mapItems($items): array
     {
         if (count($items) == 0) {
             return array();
@@ -178,7 +163,7 @@ class GitHub
         return $result;
     }
 
-    public function getIssues()
+    public function getIssues(): array
     {
         $users = ["guibranco", "ApiBR", "GuilhermeStracini", "InovacaoMediaBrasil"];
         $vacanciesUsers = ["rustdevbr", "pydevbr", "dotnetdevbr", "nodejsdevbr", "rubydevbr", "frontend-ao", "frontend-pt", "backend-ao", "backend-pt", "developersRJ"];
@@ -215,7 +200,7 @@ class GitHub
         return $data;
     }
 
-    public function getPullRequests()
+    public function getPullRequests(): array
     {
         $users = ["guibranco", "ApiBR", "GuilhermeStracini", "InovacaoMediaBrasil", "rustdevbr", "pythondevbr", "pydevbr", "dotnetdevbr", "nodejsdevbr", "rubydevbr", "frontend-ao", "frontend-pt", "backend-ao", "backend-pt", "developersRJ"];
 
@@ -242,7 +227,7 @@ class GitHub
         return $data;
     }
 
-    private function getLatestRelease($owner, $repository)
+    private function getLatestRelease($owner, $repository): mixed
     {
         $cache = "cache/github_latest_release_{$owner}_{$repository}.json";
         if (file_exists($cache) && filemtime($cache) > strtotime("-3 hour")) {
@@ -266,18 +251,18 @@ class GitHub
                 $ex->getCode(),
                 $response === null ? "null" : $response->toJson()
             ));
-            return (object)[
+            return (object) [
                 'created_at' => null,
                 'published_at' => null,
                 'name' => 'N/A',
                 'body' => '',
                 'html_url' => '',
-                'author' => (object)['login' => 'N/A']
+                'author' => (object) ['login' => 'N/A']
             ];
         }
     }
 
-    private function getLatestReleaseDetails($account, $repository)
+    private function getLatestReleaseDetails($account, $repository): array
     {
         $body = $this->getLatestRelease($account, $repository);
         $mkd = Markdown::new();
@@ -300,12 +285,12 @@ class GitHub
         return $data;
     }
 
-    public function getLatestReleaseOfBancosBrasileiros()
+    public function getLatestReleaseOfBancosBrasileiros(): array
     {
         return $this->getLatestReleaseDetails("guibranco", "bancosbrasileiros");
     }
 
-    private function getBillingInternal($accountType, $account, $type)
+    private function getBillingInternal($accountType, $account, $type): mixed
     {
         $cache = "cache/github_billing_{$accountType}_{$account}_{$type}.json";
         if (file_exists($cache) && filemtime($cache) > strtotime("-5 minute")) {
@@ -330,7 +315,7 @@ class GitHub
                 $ex->getCode(),
                 $response === null ? "null" : $response->toJson()
             ));
-            return (object)[
+            return (object) [
                 'total_minutes_used' => 0,
                 'included_minutes' => 0,
                 'days_left_in_billing_cycle' => 0
@@ -338,7 +323,7 @@ class GitHub
         }
     }
 
-    private function getBilling($type, $items)
+    private function getBilling($type, $items): array
     {
         $data = array();
 
@@ -380,7 +365,7 @@ class GitHub
         return $data;
     }
 
-    public function getAccountUsage()
+    public function getAccountUsage(): array
     {
         $orgs = array("ApiBR", "GuilhermeStracini", "InovacaoMediaBrasil");
 
@@ -396,19 +381,22 @@ class GitHub
 
     public function getApiUsage(): array
     {
-        $cache = "cache/github_api_usage.json";
-        if (count($this->apiUsage) === 0) {
-            if (file_exists($cache)) {
-                return json_decode(file_get_contents($cache));
-            }
-            return array();
-        }
         $data = array();
         $data[] = ["Resource", "Limit", "Remaining", "Used", "Reset"];
-        foreach ($this->apiUsage as $resource => $item) {
-            $data[] = [$resource, $item["limit"], $item["remaining"], $item["used"], date(self::DATE_TIME_FORMAT, $item["reset"])];
+
+        $response = $this->requestInternal(self::GITHUB_API_URL . "rate_limit");
+
+        if ($response->getStatusCode() !== 200) {
+            return $data;
         }
-        file_put_contents($cache, json_encode($data));
+
+        $body = $response->getBody();
+        $json = json_decode($body);
+
+        foreach ($json->resources as $resource => $item) {
+            $data[] = [$resource, $item->limit, $item->remaining, $item->used, date(self::DATE_TIME_FORMAT, $item->reset)];
+        }
+
         return $data;
     }
 }

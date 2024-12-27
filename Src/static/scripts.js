@@ -939,6 +939,15 @@ function showMessages(response) {
   );
   drawPieChart(response.byApplications, "pie_chart_2", optionsByApplications);
 
+  if (response.byApplications.length === 0) {
+    drawDataTable(
+      response.byApplications,
+      "messages_by_applications",
+      tableOptions
+    );
+    return;
+  }
+  
   if (response.byApplications.length > 1) {
     const byApplicationsTableData = response.byApplications;
     byApplicationsTableData[0].unshift("Actions");

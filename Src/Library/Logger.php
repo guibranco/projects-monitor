@@ -194,13 +194,26 @@ class Logger
 
     public function deleteMessagesByApplication($applicationName): bool
     {
-        $sql = "DELETE m FROM messages as m INNER JOIN applications as a ON m.application_id = a.id ";
-        $sql .= "WHERE a.name = ?;";
-        $stmt = $this->connection->prepare($sql);
-        $stmt->bind_param("s", $applicationName);
-        $result = $stmt->execute();
-        $stmt->close();
+        try {
+            $this->connection->begin_transaction();
 
-        return $result;
+            $sql = "DELETE m FROM messages as m INNER JOIN applications as a ON m.application_id = a.id ";
+            $sql .= "WHERE a.name = ?;";
+            $stmt = $this->connection->prepare($sql);
+            $stmt->bind_param("s", $applicationName);
+            $result = $stmt->execute();
+            $stmt->close();
+
+            if ($result) {
+                $this->connection->commit();
+            } else {
+                $this->connection->rollback();
+            }
+
+            return $result;
+        } catch (\Exception $e) {
+            $this->connection->rollback();
+            throw $e;
+        }
     }
 }

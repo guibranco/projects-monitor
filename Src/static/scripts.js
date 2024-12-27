@@ -951,21 +951,23 @@ function showMessages(response) {
       );
     }
 
+    const element = document.getElementById("messages_by_applications");
+    const newElement = element.cloneNode(true);
+    element.parentNode.replaceChild(newElement, element);
+
     drawDataTable(
       byApplicationsTableData,
       "messages_by_applications",
       tableOptions
     );
 
-    document
-      .getElementById("messages_by_applications")
-      .addEventListener("click", (e) => {
-        const deleteButton = e.target.closest('[data-action="delete"]');
-        if (deleteButton) {
-          const application = deleteButton.dataset.application;
-          confirmDelete(application);
-        }
-      });
+    newElement.addEventListener("click", (e) => {
+      const deleteButton = e.target.closest('[data-action="delete"]');
+      if (deleteButton) {
+        const application = deleteButton.dataset.application;
+        confirmDelete(application);
+      }
+    });
   }
 }
 

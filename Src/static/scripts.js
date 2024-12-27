@@ -1019,6 +1019,12 @@ function showNotification(title, message, type) {
     return;
   }
 
+  const validTypes = ["success", "error", "warning", "info"];
+  if (!validTypes.includes(type)) {
+    console.warn(`Invalid notification type: ${type}. Defaulting to 'info'`);
+    type = "info";
+  }
+
   const typeClass = {
     success: "bg-success text-white",
     error: "bg-danger text-white",
@@ -1026,8 +1032,14 @@ function showNotification(title, message, type) {
     info: "bg-info text-dark",
   };
 
+  if (typeof bootstrap === "undefined") {
+    console.error("Bootstrap is not loaded");
+    alert(`${title}: ${message}`);
+    return;
+  }
+
   const toast = document.createElement("div");
-  toast.className = `toast ${typeClass[type] || "bg-secondary text-white"}`;
+  toast.className = `toast ${typeClass[type]}`;
   toast.setAttribute("role", "alert");
   toast.setAttribute("aria-live", "assertive");
   toast.setAttribute("aria-atomic", "true");

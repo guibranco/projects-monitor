@@ -1475,7 +1475,7 @@ function drawChartByType(data, chartType, elementId, options, hideColumn = -1) {
     google.visualization.events.addListener(result.chart, "select", () => {
       const selection = result.chart.getSelection();
       if (selection.length > 0) {
-        const row = selection[0].row;
+        const {row} = selection[0];
         const item = result.dataTable.getValue(row, 0);
         const hiddenInfo = result.dataTable.getValue(
           row,

@@ -800,7 +800,7 @@ function showGitHub(response) {
   let coreApiUsage = response.api_usage.find((item) => item[0] === "core");
 
   if (coreApiUsage === undefined) {
-    coreApiUsage = [0, 0, 0, 0];
+    coreApiUsage = ["core", 5000, 0, 0];
   }
 
   const apiUsageGaugeOptions = {
@@ -900,7 +900,7 @@ let eventAssigned = false;
  *
  * @param {Object} response - The response object containing data for visualization.
  * @param {Array} response.grouped - An array of grouped data for the table.
- * @param {number} response.total - The total number of PM errors.
+ * @param {number} response.total - The total number of PM messages.
  * @param {Array} response.byApplications - An array of data categorized by applications.
  *
  * @throws {Error} Throws an error if the response does not contain the required properties.
@@ -908,7 +908,7 @@ let eventAssigned = false;
  * @example
  * const response = {
  *   grouped: [[...], [...]], // Example grouped data
- *   total: 1500,             // Example total PM errors
+ *   total: 1500,             // Example total PM messages
  *   byApplications: [[...], [...]] // Example application data
  * };
  * showMessages(response);
@@ -934,9 +934,9 @@ function showMessages(response) {
 
   drawDataTable(response.grouped, "messages_grouped", tableOptions);
   drawGaugeChart(
-    "PM Errors",
+    "PM messages",
     response.total,
-    "gauge_chart_pm_errors",
+    "gauge_chart_pm_messages",
     gaugeOptions
   );
   drawPieChart(response.byApplications, "pie_chart_2", optionsByApplications);

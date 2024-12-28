@@ -170,6 +170,26 @@ class WorkflowLimiterState {
 
 const workflowLimiterState = new WorkflowLimiterState();
 
+/**
+ * Initializes the workflow limiter functionality.
+ * 
+ * This function sets up the workflow limiter by binding event listeners to the
+ * workflow toggle and limit input elements. It also updates the UI based on the
+ * current state of the workflow limiter.
+ * 
+ * Elements:
+ * - workflowToggle: The checkbox element to enable or disable the workflow limiter.
+ * - workflowLimitContainer: The container element that holds the workflow limit input.
+ * - workflowLimitInput: The input element where the workflow limit value is set.
+ * 
+ * Dependencies:
+ * - workflowLimiterState: An object that holds the state of the workflow limiter,
+ *   including whether it is enabled and the current limit value.
+ * 
+ * Error Handling:
+ * - Logs an error message if any of the required elements are not found.
+ * - Logs an error message if there is an issue updating the workflow limit value.
+ */
 function initWorkflowLimiter() {
   const workflowToggle = document.getElementById("workflowToggle");
   const workflowLimitContainer = document.getElementById(
@@ -205,6 +225,13 @@ function initWorkflowLimiter() {
   });
 }
 
+/**
+ * Initializes the feed toggle switch by setting its checked state based on the current feed filter
+ * and adding an event listener to update the feed preference when the toggle state changes.
+ *
+ * This function expects an element with the ID "feedToggle" to be present in the DOM.
+ * If the element is not found, an error is logged to the console.
+ */
 function initFeedToggle() {
   const toggle = document.getElementById("feedToggle");
 
@@ -272,8 +299,7 @@ function init() {
 function setCookie(name, value, expireDays) {
   const date = new Date();
   date.setTime(date.getTime() + expireDays * 24 * 60 * 60 * 1000);
-  let expires = "expires=" + date.toUTCString();
-  document.cookie = name + "=" + value + ";" + expires + ";";
+  document.cookie = `${name}=${value};expires=${date.toUTCString()};`;
 }
 
 google.charts.load("current", { packages: ["corechart", "table", "gauge"] });
@@ -304,6 +330,15 @@ function load(url, callback) {
   xhr.send();
 }
 
+/**
+ * Displays a login modal when the user's session has expired.
+ * The modal contains a message informing the user that their session has expired,
+ * and provides options to either cancel or proceed to the login page.
+ *
+ * The modal is created dynamically and appended to the document body.
+ * Clicking the "Cancel" button will remove the modal.
+ * Clicking the "Login" button will redirect the user to the login page.
+ */
 function showLoginModal() {
   const modal = document.createElement("div");
   modal.classList.add("modal-backdrop");
@@ -517,6 +552,16 @@ function showGitHubStatsAndWakatime() {
     return;
   }
 
+  /**
+   * Loads an image into the specified HTMLImageElement with retry logic.
+   *
+   * @param {HTMLImageElement} imgElement - The image element to load the image into.
+   * @param {string} url - The URL of the image to load.
+   * @param {Object} [options={}] - Optional settings for loading the image.
+   * @param {number} [options.maxRetries=10] - The maximum number of retry attempts.
+   * @param {number} [options.retryDelay=2000] - The delay between retry attempts in milliseconds.
+   * @param {number} [options.timeout=30000] - The maximum time to keep retrying in milliseconds.
+   */
   function loadImage(imgElement, url, options = {}) {
     const { maxRetries = 10, retryDelay = 2000, timeout = 30000 } = options;
     const startTime = Date.now();
@@ -586,7 +631,7 @@ function showGitHubStatsAndWakatime() {
  * showAppVeyor(response);
  */
 function showAppVeyor(response) {
-  drawDataTable(response["projects"], "appveyor", tableOptions);
+  drawDataTable(response.projects, "appveyor", tableOptions);
 }
 
 /**
@@ -629,17 +674,17 @@ function showCPanel(response) {
 
   drawGaugeChart(
     "Log errors",
-    response["total_error_messages"],
+    response.total_error_messages,
     "gauge_chart_log_errors",
     gaugeOptions
   );
-  drawDataTable(response["error_log_files"], "error_log_files", tableOptions);
+  drawDataTable(response.error_log_files, "error_log_files", tableOptions);
   drawDataTable(
-    response["error_log_messages"],
+    response.error_log_messages,
     "error_log_messages",
     tableOptions
   );
-  drawDataTable(response["cronjobs"], "cronjobs", tableOptions);
+  drawDataTable(response.cronjobs, "cronjobs", tableOptions);
 
   const ids = {
     lvecpu: "gauge_chart_cpu",
@@ -655,7 +700,7 @@ function showCPanel(response) {
     lvenproc: "Processes",
   };
 
-  const usageData = response["usage"].map((item) => ({
+  const usageData = response.usage.map((item) => ({
     elementId: ids[item.id],
     label: labels[item.id],
     value: parseFloat(item.usage),
@@ -672,9 +717,9 @@ function showCPanel(response) {
       min: 0,
       max: item.maximum,
       greenFrom: 0,
-      greenTo: greenTo,
+      greenTo,
       yellowFrom: greenTo,
-      yellowTo: yellowTo,
+      yellowTo,
       redFrom: yellowTo,
       redTo: item.maximum,
     };
@@ -705,7 +750,7 @@ function showCPanel(response) {
  * showDomains(response);
  */
 function showDomains(response) {
-  drawDataTable(response["domains"], "domains", tableOptions);
+  drawDataTable(response.domains, "domains", tableOptions);
 }
 
 /**
@@ -1061,7 +1106,7 @@ function showNotification(title, message, type) {
 
   if (typeof bootstrap === "undefined") {
     console.error("Bootstrap is not loaded");
-    alert(`${title}: ${message}`);
+    window.alert(`${title}: ${message}`);
     return;
   }
 
@@ -1105,7 +1150,7 @@ function showNotification(title, message, type) {
  * @throws {TypeError} Throws an error if the response parameter is not an object.
  */
 function showPostman(response) {
-  if (typeof response["usage"] === "undefined") {
+  if (typeof response.usage === "undefined") {
     return;
   }
 
@@ -1149,13 +1194,8 @@ function showQueues(response) {
     redTo: 10000,
   };
 
-  drawDataTable(response["queues"], "queues", tableOptions);
-  drawGaugeChart(
-    "Queues",
-    response["total"],
-    "gauge_chart_queues",
-    gaugeOptions
-  );
+  drawDataTable(response.queues, "queues", tableOptions);
+  drawGaugeChart("Queues", response.total, "gauge_chart_queues", gaugeOptions);
 }
 
 /**
@@ -1182,7 +1222,7 @@ function showQueues(response) {
  * showUpTimeRobot(response);
  */
 function showUpTimeRobot(response) {
-  drawDataTable(response["monitors"], "uptimerobot", tableOptions);
+  drawDataTable(response.monitors, "uptimerobot", tableOptions);
 }
 
 /**
@@ -1289,60 +1329,57 @@ function showWebhook(response) {
     redTo: 1000,
   };
 
-  if (typeof response["check_hooks_date"] !== "undefined") {
-    const checkHooksDate = new Date(response["check_hooks_date"]);
-    document.getElementById("hooks_last_check").innerHTML =
-      "<b>Date: </b> " + checkHooksDate.toString();
+  if (typeof response.check_hooks_date !== "undefined") {
+    const checkHooksDate = new Date(response.check_hooks_date);
+    document.getElementById(
+      "hooks_last_check"
+    ).innerHTML = `<b>Date: </b> ${checkHooksDate.toString()}`;
   }
 
+  drawLineChart(response.statistics, "webhooks_statistics", optionsStatistics);
   drawLineChart(
-    response["statistics"],
-    "webhooks_statistics",
-    optionsStatistics
-  );
-  drawLineChart(
-    response["statistics_github"],
+    response.statistics_github,
     "webhooks_statistics_github",
     optionsStatisticsGitHub
   );
-  drawDataTable(response["senders"], "senders", tableOptions);
-  drawDataTable(response["repositories"], "repositories", tableOptions);
+  drawDataTable(response.senders, "senders", tableOptions);
+  drawDataTable(response.repositories, "repositories", tableOptions);
   drawDataTable(
-    response["installation_repositories"],
+    response.installation_repositories,
     "installed_repositories",
     tableOptions
   );
-  drawDataTable(response["workflow_runs"], "workflow_runs", tableOptions);
-  drawDataTable(response["feed"], "feed", tableOptions, 5);
-  drawPieChart(response["events"], "pie_chart_1", optionsEvents);
+  drawDataTable(response.workflow_runs, "workflow_runs", tableOptions);
+  drawDataTable(response.feed, "feed", tableOptions, 5);
+  drawPieChart(response.events, "pie_chart_1", optionsEvents);
   drawGaugeChart(
     "GH WH",
-    response["total"],
+    response.total,
     "gauge_chart_webhooks",
     gaugeOptionsTotal
   );
   drawGaugeChart(
     "WH Failed",
-    response["failed"],
+    response.failed,
     "gauge_chart_webhooks_failed",
     gaugeOptions
   );
   drawGaugeChart(
     "GH WRs",
-    response["total_workflow_runs"],
+    response.total_workflow_runs,
     "gauge_chart_workflows_runs",
     gaugeOptions
   );
   drawGaugeChart(
-    "GH App",
-    response["installations"],
-    "gauge_chart_installed_apps",
+    "Bot Installs",
+    response.installations,
+    "gauge_chart_bot_installations",
     gaugeOptions
   );
   drawGaugeChart(
-    "GH Repos",
-    response["installation_repositories_count"],
-    "gauge_chart_installation_repositories",
+    "Bot Repos",
+    response.installation_repositories_count,
+    "gauge_chart_bot_repositories",
     gaugeOptions
   );
 }
@@ -1370,7 +1407,7 @@ function showWebhook(response) {
  * showWireGuard(response);
  */
 function showWireGuard(response) {
-  drawDataTable(response["wireguard"], "wireguard", tableOptions);
+  drawDataTable(response.wireguard, "wireguard", tableOptions);
 }
 
 /**
@@ -1384,20 +1421,22 @@ function showWireGuard(response) {
  * @returns {Object} An object containing the chart type, element ID, chart instance, and optionally the data view.
  */
 function drawChartByType(data, chartType, elementId, options, hideColumn = -1) {
+  /* global google */
+
   if (!google.visualization) {
     console.error("Google Visualization API not loaded");
-    return;
+    return null;
   }
 
   if (!data || !elementId || !options) {
     console.error("Invalid parameters passed to drawChartByType");
-    return;
+    return null;
   }
 
   const element = document.getElementById(elementId);
   if (!element) {
     console.error(`Element with id ${elementId} not found`);
-    return;
+    return null;
   }
 
   const result = {
@@ -1420,7 +1459,7 @@ function drawChartByType(data, chartType, elementId, options, hideColumn = -1) {
       break;
     default:
       console.error(`Invalid chart type: ${chartType}`);
-      return;
+      return null;
   }
 
   result.dataTable = google.visualization.arrayToDataTable(data);
@@ -1433,22 +1472,18 @@ function drawChartByType(data, chartType, elementId, options, hideColumn = -1) {
 
     result.chart.draw(result.view, options);
 
-    google.visualization.events.addListener(
-      result.chart,
-      "select",
-      function () {
-        const selection = result.chart.getSelection();
-        if (selection.length > 0) {
-          const row = selection[0].row;
-          const item = result.dataTable.getValue(row, 0);
-          const hiddenInfo = result.dataTable.getValue(
-            row,
-            data[0].length > hideColumn ? hideColumn : 0
-          );
-          console.log(`You clicked on ${item}\nHidden Info: ${hiddenInfo}`);
-        }
+    google.visualization.events.addListener(result.chart, "select", () => {
+      const selection = result.chart.getSelection();
+      if (selection.length > 0) {
+        const {row} = selection[0];
+        const item = result.dataTable.getValue(row, 0);
+        const hiddenInfo = result.dataTable.getValue(
+          row,
+          data[0].length > hideColumn ? hideColumn : 0
+        );
+        console.log(`You clicked on ${item}\nHidden Info: ${hiddenInfo}`);
       }
-    );
+    });
   } else {
     result.chart.draw(result.dataTable, options);
   }

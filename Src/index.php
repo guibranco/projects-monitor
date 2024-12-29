@@ -100,8 +100,7 @@ $configuration = new Configuration();
             <img id="gh_streak" style="width: 465px;" alt="GH Streak" src="" />
          </div>
          <div style="width: calc(100%-465px); float: left;">
-            <a href="https://wakatime.com/@6be975b7-7258-4475-bc73-9c0fc554430e" target='_blank'
-               rel='noopener noreferrer'>
+            <a href="https://wakatime.com/@6be975b7-7258-4475-bc73-9c0fc554430e" target='_blank' rel='noopener noreferrer'>
                <img id="wakatime" alt="Wakatime stats" src="" />
             </a>
             <div id="postman"></div>
@@ -126,45 +125,36 @@ $configuration = new Configuration();
    <div id="messages_grouped" style="width: 50%; height: 500px; float: left; background-color: white;"></div>
    <div id="error_log_messages" style="width: 50%; height: 500px; float: left; background-color: white;"></div>
    <div style="clear:both;"></div>
-   <div class="topping">Workflow Runs <span id="counter_workflow_runs"
-         class="badge text-bg-warning rounded-pill"></span></div>
+   <div class="topping">Workflow Runs <span id="counter_workflow_runs" class="badge text-bg-warning rounded-pill"></span></div>
    <div id="workflow_runs" style="width: 100%; float: left; background-color: white;"></div>
    <div style="clear:both;"></div>
    <div style="width: 50%; float: left; background-color: white;">
-      <div class="topping">Issues Blocked <span id="counter_issues_blocked"
-            class="badge text-bg-warning rounded-pill"></span></div>
+      <div class="topping">Issues Blocked <span id="counter_issues_blocked" class="badge text-bg-warning rounded-pill"></span></div>
       <div id="issues_blocked"></div>
-      <div class="topping">Pull Requests Blocked <span id="counter_pull_requests_blocked"
-            class="badge text-bg-warning rounded-pill"></span></div>
-      <div id="pull_requests_blocked"></div>
-      <div class="topping">Feed <span id="counter_feed" class="badge text-bg-warning rounded-pill"></span></div>
-      <div id="feed"></div>
+      <div class="topping">Pull Requests Blocked <span id="counter_pull_requests_blocked" class="badge text-bg-warning rounded-pill"></span></div>
+      <div id="pull_requests_blocked"></div>      
       <div class="topping">WireGuard <span id="counter_wireguard" class="badge text-bg-warning rounded-pill"></span>
       </div>
       <div id="wireguard"></div>
-      <div class="topping">HealthChecksIo <span id="counter_healthchecksio"
-            class="badge text-bg-warning rounded-pill"></span></div>
+      <div class="topping">HealthChecksIo <span id="counter_healthchecksio" class="badge text-bg-warning rounded-pill"></span></div>
       <div id="healthchecksio"></div>
       <div class="topping">UpTimeRobot <span id="counter_uptimerobot" class="badge text-bg-warning rounded-pill"></span>
       </div>
       <div id="uptimerobot"></div>
       <div class="topping">Domains <span id="counter_domains" class="badge text-bg-warning rounded-pill"></span></div>
       <div id="domains"></div>
-      <div class="topping">Pull Requests Authored <span id="counter_pull_requests_authored"
-            class="badge text-bg-warning rounded-pill"></span></div>
+      <div class="topping">Pull Requests Authored <span id="counter_pull_requests_authored" class="badge text-bg-warning rounded-pill"></span></div>
       <div id="pull_requests_authored"></div>
-      <div class="topping">Issues Authored <span id="counter_issues_authored"
-            class="badge text-bg-warning rounded-pill"></span></div>
-      <div id="issues_authored"></div>
-      <div class="topping">Repositories <span id="counter_repositories"
-            class="badge text-bg-warning rounded-pill"></span></div>
-      <div id="repositories"></div>
-      <div class="topping">GitHub API Usage <span id="counter_api_usage"
-            class="badge text-bg-warning rounded-pill"></span></div>
+      <div class="topping">Issues Authored <span id="counter_issues_authored" class="badge text-bg-warning rounded-pill"></span></div>
+      <div id="issues_authored"></div>      
+      <div class="topping">GitHub API Usage <span id="counter_api_usage" class="badge text-bg-warning rounded-pill"></span></div>
       <div id="api_usage"></div>
-      <div class="topping">Installed Repositories <span id="counter_installed_repositories"
-            class="badge text-bg-warning rounded-pill"></span></div>
+      <div class="topping">Installed Repositories <span id="counter_installed_repositories" class="badge text-bg-warning rounded-pill"></span></div>
       <div id="installed_repositories"></div>
+      <div class="topping">Feed <span id="counter_feed" class="badge text-bg-warning rounded-pill"></span></div>
+      <div id="feed"></div>
+      <div class="topping">Repositories <span id="counter_repositories" class="badge text-bg-warning rounded-pill"></span></div>
+      <div id="repositories"></div>
    </div>
    <div style="width: 50%; float: left; background-color: white;">
       <div class="topping">Issues Awaiting Triage <span id="counter_triage"

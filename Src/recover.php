@@ -167,6 +167,9 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                             </div>
                             <button type="submit" class="btn btn-primary w-100">Send Recovery Email</button>
                         </form>
+                        <div class="text-center mt-3">
+                            <a href="login.php" class="btn btn-secondary w-100">Return to Login Page</a>
+                        </div>
                     </div>
                 </div>
             </div>

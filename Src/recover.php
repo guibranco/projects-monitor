@@ -22,7 +22,7 @@ $ip_address = isset($_SERVER['HTTP_X_FORWARDED_FOR'])
 
 if (!filter_var($ip_address, FILTER_VALIDATE_IP)) {
     http_response_code(400);
-    $message =  'Invalid IP address';
+    $message = 'Invalid IP address';
 }
 
 $attempt_count = 0;

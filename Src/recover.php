@@ -22,7 +22,7 @@ $ip_address = isset($_SERVER['HTTP_X_FORWARDED_FOR'])
 
 if (!filter_var($ip_address, FILTER_VALIDATE_IP)) {
     http_response_code(400);
-    die('Invalid IP address');
+    $message = 'Invalid IP address';
 }
 
 $attempt_count = 0;
@@ -41,18 +41,18 @@ try {
 } catch (Exception $e) {
     error_log("Rate limiting check failed: " . $e->getMessage());
     http_response_code(500);
-    die('Internal server error');
+    $message = 'Internal server error';
 }
 $max_attempts = 3;
 if ($attempt_count >= $max_attempts) {
     http_response_code(429);
     header('Content-Type: text/plain; charset=utf-8');
     $conn->close();
-    die('Too many password recovery attempts. Please try again later.');
+    $message = 'Too many password recovery attempts. Please try again later.';
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+if (empty($message) && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_POST['csrf_token']) || !isset($_SESSION['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
         http_response_code(403);
         header('Content-Type: text/plain; charset=utf-8');
         $conn->close();
@@ -131,6 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+
 $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 ?>
 <!DOCTYPE html>

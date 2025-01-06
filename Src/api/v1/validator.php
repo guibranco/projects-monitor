@@ -6,6 +6,7 @@ header('X-XSS-Protection: 1; mode=block');
 header("Content-Type: application/json; charset=UTF-8");
 
 require 'vendor/autoload.php';
+$secrets = require 'config/secrets.php';
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
@@ -17,7 +18,7 @@ function sendErrorResponse($message, $code = 401)
     exit();
 }
 
-const JWT_SECRET = 'your-256-bit-secret';
+const JWT_SECRET = $secrets['JWT_SECRET'];
 const JWT_ALGO = 'HS256';
 
 function validateJWT($token)

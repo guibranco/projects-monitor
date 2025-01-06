@@ -18,13 +18,13 @@ function sendErrorResponse($message, $code = 401)
     exit();
 }
 
-const JWT_SECRET = $secrets['JWT_SECRET'];
-const JWT_ALGO = 'HS256';
+$jwtSecret = $secrets['JWT_SECRET'];
+$jwtAlgo = 'HS256';
 
 function validateJWT($token)
 {
     try {
-        $decoded = JWT::decode($token, new Key(JWT_SECRET, JWT_ALGO));
+        $decoded = JWT::decode($token, new Key($jwtSecret, $jwtAlgo));
         if ($decoded->exp < time()) {
             throw new Exception("Token has expired");
         }

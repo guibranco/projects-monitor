@@ -261,8 +261,8 @@ class GitHub
             'created_at' => time(),
             'published_at' => time(),
             'name' => 'N/A',
-            'body' => '# {$owner}/{$repository} - Latest Release\n\nNo release found for this repository.',
-            'html_url' => 'https://github.com/{$owner}/{$repository}',
+            'body' => "# {$owner}/{$repository} - Latest Release\n\nNo release found for this repository.",
+            'html_url' => "https://github.com/{$owner}/{$repository}",
             'author' => (object) ['login' => 'N/A']
         ];
 

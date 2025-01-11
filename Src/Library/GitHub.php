@@ -58,13 +58,34 @@ class GitHub
         return $this->requestInternal($url, true);
     }
 
+    private function checkUsage($type): bool
+    {
+        if (!isset($_SESSION["api_usage"])) {
+            return true;
+        }
+
+        $resources = $_SESSION["api_usage"];
+        $resource = $resources->{$type};
+
+        return $resource->remaining > 0;
+    }
+
     private function getSearch($queryString): mixed
     {
         $hash = md5($queryString);
         $cache = "cache/github_search_{$hash}.json";
 
-        if (file_exists($cache) && filemtime($cache) > strtotime("-10 minute")) {
+        $cacheExists = file_exists($cache);
+
+        if ($cacheExists && filemtime($cache) > strtotime("-10 minute")) {
             return json_decode(file_get_contents($cache));
+        }
+
+        $result = (object) ['total_count' => 0, 'items' => []];
+        if ($this->checkUsage("search") === false) {
+            return $cacheExists
+                ? json_decode(file_get_contents($cache))
+                : $result;
         }
 
         $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode(preg_replace('!\s+!', ' ', "is:open archived:false is:{$queryString}")) . "&per_page=100";
@@ -74,7 +95,7 @@ class GitHub
             $response->ensureSuccessStatus();
             $body = $response->getBody();
             file_put_contents($cache, $body);
-            return json_decode($body);
+            $result = json_decode($body);
         } catch (RequestException $ex) {
             error_log(sprintf(
                 "GitHub search request failed - URL: %s, Error: %s, Code: %d, Response: %s",
@@ -83,8 +104,9 @@ class GitHub
                 $ex->getCode(),
                 $response === null ? "null" : $response->toJson()
             ));
-            return (object) ['total_count' => 0, 'items' => []];
         }
+
+        return $result;
     }
 
     private function getWithLabel($users, $type, $label = null, $labelsToRemove = null): mixed
@@ -230,8 +252,24 @@ class GitHub
     private function getLatestRelease($owner, $repository): mixed
     {
         $cache = "cache/github_latest_release_{$owner}_{$repository}.json";
-        if (file_exists($cache) && filemtime($cache) > strtotime("-3 hour")) {
+        $cacheExists = file_exists($cache);
+        if ($cacheExists && filemtime($cache) > strtotime("-3 hour")) {
             return json_decode(file_get_contents($cache));
+        }
+
+        $result = (object) [
+            'created_at' => time(),
+            'published_at' => time(),
+            'name' => 'N/A',
+            'body' => '# {$owner}/{$repository} - Latest Release\n\nNo release found for this repository.',
+            'html_url' => 'https://github.com/{$owner}/{$repository}',
+            'author' => (object) ['login' => 'N/A']
+        ];
+
+        if ($this->checkUsage("core") === false) {
+            return $cacheExists
+                ? json_decode(file_get_contents($cache))
+                : $result;
         }
 
         $response = null;
@@ -241,7 +279,7 @@ class GitHub
             $response->ensureSuccessStatus();
             $body = $response->getBody();
             file_put_contents($cache, $body);
-            return json_decode($body);
+            $result = json_decode($body);
         } catch (RequestException $ex) {
             error_log(sprintf(
                 "GitHub latest release request failed - Owner: %s, Repo: %s, Error: %s, Code: %d, Response: %s",
@@ -251,15 +289,9 @@ class GitHub
                 $ex->getCode(),
                 $response === null ? "null" : $response->toJson()
             ));
-            return (object) [
-                'created_at' => null,
-                'published_at' => null,
-                'name' => 'N/A',
-                'body' => '',
-                'html_url' => '',
-                'author' => (object) ['login' => 'N/A']
-            ];
         }
+
+        return $result;
     }
 
     private function getLatestReleaseDetails($account, $repository): array
@@ -269,7 +301,7 @@ class GitHub
 
         if (!isset($body->body)) {
             error_log("Unable to get latest release details for repository {$account}/{$repository} - 'body' field missing from response. Response: " . print_r($body, true));
-            return array();
+            return ["created" => "N/A", "published" => "N/A", "title" => "N/A", "description" => "N/A", "release_url" => "", "repository" => "{$account}/{$repository}", "author" => "N/A"];
         }
 
         $mkd->setContent($body->body);
@@ -290,11 +322,25 @@ class GitHub
         return $this->getLatestReleaseDetails("guibranco", "bancosbrasileiros");
     }
 
-    private function getBillingInternal($accountType, $account, $type): mixed
+    private function getBillingInternal(string $accountType, string $account, string $type): mixed
     {
         $cache = "cache/github_billing_{$accountType}_{$account}_{$type}.json";
-        if (file_exists($cache) && filemtime($cache) > strtotime("-5 minute")) {
+        $cacheExists = file_exists($cache);
+
+        if ($cacheExists && filemtime($cache) > strtotime("-5 minute")) {
             return json_decode(file_get_contents($cache));
+        }
+
+        $result = (object) [
+            'total_minutes_used' => 0,
+            'included_minutes' => 0,
+            'days_left_in_billing_cycle' => 0
+        ];
+
+        if ($this->checkUsage("core") === false) {
+            return $cacheExists
+                ? json_decode(file_get_contents($cache))
+                : $result;
         }
 
         $response = null;
@@ -304,7 +350,7 @@ class GitHub
             $response->ensureSuccessStatus();
             $body = $response->getBody();
             file_put_contents($cache, $body);
-            return json_decode($body);
+            $result = json_decode($body);
         } catch (RequestException $ex) {
             error_log(sprintf(
                 "GitHub billing request failed - Type: %s, Account: %s, BillingType: %s, Error: %s, Code: %d, Response: %s",
@@ -315,15 +361,12 @@ class GitHub
                 $ex->getCode(),
                 $response === null ? "null" : $response->toJson()
             ));
-            return (object) [
-                'total_minutes_used' => 0,
-                'included_minutes' => 0,
-                'days_left_in_billing_cycle' => 0
-            ];
         }
+
+        return $result;
     }
 
-    private function getBilling($type, $items): array
+    private function getBilling(string $type, array $items): array
     {
         $data = array();
 
@@ -382,7 +425,7 @@ class GitHub
     public function getApiUsage(): array
     {
         $data = array();
-        $data[] = ["Resource", "Limit", "Remaining", "Used", "Reset"];
+        $data[] = ["Resource", "Usage", "Reset"];
 
         $response = $this->requestInternal(self::GITHUB_API_URL . "rate_limit");
 
@@ -394,8 +437,28 @@ class GitHub
         $json = json_decode($body);
 
         foreach ($json->resources as $resource => $item) {
-            $data[] = [$resource, $item->limit, $item->remaining, $item->used, date(self::DATE_TIME_FORMAT, $item->reset)];
+            $resource = str_replace("_", " ", ucfirst($resource));
+            $used = $item->used;
+            $limit = $item->limit;
+            $percentage = ($used * 100) / $limit;
+            $minutes = floor(($item->reset - time()) / 60);
+
+            $colorUsage = "green";
+            if ($percentage >= 90) {
+                $colorUsage = "red";
+            } elseif ($percentage >= 75) {
+                $colorUsage = "orange";
+            } elseif ($percentage >= 50) {
+                $colorUsage = "yellow";
+            }
+
+            $resourceUsage = "<img alt='Resource used' src='https://img.shields.io/badge/" . number_format($percentage, 2, '.', '') . "%25-" . $used . "%2F" . $limit . "_requests-" . $colorUsage . "?style=for-the-badge&labelColor=black' />";
+            $resourceReset = "<img alt='Resource reset' src='https://img.shields.io/badge/" . $minutes . "-" . . "-" . $colorMinutes . "?style=for-the-badge&labelColor=black' />";
+
+            $data[] = [$resource, $resourceUsage, $resourceReset];
         }
+
+        $_SESSION["api_usage"] = $json->resources;
 
         return $data;
     }

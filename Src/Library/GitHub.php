@@ -441,7 +441,7 @@ class GitHub
             $used = $item->used;
             $limit = $item->limit;
             $percentage = ($used * 100) / $limit;
-            $minutes = sprintf('%02d', floor(($item->reset - time()) / 60));
+            $minutes = sprintf('%02d', max(0, floor(($item->reset - time()) / 60)));
 
             $colorUsage = "green";
             if ($percentage >= 90) {

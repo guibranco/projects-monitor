@@ -452,8 +452,17 @@ class GitHub
                 $colorUsage = "yellow";
             }
 
+            $colorMinutes = "green";
+            if ($minutes >= 45) {
+                $colorMinutes = "red";
+            } elseif ($minutes >= 30) {
+                $colorMinutes = "orange";
+            } elseif ($minutes >= 15) {
+                $colorMinutes = "yellow";
+            }
+
             $resourceUsage = "<img alt='Resource used' src='https://img.shields.io/badge/" . number_format($percentage, 2, '.', '') . "%25-" . $used . "%2F" . $limit . "_requests-" . $colorUsage . "?style=for-the-badge&labelColor=black' />";
-            $resourceReset = "<img alt='Resource reset' src='https://img.shields.io/badge/" . $minutes . "-" . . "-" . $colorMinutes . "?style=for-the-badge&labelColor=black' />";
+            $resourceReset = "<img alt='Resource reset' src='https://img.shields.io/badge/" . $minutes . "-" . date(self::DATE_TIME_FORMAT, $item->reset) . "-" . $colorMinutes . "?style=for-the-badge&labelColor=black' />";
 
             $data[] = [$resource, $resourceUsage, $resourceReset];
         }

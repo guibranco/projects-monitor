@@ -461,7 +461,7 @@ class GitHub
                 $colorMinutes = "yellow";
             }
 
-            $resourceUsage = "<img alt='Resource used' src='https://img.shields.io/badge/" . sprintf('%02.2f', $percentage) . "%25-" . $used . "%2F" . $limit . "_requests-" . $colorUsage . "?style=for-the-badge&labelColor=black' />";
+            $resourceUsage = "<img alt='Resource used' src='https://img.shields.io/badge/" . sprintf('%05.2f', $percentage) . "%25-" . $used . "%2F" . $limit . "_requests-" . $colorUsage . "?style=for-the-badge&labelColor=black' />";
             $resourceReset = "<img alt='Resource reset' src='https://img.shields.io/badge/" . $minutes . "-" . date(self::DATE_TIME_FORMAT, $item->reset) . "-" . $colorMinutes . "?style=for-the-badge&labelColor=black' />";
 
             $data[] = [$resource, $resourceUsage, $resourceReset];

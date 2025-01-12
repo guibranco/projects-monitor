@@ -7,7 +7,7 @@ CREATE TABLE projects (
     type ENUM('library', 'project') NOT NULL,
     private BOOLEAN NOT NULL DEFAULT FALSE,
     main_language VARCHAR(100) DEFAULT NULL,
-    last_commit TIMESTAMP DEFAULT NULL,
+    last_commit TIMESTAMP NULL,
     latest_release VARCHAR(50) DEFAULT NULL,
     version_url VARCHAR(255) DEFAULT NULL,
     latest_version VARCHAR(50) DEFAULT NULL,

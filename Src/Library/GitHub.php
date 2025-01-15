@@ -424,6 +424,7 @@ class GitHub
 
     public function getApiUsage(): array
     {
+        $dataCore = array();
         $data = array();
         $data[] = ["Resource", "Usage", "Reset"];
 
@@ -435,8 +436,12 @@ class GitHub
 
         $body = $response->getBody();
         $json = json_decode($body);
-
+      
         foreach ($json->resources as $resource => $item) {
+            if ($resource === "core") {
+                $dataCore = $item;
+            }
+            
             $resource = str_replace("_", " ", ucfirst($resource));
             $used = $item->used;
             $limit = $item->limit;
@@ -469,6 +474,6 @@ class GitHub
 
         $_SESSION["api_usage"] = $json->resources;
 
-        return $data;
+        return ["core"=> $dataCore, "data"=> $data];
     }
 }

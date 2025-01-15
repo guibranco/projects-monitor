@@ -842,10 +842,10 @@ function showGitHub(response) {
     redTo: 1000,
   };
 
-  let coreApiUsage = response.api_usage_core;
+  let coreApiUsage = ["core", 5000, 0, 0];
 
-  if (coreApiUsage === undefined) {
-    coreApiUsage = ["core", 5000, 0, 0];
+  if (coreApiUsage !== undefined) {
+    coreApiUsage = ["core", response.api_usage_core.limit, 0, response.api_usage_core.used];
   }
 
   const apiUsageGaugeOptions = {

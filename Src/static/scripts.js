@@ -842,7 +842,7 @@ function showGitHub(response) {
     redTo: 1000,
   };
 
-  let coreApiUsage = response.api_usage.find((item) => item[0] === "core");
+  let coreApiUsage = response.api_usage_core;
 
   if (coreApiUsage === undefined) {
     coreApiUsage = ["core", 5000, 0, 0];

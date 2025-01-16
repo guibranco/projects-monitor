@@ -378,7 +378,8 @@ class GitHub
             $included = $contentActions->included_minutes;
             $percentage = ($used * 100) / $included;
             $days = $contentStorage->days_left_in_billing_cycle;
-
+            $date = date("d/m/Y", strtotime("+{$days} days"));
+            
             $colorActions = "green";
             if ($percentage >= 90) {
                 $colorActions = "red";
@@ -398,9 +399,9 @@ class GitHub
             }
 
             $linkPrefix = $type == "users" ? "" : "organizations/" . $item . "/";
-            $accountLink = "<a href='https://github.com/" . $linkPrefix . "settings/billing/summary' target='_blank' rel='noopener noreferrer'><img alt='login' src='https://img.shields.io/badge/" . str_replace("-", "--", $item) . "-black?style=social&logo=github' /></a>";
-            $actionsImage = "<img alt='Actions used' src='https://img.shields.io/badge/" . number_format($percentage, 2, '.', '') . "%25-" . $used . "%2F" . $included . "_minutes-" . $colorActions . "?style=for-the-badge&labelColor=black' />";
-            $daysImage = "<img alt='Actions used' src='https://img.shields.io/badge/" . $days . "-Days_remaining-" . $colorDays . "?style=for-the-badge&labelColor=black' />";
+            $accountLink = "<a href='https://github.com/{$linkPrefix}settings/billing/summary' target='_blank' rel='noopener noreferrer'><img alt='login' src='https://img.shields.io/badge/" . str_replace("-", "--", $item) . "-black?style=social&logo=github' /></a>";
+            $actionsImage = "<img alt='Actions used' src='https://img.shields.io/badge/" . number_format($percentage, 2, '.', '') . "%25-{$used}%2F{$included}_minutes-{$colorActions}?style=for-the-badge&labelColor=black' />";
+            $daysImage = "<img alt='Actions used' src='https://img.shields.io/badge/{$days}_days-{$date}-{$colorDays}?style=for-the-badge&labelColor=black' />";
 
             $data[$item] = array($accountLink, $actionsImage, $daysImage);
         }

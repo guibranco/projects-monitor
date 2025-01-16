@@ -379,7 +379,7 @@ class GitHub
             $percentage = ($used * 100) / $included;
             $days = $contentStorage->days_left_in_billing_cycle;
             $date = date("d/m/Y", strtotime("+{$days} days"));
-            
+
             $colorActions = "green";
             if ($percentage >= 90) {
                 $colorActions = "red";

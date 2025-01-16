@@ -844,7 +844,10 @@ function showGitHub(response) {
 
   const apiUsageCore = { used: 0, limit: 5000 };
 
-  if (response.api_usage_core?.limit !== undefined && response.api_usage_core?.used !== undefined) {
+  if (
+    response.api_usage_core?.limit !== undefined &&
+    response.api_usage_core?.used !== undefined
+  ) {
     apiUsageCore.used = response.api_usage_core.used;
     apiUsageCore.limit = response.api_usage_core.limit;
   }

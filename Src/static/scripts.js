@@ -842,27 +842,31 @@ function showGitHub(response) {
     redTo: 1000,
   };
 
-  let coreApiUsage = response.api_usage_core;
+  const apiUsageCore = { used: 0, limit: 5000 };
 
-  if (coreApiUsage === undefined) {
-    coreApiUsage = ["core", 5000, 0, 0];
+  if (
+    response.api_usage_core?.limit !== undefined &&
+    response.api_usage_core?.used !== undefined
+  ) {
+    apiUsageCore.used = response.api_usage_core.used;
+    apiUsageCore.limit = response.api_usage_core.limit;
   }
 
   const apiUsageGaugeOptions = {
     width: "100%",
     height: "100%",
     min: 0,
-    max: coreApiUsage[1],
+    max: apiUsageCore.limit,
     greenFrom: 0,
-    greenTo: coreApiUsage[1] * 0.25,
-    yellowFrom: coreApiUsage[1] * 0.25,
-    yellowTo: coreApiUsage[1] * 0.5,
-    redFrom: coreApiUsage[1] * 0.5,
-    redTo: coreApiUsage[1],
+    greenTo: apiUsageCore.limit * 0.6,
+    yellowFrom: apiUsageCore.limit * 0.6,
+    yellowTo: apiUsageCore.limit * 0.8,
+    redFrom: apiUsageCore.limit * 0.8,
+    redTo: apiUsageCore.limit,
   };
   drawGaugeChart(
     "GH API Usage",
-    coreApiUsage[3],
+    apiUsageCore.used,
     "gauge_chart_github_usage",
     apiUsageGaugeOptions
   );

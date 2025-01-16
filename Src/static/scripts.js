@@ -846,7 +846,7 @@ function showGitHub(response) {
 
   if (response.api_usage_core?.limit !== undefined && response.api_usage_core?.used !== undefined) {
     apiUsageCore.used = response.api_usage_core.used;
-    apiUsageCode.limit = response.api_usage_core.limit;
+    apiUsageCore.limit = response.api_usage_core.limit;
   }
 
   const apiUsageGaugeOptions = {
@@ -855,10 +855,10 @@ function showGitHub(response) {
     min: 0,
     max: apiUsageCore.limit,
     greenFrom: 0,
-    greenTo: apiUsageCore.limit * 0.25,
-    yellowFrom: apiUsageCore.limit * 0.25,
-    yellowTo: apiUsageCore.limit * 0.5,
-    redFrom: apiUsageCore.limit * 0.5,
+    greenTo: apiUsageCore.limit * 0.6,
+    yellowFrom: apiUsageCore.limit * 0.6,
+    yellowTo: apiUsageCore.limit * 0.8,
+    redFrom: apiUsageCore.limit * 0.8,
     redTo: apiUsageCore.limit,
   };
   drawGaugeChart(

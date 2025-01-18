@@ -394,7 +394,7 @@ function preset() {
   showPreset = false;
   showCPanel(
     JSON.parse(
-      '{"error_log_files":[],"error_log_messages":[],"total_error_messages":0,"cronjobs":[],"usage":[{"id":"lvecpu","description":"CPU Usage","usage":0,"maximum":100},{"id":"lveep","description":"Entry Processes","usage":0,"maximum":20},{"id":"lvememphy","description":"Physical Memory Usage","usage":0,"maximum":512},{"id":"lvenproc","description":"Number of Processes","usage":0,"maximum":100}]}'
+      '{"emails":0,"error_log_files":[],"error_log_messages":[],"total_error_messages":0,"cronjobs":[],"usage":[{"id":"lvecpu","description":"CPU Usage","usage":0,"maximum":100},{"id":"lvememphy","description":"Physical Memory Usage","usage":0,"maximum":512},{"id":"lvenproc","description":"Number of Processes","usage":0,"maximum":100}]}'
     )
   );
   showGitHub(
@@ -646,6 +646,7 @@ function showAppVeyor(response) {
  * @param {Array} response.error_log_messages - An array of error log messages to be displayed.
  * @param {Array} response.cronjobs - An array of cronjob data to be displayed.
  * @param {number} response.total_error_messages - The total number of error messages.
+ * @param {number} response.emails - The total number of emails sent.
  *
  * @throws {Error} Throws an error if the response object is missing required properties.
  *
@@ -654,7 +655,8 @@ function showAppVeyor(response) {
  *   error_log_files: [...],
  *   error_log_messages: [...],
  *   cronjobs: [...],
- *   total_error_messages: 42
+ *   total_error_messages: 42,
+ *   emails: 100
  * };
  * showCPanel(response);
  */
@@ -686,17 +688,17 @@ function showCPanel(response) {
   );
   drawDataTable(response.cronjobs, "cronjobs", tableOptions);
 
+  drawGaugeChart("Emails", response.emails, "gauge_chart_emails", gaugeOptions);
+
   const ids = {
     lvecpu: "gauge_chart_cpu",
     lvememphy: "gauge_chart_memory",
-    lveep: "gauge_chart_entry_process",
     lvenproc: "gauge_chart_process",
   };
 
   const labels = {
     lvecpu: "CPU",
     lvememphy: "Memory",
-    lveep: "Entry Processes",
     lvenproc: "Processes",
   };
 

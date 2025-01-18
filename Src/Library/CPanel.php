@@ -34,7 +34,7 @@ class CPanel
         $config = new Configuration();
         $config->init();
 
-        global $cPanelApiToken, $cPanelBaseUrl, $cPanelUsername, $cpanelEmailAccount;
+        global $cPanelApiToken, $cPanelBaseUrl, $cPanelUsername, $cPanelEmailAccount;
 
         if (!file_exists(__DIR__ . "/../secrets/cPanel.secrets.php")) {
             throw new SecretsFileNotFoundException("File not found: cPanel.secrets.php");
@@ -45,7 +45,7 @@ class CPanel
         $this->baseUrl = $cPanelBaseUrl;
         $this->apiToken = $cPanelApiToken;
         $this->username = $cPanelUsername;
-        $this->emailAccount = $cpanelEmailAccount;
+        $this->emailAccount = $cPanelEmailAccount;
         $this->request = new Request();
     }
 

@@ -84,9 +84,10 @@ jobs:
           mkdir -p secrets
           cd secrets
           echo "<?php" >> cPanel.secrets.php
-          echo "\$cPanelApiToken  = \"${{ secrets.CPANEL_API_TOKEN }}\";" >> cPanel.secrets.php
-          echo "\$cPanelBaseUrl   = \"${{ secrets.CPANEL_BASE_URL }}\";" >> cPanel.secrets.php
-          echo "\$cPanelUsername  = \"${{ secrets.CPANEL_USERNAME }}\";" >> cPanel.secrets.php
+          echo "\$cPanelApiToken     = \"${{ secrets.CPANEL_API_TOKEN }}\";" >> cPanel.secrets.php
+          echo "\$cPanelBaseUrl      = \"${{ secrets.CPANEL_BASE_URL }}\";" >> cPanel.secrets.php
+          echo "\$cPanelUsername     = \"${{ secrets.CPANEL_USERNAME }}\";" >> cPanel.secrets.php
+          echo "\$cPanelEmailAccount = \"${{ secrets.CPANEL_EMAIL_ACCOUNT }}\";" >> cPanel.secrets.php
 
       - name: Create GitHub secrets file
         if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
@@ -151,7 +152,7 @@ jobs:
           cd secrets
           echo "<?php" >> rabbitMq.secrets.php
           rabbitmq_values=$(echo "$SECRETS_CONTEXT" | jq -S '.' | jq -r 'to_entries | map(select(.key | startswith("RABBITMQ_"))) | .[].value')
-          
+
           for value in $rabbitmq_values; do
               value_final=$(echo $value | sed 's/\\n/ /g')
               echo "\$rabbitMqConnectionStrings[] = \"$value_final\";" >> rabbitMq.secrets.php
@@ -263,10 +264,9 @@ jobs:
 
   automated-api-tests:
     name: Automated API tests (Postman)
-    needs: [deploy, database_migrations]    
+    needs: [deploy, database_migrations]
     runs-on: ubuntu-latest
     steps:
-        
       - name: Install Postman CLI
         if: ${{ vars.POSTMAN_ENABLE == 'true' }}
         run: curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh
@@ -278,7 +278,7 @@ jobs:
       - name: Run API tests
         if: ${{ vars.POSTMAN_ENABLE == 'true' }}
         run: postman collection run 23511-01109172-13a0-4cdb-bd0c-18a71d624a48 -e 23511-95105c79-d4eb-4388-9ff9-eb5dee83fdcf
-  
+
   create_release:
     name: Create release
     needs: [deploy, database_migrations, automated-api-tests]

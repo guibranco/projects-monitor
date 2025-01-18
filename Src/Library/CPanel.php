@@ -14,6 +14,8 @@ class CPanel
 
     private $username;
 
+    private $emailAccount;
+
     private $request;
 
     /* The above code is defining a private constant in PHP with the name `REGEX_PATTERN` and assigning
@@ -32,7 +34,7 @@ class CPanel
         $config = new Configuration();
         $config->init();
 
-        global $cPanelApiToken, $cPanelBaseUrl, $cPanelUsername;
+        global $cPanelApiToken, $cPanelBaseUrl, $cPanelUsername, $cpanelEmailAccount;
 
         if (!file_exists(__DIR__ . "/../secrets/cPanel.secrets.php")) {
             throw new SecretsFileNotFoundException("File not found: cPanel.secrets.php");
@@ -43,6 +45,7 @@ class CPanel
         $this->baseUrl = $cPanelBaseUrl;
         $this->apiToken = $cPanelApiToken;
         $this->username = $cPanelUsername;
+        $this->emailAccount = $cpanelEmailAccount;
         $this->request = new Request();
     }
 
@@ -370,5 +373,31 @@ class CPanel
         }
 
         return $result;
+    }
+
+    /**
+     * Retrieves the count of messages in the inbox.
+     *
+     * @return int The number of messages in the inbox.
+     */
+    public function getInboxMessagesCount(): int
+    {
+        $endpoint = 'execute/Mailboxes/get_mailbox_status_list';
+        $response = $this->getRequest($endpoint, '', ["account" => $this->emailAccount]);
+
+        if ($response === null || empty($response->data)) {
+            error_log("Error getting email data from cPanel");
+            return 0;
+        }
+
+        $inboxMessagesCount = 0;
+        foreach ($response->data as $item) {
+            if ($item->mailbox === "INBOX") {
+                $inboxMessagesCount = $item->messages;
+                break;
+            }
+        }
+
+        return $inboxMessagesCount;
     }
 }

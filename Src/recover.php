@@ -4,6 +4,7 @@ require_once 'vendor/autoload.php';
 
 use GuiBranco\ProjectsMonitor\Library\Configuration;
 use GuiBranco\ProjectsMonitor\Library\Database;
+use GuiBranco\ProjectsMonitor\Library\Logger;
 
 header("Content-Security-Policy: default-src 'self' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;");
 header("X-Content-Type-Options: nosniff");
@@ -39,7 +40,8 @@ try {
     $stmt->fetch();
     $stmt->close();
 } catch (Exception $e) {
-    error_log("Rate limiting check failed: " . $e->getMessage());
+    $logger = new Logger();
+    $logger->logMessage("Rate limiting check failed: " . $e->getMessage());
     http_response_code(500);
     $message = 'Internal server error';
 }
@@ -105,11 +107,13 @@ if (empty($message) && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'Failed to send the email. Try again later.';
         }
     } else {
-        error_log(sprintf(
+        $errorMessage = sprintf(
             'Failed password recovery attempt for identifier: %s, IP: %s',
             preg_replace('/[^\w\-\.\@]/', '', $identifier),
             filter_var($_SERVER['REMOTE_ADDR'], FILTER_VALIDATE_IP)
-        ));
+        );
+        $logger = new Logger();
+        $logger->logMessage($errorMessage);
         $message = 'No account found with that username or email.';
         try {
             $conn->begin_transaction();
@@ -126,7 +130,8 @@ if (empty($message) && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $conn->commit();
         } catch (Exception $e) {
             $conn->rollback();
-            error_log("Failed to log recovery attempt: " . $e->getMessage());
+            $logger = new Logger();
+            $logger->logMessage("Failed to log recovery attempt: " . $e->getMessage());
             $message = 'An error occurred. Please try again later.';
         }
     }

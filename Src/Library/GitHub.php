@@ -6,6 +6,7 @@ use GuiBranco\Pancake\Request;
 use GuiBranco\Pancake\Response;
 use GuiBranco\Pancake\RequestException;
 use GuiBranco\ProjectsMonitor\Library\Configuration;
+use GuiBranco\ProjectsMonitor\Library\Logger;
 use FastVolt\Helper\Markdown;
 
 class GitHub
@@ -97,13 +98,15 @@ class GitHub
             file_put_contents($cache, $body);
             $result = json_decode($body);
         } catch (RequestException $ex) {
-            error_log(sprintf(
+            $message = sprintf(
                 "GitHub search request failed - URL: %s, Error: %s, Code: %d, Response: %s",
                 $url,
                 $ex->getMessage(),
                 $ex->getCode(),
                 $response === null ? "null" : $response->toJson()
-            ));
+            );
+            $logger = new Logger();
+            $logger->logMessage($message);
         }
 
         return $result;
@@ -281,14 +284,16 @@ class GitHub
             file_put_contents($cache, $body);
             $result = json_decode($body);
         } catch (RequestException $ex) {
-            error_log(sprintf(
+            $message = sprintf(
                 "GitHub latest release request failed - Owner: %s, Repo: %s, Error: %s, Code: %d, Response: %s",
                 $owner,
                 $repository,
                 $ex->getMessage(),
                 $ex->getCode(),
                 $response === null ? "null" : $response->toJson()
-            ));
+            );
+            $logger = new Logger();
+            $logger->logMessage($message);
         }
 
         return $result;
@@ -300,7 +305,9 @@ class GitHub
         $mkd = Markdown::new();
 
         if (!isset($body->body)) {
-            error_log("Unable to get latest release details for repository {$account}/{$repository} - 'body' field missing from response. Response: " . print_r($body, true));
+            $message = "Unable to get latest release details for repository {$account}/{$repository} - 'body' field missing from response. Response: " . print_r($body, true);
+            $logger = new Logger();
+            $logger->logMessage($message);
             return ["created" => "N/A", "published" => "N/A", "title" => "N/A", "description" => "N/A", "release_url" => "", "repository" => "{$account}/{$repository}", "author" => "N/A"];
         }
 
@@ -352,7 +359,7 @@ class GitHub
             file_put_contents($cache, $body);
             $result = json_decode($body);
         } catch (RequestException $ex) {
-            error_log(sprintf(
+            $message = sprintf(
                 "GitHub billing request failed - Type: %s, Account: %s, BillingType: %s, Error: %s, Code: %d, Response: %s",
                 $accountType,
                 $account,
@@ -360,7 +367,9 @@ class GitHub
                 $ex->getMessage(),
                 $ex->getCode(),
                 $response === null ? "null" : $response->toJson()
-            ));
+            );
+            $logger = new Logger();
+            $logger->logMessage($message);
         }
 
         return $result;

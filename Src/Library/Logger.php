@@ -9,9 +9,12 @@ class Logger
 {
     private $connection;
 
+    private $applicationId;
+
     public function __construct()
     {
         $this->connection = (new Database())->getConnection();
+        $this->applicationId = 7;
     }
 
     public function convertUserAgentToLink(string $userAgent): string
@@ -37,6 +40,56 @@ class Logger
         return $sql;
     }
 
+    public function logMessage(string $message): bool
+    {
+        $config = new Configuration();
+        $headers = $config->getRequestHeaders();
+        $data = $config->getRequestData();
+
+        $trace = debug_backtrace();
+        $caller = $trace[1] ?? [];
+
+        $caller["object"] = isset($caller["object"]) ? print_r($caller["object"], true) : "";
+        $caller["args"] = isset($caller["args"]) ? print_r($caller["args"], true) : "";
+
+        $sql = $this->getInsert();
+        $stmt = $this->connection->prepare($sql);
+
+        $appId = $this->applicationId;
+        $class = isset($caller["class"]) ? $caller["class"] : "none";
+        $function = isset($caller["function"]) ? $caller["function"] : "none";
+        $file = isset($caller["file"]) ? $caller["file"] : "none";
+        $line = isset($caller["line"]) ? $caller["line"] : "none";
+        $object = isset($caller["object"]) ? $caller["object"] : "none";
+        $type = isset($caller["type"]) ? $caller["type"] : "none";
+        $args = isset($caller["args"]) ? $caller["args"] : "none";
+        $message = isset($message) && !empty($message) ? $message : "none";
+        $details = isset($data) && $data !== null ? json_encode($data) : "none";
+        $correlationId = isset($headers["X-Correlation-Id"]) ? $headers["X-Correlation-Id"] : "none";
+        $userAgent = isset($headers["User-Agent"]) ? $headers["User-Agent"] : "none";
+
+        $stmt->bind_param(
+            "isssisssssss",
+            $appId,
+            $class,
+            $function,
+            $file,
+            $line,
+            $object,
+            $type,
+            $args,
+            $message,
+            $details,
+            $correlationId,
+            $userAgent
+        );
+
+        $result = $stmt->execute();
+        $stmt->close();
+
+        return $result;
+    }
+
     public function saveMessage($applicationId)
     {
         $config = new Configuration();
@@ -57,6 +110,10 @@ class Logger
         $details = isset($data["details"]) ? $data["details"] : "none";
         $correlationId = isset($headers["X-Correlation-Id"]) ? $headers["X-Correlation-Id"] : "none";
         $userAgent = isset($headers["User-Agent"]) ? $headers["User-Agent"] : "none";
+
+        if (isset($data["message"]) === false) {
+            error_log(json_encode($headers));
+        }
 
         $stmt->bind_param(
             "isssisssssss",

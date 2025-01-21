@@ -995,20 +995,20 @@
         },
         {
             "name": "guibranco/pancake",
-            "version": "v1.2.0",
+            "version": "v1.2.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guibranco/pancake.git",
-                "reference": "24d10d7c56adee55345c51804115ca288bdae5fc"
+                "reference": "95f0133cc561b0de09df7794d74f72b0650cd05c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guibranco/pancake/zipball/24d10d7c56adee55345c51804115ca288bdae5fc",
-                "reference": "24d10d7c56adee55345c51804115ca288bdae5fc",
+                "url": "https://api.github.com/repos/guibranco/pancake/zipball/95f0133cc561b0de09df7794d74f72b0650cd05c",
+                "reference": "95f0133cc561b0de09df7794d74f72b0650cd05c",
                 "shasum": ""
             },
             "require-dev": {
-                "phpunit/phpunit": "11"
+                "phpunit/phpunit": "11.5.3"
             },
             "type": "library",
             "autoload": {
@@ -1029,9 +1029,9 @@
             "description": "The Pancake project, a toolkit for PHP projects",
             "support": {
                 "issues": "https://github.com/guibranco/pancake/issues",
-                "source": "https://github.com/guibranco/pancake/tree/v1.2.0"
+                "source": "https://github.com/guibranco/pancake/tree/v1.2.2"
             },
-            "time": "2025-01-18T21:47:10+00:00"
+            "time": "2025-01-20T04:05:06+00:00"
         },
         {
             "name": "kelunik/certificate",
@@ -3365,13 +3365,13 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
-    "platform": {},
-    "platform-dev": {},
+    "platform": [],
+    "platform-dev": [],
     "platform-overrides": {
         "php": "8.2.0"
     },
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.3.0"
 }

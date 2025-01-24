@@ -111,6 +111,10 @@ class Logger
         $correlationId = isset($headers["X-Correlation-Id"]) ? $headers["X-Correlation-Id"] : "none";
         $userAgent = isset($headers["User-Agent"]) ? $headers["User-Agent"] : "none";
 
+        if (is_array($details) === true) {
+            $details = json_encode($details);
+        }
+        
         if (isset($data["message"]) === false) {
             error_log(json_encode($headers));
         }

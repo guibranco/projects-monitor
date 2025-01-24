@@ -114,7 +114,7 @@ class Logger
         if (is_array($details) === true) {
             $details = json_encode($details);
         }
-        
+
         if (isset($data["message"]) === false) {
             error_log(json_encode($headers));
         }

@@ -97,7 +97,7 @@ class Logger
         $data = $config->getRequestData();
         $sql = $this->getInsert();
         $stmt = $this->connection->prepare($sql);
-        
+
         $appId = $applicationId;
         $class = isset($data["class"]) ? $data["class"] : "none";
         $function = isset($data["function"]) ? $data["function"] : "none";

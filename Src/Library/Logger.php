@@ -117,6 +117,7 @@ class Logger
 
         if (isset($data["message"]) === false) {
             error_log(json_encode($headers));
+            return false;
         }
 
         $stmt->bind_param(

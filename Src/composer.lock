@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2d472f950d91b8c7f275c3c06e068510",
+    "content-hash": "ee924bcf489d1ae710c19bd91d4a3e78",
     "packages": [
         {
             "name": "amphp/amp",
@@ -995,16 +995,16 @@
         },
         {
             "name": "guibranco/pancake",
-            "version": "v1.2.4",
+            "version": "v1.2.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guibranco/pancake.git",
-                "reference": "cdf309f307a88a954cd5ec41afc2cc693845a9f4"
+                "reference": "637ad7ea915101a1a719feb5febe4ce2e10c675e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guibranco/pancake/zipball/cdf309f307a88a954cd5ec41afc2cc693845a9f4",
-                "reference": "cdf309f307a88a954cd5ec41afc2cc693845a9f4",
+                "url": "https://api.github.com/repos/guibranco/pancake/zipball/637ad7ea915101a1a719feb5febe4ce2e10c675e",
+                "reference": "637ad7ea915101a1a719feb5febe4ce2e10c675e",
                 "shasum": ""
             },
             "require-dev": {
@@ -1029,9 +1029,9 @@
             "description": "The Pancake project, a toolkit for PHP projects",
             "support": {
                 "issues": "https://github.com/guibranco/pancake/issues",
-                "source": "https://github.com/guibranco/pancake/tree/v1.2.4"
+                "source": "https://github.com/guibranco/pancake/tree/v1.2.7"
             },
-            "time": "2025-01-27T03:24:38+00:00"
+            "time": "2025-01-27T10:32:47+00:00"
         },
         {
             "name": "kelunik/certificate",
@@ -3365,11 +3365,11 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {},
     "prefer-stable": false,
     "prefer-lowest": false,
-    "platform": [],
-    "platform-dev": [],
+    "platform": {},
+    "platform-dev": {},
     "platform-overrides": {
         "php": "8.2.0"
     },

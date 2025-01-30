@@ -6,7 +6,7 @@ header('X-XSS-Protection: 1; mode=block');
 header("Content-Type: application/json; charset=UTF-8");
 
 require 'vendor/autoload.php';
-$secrets = require 'config/secrets.php';
+$secrets = require 'secrets/api.secrets.php';
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;

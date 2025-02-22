@@ -79,6 +79,7 @@ class Webhooks
             return $response;
         }
 
+        $workflowsLimiterQuantity++; // The table header is the first row.
         $min = min($workflowsLimiterQuantity, count($response["workflow_runs"]));
         $response["workflow_runs"] = array_slice($response["workflow_runs"], 0, $min);
 

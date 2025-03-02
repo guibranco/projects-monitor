@@ -43,6 +43,8 @@ class Ip2WhoIs
     {
         $domains = [
             "guilhermebranco.com.br",
+            "guilhermestraccini.com.br",
+            "guilhermestracini.com.br",
             "zerocool.com.br",
             "apibr.com",
             "gstraccini.bot",

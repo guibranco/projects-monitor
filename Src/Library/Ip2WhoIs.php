@@ -27,13 +27,13 @@ class Ip2WhoIs
     private function getWhoIs($domain)
     {
         $apiKey = Ip2WhoIsSecrets::$ApiKey;
-        $url = "https://api.ip2whois.com/v2?key=$apiKey&domain=$domain";
+        $url = "https://api.ip2whois.com/v2?key={$apiKey}&domain={$domain}";
 
         $response = $this->request->get($url, $this->headers);
 
         if ($response->getStatusCode() != 200) {
             $error = $response->getStatusCode() == -1 ? $response->getMessage() : $response->getBody();
-            throw new RequestException("Code: {$response->getStatusCode()} - Error: {$error}");
+            throw new RequestException("Domain: {$domain} - Code: {$response->getStatusCode()} - Error: {$error}");
         }
 
         return json_decode($response->getBody());
@@ -50,9 +50,9 @@ class Ip2WhoIs
             "gstraccini.bot",
             "gstraccini.dev",
             "progress-bar.xyz",
-            "straccini.com",
+            #"straccini.com",
             "straccini.com.br",
-            "stracini.com",
+            #"stracini.com",
             "stracini.com.br"
         ];
         $pattern = '/https?:\/\/[^\s]+/';

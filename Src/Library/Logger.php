@@ -17,6 +17,31 @@ class Logger
         $this->applicationId = 7;
     }
 
+    /**
+     * Converts plain URLs in a given text to HTML anchor tags.
+     *
+     * This method searches for URLs within the input text and wraps each one in an HTML `<a>` tag.
+     * The links are set to open in a new tab (`target="_blank"`) and include security attributes
+     * (`rel="noopener noreferrer"`). All URLs are properly escaped using `htmlspecialchars` to prevent XSS.
+     *
+     * Example:
+     * Input:  "Visit https://example.com for more info."
+     * Output: "Visit <a href="https://example.com" target="_blank" rel="noopener noreferrer">https://example.com</a> for more info."
+     *
+     * @param string $text The input text containing URLs to be converted.
+     *
+     * @return string The resulting text with URLs converted to HTML links.
+     */
+    public function convertUrlsToLinks(string $text): string
+    {
+        $pattern = '/(https?:\/\/[^\s]+)/i';
+
+        return preg_replace_callback($pattern, function ($matches) {
+            $url = htmlspecialchars($matches[0], ENT_QUOTES, 'UTF-8');
+            return "<a href=\"{$url}\" target=\"_blank\" rel=\"noopener noreferrer\">{$url}</a>";
+        }, $text);
+    }
+
     public function convertUserAgentToLink(string $userAgent): string
     {
         $regex = '/(.+)\s\(\+?((https?:\/\/[^\)]+))\)$/';
@@ -29,7 +54,6 @@ class Logger
         $url = $matches[2];
         return '<a href="' . htmlspecialchars($url, ENT_QUOTES) . '" target="_blank" rel="noopener noreferrer">' . htmlspecialchars($text, ENT_QUOTES) . '</a>';
     }
-
 
     private function getInsert()
     {
@@ -209,6 +233,7 @@ class Logger
         }
         while ($row = $result->fetch_array(MYSQLI_NUM)) {
             $rowData = array_values($row);
+            $rowData[1] = $this->convertUrlsToLinks($rowData[1]);
             $rowData[2] = $this->convertUserAgentToLink($rowData[2]);
             $data[] = $rowData;
         }

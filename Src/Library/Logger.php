@@ -17,15 +17,16 @@ class Logger
         $this->applicationId = 7;
     }
 
-    public function convertUrlsToLinks(string $text): string {
+    public function convertUrlsToLinks(string $text): string
+    {
         $pattern = '/(https?:\/\/[^\s]+)/i';
-    
+
         return preg_replace_callback($pattern, function ($matches) {
             $url = htmlspecialchars($matches[0], ENT_QUOTES, 'UTF-8');
             return "<a href=\"{$url}\" target=\"_blank\" rel=\"noopener noreferrer\">{$url}</a>";
         }, $text);
     }
-    
+
     public function convertUserAgentToLink(string $userAgent): string
     {
         $regex = '/(.+)\s\(\+?((https?:\/\/[^\)]+))\)$/';

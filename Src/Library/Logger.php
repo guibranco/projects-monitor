@@ -17,6 +17,21 @@ class Logger
         $this->applicationId = 7;
     }
 
+    /**
+     * Converts plain URLs in a given text to HTML anchor tags.
+     *
+     * This method searches for URLs within the input text and wraps each one in an HTML `<a>` tag.
+     * The links are set to open in a new tab (`target="_blank"`) and include security attributes
+     * (`rel="noopener noreferrer"`). All URLs are properly escaped using `htmlspecialchars` to prevent XSS.
+     *
+     * Example:
+     * Input:  "Visit https://example.com for more info."
+     * Output: "Visit <a href="https://example.com" target="_blank" rel="noopener noreferrer">https://example.com</a> for more info."
+     *
+     * @param string $text The input text containing URLs to be converted.
+     *
+     * @return string The resulting text with URLs converted to HTML links.
+     */
     public function convertUrlsToLinks(string $text): string
     {
         $pattern = '/(https?:\/\/[^\s]+)/i';

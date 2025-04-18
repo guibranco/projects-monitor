@@ -18,7 +18,7 @@ class HealthChecksIo
         $config = new Configuration();
         $config->init();
 
-        global $healthChecksIowriteKeys;
+        global $healthChecksIoWriteKeys;
 
         if (!file_exists(__DIR__ . "/../secrets/healthChecksIo.secrets.php")) {
             throw new SecretsFileNotFoundException("File not found: healthChecksIo.secrets.php");
@@ -86,7 +86,7 @@ class HealthChecksIo
                     "-" . str_replace("-", "--", $check->name) . "-" . $this->mapColor($check->status) .
                     "?style=for-the-badge&labelColor=white' />";
                 $link = "https://healthchecks.io/checks/{$check->uuid}/details/";
-                $badge = "<a href='{$link}' title='{$check->status}' target='_blank' rel='noopener noreferrer'>{$badge}</a>";
+                $badgeLink = "<a href='{$link}' title='{$check->status}' target='_blank' rel='noopener noreferrer'>{$badge}</a>";
 
                 $checks[] = array(
                     $badgeLink,

@@ -81,17 +81,18 @@ class HealthChecksIo
             $response = $this->getRequest($writeKey);
 
             foreach ($response->checks as $check) {
-                $badge =
-                    "<img alt='" . $check->name . "' src='https://img.shields.io/badge/" . $this->mapStatus($check->status) .
-                    "-" . str_replace("-", "--", $check->name) . "-" . $this->mapColor($check->status) .
-                    "?style=for-the-badge&labelColor=white' />";
                 $link = "https://healthchecks.io/checks/{$check->uuid}/details/";
+
+                $badge = "<img alt='" . $check->name . "' src='https://img.shields.io/badge/" . $this->mapStatus($check->status);
+                $badge .= "-" . str_replace("-", "--", $check->name) . "-" . $this->mapColor($check->status);
+                $badge .= "?style=for-the-badge&labelColor=white' />";
+
                 $badgeLink = "<a href='{$link}' title='{$check->status}' target='_blank' rel='noopener noreferrer'>{$badge}</a>";
 
                 $checks[] = array(
-                    $badgeLink,
-                    date("H:i:s d/m/Y", $check->last_ping == null ? time() : strtotime($check->last_ping)),
-                    date("H:i:s d/m/Y", $check->next_ping == null ? time() : strtotime($check->next_ping))
+                             $badgeLink,
+                             date("H:i:s d/m/Y", $check->last_ping == null ? time() : strtotime($check->last_ping)),
+                             date("H:i:s d/m/Y", $check->next_ping == null ? time() : strtotime($check->next_ping))
                 );
             }
         }

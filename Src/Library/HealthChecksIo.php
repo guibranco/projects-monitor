@@ -9,7 +9,7 @@ class HealthChecksIo
 {
     private const HEALTH_CHECKS_API_URL = "https://healthchecks.io/api/v3/";
 
-    private $readKeys = array();
+    private $writeKeys = array();
 
     private $request;
 
@@ -18,7 +18,7 @@ class HealthChecksIo
         $config = new Configuration();
         $config->init();
 
-        global $healthChecksIoReadKeys;
+        global $healthChecksIoWriteKeys;
 
         if (!file_exists(__DIR__ . "/../secrets/healthChecksIo.secrets.php")) {
             throw new SecretsFileNotFoundException("File not found: healthChecksIo.secrets.php");
@@ -26,15 +26,15 @@ class HealthChecksIo
 
         require_once __DIR__ . "/../secrets/healthChecksIo.secrets.php";
 
-        $this->readKeys = $healthChecksIoReadKeys;
+        $this->writeKeys = $healthChecksIoWriteKeys;
         $this->request = new Request();
     }
 
-    private function getRequest($readKey)
+    private function getRequest($writeKey)
     {
         $url = self::HEALTH_CHECKS_API_URL . "checks/";
         $headers = [
-            "X-Api-Key: {$readKey}",
+            "X-Api-Key: {$writeKey}",
             "Accept: application/json",
             constant("USER_AGENT")
         ];
@@ -77,20 +77,22 @@ class HealthChecksIo
     {
         $checks = array();
 
-        foreach ($this->readKeys as $readKey) {
-            $response = $this->getRequest($readKey);
+        foreach ($this->writeKeys as $writeKey) {
+            $response = $this->getRequest($writeKey);
 
             foreach ($response->checks as $check) {
+                $link = "https://healthchecks.io/checks/{$check->uuid}/details/";
 
-                $img =
-                    "<img alt='" . $check->name . "' src='https://img.shields.io/badge/" . $this->mapStatus($check->status) .
-                    "-" . str_replace("-", "--", $check->name) . "-" . $this->mapColor($check->status) .
-                    "?style=for-the-badge&labelColor=white' />";
+                $badge = "<img alt='" . $check->name . "' src='https://img.shields.io/badge/" . $this->mapStatus($check->status);
+                $badge .= "-" . str_replace("-", "--", $check->name) . "-" . $this->mapColor($check->status);
+                $badge .= "?style=for-the-badge&labelColor=white' />";
+
+                $badgeLink = "<a href='{$link}' title='{$check->status}' target='_blank' rel='noopener noreferrer'>{$badge}</a>";
 
                 $checks[] = array(
-                    $img,
-                    date("H:i:s d/m/Y", $check->last_ping == null ? time() : strtotime($check->last_ping)),
-                    date("H:i:s d/m/Y", $check->next_ping == null ? time() : strtotime($check->next_ping))
+                             $badgeLink,
+                             date("H:i:s d/m/Y", $check->last_ping == null ? time() : strtotime($check->last_ping)),
+                             date("H:i:s d/m/Y", $check->next_ping == null ? time() : strtotime($check->next_ping))
                 );
             }
         }

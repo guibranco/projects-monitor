@@ -1,6 +1,6 @@
 services:
-  web:
-    container_name: projects-monitor-web
+  www:
+    container_name: www
     build: .
     ports:
       - "8000:80"
@@ -9,28 +9,34 @@ services:
       - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
     networks:
       - default
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
 
   database:
-    container_name: projects-monitor-database
+    container_name: database
     image: mariadb:latest
     restart: always
     ports:
       - "3306:3306"
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
-      interval: 5s
-      timeout: 3s
-      retries: 2
-      start_period: 0s
     environment:
       MARIADB_ROOT_PASSWORD: root
       MARIADB_DATABASE: test
       MARIADB_USER: test
       MARIADB_PASSWORD: test
     volumes:
-      - projects-monitor-db:/var/lib/mysql
+      - my-db:/var/lib/mysql
     networks:
       - default
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
 
 volumes:
-  projects-monitor-db:
+  my-db:

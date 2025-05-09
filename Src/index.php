@@ -123,8 +123,9 @@ $configuration = new Configuration();
       <div id="messages_by_applications" style="height: 300px; float: left;"></div>
    </div>
    <div style="clear:both;"></div>
-   <div id="messages_grouped" style="width: 50%; height: 500px; float: left; background-color: white;"></div>
-   <div id="error_log_messages" style="width: 50%; height: 500px; float: left; background-color: white;"></div>
+   <div id="messages_grouped" style="width: 100%; float: left; background-color: white;"></div>
+   <div style="clear:both;"></div>
+   <div id="error_log_messages" style="width: 100%; float: left; background-color: white;"></div>
    <div style="clear:both;"></div>
    <div class="topping">Workflow Runs <span id="counter_workflow_runs"
          class="badge text-bg-warning rounded-pill"></span></div>

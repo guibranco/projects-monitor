@@ -124,7 +124,7 @@ $configuration = new Configuration();
    </div>
    <div style="clear:both;"></div>
    <div id="messages_grouped" style="width: 100%; float: left; background-color: white;"></div>
-    <div style="clear:both;"></div>
+   <div style="clear:both;"></div>
    <div id="error_log_messages" style="width: 100%; float: left; background-color: white;"></div>
    <div style="clear:both;"></div>
    <div class="topping">Workflow Runs <span id="counter_workflow_runs"

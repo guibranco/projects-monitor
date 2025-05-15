@@ -741,13 +741,13 @@ function showErrorFiles(response) {
     const errorFilesTableData = response.error_log_files;
     errorFilesTableData[0].unshift("Actions");
     for (let i = 1; i < errorFilesTableData.length; i++) {
-      const safeDirectory = encodeURIComponent(errorFilesTableData[i][0]);
+      const directory = errorFilesTableData[i][0];
       errorFilesTableData[i].unshift(
         `<button 
            class="btn btn-danger btn-sm" 
            data-action="delete" 
-           data-directory="${safeDirectory}"
-           aria-label="Delete error_log file from ${safeDirectory} directory">Delete</button>`
+           data-directory="${directory}"
+           aria-label="Delete error_log file from ${directory} directory">Delete</button>`
       );
     }
 

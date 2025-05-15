@@ -741,13 +741,13 @@ function showErrorFiles(response) {
     const errorFilesTableData = response.error_log_files;
     errorFilesTableData[0].unshift("Actions");
     for (let i = 1; i < errorFilesTableData.length; i++) {
-      const safeFilename = encodeURIComponent(errorFilesTableData[i][0]);
+      const safeDirectory = encodeURIComponent(errorFilesTableData[i][0]);
       errorFilesTableData[i].unshift(
         `<button 
            class="btn btn-danger btn-sm" 
            data-action="delete" 
-           data-filename="${safeFilename}"
-           aria-label="Delete error log file ${safeFilename}">Delete</button>`
+           data-directory="${safeDirectory}"
+           aria-label="Delete error_log file from ${safeDirectory} directory">Delete</button>`
       );
     }
 
@@ -764,8 +764,8 @@ function showErrorFiles(response) {
         .addEventListener("click", (e) => {
           const deleteButton = e.target.closest('[data-action="delete"]');
           if (deleteButton) {
-            const { filename } = deleteButton.dataset;
-            confirmDeleteError(filename);
+            const { directory } = deleteButton.dataset;
+            confirmDeleteError(directory);
           }
         });
     }
@@ -1091,13 +1091,13 @@ function confirmDelete(application) {
   }
 }
 
-function confirmDeleteError(filename) {
-  const message = `Are you sure you want to delete error log file ${decodeURIComponent(
-    filename
+function confirmDeleteError(directory) {
+  const message = `Are you sure you want to delete error_log file located at ${decodeURIComponent(
+    directory
   )}?`;
 
   if (window.confirm(message)) {
-    deleteErrorLogFile(filename);
+    deleteErrorLogFile(directory);
   }
 }
 
@@ -1136,13 +1136,13 @@ function deleteMessageByApplication(application) {
     });
 }
 
-function deleteErrorLogFile(filename) {
+function deleteErrorLogFile(directory) {
   fetch("api/v1/cpanel/delete", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ filename }),
+    body: JSON.stringify({ directory }),
   })
     .then((response) => {
       if (!response.ok) {

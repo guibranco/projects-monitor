@@ -27,7 +27,7 @@ if (isset($input['filename']) === false) {
 $filename = filter_var(urldecode($input['filename']), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 $cPanel = new CPanel();
-$result = $cPanel->deleteErrorLogFile($fiename);
+$result = $cPanel->deleteErrorLogFile($filename);
 
 if ($result === false) {
     http_response_code(500);

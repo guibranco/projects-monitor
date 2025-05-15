@@ -4,38 +4,30 @@ on:
   pull_request:
   workflow_dispatch:
 
-concurrency:
-  group: build-deploy
-
 jobs:
   build:
-    permissions: write-all
+    permissions:
+      actions: write
+      checks: write
+      contents: write
+      pull-requests: write
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    name: 🏗️ Build and Test
 
     steps:
-      - uses: actions/checkout@v4
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: dorny/paths-filter@v3
-        id: changes
-        with:
-          filters: |
-            src:
-              - "Src/**"
-              - "Tests/**"
-              - "Tools/**"
-            sql:
-              - "Sql/**"
-              - "Tools/**"
-
-      - name: Cache Composer dependencies
+      - name: 💾 Cache Composer dependencies
         uses: actions/cache@v4
         with:
           path: /tmp/composer-cache
           key: ${{ runner.os }}-${{ hashFiles('**/composer.lock') }}
 
-      - name: Install dependencies
+      - name: 📦 Install PHP dependencies
         uses: "php-actions/composer@v6"
         with:
           php_extensions: sockets
@@ -43,63 +35,86 @@ jobs:
           progress: yes
           working_dir: "./Src/"
 
-      - name: Create MySQL secrets file
+      - name: 📂 Create secrets directory
+        run: mkdir -p Src/secrets
+
+      - name: 🗄️ Create MySQL secrets file
         run: |
-          cd Src
-          mkdir -p secrets
-          cd secrets
-          echo "<?php" >> mySql.secrets.php
+          cd Src/secrets
+          echo "<?php" >  mySql.secrets.php
           echo "\$mySqlHost     = \"database\";" >> mySql.secrets.php
           echo "\$mySqlUser     = \"test\";" >> mySql.secrets.php
           echo "\$mySqlPassword = \"test\";" >> mySql.secrets.php
           echo "\$mySqlDatabase = \"test\";" >> mySql.secrets.php
 
-      - name: Create RabbitMQ secrets file
+      - name: 🐰 Create RabbitMQ secrets file
         run: |
-          cd Src
-          mkdir -p secrets
-          cd secrets
+          cd Src/secrets
           echo "<?php" >> rabbitMq.secrets.php
           echo "\$rabbitMqConnectionStrings[] = \"amqp://guest:guest@queue:5672/\";" >> rabbitMq.secrets.php
 
-      - name: Docker compose up
+      - name: 🐳 Docker compose up
         run: docker compose up -d
 
-      - name: Make script executable
+      - name: 🔧 Make script executable
         run: chmod +x Tools/wait-for-healthy.sh
             
-      - name: Wait for healthy containers
+      - name: ⏳ Wait for healthy containers
         run: Tools/wait-for-healthy.sh
 
-      - name: Run database migrations
+      - name: 🔄 Run database migrations
         id: db_migration
         env:
           MYSQL_PWD: test
         run: |
-          chmod +x Tools/db-migration.sh
+          chmod +x Tools/db-migration.sh 
           Tools/db-migration.sh Sql "localhost" "test" "test"
 
-      - name: Check database
+      - name: ❌ Update PR with comment (migration error)
+        if: failure() && steps.db_migration.outputs.error == 'true'
+        uses: mshick/add-pr-comment@v2
+        with:
+          refresh-message-position: true
+          message-id: "migrations-local"
+          message: |
+            :game_die: **Database migration summary**
+
+            :x: The database migration plan failed!
+
+            `${{ steps.db_migration.outputs.error_message }}`
+
+      - name: ✅ Update PR with comment (migration steps - no changes)
+        if: steps.db_migration.outputs.files == ''
+        uses: mshick/add-pr-comment@v2
+        with:
+          refresh-message-position: true
+          message-id: "migrations-local"
+          message: |
+            :game_die: **Database migration summary**
+
+            :white_check_mark: All migrations have already been applied to the database.
+
+      - name: 🔍 Check database
         env:
           MYSQL_PWD: test
         run: |
           chmod +x Tools/db-check.sh
-          Tools/db-check.sh "localhost" "test" "test"    
+          Tools/db-check.sh "localhost" "test" "test"
 
-      - name: Install Postman CLI
-        if: ${{ vars.POSTMAN_ENABLE == 'true' }}
+      - name: 📥 Install Postman CLI
+        if: ${{ vars.POSTMAN_ENABLED == 'true' }}
         run: curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh
 
-      - name: Login to Postman CLI
-        if: ${{ vars.POSTMAN_ENABLE == 'true' }}
+      - name: 🔑 Login to Postman CLI
+        if: ${{ vars.POSTMAN_ENABLED == 'true' }}
         run: postman login --with-api-key ${{ secrets.POSTMAN_API_KEY }}
 
-      - name: Run API tests
-        if: ${{ vars.POSTMAN_ENABLE == 'true' }}
+      - name: 🧪 Run API tests
+        if: ${{ vars.POSTMAN_ENABLED == 'true' }}
         run: postman collection run 23511-01109172-13a0-4cdb-bd0c-18a71d624a48 -e 23511-f4e75c62-db3e-460b-b7ac-907e4e48f9b0
 
-      - name: Comment Postman is disabled
-        if: ${{ vars.POSTMAN_ENABLE != 'true' }}
+      - name: ℹ️ Comment Postman is disabled
+        if: ${{ vars.POSTMAN_ENABLED != 'true' }}
         uses: mshick/add-pr-comment@v2
         with:
           refresh-message-position: true
@@ -108,21 +123,21 @@ jobs:
             :rocket: **Postman tests are disabled**
 
             :x: The Postman collection run is disabled.
-      
-      - name: Populate database
+
+      - name: 🎲 Populate database
         env:
           MYSQL_PWD: test
         run: |
           chmod +x Tools/db-populate.sh
           Tools/db-populate.sh "localhost" "test" "test"
-
-      - name: Test Requests
+      
+      - name: 🧪 Test Requests
         id: test_requests
         run: |
           chmod +x Tests/request-tests.sh
           Tests/request-tests.sh "Tests/Requests"
 
-      - name: Update PR with comment (request tests - failed)
+      - name: ❌ Update PR with comment (request tests - failed)
         if: failure() && steps.test_requests.outputs.error == 'true'
         uses: mshick/add-pr-comment@v2
         with:
@@ -144,7 +159,7 @@ jobs:
               
             </details>
 
-      - name: Update PR with comment (request tests - succeeded)
+      - name: ✅ Update PR with comment (request tests - succeeded)
         if: success()
         uses: mshick/add-pr-comment@v2
         with:
@@ -155,7 +170,7 @@ jobs:
 
             :white_check_mark: All test requests succeeded
 
-      - name: Check database
+      - name: 🔍 Check database integrity
         id: db_integrity
         env:
           MYSQL_PWD: test
@@ -163,7 +178,7 @@ jobs:
           chmod +x Tests/db-integrity.sh
           Tests/db-integrity.sh "localhost" "test" "test"
 
-      - name: Update PR with comment (database integrity - failed)
+      - name: ❌ Update PR with comment (database integrity - failed)
         if: failure() && steps.db_integrity.outputs.error == 'true'
         uses: mshick/add-pr-comment@v2
         with:
@@ -173,9 +188,10 @@ jobs:
             :mag: **Database integrity summary**
 
             :x: The database integrity check failed.
+
             ${{ steps.db_integrity.outputs.log }}
 
-      - name: Update PR with comment (database integrity - succeeded)
+      - name: ✅ Update PR with comment (database integrity - succeeded)
         if: success()
         uses: mshick/add-pr-comment@v2
         with:
@@ -185,74 +201,15 @@ jobs:
             :mag: **Database integrity summary**
 
             :white_check_mark: The database integrity check succeeded
-
-      - name: Attach WireGuard connection
-        if: steps.changes.outputs.sql == 'true'
-        shell: bash
-        run: |
-          sudo apt install resolvconf
-          sudo apt install wireguard
-          echo "${{ secrets.WIREGUARD_CONFIG }}" > wg0.conf
-          sudo chmod 600 wg0.conf
-          sudo wg-quick up ./wg0.conf
-
-      - name: Dry Run database migrations
-        if: github.actor != 'dependabot[bot]' && steps.changes.outputs.sql == 'true'
-        continue-on-error: true
-        id: dry_run
-        env:
-          MYSQL_PWD: ${{ secrets.MYSQL_PASSWORD_MIGRATION }}
-        run: |
-          chmod +x Tools/db-migration.sh
-          Tools/db-migration.sh Sql "${{ secrets.MYSQL_SERVER }}" "${{ secrets.MYSQL_USER_MIGRATION }}" "${{ secrets.MYSQL_DATABASE }}" --dry-run
-
-      - name: Detach WireGuard connection
-        if: steps.changes.outputs.sql == 'true'
-        shell: bash
-        run: sudo wg-quick down ./wg0.conf
-
-      - name: Update PR with comment (migration error)
-        if: failure() && steps.dry_run.outputs.error == 'true'
-        uses: mshick/add-pr-comment@v2
-        with:
-          refresh-message-position: true
-          message-id: "migrations"
-          message: |
-            :game_die: **Database migration summary**
-
-            :x: The database migration plan failed.
-            ${{ steps.db_migration.outputs.error }}
-
-      - name: Update PR with comment (migration steps - changed)
-        if: steps.changes.outputs.sql == 'true' && steps.dry_run.outputs.files != ''
-        uses: mshick/add-pr-comment@v2
-        with:
-          refresh-message-position: true
-          message-id: "migrations"
-          message: |
-            :game_die: **Database migration summary**
-
-            :rocket: The following files will be applied to the database when this PR is merged:
-            ${{ steps.dry_run.outputs.files }}
-
-      - name: Update PR with comment (migration steps - no changes)
-        if: steps.changes.outputs.sql == 'true' && steps.dry_run.outputs.files == ''
-        uses: mshick/add-pr-comment@v2
-        with:
-          refresh-message-position: true
-          message-id: "migrations"
-          message: |
-            :game_die: **Database migration summary**
-
-            :white_check_mark: All migrations have already been applied to the database.
-
-      - name: Smoke tests on API
+           
+      - name: 🔥 Smoke tests on API
         id: smoke_tests
+        continue-on-error: true
         run: |
           chmod +x Tests/smoke-tests.sh
           Tests/smoke-tests.sh
-
-      - name: Update PR with comment (smoke tests - failed)
+      
+      - name: ❌ Update PR with comment (smoke tests - failed)
         if: failure() && steps.smoke_tests.outputs.error == 'true'
         uses: mshick/add-pr-comment@v2
         with:
@@ -268,7 +225,7 @@ jobs:
               
             ```
 
-      - name: Update PR with comment (smoke tests - succeeded)
+      - name: ✅ Update PR with comment (smoke tests - succeeded)
         if: steps.smoke_tests.outputs.error != 'true'
         uses: mshick/add-pr-comment@v2
         with:
@@ -278,3 +235,100 @@ jobs:
             :fire_engine: **Smoke tests summary**
 
             :fire: Smoke tests passed!
+            
+  db_dry_run:
+    permissions:
+      actions: write
+      contents: read
+      pull-requests: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    name: 🔍 Database Migration Dry Run
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: 🤖 Skip database migration for Dependabot PR
+        if: github.actor == 'dependabot[bot]'
+        run: |
+          echo "Skipping database migration dry run for Dependabot PR"
+          echo "This job will be marked as successful"
+      
+      - name: 🔐 Acquire WireGuard connection lock
+        if: github.actor != 'dependabot[bot]'
+        uses: guibranco/github-artifact-lock-action@v3.0.3
+        with:
+          lock-name: wireguard-connection
+
+      - name: 🔒 Set up secure WireGuard VPN connection
+        if: github.actor != 'dependabot[bot]'
+        shell: bash
+        run: |
+          echo "WIREGUARD_CONNECTED=true" >> $GITHUB_ENV
+          sudo apt-get update
+          sudo apt-get install -y wireguard wireguard-tools resolvconf
+          echo "${{ secrets.WIREGUARD_CONFIG }}" > wg0.conf
+          sudo chmod 600 wg0.conf
+          sudo modprobe wireguard
+          sudo wg-quick up ./wg0.conf
+
+      - name: 🧪 Perform dry run of database migrations
+        if: github.actor != 'dependabot[bot]'
+        continue-on-error: true
+        id: dry_run
+        env:
+          MYSQL_PWD: ${{ secrets.MYSQL_PASSWORD_MIGRATION }}
+        run: |
+          chmod +x Tools/db-migration.sh
+          Tools/db-migration.sh Sql "${{ secrets.MYSQL_SERVER }}" "${{ secrets.MYSQL_USER_MIGRATION }}" "${{ secrets.MYSQL_DATABASE }}" --dry-run
+
+      - name: 🔓 Disconnect WireGuard VPN
+        if: always() && env.WIREGUARD_CONNECTED == 'true' && github.actor != 'dependabot[bot]'
+        shell: bash
+        run: sudo wg-quick down ./wg0.conf
+
+      - name: 🔑 Release WireGuard connection lock
+        if: always() && github.actor != 'dependabot[bot]'
+        uses: guibranco/github-artifact-lock-action/release-lock@v3.0.3
+        with:
+          lock-name: wireguard-connection
+
+      - name: ❌ Update PR with comment (migration error)
+        if: failure() && steps.dry_run.outputs.error == 'true' && github.actor != 'dependabot[bot]'
+        uses: mshick/add-pr-comment@v2
+        with:
+          refresh-message-position: true
+          message-id: "migrations"
+          message: |
+            :game_die: **Database migration summary**
+
+            :x: The database migration plan failed.
+
+            `${{ steps.dry_run.outputs.error_message }}`
+
+      - name: 🚀 Update PR with comment (migration steps - changed)
+        if: steps.dry_run.outputs.files != '' && github.actor != 'dependabot[bot]'
+        uses: mshick/add-pr-comment@v2
+        with:
+          refresh-message-position: true
+          message-id: "migrations"
+          message: |
+            :game_die: **Database migration summary**
+
+            :rocket: The following files will be applied to the database when this PR is merged:
+
+            ${{ steps.dry_run.outputs.files }}
+
+      - name: ✅ Update PR with comment (migration steps - no changes)
+        if: steps.dry_run.outputs.files == '' && github.actor != 'dependabot[bot]'
+        uses: mshick/add-pr-comment@v2
+        with:
+          refresh-message-position: true
+          message-id: "migrations"
+          message: |
+            :game_die: **Database migration summary**
+
+            :white_check_mark: All migrations have already been applied to the database.

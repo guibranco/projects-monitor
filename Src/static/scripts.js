@@ -661,6 +661,9 @@ function showAppVeyor(response) {
  * showCPanel(response);
  */
 function showCPanel(response) {
+
+  showErrorFiles(response);
+  
   const gaugeOptions = {
     width: "100%",
     height: "100%",
@@ -680,14 +683,13 @@ function showCPanel(response) {
     "gauge_chart_log_errors",
     gaugeOptions
   );
-  drawDataTable(response.error_log_files, "error_log_files", tableOptions);
+
   drawDataTable(
     response.error_log_messages,
     "error_log_messages",
     tableOptions
   );
   drawDataTable(response.cronjobs, "cronjobs", tableOptions);
-
   drawGaugeChart("Emails", response.emails, "gauge_chart_emails", gaugeOptions);
 
   const ids = {
@@ -726,6 +728,47 @@ function showCPanel(response) {
       redTo: item.maximum,
     };
     drawGaugeChart(item.label, item.value, item.elementId, gaugeOptionsUsage);
+  }
+}
+
+function showErrorFiles(response) {
+  if (response.error_log_files.length === 1) {
+    drawDataTable([[]], "error_log_files", tableOptions);
+    return;
+  }
+
+  if (response.error_log_files.length > 1) {
+    const errorFilesTableData = response.error_log_files;
+    errorFilesTableData[0].unshift("Actions");
+    for (let i = 1; i < errorFilesTableData.length; i++) {
+      const safeFilename = encodeURIComponent(errorFilesTableData[i][0]);
+      errorFilesTableData[i].unshift(
+        `<button 
+           class="btn btn-danger btn-sm" 
+           data-action="delete" 
+           data-filename="${safeFilename}"
+           aria-label="Delete error log file ${safeFilename}">Delete</button>`
+      );
+    }
+
+    drawDataTable(
+      errorFilesTableData,
+      "error_log_files",
+      tableOptions
+    );
+
+    if (eventAssignedError === false) {
+      eventAssignedError = true;
+      document
+        .getElementById("error_log_files")
+        .addEventListener("click", (e) => {
+          const deleteButton = e.target.closest('[data-action="delete"]');
+          if (deleteButton) {
+            const { filename } = deleteButton.dataset;
+            confirmDeleteError(filename);
+          }
+        });
+    }
   }
 }
 
@@ -943,6 +986,7 @@ function showHealthChecksIo(response) {
 }
 
 let eventAssigned = false;
+let eventAssignedError = false;
 
 /**
  * Displays various visualizations based on the provided response data.
@@ -1047,6 +1091,16 @@ function confirmDelete(application) {
   }
 }
 
+function confirmDeleteError(filename) {
+  const message = `Are you sure you want to delete error log file ${decodeURIComponent(
+    filename
+  )}?`;
+
+  if (window.confirm(message)) {
+    deleteErrorLogFile(filename);
+  }
+}
+
 /**
  * Deletes a message by application.
  *
@@ -1072,6 +1126,33 @@ function deleteMessageByApplication(application) {
     .then((data) => {
       showNotification("Success", "Item was successfully deleted", "success");
       showMessages(data);
+    })
+    .catch((error) => {
+      showNotification(
+        "Error",
+        `Failed to delete item: ${error.message}`,
+        "error"
+      );
+    });
+}
+
+function deleteErrorLogFile(filename) {
+  fetch("api/v1/cpanel/delete", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ filename }),
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      return response.json();
+    })
+    .then((data) => {
+      showNotification("Success", "Item was successfully deleted", "success");
+      showCPanel(data);
     })
     .catch((error) => {
       showNotification(

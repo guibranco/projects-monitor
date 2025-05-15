@@ -405,15 +405,15 @@ class CPanel
         return $inboxMessagesCount;
     }
 
-     /**
-     * Deletes an error log file by filename.
-     *
-     * @param string $directory The directory where ther error_log file to delete is
-     * @return bool True if the file was successfully deleted, false otherwise
-     */
+    /**
+    * Deletes an error log file by filename.
+    *
+    * @param string $directory The directory where ther error_log file to delete is
+    * @return bool True if the file was successfully deleted, false otherwise
+    */
     public function deleteErrorLogFile($directory): bool
     {
-        $fullFilename = "/home/{$this->username}/{$directory}/error_log";    
+        $fullFilename = "/home/{$this->username}/{$directory}/error_log";
         $parameters = array(
             "cpanel_jsonapi_module" => "Fileman",
             "cpanel_jsonapi_func" => "fileop",
@@ -421,11 +421,11 @@ class CPanel
             "op" => "trash",
             "sourcefiles" => $fullFilename
         );
-       
+
         try {
             $response = $this->getRequest("json-api", "cpanel", $parameters);
             return isset($response->cpanelresult->data->result) === true && $response->cpanelresult->data->result === 1;
-        } catch (RequestException $e) {        
+        } catch (RequestException $e) {
             return false;
         }
     }

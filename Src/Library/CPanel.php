@@ -404,4 +404,15 @@ class CPanel
 
         return $inboxMessagesCount;
     }
+
+    /**
+     * Deletes an error log file by filename.
+     *
+     * @return bool If succeeded or not.
+     */
+    public function deleteErrorLogFile($filename): bool
+    {
+        $fullFilename = "/home/{$this->username}/{$filename}";
+        return false; // MOCK
+    }
 }

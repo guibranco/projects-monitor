@@ -413,31 +413,19 @@ class CPanel
  */
 public function deleteErrorLogFile($filename): bool
 {
-    $fullFilename = "/home/{$this->username}/{$filename}/error_log";
-    
-    // Validate that this is actually an error log file
-    if (!preg_match('/^(.*)\/error_log$/', $filename)) {
-        $logger = new Logger();
-        $logger->logMessage("Attempted to delete non-error log file: {$filename}");
-        return false;
-    }
-    
-    $pathInfo = pathinfo($fullFilename);
+    $fullFilename = "/home/{$this->username}/{$filename}/error_log";    
     $parameters = array(
         "cpanel_jsonapi_module" => "Fileman",
         "cpanel_jsonapi_func" => "fileop",
         "cpanel_jsonapi_apiversion" => "2",
-        "op" => "delete",
-        "sourcefiles" => $pathInfo["basename"],
-        "dir" => $pathInfo["dirname"]
+        "op" => "trash",
+        "sourcefiles" => %fullFilename
     );
    
     try {
         $response = $this->getRequest("json-api", "cpanel", $parameters);
-        return isset($response->cpanelresult->data->success) && $response->cpanelresult->data->success;
-    } catch (RequestException $e) {
-        $logger = new Logger();
-        $logger->logMessage("Error deleting error log file: {$e->getMessage()}");
+        return isset($response->cpanelresult->data->result) === true && $response->cpanelresult->data->result === 1;
+    } catch (RequestException $e) {        
         return false;
     }
 }

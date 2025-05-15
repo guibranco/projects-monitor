@@ -1,116 +1,91 @@
-name: Deploy via ftp
+name: Deploy via FTP with Database Migrations
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
-concurrency:
-  group: build-deploy
-
 jobs:
   deploy:
-    name: Deploy to FTP
+    name: 📦 Deploy Application to FTP
     runs-on: ubuntu-latest
     outputs:
-      semVer: ${{ steps.gitversion.outputs.semVer }}
+      fullSemVer: ${{ steps.gitversion.outputs.fullSemVer }}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: dorny/paths-filter@v3
-        id: changes
-        with:
-          filters: |
-            src:
-              - "Src/**"
-
-      - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v3
+      - name: 🔧 Install GitVersion
+        uses: gittools/actions/gitversion/setup@v3.2.1
         with:
           versionSpec: "5.x"
 
-      - name: Determine Version
+      - name: 🏷️ Determine Version Number
         id: gitversion
-        uses: gittools/actions/gitversion/execute@v3
+        uses: gittools/actions/gitversion/execute@v3.2.1
         with:
           useConfigFile: true
 
-      - name: Cache Composer dependencies
+      - name: 💾 Cache Composer Dependencies
         uses: actions/cache@v4
-        if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
         with:
           path: /tmp/composer-cache
           key: ${{ runner.os }}-${{ hashFiles('**/composer.lock') }}
 
-      - name: Install dependencies
+      - name: 📚 Install PHP Dependencies
         uses: "php-actions/composer@v6"
-        if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
         with:
           php_extensions: sockets
           dev: no
           progress: yes
           working_dir: "./Src/"
 
-      - name: Create cache directory
+      - name: 📁 Create Cache Directory
         run: |
           mkdir -p Src/api/v1/cache
           cd  Src/api/v1/cache
           echo "Deny from all" >> .htaccess
 
-      - name: Create .htaccess secrets file
-        if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
+      - name: 🔒 Create .htaccess Security File
         run: |
           cd Src
           mkdir -p secrets
           cd secrets
           echo "Deny from all" >> .htaccess
 
-      - name: Create AppVeyor secrets file
-        if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
+      - name: 🔑 Generate AppVeyor Configuration
         run: |
-          cd Src
-          mkdir -p secrets
-          cd secrets
+          cd Src/secrets
           echo "<?php" >> appVeyor.secrets.php
           echo "\$appVeyorApiKey = \"${{ secrets.APPVEYOR_API_KEY }}\";" >> appVeyor.secrets.php
-
-      - name: Create CPanel secrets file
-        if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
+      
+      - name: 🔑 Generate CPanel Configuration
         run: |
-          cd Src
-          mkdir -p secrets
-          cd secrets
+          cd Src/secrets
           echo "<?php" >> cPanel.secrets.php
           echo "\$cPanelApiToken     = \"${{ secrets.CPANEL_API_TOKEN }}\";" >> cPanel.secrets.php
           echo "\$cPanelBaseUrl      = \"${{ secrets.CPANEL_BASE_URL }}\";" >> cPanel.secrets.php
           echo "\$cPanelUsername     = \"${{ secrets.CPANEL_USERNAME }}\";" >> cPanel.secrets.php
           echo "\$cPanelEmailAccount = \"${{ secrets.CPANEL_EMAIL_ACCOUNT }}\";" >> cPanel.secrets.php
-
-      - name: Create GitHub secrets file
-        if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
+      
+      - name: 🔑 Generate GitHub Secrets Configuration
         run: |
-          cd Src
-          mkdir -p secrets
-          cd secrets
+          cd Src/secrets
           echo "<?php" >> gitHub.secrets.php
           echo "\$gitHubToken = \"${{ secrets.GH_TOKEN }}\";" >> gitHub.secrets.php
 
-      - name: Create HealthCheck secrets file
-        if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
+      - name: 🔑 Generate HealthChecks.io Configuration
         run: |
-          cd Src
-          mkdir -p secrets
-          cd secrets
+          cd Src/secrets
           echo "<?php" >> healthChecksIo.secrets.php
           echo "\$healthChecksIoWriteKeys[] = \"${{ secrets.HEALTHCHECKSIO_WK1 }}\";" >> healthChecksIo.secrets.php
           echo "\$healthChecksIoWriteKeys[] = \"${{ secrets.HEALTHCHECKSIO_WK2 }}\";" >> healthChecksIo.secrets.php
           echo "\$healthChecksIoWriteKeys[] = \"${{ secrets.HEALTHCHECKSIO_WK3 }}\";" >> healthChecksIo.secrets.php
 
-      - name: Create Ip2WhoIs secrets file
-        if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
+      - name: 🔑 Generate Ip2WhoIs Configuration
         run: |
           cd Src
           mkdir -p secrets
@@ -122,8 +97,7 @@ jobs:
           echo "    public static \$ApiKey = \"${{ secrets.IP2WHOIS_API_KEY }}\";" >> Ip2WhoIsSecrets.php
           echo "}" >> Ip2WhoIsSecrets.php
 
-      - name: Create MySQL secrets file
-        if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
+      - name: 🔑 Generate MySQL Database Configuration
         run: |
           cd Src
           mkdir -p secrets
@@ -134,8 +108,7 @@ jobs:
           echo "\$mySqlPassword = \"${{ secrets.MYSQL_PASSWORD }}\";" >> mySql.secrets.php
           echo "\$mySqlDatabase = \"${{ secrets.MYSQL_DATABASE }}\";" >> mySql.secrets.php
 
-      - name: Create Postman secrets file
-        if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
+      - name: 🔑 Generate Postman Configuration
         run: |
           cd Src
           mkdir -p secrets
@@ -143,8 +116,7 @@ jobs:
           echo "<?php" >> postman.secrets.php
           echo "\$postmanToken = \"${{ secrets.POSTMAN_API_KEY }}\";" >> postman.secrets.php
 
-      - name: Create RabbitMQ secrets file
-        if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
+      - name: 🔑 Generate RabbitMQ Configuration
         run: |
           SECRETS_CONTEXT='${{ toJson(secrets) }}'
           cd Src
@@ -158,7 +130,7 @@ jobs:
               echo "\$rabbitMqConnectionStrings[] = \"$value_final\";" >> rabbitMq.secrets.php
           done
 
-      - name: Create SSH secrets file for service
+      - name: 🔑 Generate SSH Configuration
         run: |
           cd Src
           mkdir -p secrets
@@ -168,8 +140,7 @@ jobs:
           echo "\$sshUsername    = \"${{ secrets.SSH_USERNAME }}\";" >> ssh.secrets.php
           echo "\$sshPrivateKey  = \"${{ secrets.SSH_PRIVATE_KEY }}\";" >> ssh.secrets.php
 
-      - name: Create UpTimeRobot secrets file
-        if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
+      - name: 🔑 Generate UpTimeRobot Configuration
         run: |
           cd Src
           mkdir -p secrets
@@ -177,8 +148,7 @@ jobs:
           echo "<?php" >> upTimeRobot.secrets.php
           echo "\$upTimeRobotToken = \"${{ secrets.UPTIMEROBOT_TOKEN }}\";" >> upTimeRobot.secrets.php
 
-      - name: Create Webhooks secrets file
-        if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
+      - name: 🔑 Generate Webhooks Configuration
         run: |
           cd Src
           mkdir -p secrets
@@ -187,8 +157,12 @@ jobs:
           echo "\$webhooksApiUrl   = \"${{ secrets.WEBHOOKS_API_URL }}\";" >> webhooks.secrets.php
           echo "\$webhooksApiToken = \"${{ secrets.WEBHOOKS_API_TOKEN }}\";" >> webhooks.secrets.php
 
-      - name: Zip files
-        if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
+      - name: 📝 Create Version File for API
+        run: |
+          cd Src       
+          echo ${{ env.fullSemVer }} > version.txt
+
+      - name: 📦 Package Files for Deployment
         run: |
           cd Src
           zip -r deploy.zip . -x install.php
@@ -197,8 +171,7 @@ jobs:
           mv Src/deploy.zip deploy
           cp "Src/install.php" deploy
 
-      - name: Upload files
-        if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
+      - name: 📤 Upload Application via FTP
         uses: sebastianpopp/ftp-action@releases/v2
         with:
           host: ${{ secrets.FTP_SERVER }}
@@ -207,21 +180,24 @@ jobs:
           localDir: "deploy/"
           remoteDir: "/"
 
-      - name: Call installation endpoint
-        if: steps.changes.outputs.src == 'true' || github.event_name == 'workflow_dispatch'
+      - name: 🚀 Trigger Installation Process
         run: curl --fail-with-body "${{ secrets.INSTALLATION_ENDPOINT }}install.php"
 
   database_migrations:
-    name: Database migrations
+    name: 🗄️ Run Database Migrations
     runs-on: ubuntu-latest
-    needs: deploy
+    permissions:
+      actions: write
+      contents: write
+    needs: [deploy]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Check changes in Sql folder
+      - name: 🔍 Detect Changes in SQL Scripts
         uses: dorny/paths-filter@v3
         id: changes
         with:
@@ -229,72 +205,88 @@ jobs:
             sql:
               - "Sql/**"
               - "Tools/**"
+      
+      - name: 🔐 Acquire WireGuard Connection Lock
+        uses: guibranco/github-artifact-lock-action@v3.0.3
+        with:
+          lock-name: wireguard-connection
 
-      - name: Attach WireGuard connection
-        if: steps.changes.outputs.sql == 'true' || github.event_name == 'workflow_dispatch'
+      - name: 🔌 Establish WireGuard VPN Connection
         shell: bash
         run: |
-          sudo apt install resolvconf
-          sudo apt install wireguard
+          echo "WIREGUARD_CONNECTED=true" >> $GITHUB_ENV
+          sudo apt-get update
+          sudo apt-get install -y wireguard wireguard-tools resolvconf
           echo "${{ secrets.WIREGUARD_CONFIG }}" > wg0.conf
           sudo chmod 600 wg0.conf
+          sudo modprobe wireguard
           sudo wg-quick up ./wg0.conf
 
-      - name: Check if the schema version table exists
+      - name: 🔍 Check for Schema Version Table
         id: new_installation
-        if: steps.changes.outputs.sql == 'true' || github.event_name == 'workflow_dispatch'
         env:
           MYSQL_PWD: ${{ secrets.MYSQL_PASSWORD_MIGRATION }}
         run: |
           chmod +x Tools/db-check.sh
           Tools/db-check.sh "${{ secrets.MYSQL_SERVER }}" "${{ secrets.MYSQL_USER_MIGRATION }}" "${{ secrets.MYSQL_DATABASE }}"
 
-      - name: Run database migrations
-        if: steps.changes.outputs.sql == 'true' || github.event_name == 'workflow_dispatch' || steps.new_installation.outputs.not_found == 'true'
+      - name: 🔄 Execute Database Migration Scripts
         env:
           MYSQL_PWD: ${{ secrets.MYSQL_PASSWORD_MIGRATION }}
         run: |
           chmod +x Tools/db-migration.sh
           Tools/db-migration.sh Sql "${{ secrets.MYSQL_SERVER }}" "${{ secrets.MYSQL_USER_MIGRATION }}" "${{ secrets.MYSQL_DATABASE }}"
 
-      - name: Detach WireGuard connection
-        if: steps.changes.outputs.sql == 'true' || github.event_name == 'workflow_dispatch'
+      - name: 🔌 Disconnect WireGuard VPN
+        if: always()
         shell: bash
         run: sudo wg-quick down ./wg0.conf
 
+      - name: 🔓 Release WireGuard Connection Lock
+        if: always()
+        uses: guibranco/github-artifact-lock-action/release-lock@v3.0.3
+        with:
+          lock-name: wireguard-connection
+
   automated-api-tests:
-    name: Automated API tests (Postman)
-    needs: [deploy, database_migrations]
+    name: 🧪 Run Automated API Tests
     runs-on: ubuntu-latest
+    needs: [deploy, database_migrations]
+
     steps:
-      - name: Install Postman CLI
-        if: ${{ vars.POSTMAN_ENABLE == 'true' }}
+      - name: 📋 Initialize Test Process
+        run: echo "Running API tests job"
+
+      - name: 🔧 Install Postman CLI
+        if: ${{ vars.POSTMAN_ENABLED == 'true' }}
         run: curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh
 
-      - name: Login to Postman CLI
-        if: ${{ vars.POSTMAN_ENABLE == 'true' }}
+      - name: 🔑 Authenticate with Postman
+        if: ${{ vars.POSTMAN_ENABLED == 'true' }}
         run: postman login --with-api-key ${{ secrets.POSTMAN_API_KEY }}
 
-      - name: Run API tests
-        if: ${{ vars.POSTMAN_ENABLE == 'true' }}
+      - name: 🧪 Execute Postman Collection Tests
+        if: ${{ vars.POSTMAN_ENABLED == 'true' }}
         run: postman collection run 23511-01109172-13a0-4cdb-bd0c-18a71d624a48 -e 23511-95105c79-d4eb-4388-9ff9-eb5dee83fdcf
 
   create_release:
-    name: Create release
+    name: 📢 Create GitHub Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
     needs: [deploy, database_migrations, automated-api-tests]
     env:
-      SEMVER: ${{ needs.deploy.outputs.semVer }}
-    runs-on: ubuntu-latest
+      fullSemVer: ${{ needs.deploy.outputs.fullSemVer }}
 
     steps:
-      - name: Create Release
+      - name: 🏷️ Create and Publish Release
         uses: ncipollo/release-action@v1.16.0
         with:
           skipIfReleaseExists: true
           allowUpdates: false
           draft: false
           makeLatest: true
-          tag: v${{ env.SEMVER }}
-          name: Release v${{ env.SEMVER }}
+          tag: v${{ env.fullSemVer }}
+          name: Release v${{ env.fullSemVer }}
           generateReleaseNotes: true
-          body: Release ${{ env.SEMVER }} of ${{ github.repository }}
+          body: Release ${{ env.fullSemVer }} of ${{ github.repository }}

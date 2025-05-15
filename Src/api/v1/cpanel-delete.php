@@ -18,20 +18,31 @@ if (json_last_error() !== JSON_ERROR_NONE) {
     exit;
 }
 
-if (isset($input['filename']) === false) {
+if (!isset($input['directory'])) {
     http_response_code(400);
-    echo json_encode(["error" => "Filename is required"]);
+    echo json_encode(["error" => "Directory is required"]);
     exit;
 }
 
-$filename = filter_var(urldecode($input['filename']), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+if (!is_string($input['directory']) || trim($input['directory']) === '') {
+    http_response_code(400);
+    echo json_encode(["error" => "Directory must be a non-empty string"]);
+    exit;
+}
+
+if (!preg_match('/^[A-Za-z0-9_\/\.\-]+$/', $input['directory'])) {
+    http_response_code(400);
+    echo json_encode(["error" => "Directory contains invalid characters"]);
+    exit;
+}
+$directory = filter_var(urldecode($input['directory']), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 $cPanel = new CPanel();
-$result = $cPanel->deleteErrorLogFile($filename);
+$result = $cPanel->deleteErrorLogFile($directory);
 
 if ($result === false) {
     http_response_code(500);
-    echo json_encode(["error" => "An error occurred while deleting the file"]);
+    echo json_encode(["error" => "An error occurred while deleting the error_log file at {$directory}"]);
     exit;
 }
 

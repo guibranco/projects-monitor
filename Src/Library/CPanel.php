@@ -3,7 +3,6 @@
 namespace GuiBranco\ProjectsMonitor\Library;
 
 use GuiBranco\ProjectsMonitor\Library\Configuration;
-use GuiBranco\ProjectsMonitor\Library\Logger;
 use GuiBranco\Pancake\Request;
 use GuiBranco\Pancake\ShieldsIo;
 
@@ -312,9 +311,7 @@ class CPanel
         );
         $response = $this->getRequest("json-api", "cpanel", $parameters);
 
-        if ($response === null || !isset($response->cpanelresult->data)) {
-            $logger = new Logger();
-            $logger->logMessage("Error getting crons from cPanel");
+        if ($response === null || !isset($response->cpanelresult->data)) {            
             return null;
         }
 
@@ -352,8 +349,6 @@ class CPanel
         $response = $this->getRequest($endpoint, '', []);
 
         if ($response === null || empty($response->data)) {
-            $logger = new Logger();
-            $logger->logMessage("Error getting usage data from cPanel");
             return null;
         }
 
@@ -389,8 +384,6 @@ class CPanel
         $response = $this->getRequest($endpoint, '', ["account" => $this->emailAccount]);
 
         if ($response === null || empty($response->data)) {
-            $logger = new Logger();
-            $logger->logMessage("Error getting email data from cPanel");
             return 0;
         }
 
@@ -424,7 +417,7 @@ class CPanel
 
         try {
             $response = $this->getRequest("json-api", "cpanel", $parameters);
-            return isset($response->cpanelresult->data->result) === true && $response->cpanelresult->data->result === 1;
+            return isset($response->cpanelresult->data[0]->result) === true && $response->cpanelresult->data[0]->result === 1;
         } catch (RequestException $e) {
             return false;
         }

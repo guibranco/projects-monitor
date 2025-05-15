@@ -311,7 +311,7 @@ class CPanel
         );
         $response = $this->getRequest("json-api", "cpanel", $parameters);
 
-        if ($response === null || !isset($response->cpanelresult->data)) {            
+        if ($response === null || !isset($response->cpanelresult->data)) {
             return null;
         }
 

@@ -1152,7 +1152,7 @@ function deleteErrorLogFile(filename) {
     })
     .then((data) => {
       showNotification("Success", "Item was successfully deleted", "success");
-      showErrorFiles(data);
+      showCPanel(data);
     })
     .catch((error) => {
       showNotification(

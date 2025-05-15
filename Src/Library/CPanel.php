@@ -408,18 +408,18 @@ class CPanel
  /**
  * Deletes an error log file by filename.
  *
- * @param string $filename The name of the error log file to delete
+ * @param string $directory The directory where ther error_log file to delete is
  * @return bool True if the file was successfully deleted, false otherwise
  */
-public function deleteErrorLogFile($filename): bool
+public function deleteErrorLogFile($directory): bool
 {
-    $fullFilename = "/home/{$this->username}/{$filename}/error_log";    
+    $fullFilename = "/home/{$this->username}/{$directory}/error_log";    
     $parameters = array(
         "cpanel_jsonapi_module" => "Fileman",
         "cpanel_jsonapi_func" => "fileop",
         "cpanel_jsonapi_apiversion" => "2",
         "op" => "trash",
-        "sourcefiles" => %fullFilename
+        "sourcefiles" => $fullFilename
     );
    
     try {

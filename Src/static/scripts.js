@@ -1092,9 +1092,7 @@ function confirmDelete(application) {
 }
 
 function confirmDeleteError(directory) {
-  const message = `Are you sure you want to delete error_log file located at ${decodeURIComponent(
-    directory
-  )}?`;
+  const message = `Are you sure you want to delete error_log file located at ${directory}?`;
 
   if (window.confirm(message)) {
     deleteErrorLogFile(directory);

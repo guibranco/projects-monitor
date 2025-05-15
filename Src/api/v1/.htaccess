@@ -5,6 +5,7 @@ RewriteCond %{REQUEST_FILENAME} !-f
 
 RewriteRule ^appveyor$ appveyor.php [NC,L]
 RewriteRule ^cpanel$ cpanel.php [NC,L]
+RewriteRule ^cpanel/delete$ cpanel-delete.php [NC,L]
 RewriteRule ^domains$ domains.php [NC,L]
 RewriteRule ^github$ github.php [NC,L]
 RewriteRule ^healthchecksio$ healthchecksio.php [NC,L]

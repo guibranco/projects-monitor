@@ -41,7 +41,7 @@ jobs:
       - name: 🗄️ Create MySQL secrets file
         run: |
           cd Src/secrets
-          echo "<?php" >> mySql.secrets.php
+          echo "<?php" >  mySql.secrets.php
           echo "\$mySqlHost     = \"database\";" >> mySql.secrets.php
           echo "\$mySqlUser     = \"test\";" >> mySql.secrets.php
           echo "\$mySqlPassword = \"test\";" >> mySql.secrets.php

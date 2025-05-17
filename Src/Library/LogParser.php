@@ -13,7 +13,7 @@ class LogParser
 {
     /**
      * Regex pattern to extract log entries.
-     * 
+     *
      * Captures:
      * - date (timestamp)
      * - multilineError (error message, possibly multiline)
@@ -44,7 +44,7 @@ class LogParser
      * Parses a full log string and extracts error entries.
      *
      * @param string $logContents The complete multiline log text.
-     * 
+     *
      * @return array<int, array{
      *     date: string,
      *     multilineError: string,
@@ -52,7 +52,7 @@ class LogParser
      *     line: string,
      *     stackTraceDetails?: string
      * }>
-     * 
+     *
      * @throws InvalidArgumentException If the log string is empty.
      */
     public function parse(string $logContents): array

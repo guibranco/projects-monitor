@@ -6,7 +6,6 @@ use GuiBranco\ProjectsMonitor\Library\Configuration;
 use GuiBranco\ProjectsMonitor\Library\LogParser;
 use GuiBranco\Pancake\Request;
 use GuiBranco\Pancake\ShieldsIo;
-use InvalidArgumentException;
 
 class CPanel
 {

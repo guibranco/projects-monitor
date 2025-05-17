@@ -18,12 +18,7 @@ class CPanel
 
     private $request;
 
-    /* The above code is defining a private constant in PHP with the name `REGEX_PATTERN` and assigning
-    it a multi-line string value enclosed in triple hash symbols (` */
-    private const REGEX_PATTERN =
-        "/\[(?<date>\d{2}-[A-Za-z]{3}-\d{4}\s\d{2}:\d{2}:\d{2}\s[A-Za-z\/_]+?)\]\s(?<error>.+?)" .
-        "(?:(?<multilineError>\n(?:.|\n)+?)\sin\s(?<file>.+?\.php)(?:\son\sline\s|:)(?<line>\d+))?" .
-        "(?<stackTrace>\nStack\strace:\n(?<stackTraceDetails>(?:#\d+\s.+?\n)*)\s+thrown\sin\s.+?\.php\son\sline\s\d+)?$/m";
+    private const REGEX_PATTERN = '/^\[(?<date>\d{2}-[A-Za-z]{3}-\d{4} \d{2}:\d{2}:\d{2} [A-Za-z\/_]+)\]\s(?<error>.+?(?:\n\s{2,}.+)*?)(?:\sin\s(?<file>.+?\.php)(?:\son\sline\s|:)(?<line>\d+))?(?:\nStack\strace:\n(?<stackTraceDetails>(?:#\d+ .+\n?)+).+?in\s.+?\.php\son\sline\s\d+)?$/msx';
 
     /**
      * The constructor initializes configuration settings and loads cPanel API credentials from a

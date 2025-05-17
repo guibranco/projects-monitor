@@ -3,8 +3,10 @@
 namespace GuiBranco\ProjectsMonitor\Library;
 
 use GuiBranco\ProjectsMonitor\Library\Configuration;
+use GuiBranco\ProjectsMonitor\Library\LogParser;
 use GuiBranco\Pancake\Request;
 use GuiBranco\Pancake\ShieldsIo;
+use InvalidArgumentException;
 
 class CPanel
 {
@@ -17,8 +19,6 @@ class CPanel
     private $emailAccount;
 
     private $request;
-
-    private const REGEX_PATTERN = '/^\[(?<date>\d{2}-[A-Za-z]{3}-\d{4} \d{2}:\d{2}:\d{2} [A-Za-z\/_]+)\]\s(?<error>.+?(?:\n\s{2,}.+)*?)(?:\sin\s(?<file>.+?\.php)(?:\son\sline\s|:)(?<line>\d+))?(?:\nStack\strace:\n(?<stackTraceDetails>(?:#\d+ .+\n?)+).+?in\s.+?\.php\son\sline\s\d+)?$/msx';
 
     /**
      * The constructor initializes configuration settings and loads cPanel API credentials from a
@@ -257,6 +257,7 @@ class CPanel
         $result = array();
         $items = $this->searchFiles("error_log", "/");
 
+        $parser = new LogParser();
         foreach ($items as $item) {
             if (strpos($item->file, ".trash") !== false) {
                 continue;
@@ -267,14 +268,13 @@ class CPanel
             if ($content === null) {
                 continue;
             }
-
-            preg_match_all(CPanel::REGEX_PATTERN, $content["contents"], $matches);
-            foreach ($matches["error"] as $index => $match) {
-                $date = date("H:i:s d/m/Y", strtotime($matches["date"][$index]));
-                $dir = str_replace("/home/{$this->username}/", "", $content["dirname"]);
-                $file = str_replace("/home/{$this->username}/", "", $matches["file"][$index]);
-                $line = $matches["line"][$index];
-                $result[] = array($date, $dir, $match, $file, $line);
+            try {
+                $errors = $parser->parse($content["contents"]);
+                foreach ($errors as $error) {
+                    $date = date("H:i:s d/m/Y", strtotime($error['date']));
+                    $dir = str_replace("/home/{$this->username}/", "", $content["dirname"]);
+                    $file = str_replace("/home/{$this->username}/", "", $error['file']);
+                    $result[] = array($date, $dir, $error['multilineError'], $file, $error['line']);
             }
         }
 
@@ -283,7 +283,7 @@ class CPanel
         }
 
         ksort($result, SORT_ASC);
-        array_unshift($result, array("Date", "Error Log", "Error", "File", "Line"));
+        array_unshift($result, array("Date", "Directory", "Error", "File", "Line"));
         return $result;
     }
 

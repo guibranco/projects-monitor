@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 use GuiBranco\ProjectsMonitor\Library\LogParser;
-use InvalidArgumentException;
 
 final class LogParserTest extends TestCase
 {

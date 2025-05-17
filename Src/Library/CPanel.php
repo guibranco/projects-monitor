@@ -268,7 +268,7 @@ class CPanel
             if ($content === null) {
                 continue;
             }
-            
+
             $errors = $parser->parse($content["contents"]);
             foreach ($errors as $error) {
                 $date = date("H:i:s d/m/Y", strtotime($error['date']));

@@ -268,13 +268,13 @@ class CPanel
             if ($content === null) {
                 continue;
             }
-            try {
-                $errors = $parser->parse($content["contents"]);
-                foreach ($errors as $error) {
-                    $date = date("H:i:s d/m/Y", strtotime($error['date']));
-                    $dir = str_replace("/home/{$this->username}/", "", $content["dirname"]);
-                    $file = str_replace("/home/{$this->username}/", "", $error['file']);
-                    $result[] = array($date, $dir, $error['multilineError'], $file, $error['line']);
+            
+            $errors = $parser->parse($content["contents"]);
+            foreach ($errors as $error) {
+                $date = date("H:i:s d/m/Y", strtotime($error['date']));
+                $dir = str_replace("/home/{$this->username}/", "", $content["dirname"]);
+                $file = str_replace("/home/{$this->username}/", "", $error['file']);
+                $result[] = array($date, $dir, $error['multilineError'], $file, $error['line']);
             }
         }
 

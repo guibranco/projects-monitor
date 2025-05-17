@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GuiBranco\ProjectsMonitor\Library;
 
 use InvalidArgumentException;
+use RuntimeException;
 
 /**
  * Parses PHP error logs with multiline error messages and optional stack traces.
@@ -65,6 +66,11 @@ class LogParser
         $results = [];
 
         preg_match_all(self::REGEX_PATTERN, $logContents, $matches, PREG_SET_ORDER);
+
+        $error = preg_last_error();
+        if ($error !== PREG_NO_ERROR) {
+            throw new RuntimeException('Regex error: ' . preg_last_error_msg(), $error);
+        }
 
         foreach ($matches as $match) {
             $entry = [

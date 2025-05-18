@@ -36,6 +36,7 @@ class Postman
         $headers = [
             "X-API-Key: {$this->token}",
             "Accept: application/json",
+            "Host: api.getpostman.com",
             constant("USER_AGENT")
         ];
 

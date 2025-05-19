@@ -35,8 +35,6 @@ class Postman
         $url = self::API_URL . $endpoint;
         $headers = [
             "X-API-Key: {$this->token}",
-            "Accept: application/json",
-            "Host: api.getpostman.com",
             constant("USER_AGENT")
         ];
 

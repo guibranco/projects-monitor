@@ -39,6 +39,12 @@ RUN apt-get update \
 RUN php -i | grep "Configuration File" || true \
 
 # Set the working directory
+
+# Copy PHP configuration
+COPY docker/php/90-custom.ini /usr/local/etc/php/conf.d/
+RUN ls -la /usr/local/etc/php/conf.d/ \
+    && cat /usr/local/etc/php/conf.d/90-custom.ini
+
 WORKDIR /var/www/html
 
 # Copy application code (at the end to leverage caching)

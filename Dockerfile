@@ -37,14 +37,13 @@ RUN apt-get update \
 
 # Configure PHP base settings (can be overridden by mounted config)
 RUN php -i | grep "Configuration File" || true \
-
-# Set the working directory
+    && php -i | grep "Scan this dir for additional" || true \
+    && mkdir -p /usr/local/etc/php/conf.d/
 
 # Copy PHP configuration
 COPY docker/php/90-custom.ini /usr/local/etc/php/conf.d/
 RUN ls -la /usr/local/etc/php/conf.d/ \
     && cat /usr/local/etc/php/conf.d/90-custom.ini
-
 WORKDIR /var/www/html
 
 # Copy application code (at the end to leverage caching)

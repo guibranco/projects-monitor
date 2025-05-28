@@ -38,22 +38,12 @@ RUN apt-get update \
 # Configure PHP base settings (can be overridden by mounted config)
 RUN php -i | grep "Configuration File" || true \
     && php -i | grep "Scan this dir for additional" || true \
-    && mkdir -p /usr/local/etc/php/conf.d/ \
-    && { \
-    echo '[mail function]'; \
-    echo 'sendmail_path = "/usr/local/bin/mhsendmail --smtp-addr=mailhog:1025"'; \
-    echo ''; \
-    echo '[PHP]'; \
-    echo 'upload_max_filesize = 10M'; \
-    echo 'post_max_size = 10M'; \
-    echo 'memory_limit = 256M'; \
-    echo 'max_execution_time = 600'; \
-    echo 'max_input_vars = 3000'; \
-    } > /usr/local/etc/php/conf.d/90-custom.ini \
-    && ls -la /usr/local/etc/php/conf.d/ \
-    && cat /usr/local/etc/php/conf.d/90-custom.ini
+    && mkdir -p /usr/local/etc/php/conf.d/
 
-# Set the working directory
+# Copy PHP configuration
+COPY docker/php/90-custom.ini /usr/local/etc/php/conf.d/
+RUN ls -la /usr/local/etc/php/conf.d/ \
+    && cat /usr/local/etc/php/conf.d/90-custom.ini
 WORKDIR /var/www/html
 
 # Copy application code (at the end to leverage caching)

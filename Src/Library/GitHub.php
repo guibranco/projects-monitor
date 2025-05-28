@@ -334,7 +334,7 @@ class GitHub
         $cache = "cache/github_billing_{$accountType}_{$account}_{$type}.json";
         $cacheExists = file_exists($cache);
 
-        if ($cacheExists && filemtime($cache) > strtotime("-5 minute")) {
+        if ($cacheExists && filemtime($cache) > strtotime("-1 hour")) {
             return json_decode(file_get_contents($cache));
         }
 

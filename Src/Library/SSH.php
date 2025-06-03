@@ -125,6 +125,7 @@ class SSH
             '10.207.124.11/32' => 'GH Actions - Vagas Aggregator',
             '10.207.124.12/32' => 'GH Actions - Bancos Brasileiros',
             '10.207.124.13/32' => 'GH Actions - Sports Agenda Worker',
+            '10.207.124.14/32' => 'Laptop Tamara',
         ];
 
         return $peers[$peerName] ?? $peerName;

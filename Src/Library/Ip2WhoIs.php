@@ -50,9 +50,9 @@ class Ip2WhoIs
             "gstraccini.bot",
             "gstraccini.dev",
             "progress-bar.xyz",
-            #"straccini.com",
+            "straccini.com",
             "straccini.com.br",
-            #"stracini.com",
+            "stracini.com",
             "stracini.com.br"
         ];
         $pattern = '/https?:\/\/[^\s]+/';

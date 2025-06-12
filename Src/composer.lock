@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "de05fe6bdf94caa360c37a8e98c330b9",
+    "content-hash": "3386d6987d1b24206078f86208935149",
     "packages": [
         {
             "name": "amphp/amp",
@@ -945,16 +945,16 @@
         },
         {
             "name": "fastvolt/markdown",
-            "version": "v0.2.1",
+            "version": "v0.2.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/fastvolt/markdown.git",
-                "reference": "c068d3644ac544e024b8f04381f7995b79f60849"
+                "reference": "6032ce01bdca8f4a2ca184bcae05590e9ec358b1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/fastvolt/markdown/zipball/c068d3644ac544e024b8f04381f7995b79f60849",
-                "reference": "c068d3644ac544e024b8f04381f7995b79f60849",
+                "url": "https://api.github.com/repos/fastvolt/markdown/zipball/6032ce01bdca8f4a2ca184bcae05590e9ec358b1",
+                "reference": "6032ce01bdca8f4a2ca184bcae05590e9ec358b1",
                 "shasum": ""
             },
             "require": {
@@ -962,6 +962,7 @@
                 "php": "^8.1"
             },
             "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.38",
                 "phpunit/phpunit": "^10.4"
             },
             "type": "library",
@@ -989,9 +990,9 @@
             ],
             "support": {
                 "issues": "https://github.com/fastvolt/markdown/issues",
-                "source": "https://github.com/fastvolt/markdown/tree/v0.2.1"
+                "source": "https://github.com/fastvolt/markdown/tree/v0.2.2"
             },
-            "time": "2024-08-28T22:09:35+00:00"
+            "time": "2025-06-09T11:41:13+00:00"
         },
         {
             "name": "guibranco/pancake",
@@ -3385,11 +3386,11 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {},
     "prefer-stable": false,
     "prefer-lowest": false,
-    "platform": [],
-    "platform-dev": [],
+    "platform": {},
+    "platform-dev": {},
     "platform-overrides": {
         "php": "8.2.0"
     },

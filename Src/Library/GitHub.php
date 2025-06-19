@@ -160,8 +160,7 @@ class GitHub
         }
 
         $result = array();
-        $mkd = Markdown::new();
-
+        
         foreach ($items as $item) {
             $repositoryName = str_replace("https://api.github.com/repos/", "", $item->repository_url);
             $labelsJson = $item->labels;
@@ -172,6 +171,7 @@ class GitHub
                 return "<span style='background-color: #" . $label->color . ";color: #" . (Color::luminance($label->color) > 120 ? "000" : "fff") . ";padding: 0 7px;border-radius: 24px;border: 1px solid #000;line-height: 21px;text-wrap:nowrap;'>" . $label->name . "</span>";
             }, $labelsJson));
 
+            $mkd = Markdown::new();
             $mkd->setContent(htmlentities($item->title));
             $title = $mkd->toHtml();
 

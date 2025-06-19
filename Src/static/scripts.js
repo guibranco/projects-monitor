@@ -410,7 +410,7 @@ function preset() {
   showQueues(JSON.parse('{"queues":[],"total":0}'));
   showWebhook(
     JSON.parse(
-      '{"senders":[],"events":[["Event","Hits"]],"failed":0,"feed":[],"repositories":[],"total":0,"statistics":[["Date","Table #1"],["01/01",0]],"statistics_github":[["Date","Table #1"],["01/01",0]],"workflow_runs":[],"total_workflow_runs":0, "installations":0, "installation_repositories": [], "installation_repositories_count": 0}'
+      '{"senders":[],"events":[["Event","Hits"]],"failed":0,"feed":[],"repositories":[],"total":0,"statistics":[["Date","Table #1"],["01/01",0]],"statistics_github":[["Date","Table #1"],["01/01",0]],"branches":[],"workflow_runs":[],"total_workflow_runs":0, "installations":0, "installation_repositories": [], "installation_repositories_count": 0}'
     )
   );
 }
@@ -1325,6 +1325,7 @@ function showUpTimeRobot(response) {
  * @param {Array} response.senders - An array of sender data.
  * @param {Array} response.repositories - An array of repository data.
  * @param {Array} response.workflow_runs - An array of workflow run data.
+ * @param {Array} response.branches - An array of branches data.
  * @param {number} response.total - The total number of webhooks received.
  * @param {number} response.failed - The number of failed webhooks.
  * @param {number} response.total_workflow_runs - The total number of workflow runs.
@@ -1344,6 +1345,7 @@ function showUpTimeRobot(response) {
  *   senders: [...],
  *   repositories: [...],
  *   workflow_runs: [...],
+ *   branches: [...],
  *   total: 100,
  *   failed: 5,
  *   total_workflow_runs: 50,
@@ -1434,6 +1436,7 @@ function showWebhook(response) {
     "installed_repositories",
     tableOptions
   );
+  drawDataTable(response.branches, "branches", tableOptions);
   drawDataTable(response.workflow_runs, "workflow_runs", tableOptions);
   drawDataTable(response.feed, "feed", tableOptions, 5);
   drawPieChart(response.events, "pie_chart_1", optionsEvents);

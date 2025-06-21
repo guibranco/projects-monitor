@@ -443,8 +443,8 @@ class GitHub
 
         return (object) [
             'total_minutes_used' => $totalMinutesUsed,
-            'total_paid_minutes_used' => $totalPaidMinutesUsed, // Now dollar amount
-            'included_minutes' => $includedMinutes, // Now dollar amount
+            'total_paid_amount'    => $totalPaidMinutesUsed, // Dollar amount
+            'included_amount'      => $includedMinutes,       // Dollar amount
             'minutes_used_breakdown' => (object) $minutesUsedBreakdown,
             'days_left_in_billing_cycle' => $this->calculateDaysLeftInBillingCycle()
         ];

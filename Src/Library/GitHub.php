@@ -335,7 +335,8 @@ class GitHub
         $cacheExists = file_exists($cache);
 
         if ($cacheExists && filemtime($cache) > strtotime("-1 hour")) {
-            return json_decode(file_get_contents($cache));
+            $cachedData = json_decode(file_get_contents($cache));
+            return $this->transformBillingData($cachedData, $type);
         }
 
         $result = (object) [
@@ -346,7 +347,7 @@ class GitHub
 
         if ($this->checkUsage("core") === false) {
             return $cacheExists
-                ? json_decode(file_get_contents($cache))
+                ? $this->transformBillingData(json_decode(file_get_contents($cache)), $type)
                 : $result;
         }
 
@@ -357,7 +358,8 @@ class GitHub
             $response->ensureSuccessStatus();
             $body = $response->getBody();
             file_put_contents($cache, $body);
-            $result = json_decode($body);
+            $rawData = json_decode($body);
+            $result = $this->transformBillingData($rawData, $type);
         } catch (RequestException $ex) {
             $message = sprintf(
                 "GitHub billing request failed - Type: %s, Account: %s, BillingType: %s, Error: %s, Code: %d, Response: %s",
@@ -373,6 +375,114 @@ class GitHub
         }
 
         return $result;
+    }
+    
+    /**
+     * Transform new GitHub billing API response to match old format
+     */
+    private function transformBillingData($rawData, string $type): object
+    {
+        // Handle case where old API response format is still returned
+        if (isset($rawData->total_minutes_used) || isset($rawData->days_left_in_billing_cycle)) {
+            return $rawData;
+        }
+    
+        // Handle new API response format
+        if (!isset($rawData->usageItems) || !is_array($rawData->usageItems)) {
+            return (object) [
+                'total_minutes_used' => 0,
+                'included_minutes' => 0,
+                'days_left_in_billing_cycle' => $this->calculateDaysLeftInBillingCycle()
+            ];
+        }
+    
+        if ($type === 'actions') {
+            return $this->transformActionsData($rawData->usageItems);
+        } elseif ($type === 'shared-storage') {
+            return $this->transformSharedStorageData($rawData->usageItems);
+        }
+    
+        // Default fallback
+        return (object) [
+            'total_minutes_used' => 0,
+            'included_minutes' => 0,
+            'days_left_in_billing_cycle' => $this->calculateDaysLeftInBillingCycle()
+        ];
+    }
+    
+    /**
+     * Transform GitHub Actions billing data from new format to old format
+     */
+    private function transformActionsData(array $usageItems): object
+    {
+        $totalMinutesUsed = 0;
+        $totalPaidMinutesUsed = 0; // Now represented as $ amount
+        $includedMinutes = 0; // Now represented as $ amount via discountAmount
+        $minutesUsedBreakdown = [];
+    
+        foreach ($usageItems as $item) {
+            // Filter for Actions minutes only
+            if ($item->product === 'Actions' && $item->unitType === 'minutes') {
+                // Sum total minutes used
+                $totalMinutesUsed += $item->quantity;
+                
+                // Sum paid minutes (now as dollar amount via netAmount)
+                $totalPaidMinutesUsed += $item->netAmount;
+                
+                // Sum included minutes (now as dollar amount via discountAmount)
+                $includedMinutes += $item->discountAmount;
+                
+                // Build minutes breakdown by SKU
+                $sku = $item->sku;
+                if (!isset($minutesUsedBreakdown[$sku])) {
+                    $minutesUsedBreakdown[$sku] = 0;
+                }
+                $minutesUsedBreakdown[$sku] += $item->quantity;
+            }
+        }
+    
+        return (object) [
+            'total_minutes_used' => $totalMinutesUsed,
+            'total_paid_minutes_used' => $totalPaidMinutesUsed, // Now dollar amount
+            'included_minutes' => $includedMinutes, // Now dollar amount
+            'minutes_used_breakdown' => (object) $minutesUsedBreakdown,
+            'days_left_in_billing_cycle' => $this->calculateDaysLeftInBillingCycle()
+        ];
+    }
+    
+    /**
+     * Transform shared storage billing data from new format to old format
+     */
+    private function transformSharedStorageData(array $usageItems): object
+    {
+        $estimatedStorageForMonth = 0;
+        $estimatedPaidStorageForMonth = 0;
+    
+        foreach ($usageItems as $item) {
+            // Filter for Packages storage
+            if ($item->product === 'Packages' && $item->sku === 'Packages storage' && $item->unitType === 'GigabyteHours') {
+                $estimatedStorageForMonth += $item->quantity;
+                $estimatedPaidStorageForMonth += $item->netAmount;
+            }
+        }
+    
+        return (object) [
+            'days_left_in_billing_cycle' => $this->calculateDaysLeftInBillingCycle(),
+            'estimated_paid_storage_for_month' => $estimatedPaidStorageForMonth,
+            'estimated_storage_for_month' => $estimatedStorageForMonth
+        ];
+    }
+    
+    /**
+     * Calculate days left in current billing cycle
+     * Since this info is no longer provided by the API, we calculate it
+     */
+    private function calculateDaysLeftInBillingCycle(): int
+    {
+        $currentDay = (int) date('j'); // Day of month without leading zeros
+        $daysInMonth = (int) date('t'); // Number of days in current month
+        
+        return max(0, $daysInMonth - $currentDay);
     }
 
     private function getBilling(string $type, array $items): array

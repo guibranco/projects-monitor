@@ -401,6 +401,9 @@ class CPanel
     public function deleteErrorLogFile($directory): bool
     {
         $fullFilename = "/home/{$this->username}/{$directory}/error_log";
+        if ($directory === ".softaculous/logs") {
+            $fullFilename .= ".log";
+        }
         $parameters = array(
             "cpanel_jsonapi_module" => "Fileman",
             "cpanel_jsonapi_func" => "fileop",

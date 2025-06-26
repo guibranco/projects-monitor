@@ -143,3 +143,4 @@ LOG;
 [17-May-2025 18:00:00 Europe/Dublin] PHP Fatal error: Error without file info
 [17-May-2025 18:01:00 Europe/Dublin] PHP Fatal error: Error with file info in /var/www/html/file.php on line 42
 }
+}

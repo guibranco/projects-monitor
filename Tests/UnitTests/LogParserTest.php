@@ -162,4 +162,3 @@ LOG;
         $this->assertSame('/var/www/html/file.php', $entry2['file']);
         $this->assertSame('42', $entry2['line']);
     }
-}

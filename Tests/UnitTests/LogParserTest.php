@@ -142,5 +142,24 @@ LOG;
         $log = <<<LOG
 [17-May-2025 18:00:00 Europe/Dublin] PHP Fatal error: Error without file info
 [17-May-2025 18:01:00 Europe/Dublin] PHP Fatal error: Error with file info in /var/www/html/file.php on line 42
-}
+LOG;
+
+        $results = $this->parser->parse($log);
+
+        $this->assertCount(2, $results);
+
+        // First entry without file info
+        $entry1 = $results[0];
+        $this->assertSame('17-May-2025 18:00:00 Europe/Dublin', $entry1['date']);
+        $this->assertStringContainsString('Error without file info', $entry1['multilineError']);
+        $this->assertSame('NO FILE', $entry1['file']);
+        $this->assertSame('-', $entry1['line']);
+
+        // Second entry with file info
+        $entry2 = $results[1];
+        $this->assertSame('17-May-2025 18:01:00 Europe/Dublin', $entry2['date']);
+        $this->assertStringContainsString('Error with file info', $entry2['multilineError']);
+        $this->assertSame('/var/www/html/file.php', $entry2['file']);
+        $this->assertSame('42', $entry2['line']);
+    }
 }

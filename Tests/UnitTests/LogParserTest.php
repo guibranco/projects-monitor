@@ -98,4 +98,68 @@ LOG;
         $this->assertIsArray($results);
         $this->assertCount(0, $results);
     }
+
+    public function testParseSingleLineErrorWithoutFile(): void
+    {
+        $log = '[17-May-2025 18:00:00 Europe/Dublin] PHP Fatal error: Something bad happened without file info';
+
+        $results = $this->parser->parse($log);
+
+        $this->assertCount(1, $results);
+
+        $entry = $results[0];
+        $this->assertSame('17-May-2025 18:00:00 Europe/Dublin', $entry['date']);
+        $this->assertStringContainsString('Something bad happened without file info', $entry['multilineError']);
+        $this->assertSame('NO FILE', $entry['file']);
+        $this->assertSame('-', $entry['line']);
+        $this->assertArrayNotHasKey('stackTraceDetails', $entry);
+    }
+
+    public function testParseMultilineErrorWithoutFile(): void
+    {
+        $log = <<<LOG
+[17-May-2025 18:36:50 Europe/Dublin] PHP Fatal error: Uncaught Exception: Multi-line error message
+with additional details
+and more information
+LOG;
+
+        $results = $this->parser->parse($log);
+
+        $this->assertCount(1, $results);
+
+        $entry = $results[0];
+        $this->assertSame('17-May-2025 18:36:50 Europe/Dublin', $entry['date']);
+        $this->assertStringContainsString('Uncaught Exception: Multi-line error message', $entry['multilineError']);
+        $this->assertStringContainsString('with additional details', $entry['multilineError']);
+        $this->assertStringContainsString('and more information', $entry['multilineError']);
+        $this->assertSame('NO FILE', $entry['file']);
+        $this->assertSame('-', $entry['line']);
+        $this->assertArrayNotHasKey('stackTraceDetails', $entry);
+    }
+
+    public function testParseMixedEntriesWithAndWithoutFile(): void
+    {
+        $log = <<<LOG
+[17-May-2025 18:00:00 Europe/Dublin] PHP Fatal error: Error without file info
+[17-May-2025 18:01:00 Europe/Dublin] PHP Fatal error: Error with file info in /var/www/html/file.php on line 42
+LOG;
+
+        $results = $this->parser->parse($log);
+
+        $this->assertCount(2, $results);
+
+        // First entry without file info
+        $entry1 = $results[0];
+        $this->assertSame('17-May-2025 18:00:00 Europe/Dublin', $entry1['date']);
+        $this->assertStringContainsString('Error without file info', $entry1['multilineError']);
+        $this->assertSame('NO FILE', $entry1['file']);
+        $this->assertSame('-', $entry1['line']);
+
+        // Second entry with file info
+        $entry2 = $results[1];
+        $this->assertSame('17-May-2025 18:01:00 Europe/Dublin', $entry2['date']);
+        $this->assertStringContainsString('Error with file info', $entry2['multilineError']);
+        $this->assertSame('/var/www/html/file.php', $entry2['file']);
+        $this->assertSame('42', $entry2['line']);
+    }
 }

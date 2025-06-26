@@ -28,16 +28,19 @@ class LogParser
         \]
         \s
         (?<multilineError>
-            (?:.*?)(?=\s+in\s.+?\.php(?:\son\sline\s|:)\d+)
+            (?:.*?)
+            (?=\s+in\s.+?\.php(?:\son\sline\s|:)\d+|$)
         )
-        \s+in\s(?<file>.+?\.php)
-        (?:\son\sline\s|:)
-        (?<line>\d+)
-        (?:\nStack\strace:\n
-            (?<stackTraceDetails>
-                (?:\#\d+\s.+?\n)*
-            )
-            \s+thrown\sin\s.+?\.php\son\sline\s\d+
+        (?:
+            \s+in\s(?<file>.+?\.php)
+            (?:\son\sline\s|:)
+            (?<line>\d+)
+            (?:\nStack\strace:\n
+                (?<stackTraceDetails>
+                    (?:\#\d+\s.+?\n)*
+                )
+                \s+thrown\sin\s.+?\.php\son\sline\s\d+
+            )?
         )?
     $/msx';
 
@@ -76,8 +79,8 @@ class LogParser
             $entry = [
                 'date' => $match['date'],
                 'multilineError' => trim($match['multilineError']),
-                'file' => $match['file'],
-                'line' => $match['line'],
+                'file' => $match['file'] ?? 'NO FILE',
+                'line' => $match['line'] ?? '-',
             ];
 
             if (isset($match['stackTraceDetails']) && $match['stackTraceDetails'] !== '') {

@@ -21,7 +21,7 @@
     },
     "require": {
         "guibranco/pancake": "^1.3.38",
-        "fastvolt/markdown": "^0.2.2",
+        "fastvolt/markdown": "^0.2.4",
         "phpseclib/phpseclib": "^3.0"
     },
     "require-dev": {

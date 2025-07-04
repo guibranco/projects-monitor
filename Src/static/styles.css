@@ -1,41 +1,218 @@
 body {
-  font-family: Arial, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   margin: 0;
   padding: 0;
-  background-color: rgb(13, 17, 23);
+  background: linear-gradient(135deg, #0d1117 0%, #1a1e2e 100%);
+  color: #ffffff;
+  min-height: 100vh;
 }
 
-code {
-  background-color: #000000;
+.dashboard-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+  padding-top: 80px;
+}
+
+/* Floating Controls */
+.floating-box {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  max-width: 320px;
+  z-index: 1050;
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.floating-box .card {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 15px;
+}
+
+.floating-box .card-header {
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 15px 15px 0 0;
+}
+
+.floating-box .card-body {
   color: #ffffff;
-  padding: 0 7px;
-  border-radius: 24px;
-  border: 1px solid #000;
-  line-height: 21px;
-  text-wrap: nowrap;
+}
+
+/* Top Statistics Chart */
+.top-chart {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Gauges Grid */
+.gauges-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 30px;
 }
 
 .gauge {
-  width: 20%;
-  height: 210px;
-  float: left;
-  background-color: white;
-}
-
-.gauge svg:first-child > g > text[text-anchor~="middle"] {
-  font-size: 0.8em;
-}
-
-.topping {
-  background: #fff;
-  width: calc(100% - 30px);
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 15px;
   padding: 10px;
-  border: 5px orange dashed;
-  font-weight: bold;
-  font-size: 2em;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  min-height: 200px;
+}
+
+.gauge:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* Stats Section */
+.stats-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.stats-left {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stats-right {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 15px;
+}
+
+.github-stats {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 20px;
+  align-items: center;
+}
+
+.github-stats img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+
+.wakatime-postman {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   text-align: center;
 }
 
+.wakatime-postman img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+
+/* Bottom Grid */
+.bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.chart-container {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 15px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  min-height: 300px;
+}
+
+/* Pie Charts Row */
+.pie-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.pie-chart {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 15px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  min-height: 300px;
+}
+
+/* Full Width Sections */
+.full-width-section {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Data Lists Grid */
+.data-lists {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.data-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.data-item {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.data-item:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Section Headers */
+.section-header {
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  color: white;
+  padding: 15px 25px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 1.2em;
+  text-align: center;
+  margin-bottom: 10px;
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+}
+
+.section-header .badge {
+  background: rgba(255, 255, 255, 0.2) !important;
+  font-size: 0.9em;
+  margin-left: 10px;
+}
+
+/* Toast Container */
 #toast-container {
   position: fixed;
   top: 1rem;
@@ -43,34 +220,61 @@ code {
   z-index: 1055;
 }
 
-.floating-box {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  max-width: 300px;
-  z-index: 1050;
+/* Code Styling */
+code {
+  background-color: rgba(0, 0, 0, 0.8);
+  color: #ffffff;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-family: "Fira Code", monospace;
 }
 
-.modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
+/* Responsive Design */
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 10px;
+    padding-top: 60px;
+  }
+
+  .stats-section,
+  .bottom-grid,
+  .data-lists {
+    grid-template-columns: 1fr;
+  }
+
+  .pie-charts {
+    grid-template-columns: 1fr;
+  }
+
+  .github-stats {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .floating-box {
+    position: relative;
+    top: 0;
+    right: 0;
+    max-width: 100%;
+    margin-bottom: 20px;
+  }
 }
 
-.modal-content {
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  text-align: center;
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
 }
 
-.modal-content button {
-  margin-right: 10px;
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
 }

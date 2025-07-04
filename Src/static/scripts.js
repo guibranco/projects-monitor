@@ -524,21 +524,17 @@ function drawChart() {
 }
 
 /**
- * Updates the GitHub statistics, streak, and Wakatime images displayed on the webpage.
- * This function generates a random refresh parameter to ensure that the
- * images are updated each time the function is called, preventing caching
- * issues in the browser.
+ * Updates GitHub statistics, streak, and Wakatime images displayed on the webpage.
+ * This function generates a random refresh parameter to ensure that the images are updated
+ * each time the function is called, preventing caching issues in the browser.
  *
- * It modifies the `src` attributes of two <img> elements with IDs
- * "gh_stats" and "gh_streak" to point to the respective GitHub stats
- * and streak stats URLs, incorporating the generated refresh parameter.
+ * It modifies the `src` attributes of three <img> elements with IDs "gh_stats",
+ * "gh_streak", and "wakatime" to point to their respective URLs, incorporating
+ * the generated refresh parameter. The function includes a retry mechanism for loading
+ * images, which attempts to reload them up to 10 times if they fail to load initially.
  *
- * @throws {Error} Throws an error if the elements with IDs "gh_stats"
- *                 or "gh_streak" do not exist in the document.
- *
- * @example
- * // Call this function to refresh GitHub stats and streaks
- * showGitHubStatsAndWakatime();
+ * If any of the image elements with IDs "gh_stats", "gh_streak", or "wakatime" do not exist,
+ * an error message is logged to the console, and no further action is taken.
  */
 function showGitHubStatsAndWakatime() {
   const refresh = Math.floor(Math.random() * 100000);
@@ -640,28 +636,7 @@ function showAppVeyor(response) {
 /**
  * Displays the control panel with various visualizations based on the provided response data.
  *
- * This function processes the response object to extract error log files, error log messages,
- * and cronjob data, and then visualizes this information using Google Charts. It creates a gauge
- * chart for total log messages and tables for log files, log messages, and cronjobs.
- *
  * @param {Object} response - The response object containing data for visualization.
- * @param {Array} response.error_log_files - An array of error log files to be displayed.
- * @param {Array} response.error_log_messages - An array of error log messages to be displayed.
- * @param {Array} response.cronjobs - An array of cronjob data to be displayed.
- * @param {number} response.total_error_messages - The total number of error messages.
- * @param {number} response.emails - The total number of emails sent.
- *
- * @throws {Error} Throws an error if the response object is missing required properties.
- *
- * @example
- * const response = {
- *   error_log_files: [...],
- *   error_log_messages: [...],
- *   cronjobs: [...],
- *   total_error_messages: 42,
- *   emails: 100
- * };
- * showCPanel(response);
  */
 function showCPanel(response) {
 
@@ -734,6 +709,16 @@ function showCPanel(response) {
   }
 }
 
+/**
+ * Renders a table of error log files and attaches an event listener for delete actions.
+ *
+ * The function checks if there are multiple error log files in the response. If so, it prepares data
+ * for a table by adding an "Actions" column with delete buttons for each file. It then draws this data
+ * into a DataTable. Additionally, it ensures that a click event listener is attached to handle delete actions,
+ * which confirms deletion before proceeding.
+ *
+ * @param {Object} response - The server response containing error log files.
+ */
 function showErrorFiles(response) {
   if (response.error_log_files.length <= 1) {
     drawDataTable([[]], "error_log_files", tableOptions);
@@ -1504,12 +1489,18 @@ function showWireGuard(response) {
 /**
  * Draws a Google Visualization chart of the specified type.
  *
+ * This function initializes a chart based on the provided data, chart type, element ID, and custom options.
+ * It handles different chart types such as "table", "line", "pie", and "gauge". If an invalid chart type is provided,
+ * it logs an error message. The function also supports hiding a specified column in the chart data and adds
+ * event listeners for user interactions like selections.
+ *
  * @param {Array} data - The data to be visualized, in the format accepted by google.visualization.arrayToDataTable.
  * @param {string} chartType - The type of chart to draw. Valid values are "table", "line", "pie", and "gauge".
  * @param {string} elementId - The ID of the HTML element where the chart will be drawn.
- * @param {Object} customOptions - The cutom options for the chart, as accepted by the specific chart type.
+ * @param {Object} customOptions - The custom options for the chart, as accepted by the specific chart type.
  * @param {number} [hideColumn=-1] - The index of the column to hide. If -1, no column will be hidden.
- * @returns {Object} An object containing the chart type, element ID, chart instance, and optionally the data view.
+ * @returns {Object|null} An object containing the chart type, element ID, chart instance, and optionally the data view,
+ *                      or null if there is an error in initialization.
  */
 function drawChartByType(data, chartType, elementId, customOptions, hideColumn = -1) {
   /* global google */
@@ -1592,6 +1583,18 @@ function drawChartByType(data, chartType, elementId, customOptions, hideColumn =
   return result;
 }
 
+/**
+ * Recursively merges two objects, deeply combining their properties.
+ *
+ * This function takes a target object and a source object, and recursively
+ * merges the properties of the source into the target. If both objects have an
+ * object property at the same key, it performs a deep merge on those properties.
+ * Otherwise, it directly assigns the property from the source to the target.
+ *
+ * @param {Object} target - The target object to which properties will be merged.
+ * @param {Object} source - The source object whose properties will be merged into the target.
+ * @returns {Object} A new object with the merged properties of the target and source.
+ */
 function deepMerge(target, source) {
     const result = { ...target };
     

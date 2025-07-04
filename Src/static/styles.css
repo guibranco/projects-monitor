@@ -8,9 +8,9 @@ body {
 }
 
 .dashboard-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 20px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
   padding-top: 80px;
 }
 
@@ -45,27 +45,30 @@ body {
 /* Top Statistics Chart */
 .top-chart {
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 15px;
+  border-radius: 0;
   padding: 20px;
-  margin-bottom: 30px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 0;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Gauges Grid */
 .gauges-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
-  margin-bottom: 30px;
+  gap: 0;
+  margin-bottom: 0;
+  padding: 20px;
 }
 
 .gauge {
   background: rgba(255, 255, 255, 0.95);
-  border-radius: 15px;
+  border-radius: 0;
   padding: 10px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   min-height: 200px;
+  margin: 1px;
 }
 
 .gauge:hover {
@@ -77,8 +80,9 @@ body {
 .stats-section {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  margin-bottom: 30px;
+  gap: 0;
+  margin-bottom: 0;
+  padding: 20px;
 }
 
 .stats-left {
@@ -233,7 +237,7 @@ code {
 /* Responsive Design */
 @media (max-width: 768px) {
   .dashboard-container {
-    padding: 10px;
+    padding: 0;
     padding-top: 60px;
   }
 

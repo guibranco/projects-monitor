@@ -104,7 +104,6 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
 <body class="bg-light">
     <div class="container-fluid">
-        <!-- Header -->
         <div class="row bg-white shadow-sm mb-4">
             <div class="col-12 py-3">
                 <h2 class="mb-0 text-center">
@@ -113,43 +112,43 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 </h2>
             </div>
         </div>
-        
+
         <div class="row">
-            <!-- Login Section -->
             <div class="col-lg-4 mb-4">
                 <div class="card login-card">
                     <div class="card-body">
                         <h3 class="card-title text-center mb-4">Login</h3>
-                        
+
                         <?php if ($error): ?>
                             <div class="alert alert-danger"><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?>
                             </div>
                         <?php endif; ?>
-                        
+
                         <form method="POST" action="">
-                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
-                            
+                            <input type="hidden" name="csrf_token"
+                                value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
+
                             <div class="mb-3">
                                 <label for="username" class="form-label">
                                     <i class="fas fa-user me-1"></i>Username
                                 </label>
-                                <input type="text" class="form-control" id="username" name="username" required 
+                                <input type="text" class="form-control" id="username" name="username" required
                                     aria-required="true" autocomplete="username">
                             </div>
-                            
+
                             <div class="mb-3">
                                 <label for="password" class="form-label">
                                     <i class="fas fa-lock me-1"></i>Password
                                 </label>
-                                <input type="password" class="form-control" id="password" name="password" required 
+                                <input type="password" class="form-control" id="password" name="password" required
                                     aria-required="true" autocomplete="current-password">
                             </div>
-                            
+
                             <button type="submit" class="btn btn-primary w-100 mb-3">
                                 <i class="fas fa-sign-in-alt me-2"></i>Login
                             </button>
                         </form>
-                        
+
                         <div class="text-center">
                             <a href="recover.php" class="text-decoration-none">
                                 <i class="fas fa-key me-1"></i>Forgot your password?
@@ -158,10 +157,8 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                     </div>
                 </div>
             </div>
-            
-            <!-- Stats and Projects Section -->
+
             <div class="col-lg-8">
-                <!-- Stats Cards -->
                 <div class="row mb-4">
                     <div class="col-md-3 col-6 mb-3">
                         <div class="card stats-card fade-in">
@@ -174,7 +171,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="col-md-3 col-6 mb-3">
                         <div class="card stats-card fade-in">
                             <div class="card-body text-center">
@@ -186,7 +183,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="col-md-3 col-6 mb-3">
                         <div class="card stats-card fade-in">
                             <div class="card-body text-center">
@@ -198,7 +195,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="col-md-3 col-6 mb-3">
                         <div class="card stats-card fade-in">
                             <div class="card-body text-center">
@@ -211,8 +208,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                         </div>
                     </div>
                 </div>
-                
-                <!-- Recent Projects -->
+
                 <div class="card mb-4">
                     <div class="card-header bg-white">
                         <h5 class="mb-0">
@@ -235,7 +231,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                                     <span class="badge status-healthy status-badge">Healthy</span>
                                 </div>
                             </div>
-                            
+
                             <div class="list-group-item">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
@@ -249,7 +245,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                                     <span class="badge status-warning status-badge">Warning</span>
                                 </div>
                             </div>
-                            
+
                             <div class="list-group-item">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
@@ -267,8 +263,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                         </div>
                     </div>
                 </div>
-                
-                <!-- System Status -->
+
                 <div class="row">
                     <div class="col-md-6 mb-4">
                         <div class="card">
@@ -297,7 +292,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="col-md-6 mb-4">
                         <div class="card">
                             <div class="card-header bg-white">
@@ -315,7 +310,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                                         <div class="progress-bar bg-success" style="width: 75%"></div>
                                     </div>
                                 </div>
-                                
+
                                 <div class="mb-3">
                                     <div class="d-flex justify-content-between">
                                         <span>Error Rate</span>
@@ -325,7 +320,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                                         <div class="progress-bar bg-success" style="width: 97%"></div>
                                     </div>
                                 </div>
-                                
+
                                 <div class="mb-3">
                                     <div class="d-flex justify-content-between">
                                         <span>Throughput</span>
@@ -335,7 +330,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                                         <div class="progress-bar bg-info" style="width: 82%"></div>
                                     </div>
                                 </div>
-                                
+
                                 <div>
                                     <div class="d-flex justify-content-between">
                                         <span>Memory Usage</span>
@@ -355,7 +350,6 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Mock API data structure for reference
         const mockApiData = {
             stats: {
                 totalProjects: 24,
@@ -403,19 +397,15 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
             }
         };
 
-        // Function to load data from API (replace with actual API call)
         function loadProjectData() {
-            // Example API call structure:
             // fetch('/api/public/dashboard-data')
             //     .then(response => response.json())
             //     .then(data => updateDashboard(data))
             //     .catch(error => console.error('Error loading data:', error));
-            
-            // For now, using mock data
+
             console.log('Mock API data structure:', mockApiData);
         }
 
-        // Function to update dashboard with API data
         function updateDashboard(data) {
             // Update stats cards
             // Update recent activity
@@ -423,10 +413,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
             // Update performance metrics
         }
 
-        // Auto-refresh data every 30 seconds
         setInterval(loadProjectData, 30000);
-        
-        // Initial load
         loadProjectData();
     </script>
 </body>

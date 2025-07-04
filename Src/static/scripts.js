@@ -250,6 +250,10 @@ const tableOptions = {
   showRowNumber: true,
   width: "100%",
   height: "100%",
+  background: {
+    fill: '#000000',
+    opacity: .05,
+  }
 };
 
 window.addEventListener("load", init);
@@ -591,8 +595,7 @@ function showGitHubStatsAndWakatime() {
         );
       } else {
         console.error(
-          `${imgElement.id} failed to load after ${
-            maxRetries === 0 ? "maximum retries" : "timeout"
+          `${imgElement.id} failed to load after ${maxRetries === 0 ? "maximum retries" : "timeout"
           }.`
         );
         cleanup();
@@ -663,7 +666,7 @@ function showAppVeyor(response) {
 function showCPanel(response) {
 
   showErrorFiles(response);
-  
+
   const gaugeOptions = {
     width: "100%",
     height: "100%",
@@ -732,7 +735,7 @@ function showCPanel(response) {
 }
 
 function showErrorFiles(response) {
-  if (response.error_log_files.length === 1) {
+  if (response.error_log_files.length <= 1) {
     drawDataTable([[]], "error_log_files", tableOptions);
     return;
   }
@@ -1504,11 +1507,11 @@ function showWireGuard(response) {
  * @param {Array} data - The data to be visualized, in the format accepted by google.visualization.arrayToDataTable.
  * @param {string} chartType - The type of chart to draw. Valid values are "table", "line", "pie", and "gauge".
  * @param {string} elementId - The ID of the HTML element where the chart will be drawn.
- * @param {Object} options - The options for the chart, as accepted by the specific chart type.
+ * @param {Object} customOptions - The cutom options for the chart, as accepted by the specific chart type.
  * @param {number} [hideColumn=-1] - The index of the column to hide. If -1, no column will be hidden.
  * @returns {Object} An object containing the chart type, element ID, chart instance, and optionally the data view.
  */
-function drawChartByType(data, chartType, elementId, options, hideColumn = -1) {
+function drawChartByType(data, chartType, elementId, customOptions, hideColumn = -1) {
   /* global google */
 
   if (!google.visualization) {
@@ -1516,7 +1519,7 @@ function drawChartByType(data, chartType, elementId, options, hideColumn = -1) {
     return null;
   }
 
-  if (!data || !elementId || !options) {
+  if (!data || !elementId || !customOptions) {
     console.error("Invalid parameters passed to drawChartByType");
     return null;
   }
@@ -1552,6 +1555,16 @@ function drawChartByType(data, chartType, elementId, options, hideColumn = -1) {
 
   result.dataTable = google.visualization.arrayToDataTable(data);
 
+  const defaultOptions = {
+    backgroundColor: 'transparent',
+    titleTextStyle: { color: '#ffffff' },
+    hAxis: { textStyle: { color: '#ffffff' } },
+    vAxis: { textStyle: { color: '#ffffff' } },
+    legend: { textStyle: { color: '#ffffff' } }
+  };
+
+  const options = deepMerge(defaultOptions, customOptions);
+
   if (hideColumn >= 0 && data.length > 0) {
     result.view = new google.visualization.DataView(result.dataTable);
     if (data[0].length > hideColumn) {
@@ -1563,7 +1576,7 @@ function drawChartByType(data, chartType, elementId, options, hideColumn = -1) {
     google.visualization.events.addListener(result.chart, "select", () => {
       const selection = result.chart.getSelection();
       if (selection.length > 0) {
-        const {row} = selection[0];
+        const { row } = selection[0];
         const item = result.dataTable.getValue(row, 0);
         const hiddenInfo = result.dataTable.getValue(
           row,
@@ -1577,6 +1590,20 @@ function drawChartByType(data, chartType, elementId, options, hideColumn = -1) {
   }
 
   return result;
+}
+
+function deepMerge(target, source) {
+    const result = { ...target };
+    
+    for (const key in source) {
+        if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+            result[key] = deepMerge(result[key] || {}, source[key]);
+        } else {
+            result[key] = source[key];
+        }
+    }
+    
+    return result;
 }
 
 /**

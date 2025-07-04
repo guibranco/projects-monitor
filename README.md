@@ -130,13 +130,26 @@ The Projects Monitor includes a REST-like API to retrieve data from integrated s
 
 ## Preview
 
+### Login
+
+The login page, with basic (public) information:
+![Dashboard Preview](projects-monitor-login.png)
+
+### Recovery Password
+
+The recovery password form:
+![Dashboard Preview](projects-monitor-recovery-password.png)
+
+### Dashboard
+
+The authenticated dashboard, with full (restricted) information:
 ![Dashboard Preview](projects-monitor-dashboard.png)
 
 ---
 
 ## Contributing
 
-Contributions are welcome! Feel free to fork this repository, submit a pull request, or create an issue for suggestions and improvements.
+Contributions are welcome! Feel free to fork this repository, submit a pull request, or create an issue to suggest and request improvements.
 
 ---
 

@@ -50,6 +50,12 @@ body {
   margin-bottom: 0;
   border: none;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  height: 400px;
+}
+
+#webhooks_statistics_github {
+  width: 100%;
+  height: 400px;
 }
 
 /* Gauges Grid */
@@ -62,19 +68,24 @@ body {
 }
 
 .gauge {
-   background: rgba(255, 255, 255, 0.1); /* Changed from 0.95 to 0.1 for dark background */
-   border-radius: 0;
-   padding: 10px;
-   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2); /* Changed border color */
-   transition: transform 0.3s ease, box-shadow 0.3s ease;
-   min-height: 200px;
-   margin: 1px;
-   color: #ffffff; /* Ensure text is white */
+  background: rgba(
+    255,
+    255,
+    255,
+    0.1
+  ); /* Changed from 0.95 to 0.1 for dark background */
+  border-radius: 0;
+  padding: 10px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2); /* Changed border color */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  min-height: 200px;
+  margin: 1px;
+  color: #ffffff; /* Ensure text is white */
 }
 
 .gauge:hover {
-   transform: translateY(-5px);
-   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
 }
 
 /* Stats Section */
@@ -134,46 +145,61 @@ body {
 
 /* Bottom Grid */
 .bottom-grid {
-   display: grid;
-   grid-template-columns: 1fr 1fr;
-   gap: 20px;
-   margin-bottom: 30px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 30px;
 }
 
 .chart-container {
-   background: rgba(255, 255, 255, 0.1); /* Changed from 0.95 to 0.1 for dark background */
-   border-radius: 15px;
-   padding: 20px;
-   border: 1px solid rgba(255, 255, 255, 0.2);
-   min-height: 300px;
-   color: #ffffff; /* Ensure text is white */
+  background: rgba(
+    255,
+    255,
+    255,
+    0.1
+  ); /* Changed from 0.95 to 0.1 for dark background */
+  border-radius: 15px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  min-height: 300px;
+  color: #ffffff; /* Ensure text is white */
 }
 
 /* Pie Charts Row */
 .pie-charts {
-   display: grid;
-   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-   gap: 20px;
-   margin-bottom: 30px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
 }
 
 .pie-chart {
-   background: rgba(255, 255, 255, 0.1); /* Changed from 0.95 to 0.1 for dark background */
-   border-radius: 15px;
-   padding: 20px;
-   border: 1px solid rgba(255, 255, 255, 0.2);
-   min-height: 300px;
-   color: #ffffff; /* Ensure text is white */
+  background: rgba(
+    255,
+    255,
+    255,
+    0.1
+  ); /* Changed from 0.95 to 0.1 for dark background */
+  border-radius: 15px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  min-height: 300px;
+  color: #ffffff; /* Ensure text is white */
 }
 
 /* Full Width Sections */
 .full-width-section {
-   background: rgba(255, 255, 255, 0.1); /* Changed from 0.95 to 0.1 for dark background */
-   border-radius: 15px;
-   padding: 20px;
-   margin-bottom: 30px;
-   border: 1px solid rgba(255, 255, 255, 0.2);
-   color: #ffffff; /* Ensure text is white */
+  background: rgba(
+    255,
+    255,
+    255,
+    0.1
+  ); /* Changed from 0.95 to 0.1 for dark background */
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff; /* Ensure text is white */
 }
 
 /* Data Lists Grid */
@@ -238,6 +264,10 @@ code {
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   font-family: "Fira Code", monospace;
+}
+
+.google-visualization-table {
+  color: #000;
 }
 
 /* Responsive Design */

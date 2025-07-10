@@ -77,12 +77,10 @@ $configuration = new Configuration();
    </div>
 
    <div class="dashboard-container">
-      <!-- Top Statistics Chart -->
       <div class="top-chart">
          <div id="webhooks_statistics_github"></div>
       </div>
 
-      <!-- Gauges Grid -->
       <div class="gauges-grid">
          <div id="gauge_chart_cpu" class="gauge"></div>
          <div id="gauge_chart_memory" class="gauge"></div>
@@ -101,7 +99,6 @@ $configuration = new Configuration();
          <div id="gauge_chart_bot_repositories" class="gauge"></div>
       </div>
 
-      <!-- Stats Section -->
       <div class="stats-section">
          <div class="stats-left">
             <div id="queues"></div>
@@ -123,7 +120,6 @@ $configuration = new Configuration();
          </div>
       </div>
 
-      <!-- Bottom Grid -->
       <div class="bottom-grid">
          <div class="chart-container">
             <div id="accounts_usage"></div>
@@ -142,7 +138,6 @@ $configuration = new Configuration();
          </div>
       </div>
 
-      <!-- Pie Charts -->
       <div class="pie-charts">
          <div class="pie-chart">
             <div id="pie_chart_1"></div>
@@ -155,7 +150,6 @@ $configuration = new Configuration();
          </div>
       </div>
 
-      <!-- Full Width Sections -->
       <div class="full-width-section">
          <div id="messages_grouped"></div>
       </div>
@@ -171,7 +165,13 @@ $configuration = new Configuration();
          <div id="workflow_runs"></div>
       </div>
 
-      <!-- Data Lists Grid -->
+      <div class="full-width-section">
+         <div class="section-header">
+            Branches <span id="counter_branches" class="badge rounded-pill"></span>
+         </div>
+         <div id="branches"></div>
+      </div>
+       
       <div class="data-lists">
          <div class="data-column">
             <div class="data-item">
@@ -310,14 +310,6 @@ $configuration = new Configuration();
                <div id="appveyor"></div>
             </div>
          </div>
-      </div>
-
-      <!-- Final Full Width Sections -->
-      <div class="full-width-section">
-         <div class="section-header">
-            Branches <span id="counter_branches" class="badge rounded-pill"></span>
-         </div>
-         <div id="branches"></div>
       </div>
 
       <div class="full-width-section">

@@ -122,10 +122,10 @@ $configuration = new Configuration();
 
       <div class="bottom-grid">
          <div class="chart-container">
-            <div id="accounts_usage"></div>
+            <div id="latest_release"></div>
          </div>
          <div class="chart-container">
-            <div id="latest_release"></div>
+            <div id="error_log_files"></div>
          </div>
       </div>
 
@@ -134,7 +134,7 @@ $configuration = new Configuration();
             <div id="hooks_last_check"></div>
          </div>
          <div class="chart-container">
-            <div id="error_log_files"></div>
+           <div id="messages_by_applications"></div>
          </div>
       </div>
 
@@ -146,7 +146,7 @@ $configuration = new Configuration();
             <div id="pie_chart_2"></div>
          </div>
          <div class="pie-chart">
-            <div id="messages_by_applications"></div>
+            <div id="pie_chart_3"></div>
          </div>
       </div>
 

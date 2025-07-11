@@ -102,6 +102,7 @@ $configuration = new Configuration();
       <div class="stats-section">
          <div class="stats-left">
             <div id="queues"></div>
+            <div id="accounts_usage"></div>
          </div>
          <div class="stats-right">
             <div class="github-stats">

@@ -121,6 +121,18 @@ $configuration = new Configuration();
          </div>
       </div>
 
+      <div class="pie-charts">
+         <div class="pie-chart">
+            <div id="pie_chart_1"></div>
+         </div>
+         <div class="pie-chart">
+            <div id="pie_chart_2"></div>
+         </div>
+         <div class="pie-chart">
+            <div id="pie_chart_3"></div>
+         </div>
+      </div>
+
       <div class="bottom-grid">
          <div class="chart-container">
             <div id="latest_release"></div>
@@ -138,19 +150,7 @@ $configuration = new Configuration();
            <div id="messages_by_applications"></div>
          </div>
       </div>
-
-      <div class="pie-charts">
-         <div class="pie-chart">
-            <div id="pie_chart_1"></div>
-         </div>
-         <div class="pie-chart">
-            <div id="pie_chart_2"></div>
-         </div>
-         <div class="pie-chart">
-            <div id="pie_chart_3"></div>
-         </div>
-      </div>
-
+     
       <div class="full-width-section">
          <div id="messages_grouped"></div>
       </div>

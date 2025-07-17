@@ -5,20 +5,20 @@ require_once 'vendor/autoload.php';
 use GuiBranco\ProjectsMonitor\Library\Configuration;
 
 if (!isset($_SESSION['last_activity']) || (time() - $_SESSION['last_activity'] > 1800)) {
-    session_unset();
-    session_destroy();
-    header('Location: login.php');
-    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-    header('Pragma: no-cache');
-    exit;
+   session_unset();
+   session_destroy();
+   header('Location: login.php');
+   header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+   header('Pragma: no-cache');
+   exit;
 }
 $_SESSION['last_activity'] = time();
 
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
-    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-    header('Pragma: no-cache');
-    exit;
+   header('Location: login.php');
+   header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+   header('Pragma: no-cache');
+   exit;
 }
 $username = isset($_SESSION['username']) ? $_SESSION['username'] : '';
 $configuration = new Configuration();
@@ -147,10 +147,10 @@ $configuration = new Configuration();
             <div id="hooks_last_check"></div>
          </div>
          <div class="chart-container">
-           <div id="messages_by_applications"></div>
+            <div id="messages_by_applications"></div>
          </div>
       </div>
-     
+
       <div class="full-width-section">
          <div id="messages_grouped"></div>
       </div>
@@ -172,7 +172,7 @@ $configuration = new Configuration();
          </div>
          <div id="branches"></div>
       </div>
-       
+
       <div class="data-lists">
          <div class="data-column">
             <div class="data-item">
@@ -321,7 +321,7 @@ $configuration = new Configuration();
    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
       integrity="sha256-CDOy6cOibCWEdsRiZuaHf8dSGGJRYuBGC+mjoJimHGw=" crossorigin="anonymous"></script>
    <script src="https://www.gstatic.com/charts/loader.js"></script>
-   <script src="static/scripts.js?<?php echo filemtime("static/scripts.js"); ?>"></script>
+   <script type="module" src="main.js?<?php echo filemtime("static/main.js"); ?>"></script>
    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
    <script>
       window.OneSignalDeferred = window.OneSignalDeferred || [];

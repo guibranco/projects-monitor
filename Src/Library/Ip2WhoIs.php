@@ -46,7 +46,7 @@ class Ip2WhoIs
             "guilhermestraccini.com.br",
             "guilhermestracini.com.br",
             "zerocool.com.br",
-            "apibr.com",
+            //"apibr.com",
             "gstraccini.bot",
             "gstraccini.dev",
             "progress-bar.xyz",

@@ -9,10 +9,16 @@ export class DataDisplayManager {
     this.eventAssignedError = false;
   }
 
+  /**
+   * Draws the AppVeyor data table on the chart manager.
+   */
   showAppVeyor(response) {
     this.chartManager.drawDataTable(response.projects, "appveyor", CHART_OPTIONS.table);
   }
 
+  /**
+   * Processes and displays various charts and tables based on the provided response data.
+   */
   showCPanel(response) {
     this.showErrorFiles(response);
 
@@ -84,6 +90,14 @@ export class DataDisplayManager {
     }
   }
 
+  /**
+   * Renders error log files in a data table with delete actions.
+   *
+   * The function checks if there is more than one error log file in the response.
+   * If so, it prepares the data to include delete buttons for each file and renders
+   * it using the chartManager. It also sets up an event listener to handle delete
+   * button clicks, confirming deletion with the user before proceeding.
+   */
   showErrorFiles(response) {
     if (response.error_log_files.length <= 1) {
       this.chartManager.drawDataTable([[]], "error_log_files", CHART_OPTIONS.table);
@@ -127,10 +141,23 @@ export class DataDisplayManager {
     }
   }
 
+  /**
+   * Draws a data table for domains using the chart manager.
+   */
   showDomains(response) {
     this.chartManager.drawDataTable(response.domains, "domains", CHART_OPTIONS.table);
   }
 
+  /**
+   * Updates the GitHub dashboard with latest release information and API usage metrics.
+   *
+   * This function processes a response object containing GitHub data, updating the DOM with the latest release details,
+   * and rendering gauge charts for API usage, issues, and pull requests. It also populates various data tables with
+   * specific data from the response.
+   *
+   * @param {Object} response - The response object containing GitHub data, including latest releases, issues, pull requests,
+   *                             and API usage statistics.
+   */
   showGitHub(response) {
     if (typeof response.latest_release !== "undefined") {
       const latestRelease = response.latest_release;
@@ -231,10 +258,23 @@ export class DataDisplayManager {
     this.chartManager.drawDataTable(response.api_usage, "api_usage", CHART_OPTIONS.table);
   }
 
+  /**
+   * Draws health check data on a chart using the provided response.
+   */
   showHealthChecksIo(response) {
     this.chartManager.drawDataTable(response["checks"], "healthchecksio", CHART_OPTIONS.table);
   }
 
+  /**
+   * Renders various charts and tables based on the provided response data.
+   *
+   * This function processes the response to draw a gauge chart, pie chart, and data table.
+   * It also conditionally adds delete buttons to the applications data table and assigns an event listener
+   * for handling delete actions. The function ensures that only one set of charts and tables are rendered
+   * based on the length of the `response.byApplications` array.
+   *
+   * @param {Object} response - An object containing grouped messages, total count, and by-applications data.
+   */
   showMessages(response) {
     const gaugeOptions = {
       width: "100%",
@@ -305,6 +345,9 @@ export class DataDisplayManager {
     }
   }
 
+  /**
+   * Updates the inner HTML of an element with id "postman" if the response has a defined usage property.
+   */
   showPostman(response) {
     if (typeof response.usage === "undefined") {
       return;
@@ -312,6 +355,9 @@ export class DataDisplayManager {
     document.getElementById("postman").innerHTML = response.usage;
   }
 
+  /**
+   * Draws a data table and a gauge chart based on the response queues data.
+   */
   showQueues(response) {
     const gaugeOptions = {
       width: "100%",
@@ -330,10 +376,16 @@ export class DataDisplayManager {
     this.chartManager.drawGaugeChart("Queues", response.total, "gauge_chart_queues", gaugeOptions);
   }
 
+  /**
+   * Draws a data table using the provided response.
+   */
   showUpTimeRobot(response) {
     this.chartManager.drawDataTable(response.monitors, "uptimerobot", CHART_OPTIONS.table);
   }
 
+  /**
+   * Updates various charts and displays webhook statistics based on response data.
+   */
   showWebhook(response) {
     const optionsStatistics = {
       title: "Webhooks by date",
@@ -449,6 +501,9 @@ export class DataDisplayManager {
     );
   }
 
+  /**
+   * Draws a wire guard data table using the chart manager.
+   */
   showWireGuard(response) {
     this.chartManager.drawDataTable(response.wireguard, "wireguard", CHART_OPTIONS.table);
   }

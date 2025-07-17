@@ -321,7 +321,7 @@ $configuration = new Configuration();
    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
       integrity="sha256-CDOy6cOibCWEdsRiZuaHf8dSGGJRYuBGC+mjoJimHGw=" crossorigin="anonymous"></script>
    <script src="https://www.gstatic.com/charts/loader.js"></script>
-   <script type="module" src="main.js?<?php echo filemtime("static/main.js"); ?>"></script>
+   <script type="module" src="static/main.js?<?php echo filemtime("static/main.js"); ?>"></script>
    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
    <script>
       window.OneSignalDeferred = window.OneSignalDeferred || [];

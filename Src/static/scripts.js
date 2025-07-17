@@ -1426,7 +1426,7 @@ function showWebhook(response) {
   );
   drawDataTable(response.branches, "branches", tableOptions);
   drawDataTable(response.workflow_runs, "workflow_runs", tableOptions);
-  drawDataTable(response.feed, "feed", tableOptions, 5);
+  drawDataTable(response.feed, "feed", tableOptions, 6);
   drawPieChart(response.events, "pie_chart_1", optionsEvents);
   drawGaugeChart(
     "GH WH",

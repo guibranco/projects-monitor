@@ -147,10 +147,10 @@ $configuration = new Configuration();
             <div id="hooks_last_check"></div>
          </div>
          <div class="chart-container">
-           <div id="messages_by_applications"></div>
+            <div id="messages_by_applications"></div>
          </div>
       </div>
-     
+
       <div class="full-width-section">
          <div id="messages_grouped"></div>
       </div>
@@ -172,7 +172,7 @@ $configuration = new Configuration();
          </div>
          <div id="branches"></div>
       </div>
-       
+
       <div class="data-lists">
          <div class="data-column">
             <div class="data-item">
@@ -321,7 +321,7 @@ $configuration = new Configuration();
    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
       integrity="sha256-CDOy6cOibCWEdsRiZuaHf8dSGGJRYuBGC+mjoJimHGw=" crossorigin="anonymous"></script>
    <script src="https://www.gstatic.com/charts/loader.js"></script>
-   <script src="static/scripts.js?<?php echo filemtime("static/scripts.js"); ?>"></script>
+   <script type="module" src="static/main.js?<?php echo filemtime("static/main.js"); ?>"></script>
    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
    <script>
       window.OneSignalDeferred = window.OneSignalDeferred || [];

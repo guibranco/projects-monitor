@@ -10,7 +10,7 @@ class DashboardApp {
     this.apiManager = new ApiManager();
     this.dataLoader = new DataLoader(this.apiManager);
     this.dataDisplayManager = new DataDisplayManager();
-    
+
     // Initialize state objects
     this.feedState = new FeedState();
     this.workflowLimiterState = new WorkflowLimiterState();
@@ -18,7 +18,7 @@ class DashboardApp {
 
     // Expose necessary objects to global scope for backwards compatibility
     this.exposeGlobals();
-    
+
     // Bind methods to maintain context
     this.init = this.init.bind(this);
     this.drawChart = this.drawChart.bind(this);
@@ -29,7 +29,7 @@ class DashboardApp {
     // Expose state objects
     window.feedState = this.feedState;
     window.workflowLimiterState = this.workflowLimiterState;
-    
+
     // Expose display functions for API callbacks
     window.showAppVeyor = this.dataDisplayManager.showAppVeyor.bind(this.dataDisplayManager);
     window.showCPanel = this.dataDisplayManager.showCPanel.bind(this.dataDisplayManager);
@@ -42,22 +42,22 @@ class DashboardApp {
     window.showUpTimeRobot = this.dataDisplayManager.showUpTimeRobot.bind(this.dataDisplayManager);
     window.showWebhook = this.dataDisplayManager.showWebhook.bind(this.dataDisplayManager);
     window.showWireGuard = this.dataDisplayManager.showWireGuard.bind(this.dataDisplayManager);
-    
+
     // Expose API functions
     window.deleteMessageByApplication = async (application) => {
       const data = await this.apiManager.deleteMessageByApplication(application);
       this.dataDisplayManager.showMessages(data);
     };
-    
+
     window.deleteErrorLogFile = async (directory) => {
       const data = await this.apiManager.deleteErrorLogFile(directory);
       this.dataDisplayManager.showCPanel(data);
     };
-    
+
     // Expose confirmation functions
     window.confirmDelete = this.uiManager.confirmDelete.bind(this.uiManager);
     window.confirmDeleteError = this.uiManager.confirmDeleteError.bind(this.uiManager);
-    
+
     // Expose GitHub stats function
     window.showGitHubStatsAndWakatime = GitHubStatsManager.show;
   }
@@ -70,7 +70,7 @@ class DashboardApp {
       return;
     }
     this.showPreset = false;
-    
+
     const presetData = {
       cpanel: JSON.parse(
         '{"emails":0,"error_log_files":[],"error_log_messages":[],"total_error_messages":0,"cronjobs":[],"usage":[{"id":"lvecpu","description":"CPU Usage","usage":0,"maximum":100},{"id":"lvememphy","description":"Physical Memory Usage","usage":0,"maximum":512},{"id":"lvenproc","description":"Number of Processes","usage":0,"maximum":100}]}'
@@ -83,7 +83,7 @@ class DashboardApp {
       ),
       queues: JSON.parse('{"queues":[],"total":0}'),
       webhooks: JSON.parse(
-        '{"senders":[],"events":[["Event","Hits"]],"failed":0,"feed":[],"repositories":[],"total":0,"statistics":[["Date","Table #1"],["01/01",0]],"statistics_github":[["Date","Table #1"],["01/01",0]],"branches":[],"workflow_runs":[],"total_workflow_runs":0, "installations":0, "installation_repositories": [], "installation_repositories_count": 0}'
+        '{"senders":[],"events":[["Event","Hits"]],"failed":0,"feed":[],"repositories":[],"total":0,"statistics":[["Date","Table #1"],["01/01",0]],"statistics_github":[["Date","Table #1"],["01/01",0]],"branches":[], "pull_requests":[], "workflow_runs":[],"total_workflow_runs":0, "installations":0, "installation_repositories": [], "installation_repositories_count": 0}'
       )
     };
 
@@ -102,7 +102,7 @@ class DashboardApp {
     const offset = new Date().toString().match(/([-\+][0-9]+)\s/)[1];
     CookieManager.set("timezone", timezone, 10);
     CookieManager.set("offset", offset, 10);
-    
+
     OptionsBoxState.handle();
     this.uiManager.initFeedToggle();
     this.uiManager.initWorkflowLimiter();
@@ -119,12 +119,12 @@ class DashboardApp {
   drawChart() {
     this.preset();
     GitHubStatsManager.show();
-    
+
     // Initial data load
     this.dataLoader.load30Interval();
     this.dataLoader.load60Interval();
     this.dataLoader.load300Interval();
-    
+
     // Set up intervals
     setInterval(() => this.dataLoader.load30Interval(), 30 * 1000);
     setInterval(() => this.dataLoader.load60Interval(), 60 * 1000);

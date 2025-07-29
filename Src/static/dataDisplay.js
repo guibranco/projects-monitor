@@ -384,7 +384,7 @@ export class DataDisplayManager {
   }
 
   /**
-   * Updates various charts and displays webhook statistics based on response data.
+   * Updates charts and displays webhook statistics based on response data.
    */
   showWebhook(response) {
     const optionsStatistics = {

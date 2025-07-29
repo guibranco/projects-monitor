@@ -173,6 +173,13 @@ $configuration = new Configuration();
          <div id="branches"></div>
       </div>
 
+      <div class="full-width-section">
+         <div class="section-header">
+            Branches <span id="counter_pull_requests" class="badge rounded-pill"></span>
+         </div>
+         <div id="pull_requests"></div>
+      </div>
+
       <div class="data-lists">
          <div class="data-column">
             <div class="data-item">

@@ -25,6 +25,9 @@ class DashboardApp {
     this.preset = this.preset.bind(this);
   }
 
+  /**
+   * Exposes global state objects and functions for API callbacks, confirmations, and GitHub stats.
+   */
   exposeGlobals() {
     // Expose state objects
     window.feedState = this.feedState;
@@ -63,7 +66,7 @@ class DashboardApp {
   }
 
   /**
-   * Initializes preset information if the showPreset flag is true.
+   * Initializes and displays preset data if showPreset is true.
    */
   preset() {
     if (!this.showPreset) {
@@ -95,7 +98,7 @@ class DashboardApp {
   }
 
   /**
-   * Initializes the application by setting up timezone, UI components, and logging states.
+   * Initializes application settings and UI components.
    */
   init() {
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;

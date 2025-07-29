@@ -175,7 +175,7 @@ $configuration = new Configuration();
 
       <div class="full-width-section">
          <div class="section-header">
-            Branches <span id="counter_pull_requests" class="badge rounded-pill"></span>
+            Pull Requests <span id="counter_pull_requests" class="badge rounded-pill"></span>
          </div>
          <div id="pull_requests"></div>
       </div>

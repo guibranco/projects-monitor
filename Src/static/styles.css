@@ -318,3 +318,251 @@ code {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.5);
 }
+
+/* ===========================================
+   COLLAPSIBLE SECTIONS FUNCTIONALITY
+   =========================================== */
+
+/* Enhanced Section Header for Collapsible Functionality */
+.section-header {
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  color: white;
+  padding: 15px 25px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 1.2em;
+  text-align: center;
+  margin-bottom: 10px;
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.section-header:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+  background: linear-gradient(135deg, #ff7849 0%, #fb9d32 100%);
+}
+
+.section-header:active {
+  transform: translateY(0);
+}
+
+/* Arrow indicator */
+.section-header::after {
+  content: '▼';
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: transform 0.3s ease;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.section-header.collapsed::after {
+  transform: translateY(-50%) rotate(-90deg);
+}
+
+/* Ripple effect on click */
+.section-header::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.3s, height 0.3s;
+}
+
+.section-header:active::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Section Content Animation */
+.section-content {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.section-content.collapsed {
+  max-height: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.section-content:not(.collapsed) {
+  max-height: 2000px; /* Adjust based on your content */
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Smooth transitions for different container types */
+.full-width-section .section-content,
+.data-item .section-content {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Badge styling remains unchanged but prevent interaction */
+.section-header .badge {
+  background: rgba(255, 255, 255, 0.2) !important;
+  font-size: 0.9em;
+  margin-left: 10px;
+  pointer-events: none; /* Prevent badge from interfering with clicks */
+}
+
+/* Different collapse states for visual feedback */
+.section-header.collapsed {
+  margin-bottom: 0;
+  border-radius: 10px 10px 10px 10px;
+  background: linear-gradient(135deg, #cc5529 0%, #c4761a 100%);
+}
+
+.section-header:not(.collapsed) {
+  margin-bottom: 10px;
+  border-radius: 10px 10px 0 0;
+}
+
+/* Container adjustments for collapsed state */
+.full-width-section.collapsed,
+.data-item.collapsed {
+  margin-bottom: 15px;
+}
+
+/* Enhanced hover effects for containers with collapsible headers */
+.full-width-section:hover .section-header:not(.collapsed),
+.data-item:hover .section-header:not(.collapsed) {
+  box-shadow: 0 6px 25px rgba(255, 107, 53, 0.4);
+}
+
+/* Loading state */
+.section-header.loading::after {
+  content: '◐';
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: translateY(-50%) rotate(0deg); }
+  to { transform: translateY(-50%) rotate(360deg); }
+}
+
+/* Focus styles for accessibility */
+.section-header:focus {
+  outline: none;
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3), 0 0 0 3px rgba(255, 255, 255, 0.3);
+}
+
+/* Collapsed section border */
+.section-header.collapsed {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Additional responsive adjustments for mobile collapsible sections */
+@media (max-width: 768px) {
+  .section-header {
+    padding: 12px 20px;
+    font-size: 1.1em;
+  }
+  
+  .section-header::after {
+    right: 15px;
+    font-size: 12px;
+  }
+  
+  .section-content.collapsed {
+    max-height: 0 !important;
+  }
+}
+
+/* Control buttons styling in floating box */
+.floating-box .btn-outline-light {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.9);
+  transition: all 0.3s ease;
+}
+
+.floating-box .btn-outline-light:hover {
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  border-color: #ff6b35;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+}
+
+.floating-box .btn-outline-light:active {
+  transform: translateY(0);
+}
+
+/* Optional: Control buttons styling if added elsewhere */
+.collapse-controls {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  padding: 15px;
+  margin: 20px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.collapse-controls button {
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  border: none;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  margin: 0 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.collapse-controls button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+  background: linear-gradient(135deg, #ff7849 0%, #fb9d32 100%);
+}
+
+.collapse-controls button:active {
+  transform: translateY(0);
+}
+
+/* Ensure collapsible sections work well with existing animations */
+.data-item.collapsed:hover {
+  transform: none; /* Disable hover transform when collapsed */
+}
+
+.full-width-section.collapsed {
+  padding: 0; /* Remove padding when collapsed to save space */
+}
+
+.data-item.collapsed {
+  padding: 0; /* Remove padding when collapsed to save space */
+}
+
+/* Keep some padding on the header even when collapsed */
+.full-width-section.collapsed .section-header,
+.data-item.collapsed .section-header {
+  margin: 20px;
+  margin-bottom: 0;
+}
+
+/* Smooth integration with existing grid layouts */
+.data-lists .data-item.collapsed {
+  margin-bottom: 5px; /* Reduce spacing for collapsed items */
+}
+
+.full-width-section.collapsed {
+  margin-bottom: 15px; /* Reduce spacing for collapsed full-width sections */
+}

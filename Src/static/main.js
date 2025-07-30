@@ -3,6 +3,7 @@ import { OptionsBoxState, FeedState, WorkflowLimiterState } from './storage.js';
 import { ApiManager, DataLoader } from './api.js';
 import { UIManager, GitHubStatsManager, CookieManager } from './ui.js';
 import { DataDisplayManager } from './dataDisplay.js';
+import { CollapsibleSectionsManager } from './collapsibleSections.js'; // Add this import
 
 class DashboardApp {
   constructor() {
@@ -10,6 +11,7 @@ class DashboardApp {
     this.apiManager = new ApiManager();
     this.dataLoader = new DataLoader(this.apiManager);
     this.dataDisplayManager = new DataDisplayManager();
+    this.collapsibleSectionsManager = new CollapsibleSectionsManager(); // Add this line
 
     // Initialize state objects
     this.feedState = new FeedState();
@@ -63,6 +65,14 @@ class DashboardApp {
 
     // Expose GitHub stats function
     window.showGitHubStatsAndWakatime = GitHubStatsManager.show;
+
+    // Expose collapsible sections functions
+    window.toggleSection = this.collapsibleSectionsManager.toggleSectionById.bind(this.collapsibleSectionsManager);
+    window.collapseAllSections = this.collapsibleSectionsManager.collapseAll.bind(this.collapsibleSectionsManager);
+    window.expandAllSections = this.collapsibleSectionsManager.expandAll.bind(this.collapsibleSectionsManager);
+    window.getSectionStates = this.collapsibleSectionsManager.getSectionStates.bind(this.collapsibleSectionsManager);
+    window.getSectionStats = this.collapsibleSectionsManager.getSectionStats.bind(this.collapsibleSectionsManager);
+    window.reinitializeCollapsibleSections = this.collapsibleSectionsManager.reinitialize.bind(this.collapsibleSectionsManager);
   }
 
   /**
@@ -95,6 +105,11 @@ class DashboardApp {
     this.dataDisplayManager.showMessages(presetData.messages);
     this.dataDisplayManager.showQueues(presetData.queues);
     this.dataDisplayManager.showWebhook(presetData.webhooks);
+
+    // Reinitialize collapsible sections after preset data is loaded
+    setTimeout(() => {
+      this.collapsibleSectionsManager.reinitialize();
+    }, 500);
   }
 
   /**
@@ -110,10 +125,51 @@ class DashboardApp {
     this.uiManager.initFeedToggle();
     this.uiManager.initWorkflowLimiter();
 
+    // Initialize collapsible sections
+    this.collapsibleSectionsManager.init();
+
+    // Set up event listeners for collapsible sections
+    this.setupCollapsibleSectionEventListeners();
+
     console.log("Options box state on load:", OptionsBoxState.load());
     console.log("Feed filter on load:", this.feedState.filter);
     console.log("Workflow limiter enabled:", this.workflowLimiterState.enabled);
     console.log("Workflow limit value:", this.workflowLimiterState.limitValue);
+  }
+
+  /**
+   * Set up event listeners for collapsible sections integration
+   */
+  setupCollapsibleSectionEventListeners() {
+    // Listen for section toggle events
+    document.addEventListener('sectionToggled', (e) => {
+      const { sectionId, collapsed } = e.detail;
+      console.log(`Dashboard: Section ${sectionId} ${collapsed ? 'collapsed' : 'expanded'}`);
+      
+      // You can add custom logic here when sections are toggled
+      // For example, pause/resume chart updates, save analytics, etc.
+    });
+
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      // Ctrl/Cmd + Shift + C to collapse all
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') {
+        e.preventDefault();
+        this.collapsibleSectionsManager.collapseAll();
+      }
+      
+      // Ctrl/Cmd + Shift + E to expand all
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'E') {
+        e.preventDefault();
+        this.collapsibleSectionsManager.expandAll();
+      }
+    });
+
+    // Log section stats on load
+    setTimeout(() => {
+      const stats = this.collapsibleSectionsManager.getSectionStats();
+      console.log('Collapsible sections stats:', stats);
+    }, 1000);
   }
 
   /**
@@ -133,6 +189,11 @@ class DashboardApp {
     setInterval(() => this.dataLoader.load60Interval(), 60 * 1000);
     setInterval(() => this.dataLoader.load300Interval(), 300 * 1000);
     setInterval(GitHubStatsManager.show, 60 * 15 * 1000);
+
+    // Reinitialize collapsible sections after initial data load
+    setTimeout(() => {
+      this.collapsibleSectionsManager.reinitialize();
+    }, 2000);
   }
 }
 

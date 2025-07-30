@@ -71,6 +71,16 @@ $configuration = new Configuration();
                      Please enter a number between 1 and 10,000
                   </div>
                </div>
+               <!-- ADD: Collapsible sections controls -->
+               <hr style="color: rgba(255,255,255,0.3);">
+               <div class="d-grid gap-2">
+                  <button type="button" class="btn btn-outline-light btn-sm" onclick="collapseAllSections()">
+                     📁 Collapse All Sections
+                  </button>
+                  <button type="button" class="btn btn-outline-light btn-sm" onclick="expandAllSections()">
+                     📂 Expand All Sections
+                  </button>
+               </div>
             </div>
          </div>
       </div>
@@ -151,108 +161,116 @@ $configuration = new Configuration();
          </div>
       </div>
 
+      <!-- UPDATED: Added section headers and section-content classes -->
       <div class="full-width-section">
-         <div id="messages_grouped"></div>
+         <div class="section-header">
+            Messages Grouped <span id="counter_messages_grouped" class="badge rounded-pill"></span>
+         </div>
+         <div id="messages_grouped" class="section-content"></div>
       </div>
 
       <div class="full-width-section">
-         <div id="error_log_messages"></div>
+         <div class="section-header">
+            Error Log Messages <span id="counter_error_log_messages" class="badge rounded-pill"></span>
+         </div>
+         <div id="error_log_messages" class="section-content"></div>
       </div>
 
       <div class="full-width-section">
          <div class="section-header">
             Workflow Runs <span id="counter_workflow_runs" class="badge rounded-pill"></span>
          </div>
-         <div id="workflow_runs"></div>
+         <div id="workflow_runs" class="section-content"></div>
       </div>
 
       <div class="full-width-section">
          <div class="section-header">
             Branches <span id="counter_branches" class="badge rounded-pill"></span>
          </div>
-         <div id="branches"></div>
+         <div id="branches" class="section-content"></div>
       </div>
 
       <div class="full-width-section">
          <div class="section-header">
             Pull Requests <span id="counter_pull_requests" class="badge rounded-pill"></span>
          </div>
-         <div id="pull_requests"></div>
+         <div id="pull_requests" class="section-content"></div>
       </div>
 
+      <!-- UPDATED: Added section-content classes to all data-item content divs -->
       <div class="data-lists">
          <div class="data-column">
             <div class="data-item">
                <div class="section-header">
                   Issues Blocked <span id="counter_issues_blocked" class="badge rounded-pill"></span>
                </div>
-               <div id="issues_blocked"></div>
+               <div id="issues_blocked" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
                   Pull Requests Blocked <span id="counter_pull_requests_blocked" class="badge rounded-pill"></span>
                </div>
-               <div id="pull_requests_blocked"></div>
+               <div id="pull_requests_blocked" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
                   GitHub API Usage <span id="counter_api_usage" class="badge rounded-pill"></span>
                </div>
-               <div id="api_usage"></div>
+               <div id="api_usage" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
                   WireGuard <span id="counter_wireguard" class="badge rounded-pill"></span>
                </div>
-               <div id="wireguard"></div>
+               <div id="wireguard" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
                   HealthChecksIo <span id="counter_healthchecksio" class="badge rounded-pill"></span>
                </div>
-               <div id="healthchecksio"></div>
+               <div id="healthchecksio" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
                   UpTimeRobot <span id="counter_uptimerobot" class="badge rounded-pill"></span>
                </div>
-               <div id="uptimerobot"></div>
+               <div id="uptimerobot" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
                   Domains <span id="counter_domains" class="badge rounded-pill"></span>
                </div>
-               <div id="domains"></div>
+               <div id="domains" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
                   Pull Requests Authored <span id="counter_pull_requests_authored" class="badge rounded-pill"></span>
                </div>
-               <div id="pull_requests_authored"></div>
+               <div id="pull_requests_authored" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
                   Issues Authored <span id="counter_issues_authored" class="badge rounded-pill"></span>
                </div>
-               <div id="issues_authored"></div>
+               <div id="issues_authored" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
                   Installed Repositories <span id="counter_installed_repositories" class="badge rounded-pill"></span>
                </div>
-               <div id="installed_repositories"></div>
+               <div id="installed_repositories" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
                   Feed <span id="counter_feed" class="badge rounded-pill"></span>
                </div>
-               <div id="feed"></div>
+               <div id="feed" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
                   Repositories <span id="counter_repositories" class="badge rounded-pill"></span>
                </div>
-               <div id="repositories"></div>
+               <div id="repositories" class="section-content"></div>
             </div>
          </div>
          <div class="data-column">
@@ -260,68 +278,71 @@ $configuration = new Configuration();
                <div class="section-header">
                   Issues Awaiting Triage <span id="counter_triage" class="badge rounded-pill"></span>
                </div>
-               <div id="triage"></div>
+               <div id="triage" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
                   Pull Requests Awaiting Triage <span id="counter_pull_requests_triage"
                      class="badge rounded-pill"></span>
                </div>
-               <div id="pull_requests_triage"></div>
+               <div id="pull_requests_triage" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
                   Pull Requests <span id="counter_pull_requests_latest" class="badge rounded-pill"></span>
                </div>
-               <div id="pull_requests_latest"></div>
+               <div id="pull_requests_latest" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
                   Issues Assigned <span id="counter_assigned" class="badge rounded-pill"></span>
                </div>
-               <div id="assigned"></div>
+               <div id="assigned" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
                   Issues WIP <span id="counter_wip" class="badge rounded-pill"></span>
                </div>
-               <div id="wip"></div>
+               <div id="wip" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
                   Issues Bug <span id="counter_bug" class="badge rounded-pill"></span>
                </div>
-               <div id="bug"></div>
+               <div id="bug" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
                   Issues <span id="counter_issues" class="badge rounded-pill"></span>
                </div>
-               <div id="issues"></div>
+               <div id="issues" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
                   Cronjobs <span id="counter_cronjobs" class="badge rounded-pill"></span>
                </div>
-               <div id="cronjobs"></div>
+               <div id="cronjobs" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
                   Senders <span id="counter_senders" class="badge rounded-pill"></span>
                </div>
-               <div id="senders"></div>
+               <div id="senders" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
                   AppVeyor <span id="counter_appveyor" class="badge rounded-pill"></span>
                </div>
-               <div id="appveyor"></div>
+               <div id="appveyor" class="section-content"></div>
             </div>
          </div>
       </div>
 
       <div class="full-width-section">
-         <div id="webhooks_statistics"></div>
+         <div class="section-header">
+            Webhooks Statistics <span id="counter_webhooks_statistics" class="badge rounded-pill"></span>
+         </div>
+         <div id="webhooks_statistics" class="section-content"></div>
       </div>
    </div>
 

@@ -1,9 +1,10 @@
 // constants.js
 export const STORAGE_KEYS = {
-  OPTIONS_BOX_STATE: "optionsBoxState",
-  FEED_FILTER: "feedFilter",
-  WORKFLOW_LIMITER: "workflowLimiter",
-  WORKFLOW_LIMIT_VALUE: "workflowLimitValue"
+  OPTIONS_BOX_STATE: 'optionsBoxState',
+  FEED_FILTER: 'feedFilter', 
+  WORKFLOW_LIMITER: 'workflowLimiter',
+  WORKFLOW_LIMIT_VALUE: 'workflowLimitValue',
+  COLLAPSIBLE_SECTIONS: 'collapsibleSections',
 };
 
 export const VALID_STATES = {

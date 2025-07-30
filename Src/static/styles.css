@@ -1,12 +1,72 @@
+/* ===========================================
+   CSS VARIABLES & ROOT STYLES
+   =========================================== */
+:root {
+  --bg-gradient: linear-gradient(135deg, #0d1117 0%, #1a1e2e 100%);
+  --accent-gradient: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  --accent-hover-gradient: linear-gradient(135deg, #ff7849 0%, #fb9d32 100%);
+  --accent-collapsed-gradient: linear-gradient(135deg, #cc5529 0%, #c4761a 100%);
+  
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-bg-light: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-border-light: rgba(255, 255, 255, 0.1);
+  
+  --text-primary: #ffffff;
+  --shadow-light: 0 4px 15px rgba(255, 107, 53, 0.3);
+  --shadow-hover: 0 6px 20px rgba(255, 107, 53, 0.4);
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.3);
+  
+  --border-radius: 15px;
+  --border-radius-small: 10px;
+  --transition: all 0.3s ease;
+  --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===========================================
+   BASE STYLES
+   =========================================== */
 body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   margin: 0;
   padding: 0;
-  background: linear-gradient(135deg, #0d1117 0%, #1a1e2e 100%);
-  color: #ffffff;
+  background: var(--bg-gradient);
+  color: var(--text-primary);
   min-height: 100vh;
 }
 
+code {
+  background-color: rgba(0, 0, 0, 0.8);
+  color: var(--text-primary);
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--glass-border);
+  font-family: "Fira Code", monospace;
+}
+
+/* ===========================================
+   SCROLLBAR STYLING
+   =========================================== */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--glass-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* ===========================================
+   LAYOUT CONTAINERS
+   =========================================== */
 .dashboard-container {
   width: 100%;
   margin: 0;
@@ -14,42 +74,147 @@ body {
   padding-top: 80px;
 }
 
-/* Floating Controls */
+/* ===========================================
+   GLASS CARD COMPONENTS
+   =========================================== */
+.glass-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius);
+  color: var(--text-primary);
+  transition: var(--transition);
+}
+
+.glass-card-light {
+  background: var(--glass-bg-light);
+  border: 1px solid var(--glass-border-light);
+  border-radius: var(--border-radius);
+  color: var(--text-primary);
+}
+
+.glass-card:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ===========================================
+   FLOATING CONTROLS
+   =========================================== */
 .floating-box {
   position: fixed;
   top: 20px;
   right: 20px;
   max-width: 320px;
   z-index: 1050;
-  backdrop-filter: blur(10px);
-  border-radius: 15px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(15px) saturate(1.2);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-card);
+  /* Dark backdrop to ensure readability over any background */
+  background: linear-gradient(135deg, 
+    rgba(13, 17, 23, 0.9) 0%, 
+    rgba(26, 30, 46, 0.85) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Alternative style for better contrast over light backgrounds */
+.floating-box.over-light {
+  background: linear-gradient(135deg, 
+    rgba(0, 0, 0, 0.85) 0%, 
+    rgba(13, 17, 23, 0.9) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 
+              0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 .floating-box .card {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 15px;
+  background: transparent;
+  border: none;
+  border-radius: var(--border-radius);
 }
 
 .floating-box .card-header {
-  background: rgba(255, 255, 255, 0.05);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 15px 15px 0 0;
+  background: rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+  backdrop-filter: blur(5px);
 }
 
 .floating-box .card-body {
-  color: #ffffff;
+  color: var(--text-primary);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
-/* Top Statistics Chart */
+/* Ensure titles and text in floating box are always readable */
+.floating-box h5,
+.floating-box h6,
+.floating-box .card-title {
+  color: white;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  font-weight: 600;
+}
+
+.floating-box .text-muted {
+  color: rgba(255, 255, 255, 0.8) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* ===========================================
+   BUTTONS
+   =========================================== */
+.btn-glass {
+  color: rgba(255, 255, 255, 0.95);
+  transition: var(--transition);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(5px);
+}
+
+.btn-glass:hover {
+  background: var(--accent-gradient);
+  border-color: #ff6b35;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-light);
+  text-shadow: none;
+}
+
+.btn-glass:active {
+  transform: translateY(0);
+}
+
+.floating-box .btn-outline-light {
+  border-color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.15);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.floating-box .btn-outline-light:hover {
+  background: var(--accent-gradient);
+  border-color: #ff6b35;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-light);
+  text-shadow: none;
+}
+
+/* ===========================================
+   CHARTS & DATA VISUALIZATION
+   =========================================== */
 .top-chart {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--glass-bg-light);
   border-radius: 0;
   padding: 20px;
   margin-bottom: 0;
   border: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--glass-border-light);
   height: 400px;
 }
 
@@ -58,7 +223,43 @@ body {
   height: 400px;
 }
 
-/* Gauges Grid */
+.chart-container {
+  @extend .glass-card;
+  padding: 20px;
+  min-height: 300px;
+}
+
+.pie-chart {
+  @extend .glass-card;
+  padding: 20px;
+  min-height: 300px;
+}
+
+.google-visualization-table {
+  color: #000;
+}
+
+/* ===========================================
+   GAUGES
+   =========================================== */
+.gauge {
+  @extend .glass-card;
+  padding: 10px;
+  box-shadow: inset 0 0 0 1px var(--glass-border);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  min-height: 200px;
+  margin: 1px;
+  border-radius: 0;
+}
+
+.gauge:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-card);
+}
+
+/* ===========================================
+   GRID LAYOUTS
+   =========================================== */
 .gauges-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -67,28 +268,6 @@ body {
   padding: 20px;
 }
 
-.gauge {
-  background: rgba(
-    255,
-    255,
-    255,
-    0.1
-  ); /* Changed from 0.95 to 0.1 for dark background */
-  border-radius: 0;
-  padding: 10px;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2); /* Changed border color */
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  min-height: 200px;
-  margin: 1px;
-  color: #ffffff; /* Ensure text is white */
-}
-
-.gauge:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-}
-
-/* Stats Section */
 .stats-section {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -97,53 +276,12 @@ body {
   padding: 20px;
 }
 
-.stats-left {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 15px;
-  padding: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
 .stats-right {
   display: grid;
   grid-template-columns: 1fr;
   gap: 15px;
 }
 
-.github-stats {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 15px;
-  padding: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 20px;
-  align-items: center;
-}
-
-.github-stats img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 10px;
-}
-
-.wakatime-postman {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 15px;
-  padding: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  text-align: center;
-}
-
-.wakatime-postman img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 10px;
-}
-
-/* Replace your existing chart container styles with these: */
-
-/* Bottom Grid */
 .bottom-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -151,21 +289,6 @@ body {
   margin-bottom: 30px;
 }
 
-.chart-container {
-  background: rgba(
-    255,
-    255,
-    255,
-    0.1
-  ); /* Changed from 0.95 to 0.1 for dark background */
-  border-radius: 15px;
-  padding: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  min-height: 300px;
-  color: #ffffff; /* Ensure text is white */
-}
-
-/* Pie Charts Row */
 .pie-charts {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -173,36 +296,6 @@ body {
   margin-bottom: 30px;
 }
 
-.pie-chart {
-  background: rgba(
-    255,
-    255,
-    255,
-    0.1
-  ); /* Changed from 0.95 to 0.1 for dark background */
-  border-radius: 15px;
-  padding: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  min-height: 300px;
-  color: #ffffff; /* Ensure text is white */
-}
-
-/* Full Width Sections */
-.full-width-section {
-  background: rgba(
-    255,
-    255,
-    255,
-    0.1
-  ); /* Changed from 0.95 to 0.1 for dark background */
-  border-radius: 15px;
-  padding: 20px;
-  margin-bottom: 30px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #ffffff; /* Ensure text is white */
-}
-
-/* Data Lists Grid */
 .data-lists {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -216,12 +309,49 @@ body {
   gap: 20px;
 }
 
-.data-item {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 15px;
+/* ===========================================
+   STATS COMPONENTS
+   =========================================== */
+.stats-left {
+  @extend .glass-card-light;
   padding: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: transform 0.3s ease;
+}
+
+.github-stats {
+  @extend .glass-card-light;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 20px;
+  align-items: center;
+}
+
+.github-stats img,
+.wakatime-postman img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--border-radius-small);
+}
+
+.wakatime-postman {
+  @extend .glass-card-light;
+  padding: 20px;
+  text-align: center;
+}
+
+/* ===========================================
+   FULL WIDTH SECTIONS & DATA ITEMS
+   =========================================== */
+.full-width-section {
+  @extend .glass-card;
+  padding: 20px;
+  margin-bottom: 30px;
+}
+
+.data-item {
+  @extend .glass-card-light;
+  padding: 20px;
+  transition: var(--transition);
 }
 
 .data-item:hover {
@@ -229,26 +359,151 @@ body {
   background: rgba(255, 255, 255, 0.08);
 }
 
-/* Section Headers */
+/* ===========================================
+   SECTION HEADERS & COLLAPSIBLE FUNCTIONALITY
+   =========================================== */
 .section-header {
-  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  background: var(--accent-gradient);
   color: white;
   padding: 15px 25px;
-  border-radius: 10px;
+  border-radius: var(--border-radius-small);
   font-weight: 600;
   font-size: 1.2em;
   text-align: center;
   margin-bottom: 10px;
-  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+  box-shadow: var(--shadow-light);
+  cursor: pointer;
+  user-select: none;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
 }
 
+.section-header:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+  background: var(--accent-hover-gradient);
+}
+
+.section-header:active {
+  transform: translateY(0);
+}
+
+.section-header:focus {
+  outline: none;
+  box-shadow: var(--shadow-light), 0 0 0 3px rgba(255, 255, 255, 0.3);
+}
+
+/* Arrow indicator */
+.section-header::after {
+  content: '▼';
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: transform 0.3s ease;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.section-header.collapsed::after {
+  transform: translateY(-50%) rotate(-90deg);
+}
+
+/* Ripple effect */
+.section-header::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.3s, height 0.3s;
+}
+
+.section-header:active::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Collapsed state styling */
+.section-header.collapsed {
+  margin-bottom: 0;
+  border-radius: var(--border-radius-small);
+  background: var(--accent-collapsed-gradient);
+  border-bottom: 1px solid var(--glass-border-light);
+}
+
+.section-header:not(.collapsed) {
+  margin-bottom: 10px;
+  border-radius: var(--border-radius-small) var(--border-radius-small) 0 0;
+}
+
+/* Loading state */
+.section-header.loading::after {
+  content: '◐';
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: translateY(-50%) rotate(0deg); }
+  to { transform: translateY(-50%) rotate(360deg); }
+}
+
+/* Section content animations */
+.section-content {
+  transition: var(--transition-smooth);
+  overflow: hidden;
+  opacity: 1;
+  transform: translateY(0);
+  max-height: 2000px;
+}
+
+.section-content.collapsed {
+  max-height: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* Collapsed container adjustments */
+.full-width-section.collapsed,
+.data-item.collapsed {
+  margin-bottom: 15px;
+  padding: 0;
+}
+
+.full-width-section.collapsed .section-header,
+.data-item.collapsed .section-header {
+  margin: 20px;
+  margin-bottom: 0;
+}
+
+.data-item.collapsed:hover {
+  transform: none;
+}
+
+.data-lists .data-item.collapsed {
+  margin-bottom: 5px;
+}
+
+/* Badge styling */
 .section-header .badge {
   background: rgba(255, 255, 255, 0.2) !important;
   font-size: 0.9em;
   margin-left: 10px;
+  pointer-events: none;
 }
 
-/* Toast Container */
+/* ===========================================
+   TOAST NOTIFICATIONS
+   =========================================== */
 #toast-container {
   position: fixed;
   top: 1rem;
@@ -256,21 +511,33 @@ body {
   z-index: 1055;
 }
 
-/* Code Styling */
-code {
-  background-color: rgba(0, 0, 0, 0.8);
-  color: #ffffff;
-  padding: 4px 8px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  font-family: "Fira Code", monospace;
+/* ===========================================
+   CONTROL BUTTONS
+   =========================================== */
+.collapse-controls {
+  @extend .glass-card-light;
+  padding: 15px;
+  margin: 20px;
+  text-align: center;
 }
 
-.google-visualization-table {
-  color: #000;
+.collapse-controls button {
+  @extend .btn-glass;
+  background: var(--accent-gradient);
+  border: none;
+  color: white;
+  margin: 0 5px;
 }
 
-/* Responsive Design */
+.collapse-controls button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-light);
+  background: var(--accent-hover-gradient);
+}
+
+/* ===========================================
+   RESPONSIVE DESIGN
+   =========================================== */
 @media (max-width: 768px) {
   .dashboard-container {
     padding: 0;
@@ -299,22 +566,14 @@ code {
     max-width: 100%;
     margin-bottom: 20px;
   }
-}
 
-/* Scrollbar Styling */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
+  .section-header {
+    padding: 12px 20px;
+    font-size: 1.1em;
+  }
+  
+  .section-header::after {
+    right: 15px;
+    font-size: 12px;
+  }
 }

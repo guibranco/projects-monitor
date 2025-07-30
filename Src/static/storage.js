@@ -191,7 +191,7 @@ export class CollapsibleSectionsState {
     }
 
     const collapsed = Boolean(isCollapsed);
-    
+
     if (collapsed) {
       this._collapsedSections[sectionId] = true;
     } else {
@@ -278,7 +278,7 @@ export class CollapsibleSectionsState {
       }
 
       const parsed = JSON.parse(stored);
-      
+
       // Validate that it's an object
       if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
         console.warn("CollapsibleSectionsState: Invalid stored data format, resetting to empty state");

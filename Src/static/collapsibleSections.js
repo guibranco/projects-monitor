@@ -6,7 +6,7 @@ export class CollapsibleSectionsManager {
         this.isInitialized = false;
         this.sections = new Map();
         this.state = new CollapsibleSectionsState();
-        
+
         // Bind methods to maintain context
         this.init = this.init.bind(this);
         this.handleHeaderClick = this.handleHeaderClick.bind(this);
@@ -32,11 +32,11 @@ export class CollapsibleSectionsManager {
      */
     initializeCollapsibleSections() {
         const sectionHeaders = document.querySelectorAll('.section-header');
-        
+
         sectionHeaders.forEach(header => {
             // Add click event listener
             header.addEventListener('click', (e) => this.handleHeaderClick(e, header));
-            
+
             // Add keyboard support for accessibility
             header.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -44,28 +44,28 @@ export class CollapsibleSectionsManager {
                     this.handleHeaderClick(e, header);
                 }
             });
-            
+
             // Make header focusable for keyboard navigation
             if (!header.hasAttribute('tabindex')) {
                 header.setAttribute('tabindex', '0');
             }
-            
+
             // Set up ARIA attributes for accessibility
             this.setupAccessibility(header);
-            
+
             // Store section reference
             const content = this.getContentElement(header);
             if (content) {
                 this.sections.set(content.id, { header, content });
             }
-            
+
             // Restore previous state from storage
             this.restoreState(header);
         });
 
         this.isInitialized = true;
         console.log(`CollapsibleSectionsManager: Initialized ${sectionHeaders.length} collapsible sections`);
-        
+
         // Log initial statistics
         const stats = this.getSectionStats();
         console.log(`CollapsibleSectionsManager: Initial state - ${stats.collapsed} collapsed, ${stats.expanded} expanded`);
@@ -79,11 +79,11 @@ export class CollapsibleSectionsManager {
         if (content) {
             const contentId = content.id || `content_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
             if (!content.id) content.id = contentId;
-            
+
             header.setAttribute('aria-expanded', 'true');
             header.setAttribute('aria-controls', contentId);
             content.setAttribute('aria-labelledby', header.id || contentId + '_header');
-            
+
             if (!header.id) {
                 header.id = contentId + '_header';
             }
@@ -104,7 +104,7 @@ export class CollapsibleSectionsManager {
 
         // Add loading state briefly for visual feedback
         header.classList.add('loading');
-        
+
         setTimeout(() => {
             header.classList.remove('loading');
             this.toggleSection(header, content);
@@ -116,7 +116,7 @@ export class CollapsibleSectionsManager {
      */
     getContentElement(header) {
         let content = header.nextElementSibling;
-        
+
         // If next sibling doesn't have section-content class, try to find it
         if (content && !content.classList.contains('section-content')) {
             // Add the class if it's likely the content container
@@ -149,7 +149,7 @@ export class CollapsibleSectionsManager {
                 content.classList.add('section-content');
             }
         }
-        
+
         return content;
     }
 
@@ -179,7 +179,7 @@ export class CollapsibleSectionsManager {
             header.classList.add('collapsed');
             content.classList.add('collapsed');
             header.setAttribute('aria-expanded', 'false');
-            
+
             // Add collapsed class to parent container for styling
             const parentContainer = header.closest('.full-width-section, .data-item');
             if (parentContainer) {
@@ -190,7 +190,7 @@ export class CollapsibleSectionsManager {
             header.classList.remove('collapsed');
             content.classList.remove('collapsed');
             header.setAttribute('aria-expanded', 'true');
-            
+
             // Remove collapsed class from parent container
             const parentContainer = header.closest('.full-width-section, .data-item');
             if (parentContainer) {
@@ -262,7 +262,7 @@ export class CollapsibleSectionsManager {
                 this.toggleSection(sectionData.header, sectionData.content, true);
             }
         });
-        
+
         console.log('CollapsibleSectionsManager: All sections collapsed');
     }
 
@@ -278,7 +278,7 @@ export class CollapsibleSectionsManager {
                 this.toggleSection(sectionData.header, sectionData.content, false);
             }
         });
-        
+
         console.log('CollapsibleSectionsManager: All sections expanded');
     }
 
@@ -327,14 +327,14 @@ export class CollapsibleSectionsManager {
      */
     resetAllStates() {
         this.state.clearAll();
-        
+
         // Apply visual reset to all sections
         this.sections.forEach((sectionData) => {
             if (sectionData.header.classList.contains('collapsed')) {
                 this.toggleSection(sectionData.header, sectionData.content, false);
             }
         });
-        
+
         console.log('CollapsibleSectionsManager: All states reset to expanded');
     }
 
@@ -355,7 +355,7 @@ export class CollapsibleSectionsManager {
             this.sections.forEach((sectionData, sectionId) => {
                 const shouldBeCollapsed = this.state.isSectionCollapsed(sectionId);
                 const isCurrentlyCollapsed = sectionData.header.classList.contains('collapsed');
-                
+
                 if (shouldBeCollapsed !== isCurrentlyCollapsed) {
                     this.toggleSection(sectionData.header, sectionData.content, shouldBeCollapsed);
                 }

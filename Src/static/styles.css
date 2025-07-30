@@ -427,7 +427,7 @@ code {
 /* Different collapse states for visual feedback */
 .section-header.collapsed {
   margin-bottom: 0;
-  border-radius: 10px 10px 10px 10px;
+  border-radius: 10px;
   background: linear-gradient(135deg, #cc5529 0%, #c4761a 100%);
 }
 

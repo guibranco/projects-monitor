@@ -14,7 +14,7 @@ export class CollapsibleSectionsManager {
     }
 
     /**
-     * Initialize collapsible sections functionality
+     * Initializes collapsible sections functionality when the DOM is ready.
      */
     init() {
         if (this.isInitialized) return;
@@ -28,7 +28,8 @@ export class CollapsibleSectionsManager {
     }
 
     /**
-     * Set up all collapsible sections on the page
+     * Initializes all collapsible sections on the page by setting up event listeners,
+     * keyboard support, focusability, ARIA attributes, and restoring previous states.
      */
     initializeCollapsibleSections() {
         const sectionHeaders = document.querySelectorAll('.section-header');
@@ -72,7 +73,13 @@ export class CollapsibleSectionsManager {
     }
 
     /**
-     * Set up accessibility attributes
+     * Set up accessibility attributes for a header and its associated content element.
+     *
+     * This function ensures that the header and content elements have the necessary
+     * ARIA attributes for better accessibility. It assigns unique IDs if they are missing
+     * and sets the `aria-expanded`, `aria-controls`, and `aria-labelledby` attributes accordingly.
+     *
+     * @param {HTMLElement} header - The header element to which accessibility attributes will be set.
      */
     setupAccessibility(header) {
         const content = this.getContentElement(header);
@@ -91,7 +98,13 @@ export class CollapsibleSectionsManager {
     }
 
     /**
-     * Handle header click events
+     * Handles click events on headers to toggle sections.
+     *
+     * This function prevents clicks on badges from triggering section toggles.
+     * It adds a loading state briefly for visual feedback and then toggles the section.
+     *
+     * @param {Event} event - The click event object.
+     * @param {HTMLElement} header - The header element that was clicked.
      */
     handleHeaderClick(event, header) {
         // Prevent badge clicks from triggering collapse
@@ -112,7 +125,16 @@ export class CollapsibleSectionsManager {
     }
 
     /**
-     * Find the content element associated with a header
+     * Find and potentially mark the content element associated with a header.
+     *
+     * This function starts by checking the next sibling of the provided header.
+     * If it doesn't have the 'section-content' class, the function then checks if
+     * the sibling's ID contains specific keywords or if its tag name is 'DIV'.
+     * If either condition is met, the class is added to the element, indicating that
+     * it is a content container. The function returns the identified content element.
+     *
+     * @param {HTMLElement} header - The header element for which to find the associated content.
+     * @returns {HTMLElement} The content element associated with the given header.
      */
     getContentElement(header) {
         let content = header.nextElementSibling;
@@ -154,7 +176,17 @@ export class CollapsibleSectionsManager {
     }
 
     /**
-     * Toggle section collapsed/expanded state
+     * Toggles the collapsed or expanded state of a section.
+     *
+     * This function checks if the section has an ID and logs a warning if it does not.
+     * It determines whether to collapse or expand the section based on either a forced state
+     * or by toggling its current state using a state management system. Visual changes are applied
+     * to the header, content, and parent container, and the state is updated if a forceState was provided.
+     * A custom event 'sectionToggled' is dispatched with details about the section's new state.
+     *
+     * @param {HTMLElement} header - The header element of the section to toggle.
+     * @param {HTMLElement} content - The content element of the section to toggle.
+     * @param {boolean|null} forceState - An optional boolean to force the section to be collapsed or expanded.
      */
     toggleSection(header, content, forceState = null) {
         const sectionId = content.id;
@@ -218,7 +250,13 @@ export class CollapsibleSectionsManager {
     }
 
     /**
-     * Restore section state from storage
+     * Restores the section state from storage based on the provided header.
+     *
+     * This function retrieves the content element associated with the given header
+     * and checks if it was previously collapsed. If so, it schedules a toggle
+     * operation using setTimeout to ensure smooth animation during page load.
+     *
+     * @param {HTMLElement} header - The header element whose section state needs to be restored.
      */
     restoreState(header) {
         const content = this.getContentElement(header);
@@ -236,7 +274,7 @@ export class CollapsibleSectionsManager {
     // Public API methods for external use
 
     /**
-     * Toggle a specific section by its content ID
+     * Toggles a specific section by its content ID.
      */
     toggleSectionById(sectionId, forceState = null) {
         const sectionData = this.sections.get(sectionId);
@@ -250,7 +288,7 @@ export class CollapsibleSectionsManager {
     }
 
     /**
-     * Collapse all sections
+     * Collapses all sections by applying visual changes and updating state.
      */
     collapseAll() {
         const sectionIds = Array.from(this.sections.keys());
@@ -267,7 +305,7 @@ export class CollapsibleSectionsManager {
     }
 
     /**
-     * Expand all sections
+     * Expands all collapsible sections and applies visual changes.
      */
     expandAll() {
         this.state.expandAll();
@@ -283,7 +321,7 @@ export class CollapsibleSectionsManager {
     }
 
     /**
-     * Get current state of all sections
+     * Retrieves the current state of all sections.
      */
     getSectionStates() {
         const allSectionIds = Array.from(this.sections.keys());
@@ -291,7 +329,7 @@ export class CollapsibleSectionsManager {
     }
 
     /**
-     * Get count of collapsed vs expanded sections
+     * Retrieves stats on collapsed vs expanded sections.
      */
     getSectionStats() {
         const allSectionIds = Array.from(this.sections.keys());
@@ -299,21 +337,21 @@ export class CollapsibleSectionsManager {
     }
 
     /**
-     * Check if a specific section is collapsed
+     * Determines if a specific section is collapsed.
      */
     isSectionCollapsed(sectionId) {
         return this.state.isSectionCollapsed(sectionId);
     }
 
     /**
-     * Get the state management instance for advanced operations
+     * Retrieves the state management instance.
      */
     getStateManager() {
         return this.state;
     }
 
     /**
-     * Reinitialize sections (useful when new sections are added dynamically)
+     * Reinitializes sections by clearing them and re-running initialization.
      */
     reinitialize() {
         console.log('CollapsibleSectionsManager: Reinitializing...');
@@ -323,7 +361,7 @@ export class CollapsibleSectionsManager {
     }
 
     /**
-     * Clear all stored states and reset to expanded
+     * Clears all stored states and resets sections to an expanded state.
      */
     resetAllStates() {
         this.state.clearAll();
@@ -339,14 +377,14 @@ export class CollapsibleSectionsManager {
     }
 
     /**
-     * Export current state for debugging
+     * Exports the current state for debugging purposes.
      */
     exportState() {
         return this.state.exportState();
     }
 
     /**
-     * Import state for debugging or restoration
+     * Imports state and re-applies visual states if necessary.
      */
     importState(stateData) {
         const success = this.state.importState(stateData);
@@ -365,7 +403,7 @@ export class CollapsibleSectionsManager {
     }
 
     /**
-     * Clean up event listeners (for cleanup/disposal)
+     * Cleans up resources and resets state.
      */
     destroy() {
         this.sections.forEach((sectionData) => {

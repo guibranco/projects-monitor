@@ -167,9 +167,8 @@ export class CollapsibleSectionsState {
   }
 
   /**
-   * Check if a specific section is collapsed
+   * Determines if a specific section is collapsed based on its ID.
    * @param {string} sectionId - The ID of the section to check
-   * @returns {boolean} True if collapsed, false if expanded
    */
   isSectionCollapsed(sectionId) {
     if (!sectionId) {
@@ -180,9 +179,7 @@ export class CollapsibleSectionsState {
   }
 
   /**
-   * Set the collapsed state of a specific section
-   * @param {string} sectionId - The ID of the section
-   * @param {boolean} isCollapsed - Whether the section should be collapsed
+   * Updates the collapsed state of a section.
    */
   setSectionCollapsed(sectionId, isCollapsed) {
     if (!sectionId) {
@@ -203,9 +200,7 @@ export class CollapsibleSectionsState {
   }
 
   /**
-   * Toggle the collapsed state of a specific section
-   * @param {string} sectionId - The ID of the section to toggle
-   * @returns {boolean} The new collapsed state
+   * Toggles the collapsed state of a specific section and returns the new state.
    */
   toggleSection(sectionId) {
     if (!sectionId) {
@@ -220,8 +215,7 @@ export class CollapsibleSectionsState {
   }
 
   /**
-   * Collapse all sections
-   * @param {string[]} sectionIds - Array of section IDs to collapse
+   * Collapses multiple sections based on provided IDs.
    */
   collapseAll(sectionIds = []) {
     if (!Array.isArray(sectionIds) || sectionIds.length === 0) {
@@ -238,7 +232,7 @@ export class CollapsibleSectionsState {
   }
 
   /**
-   * Expand all sections
+   * Clears all collapsed sections and logs the number of expanded sections.
    */
   expandAll() {
     const previousCount = Object.keys(this._collapsedSections).length;
@@ -248,9 +242,8 @@ export class CollapsibleSectionsState {
   }
 
   /**
-   * Get statistics about collapsed/expanded sections
+   * Retrieves statistics about collapsed and expanded sections.
    * @param {string[]} allSectionIds - Array of all available section IDs
-   * @returns {Object} Statistics object
    */
   getStats(allSectionIds = []) {
     const totalSections = allSectionIds.length;
@@ -267,8 +260,14 @@ export class CollapsibleSectionsState {
   }
 
   /**
-   * Load collapsed sections state from localStorage
-   * @returns {Object} Collapsed sections object
+   * Load the collapsed sections state from localStorage.
+   *
+   * This function retrieves the collapsed sections data from localStorage, parses it,
+   * validates its structure and content, and returns a cleaned-up object of valid entries.
+   * If any errors occur during this process or if the data is invalid, it logs an error
+   * and returns an empty object.
+   *
+   * @returns {Object} An object representing the collapsed sections state with validated boolean values.
    */
   loadCollapsedSections() {
     try {
@@ -301,7 +300,7 @@ export class CollapsibleSectionsState {
   }
 
   /**
-   * Save collapsed sections state to localStorage
+   * Saves the current collapsed sections state to localStorage.
    */
   saveCollapsedSections() {
     try {
@@ -312,7 +311,7 @@ export class CollapsibleSectionsState {
   }
 
   /**
-   * Clear all stored collapse states (reset to all expanded)
+   * Resets all stored collapse states to expanded.
    */
   clearAll() {
     this._collapsedSections = {};
@@ -321,8 +320,7 @@ export class CollapsibleSectionsState {
   }
 
   /**
-   * Export current state for debugging or backup
-   * @returns {Object} Current state object
+   * Exports the current state, including collapsed sections, timestamp, and version.
    */
   exportState() {
     return {
@@ -333,9 +331,15 @@ export class CollapsibleSectionsState {
   }
 
   /**
-   * Import state from a backup (for debugging or state restoration)
-   * @param {Object} stateData - State data to import
-   * @returns {boolean} Success status
+   * Import state from a backup (for debugging or state restoration).
+   *
+   * This function validates the input `stateData`, checks if it contains valid `collapsedSections` data,
+   * and updates the internal `_collapsedSections` state. It logs success or failure messages accordingly
+   * and returns a boolean indicating whether the import was successful.
+   *
+   * @param {Object} stateData - State data to import, expected to have a 'collapsedSections' property.
+   * @returns {boolean} True if the state is successfully imported, otherwise false.
+   * @throws Error If the input `stateData` is invalid or does not contain valid `collapsedSections` data.
    */
   importState(stateData) {
     try {

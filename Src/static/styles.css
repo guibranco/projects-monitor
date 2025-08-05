@@ -208,16 +208,6 @@ code {
 /* ===========================================
    CHARTS & DATA VISUALIZATION
    =========================================== */
-.top-chart {
-  background: var(--glass-bg-light);
-  border-radius: 0;
-  padding: 20px;
-  margin-bottom: 0;
-  border: none;
-  border-bottom: 1px solid var(--glass-border-light);
-  height: 400px;
-}
-
 #webhooks_statistics_github {
   width: 100%;
   height: 400px;

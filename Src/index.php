@@ -88,7 +88,7 @@ $configuration = new Configuration();
    <div class="dashboard-container">
       <div class="full-width-section">
          <div class="section-header">
-            Webhooks Statistics <span id="counter_webhooks_statistics_github" class="badge rounded-pill"></span>
+            GitHub Webhooks Statistics <span id="counter_webhooks_statistics_github" class="badge rounded-pill"></span>
          </div>
          <div id="webhooks_statistics_github" class="section-content"></div>
       </div>

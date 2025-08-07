@@ -76,7 +76,7 @@ class DashboardApp {
   }
 
   /**
-   * Initializes and displays preset data if showPreset is true.
+   * Initializes and displays preset data if showPreset is true, then reinitializes collapsible sections.
    */
   preset() {
     if (!this.showPreset) {
@@ -113,7 +113,7 @@ class DashboardApp {
   }
 
   /**
-   * Initializes application settings and UI components.
+   * Initializes application settings, UI components, and event listeners.
    */
   init() {
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -138,7 +138,15 @@ class DashboardApp {
   }
 
   /**
-   * Set up event listeners for collapsible sections integration
+   * Set up event listeners for collapsible section integration.
+   *
+   * This function sets up event listeners to handle various interactions with collapsible sections.
+   * It includes:
+   * - Logging when a section is toggled (collapsed or expanded).
+   * - Adding keyboard shortcuts to collapse or expand all sections.
+   * - Logging the statistics of collapsible sections after a delay on page load.
+   *
+   * @param {Event} e - The event object passed by the browser.
    */
   setupCollapsibleSectionEventListeners() {
     // Listen for section toggle events
@@ -173,7 +181,7 @@ class DashboardApp {
   }
 
   /**
-   * Initializes and starts the chart drawing process with data loading intervals.
+   * Initializes chart, loads initial data, and sets up data loading intervals.
    */
   drawChart() {
     this.preset();

@@ -71,7 +71,6 @@ $configuration = new Configuration();
                      Please enter a number between 1 and 10,000
                   </div>
                </div>
-               <!-- ADD: Collapsible sections controls -->
                <hr style="color: rgba(255,255,255,0.3);">
                <div class="d-grid gap-2">
                   <button type="button" class="btn btn-outline-light btn-sm" onclick="collapseAllSections()">
@@ -87,8 +86,11 @@ $configuration = new Configuration();
    </div>
 
    <div class="dashboard-container">
-      <div class="top-chart">
-         <div id="webhooks_statistics_github"></div>
+      <div class="full-width-section">
+         <div class="section-header">
+            GitHub Webhooks Statistics <span id="counter_webhooks_statistics_github" class="badge rounded-pill"></span>
+         </div>
+         <div id="webhooks_statistics_github" class="section-content"></div>
       </div>
 
       <div class="gauges-grid">
@@ -161,7 +163,6 @@ $configuration = new Configuration();
          </div>
       </div>
 
-      <!-- UPDATED: Added section headers and section-content classes -->
       <div class="full-width-section">
          <div class="section-header">
             Messages Grouped <span id="counter_messages_grouped" class="badge rounded-pill"></span>
@@ -197,7 +198,6 @@ $configuration = new Configuration();
          <div id="pull_requests" class="section-content"></div>
       </div>
 
-      <!-- UPDATED: Added section-content classes to all data-item content divs -->
       <div class="data-lists">
          <div class="data-column">
             <div class="data-item">

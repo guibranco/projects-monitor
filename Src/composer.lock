@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "269e01646d3de3f96166a89c3ee6953e",
+    "content-hash": "af369bf69e2a305c3a2b5874b45ef10a",
     "packages": [
         {
             "name": "fastvolt/markdown",
@@ -65,20 +65,20 @@
         },
         {
             "name": "guibranco/pancake",
-            "version": "v1.3.72",
+            "version": "v1.3.75",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guibranco/pancake.git",
-                "reference": "de91e7fdd5d383b085995021fe7890da11e1a585"
+                "reference": "a76181983fd84b06ab883454dbd985a601ad42f6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guibranco/pancake/zipball/de91e7fdd5d383b085995021fe7890da11e1a585",
-                "reference": "de91e7fdd5d383b085995021fe7890da11e1a585",
+                "url": "https://api.github.com/repos/guibranco/pancake/zipball/a76181983fd84b06ab883454dbd985a601ad42f6",
+                "reference": "a76181983fd84b06ab883454dbd985a601ad42f6",
                 "shasum": ""
             },
             "require-dev": {
-                "phpunit/phpunit": "12.3.7"
+                "phpunit/phpunit": "12.3.11"
             },
             "type": "library",
             "autoload": {
@@ -99,9 +99,9 @@
             "description": "The Pancake project, a toolkit for PHP projects",
             "support": {
                 "issues": "https://github.com/guibranco/pancake/issues",
-                "source": "https://github.com/guibranco/pancake/tree/v1.3.72"
+                "source": "https://github.com/guibranco/pancake/tree/v1.3.75"
             },
-            "time": "2025-09-04T11:13:07+00:00"
+            "time": "2025-09-17T14:15:25+00:00"
         },
         {
             "name": "paragonie/constant_time_encoding",
@@ -905,16 +905,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "11.5.38",
+            "version": "11.5.39",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "5bd0e4f64a2261b7ade7054c51547beaf2d99e43"
+                "reference": "ad5597f79d8489d2870073ac0bc0dd0ad1fa9931"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/5bd0e4f64a2261b7ade7054c51547beaf2d99e43",
-                "reference": "5bd0e4f64a2261b7ade7054c51547beaf2d99e43",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/ad5597f79d8489d2870073ac0bc0dd0ad1fa9931",
+                "reference": "ad5597f79d8489d2870073ac0bc0dd0ad1fa9931",
                 "shasum": ""
             },
             "require": {
@@ -986,7 +986,7 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/phpunit/issues",
                 "security": "https://github.com/sebastianbergmann/phpunit/security/policy",
-                "source": "https://github.com/sebastianbergmann/phpunit/tree/11.5.38"
+                "source": "https://github.com/sebastianbergmann/phpunit/tree/11.5.39"
             },
             "funding": [
                 {
@@ -1010,7 +1010,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-09-11T10:34:07+00:00"
+            "time": "2025-09-14T06:20:41+00:00"
         },
         {
             "name": "sebastian/cli-parser",

@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6d0a6328eda83b2a3fd7e6e7d8ff4ee0",
+    "content-hash": "8cc35b6b6267bf89258f1957ce9d1156",
     "packages": [
         {
             "name": "fastvolt/markdown",
-            "version": "v0.2.4",
+            "version": "v0.2.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/fastvolt/markdown.git",
-                "reference": "ded3261799d713efa6a685cd0d44344c021fd02c"
+                "reference": "980a954841806ffcf731ff4c58b527c77ebdfb1e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/fastvolt/markdown/zipball/ded3261799d713efa6a685cd0d44344c021fd02c",
-                "reference": "ded3261799d713efa6a685cd0d44344c021fd02c",
+                "url": "https://api.github.com/repos/fastvolt/markdown/zipball/980a954841806ffcf731ff4c58b527c77ebdfb1e",
+                "reference": "980a954841806ffcf731ff4c58b527c77ebdfb1e",
                 "shasum": ""
             },
             "require": {
@@ -37,7 +37,8 @@
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "FastVolt\\Helper\\": "src/"
+                    "FastVolt\\Helper\\": "src/",
+                    "FastVolt\\Helper\\Markdown\\": "src/Markdown/"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -59,9 +60,9 @@
             ],
             "support": {
                 "issues": "https://github.com/fastvolt/markdown/issues",
-                "source": "https://github.com/fastvolt/markdown/tree/v0.2.4"
+                "source": "https://github.com/fastvolt/markdown/tree/v0.2.5"
             },
-            "time": "2025-06-26T22:24:22+00:00"
+            "time": "2025-11-11T22:50:44+00:00"
         },
         {
             "name": "guibranco/pancake",

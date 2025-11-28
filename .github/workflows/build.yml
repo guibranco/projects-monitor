@@ -17,7 +17,7 @@ jobs:
 
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -247,7 +247,7 @@ jobs:
     
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
       
@@ -259,7 +259,7 @@ jobs:
       
       - name: 🔐 Acquire WireGuard connection lock
         if: github.actor != 'dependabot[bot]'
-        uses: guibranco/github-artifact-lock-action@v3.0.12
+        uses: guibranco/github-artifact-lock-action@v3.0.13
         with:
           lock-name: wireguard-connection
 
@@ -292,7 +292,7 @@ jobs:
 
       - name: 🔑 Release WireGuard connection lock
         if: always() && github.actor != 'dependabot[bot]'
-        uses: guibranco/github-artifact-lock-action/release-lock@v3.0.12
+        uses: guibranco/github-artifact-lock-action/release-lock@v3.0.13
         with:
           lock-name: wireguard-connection
 

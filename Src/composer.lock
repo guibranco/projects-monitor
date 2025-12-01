@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8cc35b6b6267bf89258f1957ce9d1156",
+    "content-hash": "769c5b26a58dfa39375c481c061a1b5c",
     "packages": [
         {
             "name": "fastvolt/markdown",

@@ -1,6 +1,6 @@
 <?php
 
-require_once 'session_validator.php';
+require_once 'validator.php';
 require_once '../../vendor/autoload.php';
 
 use GuiBranco\ProjectsMonitor\Library\Logger;

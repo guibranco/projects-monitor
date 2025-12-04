@@ -39,11 +39,6 @@ You can find a preview of the current dashboard at the bottom of this README.md 
 - **WireGuard VPN**:
   - List the status of the WireGuard VPN clients and connections.
 
-### Upcoming Improvements
-
-> [!Warning]
-> A UI kit is planned to enhance the visual and functional aspects of the dashboard. Follow the progress in [#12](https://github.com/guibranco/projects-monitor/issues/12).
-
 ---
 
 ## Requirements

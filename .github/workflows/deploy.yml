@@ -28,7 +28,7 @@ jobs:
         uses: gittools/actions/gitversion/execute@v4.2.0
 
       - name: 💾 Cache Composer Dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: /tmp/composer-cache
           key: ${{ runner.os }}-${{ hashFiles('**/composer.lock') }}
@@ -205,7 +205,7 @@ jobs:
               - "Tools/**"
       
       - name: 🔐 Acquire WireGuard Connection Lock
-        uses: guibranco/github-artifact-lock-action@v3.0.13
+        uses: guibranco/github-artifact-lock-action@v3.0.14
         with:
           lock-name: wireguard-connection
 
@@ -242,7 +242,7 @@ jobs:
 
       - name: 🔓 Release WireGuard Connection Lock
         if: always()
-        uses: guibranco/github-artifact-lock-action/release-lock@v3.0.13
+        uses: guibranco/github-artifact-lock-action/release-lock@v3.0.14
         with:
           lock-name: wireguard-connection
 

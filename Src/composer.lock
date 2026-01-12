@@ -66,16 +66,16 @@
         },
         {
             "name": "guibranco/pancake",
-            "version": "v1.3.95",
+            "version": "v1.3.96",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guibranco/pancake.git",
-                "reference": "763a7343d45e51170ca7fc34ef389fc56c1d55d1"
+                "reference": "5a293babc98c8f3b048b1215168918166a625518"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guibranco/pancake/zipball/763a7343d45e51170ca7fc34ef389fc56c1d55d1",
-                "reference": "763a7343d45e51170ca7fc34ef389fc56c1d55d1",
+                "url": "https://api.github.com/repos/guibranco/pancake/zipball/5a293babc98c8f3b048b1215168918166a625518",
+                "reference": "5a293babc98c8f3b048b1215168918166a625518",
                 "shasum": ""
             },
             "require-dev": {
@@ -100,9 +100,9 @@
             "description": "The Pancake project, a toolkit for PHP projects",
             "support": {
                 "issues": "https://github.com/guibranco/pancake/issues",
-                "source": "https://github.com/guibranco/pancake/tree/v1.3.95"
+                "source": "https://github.com/guibranco/pancake/tree/v1.3.96"
             },
-            "time": "2025-12-24T16:54:44+00:00"
+            "time": "2026-01-12T03:50:08+00:00"
         },
         {
             "name": "paragonie/constant_time_encoding",

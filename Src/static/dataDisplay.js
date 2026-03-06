@@ -477,12 +477,6 @@ export class DataDisplayManager {
       gaugeOptionsTotal
     );
     this.chartManager.drawGaugeChart(
-      "WH Failed",
-      response.failed,
-      "gauge_chart_webhooks_failed",
-      gaugeOptions
-    );
-    this.chartManager.drawGaugeChart(
       "GH WRs",
       response.total_workflow_runs,
       "gauge_chart_workflows_runs",

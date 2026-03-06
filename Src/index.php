@@ -104,7 +104,6 @@ $configuration = new Configuration();
          <div id="gauge_chart_issues" class="gauge"></div>
          <div id="gauge_chart_pull_requests" class="gauge"></div>
          <div id="gauge_chart_workflows_runs" class="gauge"></div>
-         <div id="gauge_chart_webhooks_failed" class="gauge"></div>
          <div id="gauge_chart_queues" class="gauge"></div>
          <div id="gauge_chart_pm_messages" class="gauge"></div>
          <div id="gauge_chart_bot_installations" class="gauge"></div>

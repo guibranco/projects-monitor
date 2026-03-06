@@ -76,7 +76,7 @@ class DashboardApp {
   }
 
   /**
-   * Initializes and displays preset data if showPreset is true, then reinitializes collapsible sections.
+   * Initializes and displays preset data if showPreset is true.
    */
   preset() {
     if (!this.showPreset) {

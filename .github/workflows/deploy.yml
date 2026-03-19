@@ -196,7 +196,7 @@ jobs:
           fetch-depth: 0
 
       - name: 🔍 Detect Changes in SQL Scripts
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         id: changes
         with:
           filters: |
@@ -205,7 +205,7 @@ jobs:
               - "Tools/**"
       
       - name: 🔐 Acquire WireGuard Connection Lock
-        uses: guibranco/github-artifact-lock-action@v3.0.17
+        uses: guibranco/github-artifact-lock-action@v3.0.19
         with:
           lock-name: wireguard-connection
 
@@ -242,7 +242,7 @@ jobs:
 
       - name: 🔓 Release WireGuard Connection Lock
         if: always()
-        uses: guibranco/github-artifact-lock-action/release-lock@v3.0.17
+        uses: guibranco/github-artifact-lock-action/release-lock@v3.0.19
         with:
           lock-name: wireguard-connection
 
@@ -278,7 +278,7 @@ jobs:
 
     steps:
       - name: 🏷️ Create and Publish Release
-        uses: ncipollo/release-action@v1.20.0
+        uses: ncipollo/release-action@v1.21.0
         with:
           skipIfReleaseExists: true
           allowUpdates: false

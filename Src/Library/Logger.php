@@ -120,13 +120,12 @@ class Logger
         $headers = $config->getRequestHeaders();
         $data = $config->getRequestData();
         $sql = $this->getInsert();
-        $stmt = $this->connection->prepare($sql);
 
         $appId = $applicationId;
         $class = isset($data["class"]) ? $data["class"] : "none";
         $function = isset($data["function"]) ? $data["function"] : "none";
         $file = isset($data["file"]) ? $data["file"] : "none";
-        $line = isset($data["line"]) ? $data["line"] : "none";
+        $line = isset($data["line"]) ? (int)$data["line"] : 0;;
         $object = isset($data["object"]) ? $data["object"] : "none";
         $type = isset($data["type"]) ? $data["type"] : "none";
         $args = isset($data["args"]) ? $data["args"] : "none";
@@ -135,17 +134,22 @@ class Logger
         $correlationId = isset($headers["X-Correlation-Id"]) ? $headers["X-Correlation-Id"] : "none";
         $userAgent = isset($headers["User-Agent"]) ? $headers["User-Agent"] : "none";
 
-        if (is_array($details) === true) {
-            $details = json_encode($details);
-        }
+        $stmt = $this->connection->prepare($sql);
 
-        if (isset($data["message"]) === false) {
-            error_log(json_encode($headers));
+        if ($stmt === false) {
+            error_log("Prepare failed: " . $this->connection->error);
             return false;
+        }               
+        
+        if (is_array($details) || is_object($details)) {
+            $encodedDetails = json_encode($details, JSON_INVALID_UTF8_SUBSTITUTE);
+            $details = $encodedDetails === false ? json_last_error_msg() : $encodedDetails;
         }
-
+        
+        $args = is_array($args) ? json_encode($args) : (string)$args;
+        
         $stmt->bind_param(
-            "isssisssssss",
+            "isssssssssss",
             $appId,
             $class,
             $function,
@@ -159,10 +163,15 @@ class Logger
             $correlationId,
             $userAgent
         );
-
+        
         $result = $stmt->execute();
+        
+        if ($result === false) {
+            error_log("Execute failed: " . $stmt->error);
+        }
+        
         $stmt->close();
-
+        
         return $result;
     }
 

@@ -125,7 +125,8 @@ class Logger
         $class = isset($data["class"]) ? $data["class"] : "none";
         $function = isset($data["function"]) ? $data["function"] : "none";
         $file = isset($data["file"]) ? $data["file"] : "none";
-        $line = isset($data["line"]) ? (int)$data["line"] : 0;;
+        $line = isset($data["line"]) ? (int)$data["line"] : 0;
+        ;
         $object = isset($data["object"]) ? $data["object"] : "none";
         $type = isset($data["type"]) ? $data["type"] : "none";
         $args = isset($data["args"]) ? $data["args"] : "none";
@@ -139,15 +140,15 @@ class Logger
         if ($stmt === false) {
             error_log("Prepare failed: " . $this->connection->error);
             return false;
-        }               
-        
+        }
+
         if (is_array($details) || is_object($details)) {
             $encodedDetails = json_encode($details, JSON_INVALID_UTF8_SUBSTITUTE);
             $details = $encodedDetails === false ? json_last_error_msg() : $encodedDetails;
         }
-        
+
         $args = is_array($args) ? json_encode($args) : (string)$args;
-        
+
         $stmt->bind_param(
             "isssssssssss",
             $appId,
@@ -163,15 +164,15 @@ class Logger
             $correlationId,
             $userAgent
         );
-        
+
         $result = $stmt->execute();
-        
+
         if ($result === false) {
             error_log("Execute failed: " . $stmt->error);
         }
-        
+
         $stmt->close();
-        
+
         return $result;
     }
 

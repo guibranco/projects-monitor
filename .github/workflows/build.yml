@@ -72,7 +72,7 @@ jobs:
 
       - name: ❌ Update PR with comment (migration error)
         if: failure() && steps.db_migration.outputs.error == 'true'
-        uses: mshick/add-pr-comment@v2
+        uses: mshick/add-pr-comment@v3
         with:
           refresh-message-position: true
           message-id: "migrations-local"
@@ -85,7 +85,7 @@ jobs:
 
       - name: ✅ Update PR with comment (migration steps - no changes)
         if: steps.db_migration.outputs.files == ''
-        uses: mshick/add-pr-comment@v2
+        uses: mshick/add-pr-comment@v3
         with:
           refresh-message-position: true
           message-id: "migrations-local"
@@ -115,7 +115,7 @@ jobs:
 
       - name: ℹ️ Comment Postman is disabled
         if: ${{ vars.POSTMAN_ENABLED != 'true' }}
-        uses: mshick/add-pr-comment@v2
+        uses: mshick/add-pr-comment@v3
         with:
           refresh-message-position: true
           message-id: "postman-disabled"
@@ -139,7 +139,7 @@ jobs:
 
       - name: ❌ Update PR with comment (request tests - failed)
         if: failure() && steps.test_requests.outputs.error == 'true'
-        uses: mshick/add-pr-comment@v2
+        uses: mshick/add-pr-comment@v3
         with:
           refresh-message-position: true
           message-id: "requests"
@@ -161,7 +161,7 @@ jobs:
 
       - name: ✅ Update PR with comment (request tests - succeeded)
         if: success()
-        uses: mshick/add-pr-comment@v2
+        uses: mshick/add-pr-comment@v3
         with:
           refresh-message-position: true
           message-id: "requests"
@@ -180,7 +180,7 @@ jobs:
 
       - name: ❌ Update PR with comment (database integrity - failed)
         if: failure() && steps.db_integrity.outputs.error == 'true'
-        uses: mshick/add-pr-comment@v2
+        uses: mshick/add-pr-comment@v3
         with:
           refresh-message-position: true
           message-id: "db-integrity"
@@ -193,7 +193,7 @@ jobs:
 
       - name: ✅ Update PR with comment (database integrity - succeeded)
         if: success()
-        uses: mshick/add-pr-comment@v2
+        uses: mshick/add-pr-comment@v3
         with:
           refresh-message-position: true
           message-id: "db-integrity"
@@ -211,7 +211,7 @@ jobs:
       
       - name: ❌ Update PR with comment (smoke tests - failed)
         if: failure() && steps.smoke_tests.outputs.error == 'true'
-        uses: mshick/add-pr-comment@v2
+        uses: mshick/add-pr-comment@v3
         with:
           refresh-message-position: true
           message-id: "smoke-tests"
@@ -227,7 +227,7 @@ jobs:
 
       - name: ✅ Update PR with comment (smoke tests - succeeded)
         if: steps.smoke_tests.outputs.error != 'true'
-        uses: mshick/add-pr-comment@v2
+        uses: mshick/add-pr-comment@v3
         with:
           refresh-message-position: true
           message-id: "smoke-tests"
@@ -259,7 +259,7 @@ jobs:
       
       - name: 🔐 Acquire WireGuard connection lock
         if: github.actor != 'dependabot[bot]'
-        uses: guibranco/github-artifact-lock-action@v3.0.17
+        uses: guibranco/github-artifact-lock-action@v3.0.19
         with:
           lock-name: wireguard-connection
 
@@ -292,13 +292,13 @@ jobs:
 
       - name: 🔑 Release WireGuard connection lock
         if: always() && github.actor != 'dependabot[bot]'
-        uses: guibranco/github-artifact-lock-action/release-lock@v3.0.17
+        uses: guibranco/github-artifact-lock-action/release-lock@v3.0.19
         with:
           lock-name: wireguard-connection
 
       - name: ❌ Update PR with comment (migration error)
         if: failure() && steps.dry_run.outputs.error == 'true' && github.actor != 'dependabot[bot]'
-        uses: mshick/add-pr-comment@v2
+        uses: mshick/add-pr-comment@v3
         with:
           refresh-message-position: true
           message-id: "migrations"
@@ -311,7 +311,7 @@ jobs:
 
       - name: 🚀 Update PR with comment (migration steps - changed)
         if: steps.dry_run.outputs.files != '' && github.actor != 'dependabot[bot]'
-        uses: mshick/add-pr-comment@v2
+        uses: mshick/add-pr-comment@v3
         with:
           refresh-message-position: true
           message-id: "migrations"
@@ -324,7 +324,7 @@ jobs:
 
       - name: ✅ Update PR with comment (migration steps - no changes)
         if: steps.dry_run.outputs.files == '' && github.actor != 'dependabot[bot]'
-        uses: mshick/add-pr-comment@v2
+        uses: mshick/add-pr-comment@v3
         with:
           refresh-message-position: true
           message-id: "migrations"

@@ -83,45 +83,45 @@ class UpTimeRobot
     {
         $monitors = array();
         $response = $this->doRequest();
-    
+
         foreach ($response->monitors as $monitor) {
-    
+
             $img =
                 "<img alt='" . $monitor->friendly_name . "' src='https://img.shields.io/badge/" . $this->mapStatus($monitor->status) .
                 "-" . str_replace("-", "--", $monitor->friendly_name) . "-" . $this->mapColor($monitor->status) .
                 "?style=for-the-badge&labelColor=white' />";
-    
+
             $lastChange = "-";
             $details = "No logs available";
-    
+
             if (!empty($monitor->logs) && isset($monitor->logs[0])) {
-    
+
                 $log = $monitor->logs[0];
-    
+
                 $lastChange = isset($log->datetime)
                     ? date("H:i:s d/m/Y", $log->datetime)
                     : "-";
-    
+
                 if (isset($log->reason)) {
-    
+
                     $code = $log->reason->code ?? "-";
                     $detail = $log->reason->detail ?? "-";
-    
+
                     $details = "{$code} - {$detail}";
                 }
             }
-    
+
             $monitors[] = array(
                 $img,
                 $lastChange,
                 $details
             );
         }
-    
+
         sort($monitors, SORT_ASC);
-    
+
         array_unshift($monitors, array("Monitor", "Last change", "Details"));
-    
+
         return $monitors;
     }
 }

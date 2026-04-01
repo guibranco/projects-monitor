@@ -62,7 +62,8 @@ class UpTimeRobot
             1 => "🆕",
             2 => "✅",
             8 => "⚠️",
-            9 => "❌"
+            9 => "❌",
+            default => "❓"
         };
     }
 
@@ -72,8 +73,9 @@ class UpTimeRobot
             0 => "gray",
             1 => "blue",
             2 => "green",
-            8 => "⚠yellow",
-            9 => "red"
+            8 => "yellow",
+            9 => "red",
+            default => "lightgray"
         };
     }
 
@@ -83,15 +85,36 @@ class UpTimeRobot
         $response = $this->doRequest();
 
         foreach ($response->monitors as $monitor) {
-            $log = $monitor->logs[0];
+
             $img =
                 "<img alt='" . $monitor->friendly_name . "' src='https://img.shields.io/badge/" . $this->mapStatus($monitor->status) .
                 "-" . str_replace("-", "--", $monitor->friendly_name) . "-" . $this->mapColor($monitor->status) .
                 "?style=for-the-badge&labelColor=white' />";
+
+            $lastChange = "-";
+            $details = "No logs available";
+
+            if (!empty($monitor->logs) && isset($monitor->logs[0])) {
+
+                $log = $monitor->logs[0];
+
+                $lastChange = isset($log->datetime)
+                    ? date("H:i:s d/m/Y", $log->datetime)
+                    : "-";
+
+                if (isset($log->reason)) {
+
+                    $code = $log->reason->code ?? "-";
+                    $detail = $log->reason->detail ?? "-";
+
+                    $details = "{$code} - {$detail}";
+                }
+            }
+
             $monitors[] = array(
                 $img,
-                date("H:i:s d/m/Y", $log->datetime),
-                $log->reason->code . " - " . $log->reason->detail
+                $lastChange,
+                $details
             );
         }
 

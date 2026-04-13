@@ -19,13 +19,13 @@ jobs:
           fetch-depth: 0
 
       - name: 🔧 Install GitVersion
-        uses: gittools/actions/gitversion/setup@v4.4.2
+        uses: gittools/actions/gitversion/setup@v4.5.0
         with:
           versionSpec: "6.x"
 
       - name: 🏷️ Determine Version Number
         id: gitversion
-        uses: gittools/actions/gitversion/execute@v4.4.2
+        uses: gittools/actions/gitversion/execute@v4.5.0
 
       - name: 💾 Cache Composer Dependencies
         uses: actions/cache@v5
@@ -205,7 +205,7 @@ jobs:
               - "Tools/**"
       
       - name: 🔐 Acquire WireGuard Connection Lock
-        uses: guibranco/github-artifact-lock-action@v3.0.21
+        uses: guibranco/github-artifact-lock-action@v3.0.22
         with:
           lock-name: wireguard-connection
 
@@ -242,7 +242,7 @@ jobs:
 
       - name: 🔓 Release WireGuard Connection Lock
         if: always()
-        uses: guibranco/github-artifact-lock-action/release-lock@v3.0.21
+        uses: guibranco/github-artifact-lock-action/release-lock@v3.0.22
         with:
           lock-name: wireguard-connection
 

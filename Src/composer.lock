@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6b38161acee497f80dd97172315653c8",
+    "content-hash": "cb238a683b74bfa7514f728b25c1cc7f",
     "packages": [
         {
             "name": "fastvolt/markdown",
@@ -66,16 +66,16 @@
         },
         {
             "name": "guibranco/pancake",
-            "version": "v1.7.4",
+            "version": "v1.7.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guibranco/pancake.git",
-                "reference": "1f786eac92cfd5028815b71cc6eefebd1d335d1a"
+                "reference": "a1e47e3fd1b070c3b4bbf0aee085e9f14b18158d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guibranco/pancake/zipball/1f786eac92cfd5028815b71cc6eefebd1d335d1a",
-                "reference": "1f786eac92cfd5028815b71cc6eefebd1d335d1a",
+                "url": "https://api.github.com/repos/guibranco/pancake/zipball/a1e47e3fd1b070c3b4bbf0aee085e9f14b18158d",
+                "reference": "a1e47e3fd1b070c3b4bbf0aee085e9f14b18158d",
                 "shasum": ""
             },
             "require-dev": {
@@ -100,9 +100,9 @@
             "description": "The Pancake project, a toolkit for PHP projects",
             "support": {
                 "issues": "https://github.com/guibranco/pancake/issues",
-                "source": "https://github.com/guibranco/pancake/tree/v1.7.4"
+                "source": "https://github.com/guibranco/pancake/tree/v1.7.5"
             },
-            "time": "2026-04-22T19:11:09+00:00"
+            "time": "2026-04-24T10:43:22+00:00"
         },
         {
             "name": "paragonie/constant_time_encoding",

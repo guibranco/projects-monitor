@@ -63,7 +63,7 @@ class RabbitMq
         return "green";
     }
 
-    private function parseQueue($host, $queue, $shieldsIo)
+    private function parseQueue($host, $vhost, $queue, $shieldsIo)
     {
         $name = $queue["name"];
         $messages = $queue["messages"];
@@ -101,7 +101,13 @@ class RabbitMq
         $labelColor = $this->getColorByThreshold($consumers, 15, 5, 1);
         $badgeConsumers = $shieldsIo->generateBadgeUrl($consumers, $state, $colorConsumers, "for-the-badge", $labelColor, null);
         $imgConsumers = "<img alt='{$consumers} consumers in queue' src='{$badgeConsumers}' />";
-        $item = array($host, $imgMessages, $imgConsumers);
+
+        $safeHost = htmlspecialchars(urlencode($host), ENT_QUOTES, 'UTF-8');
+        $safeVhost = htmlspecialchars(urlencode($vhost), ENT_QUOTES, 'UTF-8');
+        $safeName = htmlspecialchars(urlencode($name), ENT_QUOTES, 'UTF-8');
+        $purgeBtn = "<button class=\"btn btn-warning btn-sm\" data-action=\"purge\" data-host=\"{$safeHost}\" data-vhost=\"{$safeVhost}\" data-queue=\"{$safeName}\" aria-label=\"Purge {$name}\">Purge</button>";
+
+        $item = array($host, $imgMessages, $imgConsumers, $purgeBtn);
 
         return array("item" => $item, "messages" => $messages);
     }
@@ -111,7 +117,7 @@ class RabbitMq
         $shieldsIo = new ShieldsIo();
         $data = array();
         $data["total"] = 0;
-        $data["queues"][] = array("Server", "Queue", "Consumers");
+        $data["queues"][] = array("Server", "Queue", "Consumers", "Actions");
         foreach ($this->getServers() as $server) {
             $headers = array("Authorization: Basic " . base64_encode($server["user"] . ":" . $server["password"]));
             $url = "https://" . $server["host"] . "/api/queues/" . $server["vhost"] . "/";
@@ -121,7 +127,7 @@ class RabbitMq
             }
             $node = json_decode($response->getBody(), true);
             foreach ($node as $queue) {
-                $result = $this->parseQueue($server["host"], $queue, $shieldsIo);
+                $result = $this->parseQueue($server["host"], $server["vhost"], $queue, $shieldsIo);
 
                 if ($result === null) {
                     continue;
@@ -134,5 +140,21 @@ class RabbitMq
 
         ksort($data);
         return $data;
+    }
+
+    public function purgeQueue(string $host, string $vhost, string $queueName): bool
+    {
+        foreach ($this->getServers() as $server) {
+            if ($server["host"] !== $host) {
+                continue;
+            }
+            $headers = array("Authorization: Basic " . base64_encode($server["user"] . ":" . $server["password"]));
+            $encodedVhost = rawurlencode($vhost);
+            $encodedQueue = rawurlencode($queueName);
+            $url = "https://" . $server["host"] . "/api/queues/" . $encodedVhost . "/" . $encodedQueue . "/contents";
+            $response = $this->request->delete($url, $headers);
+            return $response->getStatusCode() === 204;
+        }
+        return false;
     }
 }

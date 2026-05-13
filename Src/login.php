@@ -17,14 +17,12 @@ $configuration->init();
 $database = new Database();
 $conn = $database->getConnection();
 
-$error = '';
-
 /**
  * @param string $value
  * @param array $flags
  * @return string
  */
-function sanitizeFilterString($value, array $flags): string
+function sanitizeFilterString(string $value, array $flags): string
 {
     $noQuotes = in_array(FILTER_FLAG_NO_ENCODE_QUOTES, $flags);
     $options = ($noQuotes ? ENT_NOQUOTES : ENT_QUOTES) | ENT_SUBSTITUTE;
@@ -35,29 +33,24 @@ function sanitizeFilterString($value, array $flags): string
     return html_entity_decode($value, $optionsDecode);
 }
 
-function login()
+function login(mysqli $conn): string
 {
-    global $error, $conn;
-
     if (!isset($_POST['csrf_token']) || !isset($_SESSION['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        $error = 'Invalid request';
-        return;
+        return 'Invalid request';
     }
 
     $username = sanitizeFilterString($_POST['username'], []);
     $password = filter_input(INPUT_POST, 'password', FILTER_UNSAFE_RAW);
 
     if (empty($username) || empty($password)) {
-        $error = 'All fields are required';
-        return;
+        return 'All fields are required';
     }
 
-    $attempts = isset($_SESSION['login_attempts']) ? $_SESSION['login_attempts'] : 0;
-    $lastAttempt = isset($_SESSION['last_attempt']) ? $_SESSION['last_attempt'] : 0;
+    $attempts    = $_SESSION['login_attempts'] ?? 0;
+    $lastAttempt = $_SESSION['last_attempt']   ?? 0;
 
     if ($attempts >= 3 && time() - $lastAttempt < 900) {
-        $error = 'Too many failed attempts. Please try again later.';
-        return;
+        return 'Too many failed attempts. Please try again later.';
     }
 
     $stmt = $conn->prepare('SELECT id, username, email, password FROM users WHERE username = ?');
@@ -66,27 +59,24 @@ function login()
     $result = $stmt->get_result();
 
     $user = $result->fetch_assoc();
+    $stmt->close();
+
     if ($user && password_verify($password, $user['password'])) {
-        $_SESSION['user_id'] = $user['id'];
-        $_SESSION['username'] = $user['username'];
-        $_SESSION['email'] = $user['email'];
+        $_SESSION['user_id']       = $user['id'];
+        $_SESSION['username']      = $user['username'];
+        $_SESSION['email']         = $user['email'];
         $_SESSION['last_activity'] = time();
-        unset($_SESSION['login_attempts']);
-        unset($_SESSION['last_attempt']);
+        unset($_SESSION['login_attempts'], $_SESSION['last_attempt']);
         header('Location: index.php');
         exit;
-    } else {
-        $error = 'Invalid username or password.';
-        $_SESSION['login_attempts'] = $attempts + 1;
-        $_SESSION['last_attempt'] = time();
     }
 
-    $stmt->close();
+    $_SESSION['login_attempts'] = $attempts + 1;
+    $_SESSION['last_attempt']   = time();
+    return 'Invalid username or password.';
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    login();
-}
+$error = $_SERVER['REQUEST_METHOD'] === 'POST' ? login($conn) : '';
 $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 ?>
 <!DOCTYPE html>
@@ -159,112 +149,74 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
             </div>
 
             <div class="col-lg-8">
-                <div class="row mb-4">
+                <!-- Stats Cards -->
+                <div class="row mb-4" id="stats-row">
                     <div class="col-md-3 col-6 mb-3">
                         <div class="card stats-card fade-in">
                             <div class="card-body text-center">
                                 <div class="stats-icon bg-primary-light mx-auto">
-                                    <i class="fas fa-project-diagram"></i>
+                                    <i class="fas fa-satellite-dish"></i>
                                 </div>
-                                <h4 class="fw-bold mb-1">24</h4>
-                                <p class="text-muted mb-0">Active Projects</p>
+                                <h4 class="fw-bold mb-1" id="stat-total"><span class="placeholder-glow"><span class="placeholder col-4"></span></span></h4>
+                                <p class="text-muted mb-0">Monitors</p>
                             </div>
                         </div>
                     </div>
-
                     <div class="col-md-3 col-6 mb-3">
                         <div class="card stats-card fade-in">
                             <div class="card-body text-center">
                                 <div class="stats-icon bg-success-light mx-auto">
                                     <i class="fas fa-check-circle"></i>
                                 </div>
-                                <h4 class="fw-bold mb-1">18</h4>
+                                <h4 class="fw-bold mb-1" id="stat-healthy"><span class="placeholder-glow"><span class="placeholder col-4"></span></span></h4>
                                 <p class="text-muted mb-0">Healthy</p>
                             </div>
                         </div>
                     </div>
-
                     <div class="col-md-3 col-6 mb-3">
                         <div class="card stats-card fade-in">
                             <div class="card-body text-center">
                                 <div class="stats-icon bg-warning-light mx-auto">
                                     <i class="fas fa-exclamation-triangle"></i>
                                 </div>
-                                <h4 class="fw-bold mb-1">4</h4>
+                                <h4 class="fw-bold mb-1" id="stat-warning"><span class="placeholder-glow"><span class="placeholder col-4"></span></span></h4>
                                 <p class="text-muted mb-0">Warnings</p>
                             </div>
                         </div>
                     </div>
-
                     <div class="col-md-3 col-6 mb-3">
                         <div class="card stats-card fade-in">
                             <div class="card-body text-center">
                                 <div class="stats-icon bg-danger-light mx-auto">
                                     <i class="fas fa-times-circle"></i>
                                 </div>
-                                <h4 class="fw-bold mb-1">2</h4>
+                                <h4 class="fw-bold mb-1" id="stat-critical"><span class="placeholder-glow"><span class="placeholder col-4"></span></span></h4>
                                 <p class="text-muted mb-0">Critical</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
+                <!-- Recent Activity -->
                 <div class="card mb-4">
-                    <div class="card-header bg-white">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">
-                            <i class="fas fa-clock me-2"></i>Recent Project Activity
+                            <i class="fas fa-clock me-2"></i>Recent Monitor Activity
                         </h5>
+                        <small class="text-muted" id="last-updated"></small>
                     </div>
-                    <div class="card-body p-0">
+                    <div class="card-body p-0" id="activity-list">
                         <div class="list-group list-group-flush">
-                            <div class="list-group-item">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <h6 class="mb-1">E-Commerce Platform</h6>
-                                        <p class="mb-1 text-muted">API response time: 145ms</p>
-                                        <small class="text-muted">
-                                            <span class="tech-badge">PHP</span>
-                                            <span class="tech-badge">MySQL</span>
-                                            <span class="tech-badge">Redis</span>
-                                        </small>
-                                    </div>
-                                    <span class="badge status-healthy status-badge">Healthy</span>
-                                </div>
-                            </div>
-
-                            <div class="list-group-item">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <h6 class="mb-1">User Management API</h6>
-                                        <p class="mb-1 text-muted">High CPU usage: 78%</p>
-                                        <small class="text-muted">
-                                            <span class="tech-badge">Node.js</span>
-                                            <span class="tech-badge">MongoDB</span>
-                                        </small>
-                                    </div>
-                                    <span class="badge status-warning status-badge">Warning</span>
-                                </div>
-                            </div>
-
-                            <div class="list-group-item">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <h6 class="mb-1">Analytics Dashboard</h6>
-                                        <p class="mb-1 text-muted">Service unavailable</p>
-                                        <small class="text-muted">
-                                            <span class="tech-badge">React</span>
-                                            <span class="tech-badge">Python</span>
-                                            <span class="tech-badge">PostgreSQL</span>
-                                        </small>
-                                    </div>
-                                    <span class="badge status-critical status-badge">Critical</span>
-                                </div>
+                            <div class="list-group-item text-center text-muted py-4">
+                                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                                Loading monitor data…
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="row">
+                    <!-- System Status -->
                     <div class="col-md-6 mb-4">
                         <div class="card">
                             <div class="card-header bg-white">
@@ -272,73 +224,27 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                                     <i class="fas fa-server me-2"></i>System Status
                                 </h6>
                             </div>
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span>Server Uptime</span>
-                                    <span class="badge bg-success">99.9%</span>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span>Database Connection</span>
-                                    <span class="badge bg-success">Active</span>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span>Cache System</span>
-                                    <span class="badge bg-success">Operational</span>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span>API Gateway</span>
-                                    <span class="badge bg-warning">Degraded</span>
+                            <div class="card-body" id="system-status">
+                                <div class="text-center text-muted py-3">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                                    Loading…
                                 </div>
                             </div>
                         </div>
                     </div>
 
+                    <!-- Performance Metrics -->
                     <div class="col-md-6 mb-4">
                         <div class="card">
                             <div class="card-header bg-white">
                                 <h6 class="mb-0">
-                                    <i class="fas fa-chart-line me-2"></i>Performance Metrics
+                                    <i class="fas fa-chart-line me-2"></i>Resource Usage
                                 </h6>
                             </div>
-                            <div class="card-body">
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between">
-                                        <span>Avg Response Time</span>
-                                        <span>234ms</span>
-                                    </div>
-                                    <div class="progress mt-1" style="height: 6px;">
-                                        <div class="progress-bar bg-success" style="width: 75%"></div>
-                                    </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between">
-                                        <span>Error Rate</span>
-                                        <span>0.03%</span>
-                                    </div>
-                                    <div class="progress mt-1" style="height: 6px;">
-                                        <div class="progress-bar bg-success" style="width: 97%"></div>
-                                    </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between">
-                                        <span>Throughput</span>
-                                        <span>1,247 req/min</span>
-                                    </div>
-                                    <div class="progress mt-1" style="height: 6px;">
-                                        <div class="progress-bar bg-info" style="width: 82%"></div>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <div class="d-flex justify-content-between">
-                                        <span>Memory Usage</span>
-                                        <span>68%</span>
-                                    </div>
-                                    <div class="progress mt-1" style="height: 6px;">
-                                        <div class="progress-bar bg-warning" style="width: 68%"></div>
-                                    </div>
+                            <div class="card-body" id="performance-metrics">
+                                <div class="text-center text-muted py-3">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                                    Loading…
                                 </div>
                             </div>
                         </div>
@@ -348,73 +254,151 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha256-CDOy6cOibCWEdsRiZuaHf8dSGGJRYuBGC+mjoJimHGw=" crossorigin="anonymous"></script>
     <script>
-        const mockApiData = {
-            stats: {
-                totalProjects: 24,
-                healthyProjects: 18,
-                warningProjects: 4,
-                criticalProjects: 2
-            },
-            recentActivity: [
-                {
-                    id: 1,
-                    name: "E-Commerce Platform",
-                    status: "healthy",
-                    message: "API response time: 145ms",
-                    technologies: ["PHP", "MySQL", "Redis"],
-                    lastUpdated: "2025-07-04T10:30:00Z"
-                },
-                {
-                    id: 2,
-                    name: "User Management API",
-                    status: "warning",
-                    message: "High CPU usage: 78%",
-                    technologies: ["Node.js", "MongoDB"],
-                    lastUpdated: "2025-07-04T10:25:00Z"
-                },
-                {
-                    id: 3,
-                    name: "Analytics Dashboard",
-                    status: "critical",
-                    message: "Service unavailable",
-                    technologies: ["React", "Python", "PostgreSQL"],
-                    lastUpdated: "2025-07-04T10:20:00Z"
-                }
-            ],
-            systemStatus: {
-                serverUptime: 99.9,
-                databaseConnection: "active",
-                cacheSystem: "operational",
-                apiGateway: "degraded"
-            },
-            performance: {
-                avgResponseTime: 234,
-                errorRate: 0.03,
-                throughput: 1247,
-                memoryUsage: 68
-            }
+        const STATUS_CONFIG = {
+            healthy:     { badge: 'bg-success',   text: 'Healthy',     bar: 'bg-success' },
+            warning:     { badge: 'bg-warning',   text: 'Warning',     bar: 'bg-warning' },
+            critical:    { badge: 'bg-danger',    text: 'Critical',    bar: 'bg-danger'  },
+            operational: { badge: 'bg-success',   text: 'Operational', bar: 'bg-success' },
+            unknown:     { badge: 'bg-secondary', text: 'Unknown',     bar: 'bg-secondary'},
+            paused:      { badge: 'bg-secondary', text: 'Paused',      bar: 'bg-secondary'},
         };
 
-        function loadProjectData() {
-            // fetch('/api/public/dashboard-data')
-            //     .then(response => response.json())
-            //     .then(data => updateDashboard(data))
-            //     .catch(error => console.error('Error loading data:', error));
-
-            console.log('Mock API data structure:', mockApiData);
+        function escHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
 
-        function updateDashboard(data) {
-            // Update stats cards
-            // Update recent activity
-            // Update system status
-            // Update performance metrics
+        function formatRelativeTime(isoString) {
+            if (!isoString) return '—';
+            const diff = Math.floor((Date.now() - new Date(isoString).getTime()) / 1000);
+            if (diff < 60)   return `${diff}s ago`;
+            if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+            if (diff < 86400)return `${Math.floor(diff / 3600)}h ago`;
+            return `${Math.floor(diff / 86400)}d ago`;
         }
 
-        setInterval(loadProjectData, 30000);
-        loadProjectData();
+        function statusBadge(status) {
+            const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.unknown;
+            return `<span class="badge ${cfg.badge} status-badge">${cfg.text}</span>`;
+        }
+
+        function updateStats(monitors) {
+            document.getElementById('stat-total').textContent   = monitors.total;
+            document.getElementById('stat-healthy').textContent = monitors.healthy;
+            document.getElementById('stat-warning').textContent = monitors.warning;
+            document.getElementById('stat-critical').textContent= monitors.critical;
+        }
+
+        function updateActivity(items) {
+            const el = document.getElementById('activity-list');
+            if (!items || items.length === 0) {
+                el.innerHTML = '<div class="list-group list-group-flush"><div class="list-group-item text-center text-muted py-4">No monitor data available</div></div>';
+                return;
+            }
+            const rows = items.map(item => `
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">${escHtml(item.name)}</h6>
+                            <small class="text-muted">Last change: ${formatRelativeTime(item.lastChange)}</small>
+                        </div>
+                        ${statusBadge(item.status)}
+                    </div>
+                </div>`).join('');
+            el.innerHTML = `<div class="list-group list-group-flush">${rows}</div>`;
+        }
+
+        function updateSystemStatus(sys) {
+            const el = document.getElementById('system-status');
+            if (!sys) {
+                el.innerHTML = '<p class="text-muted mb-0">Data unavailable</p>';
+                return;
+            }
+            const rows = Object.values(sys).map(item => {
+                const cfg  = STATUS_CONFIG[item.status] ?? STATUS_CONFIG.unknown;
+                const pct  = item.percent !== null ? `${item.percent}%` : cfg.text;
+                return `
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>${escHtml(item.label)}</span>
+                    <span class="badge ${cfg.badge}">${pct}</span>
+                </div>`;
+            }).join('');
+            el.innerHTML = rows;
+        }
+
+        function updatePerformance(perf) {
+            const el = document.getElementById('performance-metrics');
+            if (!perf) {
+                el.innerHTML = '<p class="text-muted mb-0">Data unavailable</p>';
+                return;
+            }
+
+            const labels = { cpu: 'CPU Usage', memory: 'Memory Usage', processes: 'Processes' };
+            const units  = { cpu: '%', memory: ' MB', processes: '' };
+
+            const rows = Object.entries(perf).map(([key, item]) => {
+                if (item.percent === null && item.value === null) return '';
+                const pct   = item.percent ?? 0;
+                const cfg   = pct >= 90 ? STATUS_CONFIG.critical : pct >= 75 ? STATUS_CONFIG.warning : STATUS_CONFIG.healthy;
+                const value = item.value !== null
+                    ? `${item.value}${units[key] ?? ''} / ${item.max}${units[key] ?? ''}`
+                    : '—';
+                return `
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>${labels[key] ?? key}</span>
+                        <span>${value}</span>
+                    </div>
+                    <div class="progress mt-1" style="height:6px;">
+                        <div class="progress-bar ${cfg.bar}" style="width:${Math.min(pct, 100)}%"></div>
+                    </div>
+                </div>`;
+            }).join('');
+            el.innerHTML = rows || '<p class="text-muted mb-0">No resource data available</p>';
+        }
+
+        function updateLastUpdated(isoString) {
+            const el = document.getElementById('last-updated');
+            if (el && isoString) {
+                el.textContent = `Updated ${formatRelativeTime(isoString)}`;
+            }
+        }
+
+        function showError() {
+            ['stat-total','stat-healthy','stat-warning','stat-critical'].forEach(id => {
+                document.getElementById(id).textContent = '—';
+            });
+            document.getElementById('activity-list').innerHTML =
+                '<div class="list-group list-group-flush"><div class="list-group-item text-center text-danger py-4"><i class="fas fa-exclamation-circle me-2"></i>Could not load monitor data</div></div>';
+            document.getElementById('system-status').innerHTML  = '<p class="text-muted mb-0">Data unavailable</p>';
+            document.getElementById('performance-metrics').innerHTML = '<p class="text-muted mb-0">Data unavailable</p>';
+        }
+
+        function loadDashboard() {
+            fetch('api/v1/public-stats')
+                .then(r => {
+                    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                    return r.json();
+                })
+                .then(data => {
+                    updateStats(data.monitors);
+                    updateActivity(data.recentActivity);
+                    updateSystemStatus(data.systemStatus);
+                    updatePerformance(data.performance);
+                    updateLastUpdated(data.generatedAt);
+                })
+                .catch(err => {
+                    console.error('Failed to load dashboard data:', err);
+                    showError();
+                });
+        }
+
+        loadDashboard();
+        setInterval(loadDashboard, 60000);
     </script>
 </body>
 

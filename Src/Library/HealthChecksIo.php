@@ -73,6 +73,48 @@ class HealthChecksIo
         };
     }
 
+    public function getStats(): array
+    {
+        $counts = ['total' => 0, 'up' => 0, 'warning' => 0, 'down' => 0, 'paused' => 0];
+        $checks = [];
+
+        foreach ($this->writeKeys as $writeKey) {
+            $response = $this->getRequest($writeKey);
+
+            foreach ($response->checks as $check) {
+                $counts['total']++;
+
+                match ($check->status) {
+                    'up'     => $counts['up']++,
+                    'grace'  => $counts['warning']++,
+                    'down'   => $counts['down']++,
+                    default  => $counts['paused']++,
+                };
+
+                $status = match ($check->status) {
+                    'up'    => 'healthy',
+                    'grace' => 'warning',
+                    'down'  => 'critical',
+                    default => 'paused',
+                };
+
+                $lastChange = $check->last_ping !== null
+                    ? date('Y-m-d\TH:i:s\Z', strtotime($check->last_ping))
+                    : null;
+
+                $checks[] = [
+                    'name'       => $check->name,
+                    'status'     => $status,
+                    'lastChange' => $lastChange,
+                ];
+            }
+        }
+
+        usort($checks, fn($a, $b) => strcmp($a['name'], $b['name']));
+
+        return ['counts' => $counts, 'checks' => $checks];
+    }
+
     public function getChecks()
     {
         $checks = array();

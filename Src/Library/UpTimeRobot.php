@@ -79,6 +79,46 @@ class UpTimeRobot
         };
     }
 
+    public function getStats(): array
+    {
+        $response = $this->doRequest();
+        $counts = ['total' => 0, 'up' => 0, 'warning' => 0, 'down' => 0, 'paused' => 0];
+        $monitors = [];
+
+        foreach ($response->monitors as $monitor) {
+            $counts['total']++;
+
+            match ($monitor->status) {
+                2       => $counts['up']++,
+                8       => $counts['warning']++,
+                9       => $counts['down']++,
+                default => $counts['paused']++,
+            };
+
+            $status = match ($monitor->status) {
+                2       => 'healthy',
+                8       => 'warning',
+                9       => 'critical',
+                default => 'paused',
+            };
+
+            $lastChange = null;
+            if (!empty($monitor->logs) && isset($monitor->logs[0]->datetime)) {
+                $lastChange = date('Y-m-d\TH:i:s\Z', $monitor->logs[0]->datetime);
+            }
+
+            $monitors[] = [
+                'name'       => $monitor->friendly_name,
+                'status'     => $status,
+                'lastChange' => $lastChange,
+            ];
+        }
+
+        usort($monitors, fn($a, $b) => strcmp($a['name'], $b['name']));
+
+        return ['counts' => $counts, 'monitors' => $monitors];
+    }
+
     public function getMonitors()
     {
         $monitors = array();

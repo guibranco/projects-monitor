@@ -158,6 +158,9 @@ $configuration = new Configuration();
             <div id="hooks_last_check"></div>
          </div>
          <div class="chart-container">
+            <div class="text-end mb-1">
+               <button id="btn_truncate_messages" class="btn btn-warning btn-sm" onclick="if(window.confirmTruncateMessages?.()) window.truncateMessages?.()">Truncate All Messages</button>
+            </div>
             <div id="messages_by_applications"></div>
          </div>
       </div>

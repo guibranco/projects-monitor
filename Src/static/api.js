@@ -107,6 +107,69 @@ export class ApiManager {
   }
 
   /**
+   * Purges all messages from a specific RabbitMQ queue.
+   *
+   * @param {string} host - URL-encoded RabbitMQ server hostname.
+   * @param {string} vhost - URL-encoded virtual host.
+   * @param {string} queue - URL-encoded queue name.
+   */
+  async purgeQueue(host, vhost, queue) {
+    try {
+      const response = await fetch(API_ENDPOINTS.QUEUES_PURGE, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ host, vhost, queue }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      const data = await response.json();
+      NotificationManager.show("Success", "Queue was successfully purged", "success");
+      return data;
+    } catch (error) {
+      NotificationManager.show(
+        "Error",
+        `Failed to purge queue: ${error.message}`,
+        "error"
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Truncates the messages table, removing all messages.
+   */
+  async truncateMessages() {
+    try {
+      const response = await fetch(API_ENDPOINTS.MESSAGES_TRUNCATE, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      const data = await response.json();
+      NotificationManager.show("Success", "All messages have been truncated", "success");
+      return data;
+    } catch (error) {
+      NotificationManager.show(
+        "Error",
+        `Failed to truncate messages: ${error.message}`,
+        "error"
+      );
+      throw error;
+    }
+  }
+
+  /**
    * Deletes an error log file from a specified directory using the cPanel API.
    * This function makes an asynchronous POST request to delete the file and handles
    * responses, showing success or error notifications accordingly.

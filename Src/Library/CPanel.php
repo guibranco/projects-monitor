@@ -415,7 +415,97 @@ class CPanel
         try {
             $response = $this->getRequest("json-api", "cpanel", $parameters);
             return isset($response->cpanelresult->data[0]->result) === true && $response->cpanelresult->data[0]->result === 1;
-        } catch (RequestException $e) {
+        } catch (RequestException) {
+            return false;
+        }
+    }
+
+    /**
+     * Returns the full path, dirname, and basename of every error_log file found,
+     * excluding files inside .trash directories and any already-locked .processing files.
+     *
+     * @return array<int, array{fullPath: string, dirname: string, basename: string}>
+     */
+    public function getErrorLogFilePaths(): array
+    {
+        $result = array();
+        $items = $this->searchFiles("error_log", "/");
+
+        foreach ($items as $item) {
+            if (strpos($item->file, ".trash") !== false) {
+                continue;
+            }
+            if (str_ends_with($item->file, ".processing")) {
+                continue;
+            }
+            $pathInfo = pathinfo($item->file);
+            $result[] = array(
+                "fullPath" => $item->file,
+                "dirname"  => $pathInfo["dirname"],
+                "basename" => $pathInfo["basename"]
+            );
+        }
+
+        return $result;
+    }
+
+    /**
+     * Reads and returns the raw contents of a file by its full server path.
+     *
+     * @param string $fullPath Absolute path on the cPanel server.
+     * @return array{fullPath: string, dirname: string, basename: string, contents: string}|null
+     */
+    public function readFile(string $fullPath): array|null
+    {
+        return $this->loadContent($fullPath);
+    }
+
+    /**
+     * Renames a file on the cPanel server using the Fileman fileop API.
+     *
+     * @param string $sourcePath Absolute path of the file to rename.
+     * @param string $destPath   Absolute path of the new name/location.
+     * @return bool True on success, false otherwise.
+     */
+    public function renameFile(string $sourcePath, string $destPath): bool
+    {
+        $parameters = array(
+            "cpanel_jsonapi_module" => "Fileman",
+            "cpanel_jsonapi_func"   => "fileop",
+            "cpanel_jsonapi_apiversion" => "2",
+            "op"          => "rename",
+            "sourcefiles" => $sourcePath,
+            "destfiles"   => $destPath
+        );
+
+        try {
+            $response = $this->getRequest("json-api", "cpanel", $parameters);
+            return isset($response->cpanelresult->data[0]->result) && $response->cpanelresult->data[0]->result === 1;
+        } catch (RequestException) {
+            return false;
+        }
+    }
+
+    /**
+     * Moves a file to the cPanel trash by its full server path.
+     *
+     * @param string $fullPath Absolute path of the file to delete.
+     * @return bool True on success, false otherwise.
+     */
+    public function deleteFile(string $fullPath): bool
+    {
+        $parameters = array(
+            "cpanel_jsonapi_module" => "Fileman",
+            "cpanel_jsonapi_func"   => "fileop",
+            "cpanel_jsonapi_apiversion" => "2",
+            "op"          => "trash",
+            "sourcefiles" => $fullPath
+        );
+
+        try {
+            $response = $this->getRequest("json-api", "cpanel", $parameters);
+            return isset($response->cpanelresult->data[0]->result) && $response->cpanelresult->data[0]->result === 1;
+        } catch (RequestException) {
             return false;
         }
     }

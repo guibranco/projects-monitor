@@ -312,4 +312,24 @@ class Logger
             throw $e;
         }
     }
+
+    public function truncateMessages(): bool
+    {
+        try {
+            $this->connection->begin_transaction();
+
+            $result = $this->connection->query("TRUNCATE TABLE messages");
+
+            if ($result) {
+                $this->connection->commit();
+            } else {
+                $this->connection->rollback();
+            }
+
+            return $result !== false;
+        } catch (\Exception $e) {
+            $this->connection->rollback();
+            throw $e;
+        }
+    }
 }

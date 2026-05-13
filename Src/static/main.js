@@ -54,6 +54,11 @@ class DashboardApp {
       this.dataDisplayManager.showMessages(data);
     };
 
+    window.truncateMessages = async () => {
+      const data = await this.apiManager.truncateMessages();
+      this.dataDisplayManager.showMessages(data);
+    };
+
     window.deleteErrorLogFile = async (directory) => {
       const data = await this.apiManager.deleteErrorLogFile(directory);
       this.dataDisplayManager.showCPanel(data);
@@ -61,6 +66,7 @@ class DashboardApp {
 
     // Expose confirmation functions
     window.confirmDelete = this.uiManager.confirmDelete.bind(this.uiManager);
+    window.confirmTruncateMessages = this.uiManager.confirmTruncateMessages.bind(this.uiManager);
     window.confirmDeleteError = this.uiManager.confirmDeleteError.bind(this.uiManager);
 
     // Expose GitHub stats function

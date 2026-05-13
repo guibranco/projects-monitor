@@ -23,6 +23,7 @@ export const API_ENDPOINTS = {
   CPANEL_DELETE: "api/v1/cpanel/delete",
   MESSAGES: "api/v1/messages",
   MESSAGES_DELETE: "api/v1/messages/delete",
+  MESSAGES_TRUNCATE: "api/v1/messages/truncate",
   QUEUES: "api/v1/queues",
   DOMAINS: "api/v1/domains",
   GITHUB: "api/v1/github",

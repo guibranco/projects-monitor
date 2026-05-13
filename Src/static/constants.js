@@ -25,6 +25,7 @@ export const API_ENDPOINTS = {
   MESSAGES_DELETE: "api/v1/messages/delete",
   MESSAGES_TRUNCATE: "api/v1/messages/truncate",
   QUEUES: "api/v1/queues",
+  QUEUES_PURGE: "api/v1/queues/purge",
   DOMAINS: "api/v1/domains",
   GITHUB: "api/v1/github",
   HEALTHCHECKS: "api/v1/healthchecksio",

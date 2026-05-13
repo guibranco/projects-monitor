@@ -7,6 +7,7 @@ export class DataDisplayManager {
     this.chartManager = new ChartManager();
     this.eventAssigned = false;
     this.eventAssignedError = false;
+    this.eventAssignedQueues = false;
   }
 
   /**
@@ -374,6 +375,22 @@ export class DataDisplayManager {
 
     this.chartManager.drawDataTable(response.queues, "queues", CHART_OPTIONS.table);
     this.chartManager.drawGaugeChart("Queues", response.total, "gauge_chart_queues", gaugeOptions);
+
+    if (this.eventAssignedQueues === false) {
+      this.eventAssignedQueues = true;
+      document
+        .getElementById("queues")
+        .addEventListener("click", (e) => {
+          const purgeButton = e.target.closest('[data-action="purge"]');
+          if (purgeButton) {
+            const { host, vhost, queue } = purgeButton.dataset;
+            const decodedQueue = decodeURIComponent(queue);
+            if (window.confirmPurgeQueue && window.confirmPurgeQueue(decodedQueue)) {
+              window.purgeQueue?.(host, vhost, queue);
+            }
+          }
+        });
+    }
   }
 
   /**

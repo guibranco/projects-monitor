@@ -118,6 +118,10 @@ export class UIManager {
     return window.confirm(message);
   }
 
+  confirmTruncateMessages() {
+    return window.confirm("Are you sure you want to truncate all messages? This action cannot be undone.");
+  }
+
   confirmDeleteError(directory) {
     const message = `Are you sure you want to delete error_log file located at ${directory}?`;
     return window.confirm(message);

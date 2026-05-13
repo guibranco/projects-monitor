@@ -304,12 +304,16 @@ export class DataDisplayManager {
     );
     this.chartManager.drawPieChart(response.byApplications, "pie_chart_2", optionsByApplications);
 
+    const truncateBtn = document.getElementById("btn_truncate_messages");
+
     if (response.byApplications.length === 1) {
+      if (truncateBtn) truncateBtn.style.display = "none";
       this.chartManager.drawDataTable([[]], "messages_by_applications", CHART_OPTIONS.table);
       return;
     }
 
     if (response.byApplications.length > 1) {
+      if (truncateBtn) truncateBtn.style.display = "";
       const byApplicationsTableData = response.byApplications;
       byApplicationsTableData[0].unshift("Actions");
       for (let i = 1; i < byApplicationsTableData.length; i++) {

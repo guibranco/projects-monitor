@@ -122,6 +122,10 @@ export class UIManager {
     return window.confirm("Are you sure you want to truncate all messages? This action cannot be undone.");
   }
 
+  confirmPurgeQueue(queueName) {
+    return window.confirm(`Are you sure you want to purge all messages from queue "${queueName}"? This action cannot be undone.`);
+  }
+
   confirmDeleteError(directory) {
     const message = `Are you sure you want to delete error_log file located at ${directory}?`;
     return window.confirm(message);

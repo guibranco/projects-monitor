@@ -644,3 +644,18 @@ code {
     padding: 0;
   }
 }
+
+/* ===========================================
+   FOOTER
+   =========================================== */
+footer {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+footer a {
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+
+footer a:hover {
+  color: rgba(255, 255, 255, 0.8) !important;
+}

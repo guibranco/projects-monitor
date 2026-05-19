@@ -382,11 +382,7 @@ $configuration = new Configuration();
       </div>
    </div>
 
-   <footer class="text-center py-3 mt-2 text-muted small">
-      <a href="https://github.com/guibranco/projects-monitor" target="_blank" rel="noopener noreferrer" class="text-muted text-decoration-none">
-         <i class="bi bi-github me-1"></i>guibranco/projects-monitor
-      </a>
-   </footer>
+   <?php include_once __DIR__ . '/footer.php'; ?>
 
    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
       integrity="sha256-CDOy6cOibCWEdsRiZuaHf8dSGGJRYuBGC+mjoJimHGw=" crossorigin="anonymous"></script>

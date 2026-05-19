@@ -42,32 +42,44 @@ export class ApiManager {
   }
 
   /**
-   * Displays a login modal with session expired message and login options.
+   * Displays a session-expired modal and redirects to login on confirmation.
    */
   showLoginModal() {
-    const modal = document.createElement("div");
-    modal.classList.add("modal-backdrop");
-    modal.setAttribute("role", "dialog");
-    modal.setAttribute("aria-modal", "true");
-    modal.setAttribute("aria-labelledby", "modalTitle");
+    const existing = document.getElementById("session-expired-modal");
+    if (existing) return;
 
-    const modalContent = document.createElement("div");
-    modalContent.classList.add("modal-content");
-    modalContent.innerHTML = `
-      <h2 id="modalTitle">Session Expired</h2>
-      <p>Your session has expired. Please login again.</p>
-      <button id="cancelBtn">Cancel</button>
-      <button id="loginBtn">Login</button>
-    `;
+    document.body.insertAdjacentHTML("beforeend", `
+      <div class="modal fade" id="session-expired-modal" tabindex="-1"
+           aria-labelledby="sessionExpiredTitle" aria-modal="true" role="dialog">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content session-expired-modal-content">
+            <div class="modal-header session-expired-header">
+              <h5 class="modal-title" id="sessionExpiredTitle">
+                <i class="bi bi-clock-history me-2"></i>Session Expired
+              </h5>
+            </div>
+            <div class="modal-body">
+              <p class="mb-0">Your session has expired. Please log in again to continue.</p>
+            </div>
+            <div class="modal-footer session-expired-footer">
+              <button type="button" class="btn session-expired-btn-dismiss" id="sessionCancelBtn">
+                <i class="bi bi-x-circle me-1"></i>Dismiss
+              </button>
+              <button type="button" class="btn session-expired-btn-login" id="sessionLoginBtn">
+                <i class="bi bi-box-arrow-in-right me-1"></i>Log In
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `);
 
-    modal.appendChild(modalContent);
-    document.body.appendChild(modal);
+    const modalEl = document.getElementById("session-expired-modal");
+    const bsModal = new bootstrap.Modal(modalEl, { backdrop: "static", keyboard: false });
+    bsModal.show();
 
-    document.getElementById("cancelBtn").addEventListener("click", () => {
-      modal.remove();
-    });
-
-    document.getElementById("loginBtn").addEventListener("click", () => {
+    document.getElementById("sessionCancelBtn").addEventListener("click", () => bsModal.hide());
+    document.getElementById("sessionLoginBtn").addEventListener("click", () => {
       window.location.href = "login.php";
     });
   }

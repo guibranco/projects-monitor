@@ -8,6 +8,13 @@ export class DataDisplayManager {
     this.eventAssigned = false;
     this.eventAssignedError = false;
     this.eventAssignedQueues = false;
+    this.eventAssignedDbErrors = false;
+  }
+
+  #escHtml(str) {
+    return String(str ?? '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
   /**
@@ -347,6 +354,78 @@ export class DataDisplayManager {
             }
           });
       }
+    }
+  }
+
+  /**
+   * Renders the DB-backed errors table with per-path delete and a truncate-all button.
+   */
+  showDbErrors(response) {
+    const counterEl  = document.getElementById("counter_db_error_messages");
+    const truncateBtn = document.getElementById("btn_truncate_db_errors");
+    const container  = document.getElementById("db_error_messages");
+    if (!container) return;
+
+    const total = response.total ?? 0;
+    if (counterEl) counterEl.textContent = total;
+
+    if (!response.errors || response.errors.length === 0) {
+      if (truncateBtn) truncateBtn.style.display = "none";
+      container.innerHTML = '<p class="text-muted text-center py-3 mb-0">No error records in the database.</p>';
+      return;
+    }
+
+    if (truncateBtn) truncateBtn.style.display = "";
+
+    const rows = response.errors.map(err => {
+      const basePath       = (err.error_log_path ?? '').split('/').pop();
+      const truncatedError = (err.error ?? '').length > 120
+        ? err.error.substring(0, 120) + '…'
+        : (err.error ?? '');
+      const safePath = encodeURIComponent(err.error_log_path ?? '');
+      return `<tr>
+        <td class="text-nowrap small">${this.#escHtml(err.date)}</td>
+        <td class="small font-monospace" title="${this.#escHtml(err.error_log_path)}">${this.#escHtml(basePath)}</td>
+        <td class="small" title="${this.#escHtml(err.error)}">${this.#escHtml(truncatedError)}</td>
+        <td class="small font-monospace text-nowrap">${this.#escHtml(err.file)}:${err.line}</td>
+        <td class="text-center">
+          <button class="btn btn-danger btn-sm"
+                  data-action="delete-path"
+                  data-path="${safePath}"
+                  title="Delete all errors for this log file"
+                  aria-label="Delete all errors for ${this.#escHtml(basePath)}">
+            <i class="bi bi-trash2"></i>
+          </button>
+        </td>
+      </tr>`;
+    }).join('');
+
+    container.innerHTML = `
+      <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0 db-errors-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Log File</th>
+              <th>Error</th>
+              <th>Location</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+
+    if (!this.eventAssignedDbErrors) {
+      this.eventAssignedDbErrors = true;
+      container.addEventListener("click", (e) => {
+        const btn = e.target.closest('[data-action="delete-path"]');
+        if (!btn) return;
+        const decoded = decodeURIComponent(btn.dataset.path ?? '');
+        if (window.confirmDeleteErrorsByPath?.(decoded)) {
+          window.deleteErrorsByPath?.(decoded);
+        }
+      });
     }
   }
 

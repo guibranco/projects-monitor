@@ -4,7 +4,7 @@ require_once 'vendor/autoload.php';
 
 use GuiBranco\ProjectsMonitor\Library\Configuration;
 
-if (!isset($_SESSION['last_activity']) || (time() - $_SESSION['last_activity'] > 1800)) {
+if (!isset($_SESSION['last_activity']) || time() - $_SESSION['last_activity'] > 1800) {
     session_unset();
     session_destroy();
     header('Location: login.php');
@@ -20,7 +20,7 @@ if (!isset($_SESSION['user_id'])) {
     header('Pragma: no-cache');
     exit;
 }
-$username = isset($_SESSION['username']) ? $_SESSION['username'] : '';
+$username = $_SESSION['username'] ?? '';
 $configuration = new Configuration();
 ?>
 <!DOCTYPE html>
@@ -212,6 +212,21 @@ $configuration = new Configuration();
             <i class="bi bi-exclamation-triangle me-2"></i>Error Log Messages <span id="counter_error_log_messages" class="badge rounded-pill"></span>
          </div>
          <div id="error_log_messages" class="section-content"></div>
+      </div>
+
+      <div class="full-width-section">
+         <div class="section-header">
+            <i class="bi bi-database-exclamation me-2"></i>Error Log (Database) <span id="counter_db_error_messages" class="badge rounded-pill"></span>
+         </div>
+         <div class="section-content">
+            <div class="text-end mb-1">
+               <button id="btn_truncate_db_errors" class="btn btn-warning btn-sm" style="display:none"
+                  onclick="if(window.confirmTruncateDbErrors?.()) window.truncateDbErrors?.()">
+                  <i class="bi bi-trash me-1"></i>Truncate All
+               </button>
+            </div>
+            <div id="db_error_messages"></div>
+         </div>
       </div>
 
       <div class="full-width-section">

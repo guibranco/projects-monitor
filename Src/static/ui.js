@@ -130,6 +130,14 @@ export class UIManager {
     const message = `Are you sure you want to delete error_log file located at ${directory}?`;
     return window.confirm(message);
   }
+
+  confirmTruncateDbErrors() {
+    return window.confirm("Are you sure you want to truncate all DB error records? This action cannot be undone.");
+  }
+
+  confirmDeleteErrorsByPath(path) {
+    return window.confirm(`Delete all DB error records for:\n${path}\n\nThis action cannot be undone.`);
+  }
 }
 
 export class GitHubStatsManager {

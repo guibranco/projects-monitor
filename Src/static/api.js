@@ -181,6 +181,32 @@ export class ApiManager {
     }
   }
 
+  async truncateDbErrors() {
+    try {
+      const response = await fetch(API_ENDPOINTS.ERRORS_TRUNCATE, { method: "POST" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return await response.json();
+    } catch (error) {
+      NotificationManager.show("Error", `Failed to truncate errors table: ${error.message}`, "error");
+      throw error;
+    }
+  }
+
+  async deleteErrorsByPath(path) {
+    try {
+      const response = await fetch(API_ENDPOINTS.ERRORS_DELETE_PATH, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path }),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return await response.json();
+    } catch (error) {
+      NotificationManager.show("Error", `Failed to delete errors: ${error.message}`, "error");
+      throw error;
+    }
+  }
+
   /**
    * Deletes an error log file from a specified directory using the cPanel API.
    * This function makes an asynchronous POST request to delete the file and handles
@@ -244,6 +270,7 @@ export class DataLoader {
    */
   load60Interval() {
     this.apiManager.load(API_ENDPOINTS.DOMAINS, (data) => window.showDomains?.(data));
+    this.apiManager.load(API_ENDPOINTS.ERRORS, (data) => window.showDbErrors?.(data));
     this.apiManager.load(API_ENDPOINTS.GITHUB, (data) => window.showGitHub?.(data));
     this.apiManager.load(API_ENDPOINTS.HEALTHCHECKS, (data) => window.showHealthChecksIo?.(data));
     this.apiManager.load(API_ENDPOINTS.UPTIMEROBOT, (data) => window.showUpTimeRobot?.(data));

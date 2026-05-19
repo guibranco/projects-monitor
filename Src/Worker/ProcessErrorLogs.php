@@ -79,6 +79,11 @@ try {
 }
 
 $stats['files'] = count($files);
+
+if ($stats['files'] === 0) {
+    exit(0);
+}
+
 workerLog("Found {$stats['files']} error_log file(s)");
 
 // ---------------------------------------------------------------------------

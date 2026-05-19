@@ -6,7 +6,7 @@ use GuiBranco\ProjectsMonitor\Library\Configuration;
 use GuiBranco\ProjectsMonitor\Library\Database;
 use GuiBranco\ProjectsMonitor\Library\Logger;
 
-header("Content-Security-Policy: default-src 'self' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;");
+header("Content-Security-Policy: default-src 'self' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net;");
 header("X-Content-Type-Options: nosniff");
 header("X-Frame-Options: DENY");
 header("Referrer-Policy: strict-origin-when-cross-origin");

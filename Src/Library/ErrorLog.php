@@ -87,4 +87,38 @@ class ErrorLog
         $stmt->close();
         return $total;
     }
+
+    public function getErrors(int $limit = 500): array
+    {
+        $rows = [];
+        $stmt = $this->connection->prepare(
+            "SELECT id, error_log_path, date, error, file, line
+             FROM errors
+             ORDER BY date DESC
+             LIMIT ?"
+        );
+        $stmt->bind_param("i", $limit);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        while ($row = $result->fetch_assoc()) {
+            $rows[] = $row;
+        }
+        $stmt->close();
+        return $rows;
+    }
+
+    public function truncate(): bool
+    {
+        return $this->connection->query("TRUNCATE TABLE errors") !== false;
+    }
+
+    public function deleteByPath(string $path): int
+    {
+        $stmt = $this->connection->prepare("DELETE FROM errors WHERE error_log_path = ?");
+        $stmt->bind_param("s", $path);
+        $stmt->execute();
+        $affected = $stmt->affected_rows;
+        $stmt->close();
+        return $affected;
+    }
 }

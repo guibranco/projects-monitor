@@ -1,4 +1,5 @@
 **/cache/**
+!**/cache/.htaccess
 **/secrets/**
 **/vendor/**
 **/domains.json

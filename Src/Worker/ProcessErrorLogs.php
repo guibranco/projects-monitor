@@ -50,19 +50,23 @@ function parseDate(string $raw): ?string
     }
 }
 
+function workerStarted(): void
+{
+    workerLog('=== ProcessErrorLogs worker started ===');
+}
+
 // ---------------------------------------------------------------------------
 // Bootstrap
 // ---------------------------------------------------------------------------
 
 $stats = ['files' => 0, 'processed' => 0, 'inserted' => 0, 'skipped' => 0, 'errors' => 0];
 
-workerLog('=== ProcessErrorLogs worker started ===');
-
 try {
-    $cPanel   = new CPanel();
+    $cPanel = new CPanel();
     $errorLog = new ErrorLog();
-    $parser   = new LogParser();
+    $parser = new LogParser();
 } catch (Throwable $e) {
+    workerStarted();
     workerLog('FATAL: could not initialise services — ' . $e->getMessage());
     exit(1);
 }
@@ -74,6 +78,7 @@ try {
 try {
     $files = $cPanel->getErrorLogFilePaths();
 } catch (Throwable $e) {
+    workerStarted();
     workerLog('FATAL: could not query cPanel for error_log files — ' . $e->getMessage());
     exit(1);
 }
@@ -84,6 +89,7 @@ if ($stats['files'] === 0) {
     exit(0);
 }
 
+workerStarted();
 workerLog("Found {$stats['files']} error_log file(s)");
 
 // ---------------------------------------------------------------------------
@@ -91,7 +97,7 @@ workerLog("Found {$stats['files']} error_log file(s)");
 // ---------------------------------------------------------------------------
 
 foreach ($files as $fileInfo) {
-    $fullPath       = $fileInfo['fullPath'];
+    $fullPath = $fileInfo['fullPath'];
     $processingPath = $fullPath . '.processing';
 
     workerLog("→ {$fullPath}");
@@ -133,8 +139,8 @@ foreach ($files as $fileInfo) {
             continue;
         }
 
-        $line             = is_numeric($entry['line']) ? (int) $entry['line'] : 0;
-        $error            = extractFirstLine($entry['multilineError']);
+        $line = is_numeric($entry['line']) ? (int) $entry['line'] : 0;
+        $error = extractFirstLine($entry['multilineError']);
         $stackTraceDetails = isset($entry['stackTraceDetails']) ? trim($entry['stackTraceDetails']) : null;
 
         $saved = $errorLog->saveError(

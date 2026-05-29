@@ -1,0 +1,878 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Projects Monitor API",
+    "description": "Internal REST API for the Projects Monitor dashboard.\n\n## Authentication\n\nAll protected endpoints require an active PHP session obtained by logging in via the dashboard (`/login.php`). The session is carried by the `PHPSESSID` cookie.\n\nSessions expire after **30 minutes** of inactivity. A maximum of **60 requests per minute** is enforced per session.\n\n## Public endpoints\n\nTwo endpoints bypass session auth:\n- `GET /api/v1/public-stats` — cached public stats (CORS enabled)\n- `POST /api/v1/log-message` — validated by an application-level token",
+    "version": "0.0.0-dev",
+    "contact": {
+      "name": "Guilherme Branco Stracini"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://guilherme.straccini.com/projects-monitor",
+      "description": "Production"
+    },
+    {
+      "url": "http://localhost:8000",
+      "description": "Local development"
+    }
+  ],
+  "security": [
+    { "sessionCookie": [] }
+  ],
+  "tags": [
+    { "name": "AppVeyor",    "description": "AppVeyor CI build data" },
+    { "name": "cPanel",      "description": "cPanel server stats and error-log file management" },
+    { "name": "Domains",     "description": "Domain SSL/expiry validity information" },
+    { "name": "Errors",      "description": "Database-backed error log management" },
+    { "name": "GitHub",      "description": "GitHub API stats, issues, pull requests, and releases" },
+    { "name": "HealthChecks","description": "HealthChecks.io monitor status" },
+    { "name": "Messages",    "description": "Application log-message management" },
+    { "name": "Postman",     "description": "Postman API usage stats" },
+    { "name": "Queues",      "description": "RabbitMQ queue monitoring and management" },
+    { "name": "UpTimeRobot", "description": "UpTimeRobot monitor status" },
+    { "name": "Webhooks",    "description": "GitHub webhook dashboard and processing-state statistics" },
+    { "name": "WireGuard",   "description": "WireGuard VPN peer data" },
+    { "name": "Public",      "description": "Endpoints that do not require a session" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "sessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "PHPSESSID",
+        "description": "PHP session cookie. Obtained by logging in via `/login.php`."
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "No valid session (not logged in or session expired)."
+      },
+      "RateLimited": {
+        "description": "Rate limit exceeded — more than 60 requests per minute."
+      },
+      "BadRequest": {
+        "description": "Invalid or missing request parameters."
+      },
+      "ServerError": {
+        "description": "Internal server error.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string", "example": "An error occurred." }
+        }
+      },
+      "UsageMetric": {
+        "type": "object",
+        "properties": {
+          "id":          { "type": "string",  "example": "lvecpu" },
+          "description": { "type": "string",  "example": "CPU Usage" },
+          "usage":       { "type": "number",  "example": 12.5 },
+          "maximum":     { "type": "number",  "example": 100 }
+        }
+      },
+      "CpanelData": {
+        "type": "object",
+        "properties": {
+          "error_log_files": {
+            "type": "array",
+            "description": "List of error-log file paths available for deletion.",
+            "items": { "type": "string" }
+          },
+          "error_log_messages": {
+            "type": "array",
+            "description": "Parsed error log entries.",
+            "items": { "type": "object" }
+          },
+          "total_error_messages": { "type": "integer", "example": 0 },
+          "cronjobs": {
+            "type": "array",
+            "description": "Configured cPanel cron jobs.",
+            "items": { "type": "object" }
+          },
+          "emails": { "type": "integer", "example": 5 },
+          "usage": {
+            "type": "array",
+            "nullable": true,
+            "description": "Resource usage metrics (CPU, Memory, Processes).",
+            "items": { "$ref": "#/components/schemas/UsageMetric" }
+          }
+        }
+      },
+      "ErrorEntry": {
+        "type": "object",
+        "properties": {
+          "id":          { "type": "integer", "example": 1 },
+          "error":       { "type": "string",  "example": "Undefined variable $x" },
+          "file":        { "type": "string",  "example": "/var/www/app/index.php" },
+          "line":        { "type": "integer", "example": 42 },
+          "stack_trace": { "type": "string",  "nullable": true },
+          "date":        { "type": "string",  "format": "date-time" }
+        }
+      },
+      "ErrorsData": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ErrorEntry" }
+          },
+          "total": { "type": "integer", "example": 3 }
+        }
+      },
+      "MessagesData": {
+        "type": "object",
+        "properties": {
+          "total": { "type": "integer", "example": 150 },
+          "byApplications": {
+            "type": "array",
+            "description": "Google Charts-compatible 2-D array: first row is headers, subsequent rows are data.",
+            "items": { "type": "array", "items": {} }
+          },
+          "grouped": {
+            "type": "array",
+            "description": "Messages grouped by application with counts.",
+            "items": { "type": "object" }
+          }
+        }
+      },
+      "ProcessingStateTableCounts": {
+        "type": "object",
+        "description": "Record count per GitHub table for one processing state.",
+        "properties": {
+          "github_branches":      { "type": "integer", "example": 62 },
+          "github_comments":      { "type": "integer", "example": 43 },
+          "github_installations": { "type": "integer", "example": 3  },
+          "github_issues":        { "type": "integer", "example": 2  },
+          "github_pull_requests": { "type": "integer", "example": 88 },
+          "github_pushes":        { "type": "integer", "example": 217},
+          "github_repositories":  { "type": "integer", "example": 0  },
+          "github_signature":     { "type": "integer", "example": 0  },
+          "github_users":         { "type": "integer", "example": 3  }
+        }
+      },
+      "ProcessingStateCounts": {
+        "type": "object",
+        "description": "Record counts for every processing state. RE_REQUESTED and UPDATED are always 0 for github_signature.",
+        "properties": {
+          "NEW":          { "$ref": "#/components/schemas/ProcessingStateTableCounts" },
+          "RE_REQUESTED": { "$ref": "#/components/schemas/ProcessingStateTableCounts" },
+          "UPDATED":      { "$ref": "#/components/schemas/ProcessingStateTableCounts" },
+          "PROCESSING":   { "$ref": "#/components/schemas/ProcessingStateTableCounts" },
+          "PROCESSED":    { "$ref": "#/components/schemas/ProcessingStateTableCounts" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/v1/appveyor": {
+      "get": {
+        "summary": "AppVeyor builds",
+        "description": "Returns all AppVeyor project build statuses.",
+        "operationId": "getAppVeyor",
+        "tags": ["AppVeyor"],
+        "responses": {
+          "200": {
+            "description": "List of AppVeyor project builds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "projects": {
+                      "type": "array",
+                      "items": { "type": "object" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/cpanel": {
+      "get": {
+        "summary": "cPanel stats",
+        "description": "Returns cPanel resource usage, error log files, parsed error messages, email count, and cron jobs.",
+        "operationId": "getCPanel",
+        "tags": ["cPanel"],
+        "responses": {
+          "200": {
+            "description": "cPanel dashboard data.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CpanelData" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/cpanel/delete": {
+      "post": {
+        "summary": "Delete cPanel error log file",
+        "description": "Deletes a specific error_log file from the server. The directory value must consist only of alphanumeric characters, underscores, slashes, dots, and dashes.",
+        "operationId": "deleteCPanelErrorLog",
+        "tags": ["cPanel"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["directory"],
+                "properties": {
+                  "directory": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_/\\.\\-]+$",
+                    "example": "/home/user/public_html"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "File deleted. Returns updated cPanel data.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CpanelData" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/domains": {
+      "get": {
+        "summary": "Domain validity",
+        "description": "Returns SSL certificate and expiry validity information for all configured domains.",
+        "operationId": "getDomains",
+        "tags": ["Domains"],
+        "responses": {
+          "200": {
+            "description": "Domain validity data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "domains": {
+                      "type": "array",
+                      "items": { "type": "object" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/errors": {
+      "get": {
+        "summary": "Database error logs",
+        "description": "Returns all error log entries stored in the database.",
+        "operationId": "getErrors",
+        "tags": ["Errors"],
+        "responses": {
+          "200": {
+            "description": "Error log entries.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorsData" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/errors/truncate": {
+      "post": {
+        "summary": "Truncate error log table",
+        "description": "Removes all rows from the error log database table.",
+        "operationId": "truncateErrors",
+        "tags": ["Errors"],
+        "responses": {
+          "200": {
+            "description": "Table truncated. Returns (now-empty) error log data.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorsData" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/errors/delete-path": {
+      "post": {
+        "summary": "Delete errors by file path",
+        "description": "Deletes all error log entries whose file column matches the supplied path.",
+        "operationId": "deleteErrorsByPath",
+        "tags": ["Errors"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["path"],
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "example": "/var/www/app/src/Service.php"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Errors deleted (or attempted). Returns updated error log data plus a deleted flag.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ErrorsData" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "deleted": { "type": "boolean", "example": true }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/api/v1/github": {
+      "get": {
+        "summary": "GitHub stats",
+        "description": "Returns GitHub API rate-limit usage, issues, pull requests, accounts usage, and the latest release.",
+        "operationId": "getGitHub",
+        "tags": ["GitHub"],
+        "responses": {
+          "200": {
+            "description": "GitHub dashboard data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "api_usage": {
+                      "type": "object",
+                      "description": "Full GitHub API rate-limit context."
+                    },
+                    "api_usage_core": {
+                      "type": "object",
+                      "description": "Core rate-limit bucket (limit, remaining, reset)."
+                    },
+                    "accounts_usage": {
+                      "type": "array",
+                      "items": { "type": "object" }
+                    },
+                    "issues": {
+                      "type": "object",
+                      "description": "Issues grouped by label/state (bug, triage, wip, assigned, authored, blocked)."
+                    },
+                    "pull_requests": {
+                      "type": "object",
+                      "description": "Pull requests grouped (awaiting_triage, latest, authored, blocked)."
+                    },
+                    "latest_release": {
+                      "type": "object",
+                      "nullable": true,
+                      "description": "Most recent GitHub release metadata."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/healthchecksio": {
+      "get": {
+        "summary": "HealthChecks.io monitors",
+        "description": "Returns the status of all configured HealthChecks.io monitors.",
+        "operationId": "getHealthChecksIo",
+        "tags": ["HealthChecks"],
+        "responses": {
+          "200": {
+            "description": "Monitor status list.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "checks": {
+                      "type": "array",
+                      "items": { "type": "object" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/message": {
+      "get": {
+        "summary": "Get single message",
+        "description": "Returns a single log message by its database ID.",
+        "operationId": "getMessage",
+        "tags": ["Messages"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "description": "Message ID to retrieve. Defaults to 0.",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "example": 42
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message object, or null when not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "nullable": true
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/api/v1/messages": {
+      "get": {
+        "summary": "All messages",
+        "description": "Returns total message count, counts per application, and all messages grouped by application.",
+        "operationId": "getMessages",
+        "tags": ["Messages"],
+        "responses": {
+          "200": {
+            "description": "Messages summary.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MessagesData" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/messages/delete": {
+      "post": {
+        "summary": "Delete messages by application",
+        "description": "Deletes all log messages belonging to the specified application.",
+        "operationId": "deleteMessages",
+        "tags": ["Messages"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["application"],
+                "properties": {
+                  "application": {
+                    "type": "string",
+                    "example": "MyApp"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Messages deleted. Returns updated messages summary.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MessagesData" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/messages/truncate": {
+      "post": {
+        "summary": "Truncate all messages",
+        "description": "Removes all rows from the messages table.",
+        "operationId": "truncateMessages",
+        "tags": ["Messages"],
+        "responses": {
+          "200": {
+            "description": "Table truncated. Returns (now-empty) messages summary.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MessagesData" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/postman": {
+      "get": {
+        "summary": "Postman API usage",
+        "description": "Returns Postman API usage statistics for the configured workspace.",
+        "operationId": "getPostman",
+        "tags": ["Postman"],
+        "responses": {
+          "200": {
+            "description": "Postman usage data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "usage": { "type": "object" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/queues": {
+      "get": {
+        "summary": "RabbitMQ queues",
+        "description": "Returns message counts and status for all configured RabbitMQ queues.",
+        "operationId": "getQueues",
+        "tags": ["Queues"],
+        "responses": {
+          "200": {
+            "description": "Queue data.",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/queues/purge": {
+      "post": {
+        "summary": "Purge a RabbitMQ queue",
+        "description": "Removes all messages from the specified queue.",
+        "operationId": "purgeQueue",
+        "tags": ["Queues"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["host", "vhost", "queue"],
+                "properties": {
+                  "host":  { "type": "string", "example": "rabbitmq.example.com" },
+                  "vhost": { "type": "string", "example": "%2F" },
+                  "queue": { "type": "string", "example": "github_pull_requests" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Queue purged. Returns updated queue data.",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/uptimerobot": {
+      "get": {
+        "summary": "UpTimeRobot monitors",
+        "description": "Returns the status of all configured UpTimeRobot monitors.",
+        "operationId": "getUpTimeRobot",
+        "tags": ["UpTimeRobot"],
+        "responses": {
+          "200": {
+            "description": "Monitor status list.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "monitors": {
+                      "type": "array",
+                      "items": { "type": "object" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/webhooks": {
+      "get": {
+        "summary": "Webhooks dashboard",
+        "description": "Returns the full GitHub webhook dashboard: statistics charts, event distribution, senders, repositories, branches, pull requests, workflow runs, and the activity feed.",
+        "operationId": "getWebhooks",
+        "tags": ["Webhooks"],
+        "parameters": [
+          {
+            "name": "feedOptionsFilter",
+            "in": "query",
+            "required": false,
+            "description": "Activity feed filter. Unrecognised values fall back to all.",
+            "schema": {
+              "type": "string",
+              "enum": ["all", "mine"],
+              "default": "all"
+            }
+          },
+          {
+            "name": "workflowsLimiterEnabled",
+            "in": "query",
+            "required": false,
+            "description": "Whether to cap the number of workflow run rows returned.",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "workflowsLimiterQuantity",
+            "in": "query",
+            "required": false,
+            "description": "Maximum number of workflow run rows. Only used when workflowsLimiterEnabled is true. Range: 1-10000.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000,
+              "example": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Webhook dashboard data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statistics":              { "type": "array", "description": "Google Charts-compatible 2-D array for the webhooks-by-date line chart.",        "items": { "type": "array", "items": {} } },
+                    "statistics_github":       { "type": "array", "description": "Google Charts-compatible 2-D array for the GitHub-webhooks-by-date line chart.", "items": { "type": "array", "items": {} } },
+                    "events":                  { "type": "array", "description": "Google Charts-compatible 2-D array for the events-by-type pie chart.",            "items": { "type": "array", "items": {} } },
+                    "senders":                 { "type": "array", "description": "Users who triggered webhook events.",                                             "items": { "type": "array", "items": {} } },
+                    "repositories":            { "type": "array", "description": "Repositories with webhook activity.",                                             "items": { "type": "array", "items": {} } },
+                    "branches":                { "type": "array", "description": "Recent branch push events.",                                                      "items": { "type": "array", "items": {} } },
+                    "pull_requests":           { "type": "array", "description": "Recent pull request events.",                                                     "items": { "type": "array", "items": {} } },
+                    "workflow_runs":           { "type": "array", "description": "Recent GitHub Actions workflow runs.",                                            "items": { "type": "array", "items": {} } },
+                    "feed":                    { "type": "array", "description": "Activity feed filtered by feedOptionsFilter.",                                    "items": { "type": "array", "items": {} } },
+                    "installation_repositories": { "type": "array", "description": "Repositories from GitHub App installations.",                                  "items": { "type": "array", "items": {} } },
+                    "total":                              { "type": "integer", "description": "Total GitHub webhook records.", "example": 15000 },
+                    "total_workflow_runs":                { "type": "integer", "example": 500 },
+                    "installations":                      { "type": "integer", "description": "Number of GitHub App installations.", "example": 12 },
+                    "installation_repositories_count":    { "type": "integer", "example": 30 },
+                    "check_hooks_date": { "type": "string", "description": "ISO-8601 date when hooks were last checked (omitted when unavailable).", "example": "2024-01-15" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/webhooks-statistics": {
+      "get": {
+        "summary": "Webhook processing-state counts",
+        "description": "Returns the count of records in each GitHub webhook table broken down by processing state (NEW, RE_REQUESTED, UPDATED, PROCESSING, PROCESSED). Calls the upstream /processing-state endpoint on the Webhooks API.",
+        "operationId": "getWebhooksStatistics",
+        "tags": ["Webhooks"],
+        "responses": {
+          "200": {
+            "description": "Processing-state counts per table.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProcessingStateCounts" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/wireguard": {
+      "get": {
+        "summary": "WireGuard peers",
+        "description": "Returns WireGuard VPN peer connection data retrieved via SSH.",
+        "operationId": "getWireGuard",
+        "tags": ["WireGuard"],
+        "responses": {
+          "200": {
+            "description": "WireGuard peer data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "wireguard": {
+                      "type": "array",
+                      "items": { "type": "object" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/public-stats": {
+      "get": {
+        "summary": "Public system stats",
+        "description": "Returns aggregated system and monitor statistics. Publicly accessible - no session required. Cached for up to 60 seconds (Cache-Control: public, max-age=60). CORS enabled (Access-Control-Allow-Origin: *).",
+        "operationId": "getPublicStats",
+        "tags": ["Public"],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Cached public stats.",
+            "headers": {
+              "Cache-Control":              { "description": "Always public, max-age=60.", "schema": { "type": "string" } },
+              "Access-Control-Allow-Origin": { "description": "Always *.",                 "schema": { "type": "string" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/log-message": {
+      "post": {
+        "summary": "Log an application message",
+        "description": "Accepts a structured log message from an authenticated application. Authentication is performed via an application-level token (not a user session). Returns true on success.",
+        "operationId": "logMessage",
+        "tags": ["Public"],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Message payload validated by the Application service. Exact fields depend on the application's contract."
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Message accepted and saved.",
+            "content": {
+              "application/json": {
+                "schema": { "type": "boolean", "example": true }
+              }
+            }
+          },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    }
+  }
+}

@@ -46,6 +46,7 @@ class DashboardApp {
     window.showQueues = this.dataDisplayManager.showQueues.bind(this.dataDisplayManager);
     window.showUpTimeRobot = this.dataDisplayManager.showUpTimeRobot.bind(this.dataDisplayManager);
     window.showWebhook = this.dataDisplayManager.showWebhook.bind(this.dataDisplayManager);
+    window.showWebhookProcessingStats = this.dataDisplayManager.showWebhookProcessingStats.bind(this.dataDisplayManager);
     window.showWireGuard = this.dataDisplayManager.showWireGuard.bind(this.dataDisplayManager);
 
     // Expose API functions
@@ -124,7 +125,8 @@ class DashboardApp {
       webhooks: JSON.parse(
         '{"senders":[],"events":[["Event","Hits"]],"feed":[],"repositories":[],"total":0,"statistics":[["Date","Table #1"],["01/01",0]],"statistics_github":[["Date","Table #1"],["01/01",0]],"branches":[], "pull_requests":[], "workflow_runs":[],"total_workflow_runs":0, "installations":0, "installation_repositories": [], "installation_repositories_count": 0}'
       ),
-      errors_db: { errors: [], total: 0 }
+      errors_db: { errors: [], total: 0 },
+      webhooks_statistics: { NEW: {}, RE_REQUESTED: {}, UPDATED: {}, PROCESSING: {}, PROCESSED: {} }
     };
 
     this.dataDisplayManager.showCPanel(presetData.cpanel);
@@ -133,6 +135,7 @@ class DashboardApp {
     this.dataDisplayManager.showQueues(presetData.queues);
     this.dataDisplayManager.showWebhook(presetData.webhooks);
     this.dataDisplayManager.showDbErrors(presetData.errors_db);
+    this.dataDisplayManager.showWebhookProcessingStats(presetData.webhooks_statistics);
 
     // Reinitialize collapsible sections after preset data is loaded
     setTimeout(() => {

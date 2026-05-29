@@ -35,7 +35,8 @@ export const API_ENDPOINTS = {
   UPTIMEROBOT: "api/v1/uptimerobot",
   WIREGUARD: "api/v1/wireguard",
   POSTMAN: "api/v1/postman",
-  WEBHOOKS: "api/v1/webhooks"
+  WEBHOOKS: "api/v1/webhooks",
+  WEBHOOKS_STATISTICS: "api/v1/webhooks-statistics"
 };
 
 export const CHART_OPTIONS = {

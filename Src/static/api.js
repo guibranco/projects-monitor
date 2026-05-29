@@ -263,6 +263,7 @@ export class DataLoader {
       `${API_ENDPOINTS.WEBHOOKS}?feedOptionsFilter=${feedState.filter}&workflowsLimiterEnabled=${workflowLimiterState.enabled}&workflowsLimiterQuantity=${workflowLimiterState.limitValue}`,
       (data) => window.showWebhook?.(data)
     );
+    this.apiManager.load(API_ENDPOINTS.WEBHOOKS_STATISTICS, (data) => window.showWebhookProcessingStats?.(data));
   }
 
   /**

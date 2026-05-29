@@ -105,4 +105,9 @@ class Webhooks
     {
         return $this->doRequest("github/workflow/{$sequence}", "delete", 202);
     }
+
+    public function getStatistics(): mixed
+    {
+        return $this->doRequest("processing-state", "get", 200);
+    }
 }

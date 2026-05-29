@@ -602,4 +602,41 @@ export class DataDisplayManager {
   showWireGuard(response) {
     this.chartManager.drawDataTable(response.wireguard, "wireguard", CHART_OPTIONS.table);
   }
+
+  /**
+   * Renders processing state counts from the webhooks /statistics endpoint as a table.
+   * Rows = database tables, columns = processing states (NEW, RE_REQUESTED, UPDATED, PROCESSING, PROCESSED).
+   */
+  showWebhookProcessingStats(response) {
+    const states = ["NEW", "RE_REQUESTED", "UPDATED", "PROCESSING", "PROCESSED"];
+    const tables = [
+      "github_branches",
+      "github_comments",
+      "github_installations",
+      "github_issues",
+      "github_pull_requests",
+      "github_pushes",
+      "github_repositories",
+      "github_signature",
+      "github_users",
+    ];
+
+    const header = ["Table", ...states];
+    const rows = tables.map((table) => {
+      const displayName = table.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+      return [displayName, ...states.map((state) => (response[state]?.[table] ?? 0))];
+    });
+
+    const data = [header, ...rows];
+
+    const counterEl = document.getElementById("counter_webhook_processing_stats");
+    if (counterEl) {
+      const total = rows.reduce((sum, row) => {
+        return sum + states.reduce((s, _, i) => s + (row[i + 1] || 0), 0);
+      }, 0);
+      counterEl.innerHTML = total;
+    }
+
+    this.chartManager.drawChartByType(data, "table", "webhook_processing_stats", CHART_OPTIONS.table);
+  }
 }

@@ -395,6 +395,13 @@ $configuration = new Configuration();
          </div>
          <div id="webhooks_statistics" class="section-content"></div>
       </div>
+
+      <div class="full-width-section">
+         <div class="section-header">
+            <i class="bi bi-stack me-2"></i>Processing State Counts <span id="counter_webhook_processing_stats" class="badge rounded-pill"></span>
+         </div>
+         <div id="webhook_processing_stats" class="section-content"></div>
+      </div>
    </div>
 
    <?php include_once __DIR__ . '/footer.php'; ?>

@@ -4,7 +4,9 @@ require_once 'session_validator.php';
 require_once '../../vendor/autoload.php';
 
 use GuiBranco\ProjectsMonitor\Library\GitHub;
+use GuiBranco\ProjectsMonitor\Library\LogStream;
 
+LogStream::info("API request received", ["endpoint" => "GET /api/v1/github"], "api");
 $github = new GitHub();
 $apiUsage = $github->getApiUsage();
 ;

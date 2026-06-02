@@ -4,7 +4,9 @@ require_once 'session_validator.php';
 require_once '../../vendor/autoload.php';
 
 use GuiBranco\ProjectsMonitor\Library\CPanel;
+use GuiBranco\ProjectsMonitor\Library\LogStream;
 
+LogStream::info("API request received", ["endpoint" => "GET /api/v1/cpanel"], "api");
 $cPanel = new CPanel();
 $logMessages = $cPanel->getErrorLogMessages();
 $data["error_log_files"] = $cPanel->getErrorLogFiles();

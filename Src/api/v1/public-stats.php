@@ -3,7 +3,9 @@
 require_once '../../vendor/autoload.php';
 
 use GuiBranco\ProjectsMonitor\Library\PublicStats;
+use GuiBranco\ProjectsMonitor\Library\LogStream;
 
+LogStream::debug("API request received", ["endpoint" => "GET /api/v1/public-stats"], "api");
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: public, max-age=60');
 header('Access-Control-Allow-Origin: *');

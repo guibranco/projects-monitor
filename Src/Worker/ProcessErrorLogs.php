@@ -25,6 +25,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 use GuiBranco\ProjectsMonitor\Library\CPanel;
 use GuiBranco\ProjectsMonitor\Library\ErrorLog;
 use GuiBranco\ProjectsMonitor\Library\LogParser;
+use GuiBranco\ProjectsMonitor\Library\LogStream;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -59,6 +60,8 @@ function workerStarted(): void
 // Bootstrap
 // ---------------------------------------------------------------------------
 
+LogStream::initialize();
+
 $stats = ['files' => 0, 'processed' => 0, 'inserted' => 0, 'skipped' => 0, 'errors' => 0];
 
 try {
@@ -68,6 +71,7 @@ try {
 } catch (Throwable $e) {
     workerStarted();
     workerLog('FATAL: could not initialise services — ' . $e->getMessage());
+    LogStream::critical("ProcessErrorLogs failed to initialise services", ["error" => $e->getMessage()], "worker");
     exit(1);
 }
 
@@ -80,6 +84,7 @@ try {
 } catch (Throwable $e) {
     workerStarted();
     workerLog('FATAL: could not query cPanel for error_log files — ' . $e->getMessage());
+    LogStream::critical("ProcessErrorLogs failed to query cPanel", ["error" => $e->getMessage()], "worker");
     exit(1);
 }
 
@@ -91,6 +96,7 @@ if ($stats['files'] === 0) {
 
 workerStarted();
 workerLog("Found {$stats['files']} error_log file(s)");
+LogStream::info("ProcessErrorLogs worker started", ["files_found" => $stats['files']], "worker");
 
 // ---------------------------------------------------------------------------
 // Process each file
@@ -105,6 +111,7 @@ foreach ($files as $fileInfo) {
     // Step 1 — rename to lock the file against concurrent cron runs
     if (!$cPanel->renameFile($fullPath, $processingPath)) {
         workerLog("  WARN: rename failed, skipping");
+        LogStream::warning("Could not lock error log file for processing", ["path" => $fullPath], "worker");
         $stats['errors']++;
         continue;
     }
@@ -113,6 +120,7 @@ foreach ($files as $fileInfo) {
     $content = $cPanel->readFile($processingPath);
     if ($content === null || trim($content['contents']) === '') {
         workerLog("  WARN: file is empty or unreadable, deleting");
+        LogStream::warning("Error log file is empty or unreadable", ["path" => $processingPath], "worker");
         $cPanel->deleteFile($processingPath);
         $stats['errors']++;
         continue;
@@ -123,6 +131,7 @@ foreach ($files as $fileInfo) {
         $entries = $parser->parse($content['contents']);
     } catch (Throwable $e) {
         workerLog("  ERROR: parse failed — " . $e->getMessage() . ", deleting");
+        LogStream::error("Failed to parse error log file", ["path" => $processingPath, "error" => $e->getMessage()], "worker");
         $cPanel->deleteFile($processingPath);
         $stats['errors']++;
         continue;
@@ -185,3 +194,4 @@ workerLog(sprintf(
     $stats['skipped'],
     $stats['errors']
 ));
+LogStream::info("ProcessErrorLogs worker completed", array_merge($stats, ["elapsed_seconds" => $elapsed]), "worker");

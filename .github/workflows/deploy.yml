@@ -155,6 +155,16 @@ jobs:
           echo "\$webhooksApiUrl   = \"${{ secrets.WEBHOOKS_API_URL }}\";" >> webhooks.secrets.php
           echo "\$webhooksApiToken = \"${{ secrets.WEBHOOKS_API_TOKEN }}\";" >> webhooks.secrets.php
 
+      - name: 🔑 Generate LogStream Configuration
+        run: |
+          cd Src
+          mkdir -p secrets
+          cd secrets
+          echo "<?php" >> logStream.secrets.php
+          echo "\$logStreamServer = \"${{ secrets.LOGSTREAM_SERVER }}\";" >> logStream.secrets.php
+          echo "\$logStreamToken  = \"${{ secrets.LOGSTREAM_TOKEN }}\";" >> logStream.secrets.php
+          echo "\$logStreamAppId  = \"${{ vars.LOGSTREAM_APP_ID }}\";" >> logStream.secrets.php
+
       - name: 📝 Create Version File for API
         run: |
           cd Src       

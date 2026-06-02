@@ -3,6 +3,7 @@
 require_once '../../vendor/autoload.php';
 
 use GuiBranco\ProjectsMonitor\Library\Logger;
+use GuiBranco\ProjectsMonitor\Library\LogStream;
 
 if (headers_sent($file, $line)) {
     error_log("Headers already sent in $file:$line");
@@ -40,6 +41,11 @@ function validateIP()
     if ($_SESSION['ip'] !== $_SERVER['REMOTE_ADDR']) {
         $logger = new Logger();
         $logger->logMessage("Potential session hijacking attempt: ".$_SERVER['REMOTE_ADDR']." in ".$_SERVER["SCRIPT_NAME"]);
+        LogStream::warning("Session hijacking attempt detected", [
+            "ip" => $_SERVER['REMOTE_ADDR'],
+            "stored_ip" => $_SESSION['ip'],
+            "script" => $_SERVER["SCRIPT_NAME"],
+        ], "security");
         session_destroy();
         sendErrorResponse("Session invalid", 401);
     }
@@ -59,6 +65,11 @@ if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
 if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > SESSION_TIMEOUT) {
     $logger = new Logger();
     $logger->logMessage("Session timeout for user: " . $_SESSION['user_id']." in ".$_SERVER["SCRIPT_NAME"]);
+    LogStream::info("Session expired", [
+        "user_id" => $_SESSION['user_id'],
+        "script" => $_SERVER["SCRIPT_NAME"],
+        "idle_seconds" => time() - $_SESSION['last_activity'],
+    ], "security");
     session_unset();
     session_destroy();
     sendErrorResponse("Session expired. Please log in again.", 401);
@@ -72,6 +83,11 @@ if (!isset($_SESSION['request_count'])) {
         if ($_SESSION['request_count'] > MAX_REQUESTS_PER_MINUTE) {
             $logger = new Logger();
             $logger->logMessage("Rate limit exceeded for user: " . $_SESSION['user_id']);
+            LogStream::warning("Rate limit exceeded", [
+                "user_id" => $_SESSION['user_id'],
+                "request_count" => $_SESSION['request_count'],
+                "script" => $_SERVER["SCRIPT_NAME"],
+            ], "security");
             sendErrorResponse("Too many requests", 429);
         }
         $_SESSION['request_count']++;

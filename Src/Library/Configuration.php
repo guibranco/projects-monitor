@@ -18,6 +18,7 @@ class Configuration
 
         error_reporting(E_ALL);
         $this->setUserAgent();
+        LogStream::initialize();
     }
 
     private function setUserAgent()

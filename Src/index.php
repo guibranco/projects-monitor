@@ -32,7 +32,7 @@ $configuration = new Configuration();
    <meta http-equiv="X-UA-Compatible" content="IE=edge">
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" crossorigin="anonymous">
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" integrity="sha512-dPXYcDub/aeb08c63jRq/k6GaKccl256JQy/AnOq7CAnEZ9FzSL9wSbcZkMp4R26vBsMLFYH4kQ67/bbV8XaCQ==" crossorigin="anonymous">
    <link rel="preconnect" href="https://fonts.googleapis.com">
    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
@@ -205,6 +205,13 @@ $configuration = new Configuration();
             <i class="bi bi-collection me-2"></i>Messages Grouped <span id="counter_messages_grouped" class="badge rounded-pill"></span>
          </div>
          <div id="messages_grouped" class="section-content"></div>
+      </div>
+
+      <div class="full-width-section">
+         <div class="section-header">
+            <i class="bi bi-stack me-2"></i>Processing State Counts <span id="counter_webhook_processing_stats" class="badge rounded-pill"></span>
+         </div>
+         <div id="webhook_processing_stats" class="section-content"></div>
       </div>
 
       <div class="full-width-section">

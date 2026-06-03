@@ -5,6 +5,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
 jobs:
   deploy:
     name: 📦 Deploy Application to FTP
@@ -180,6 +184,7 @@ jobs:
           cp "Src/install.php" deploy
 
       - name: 📤 Upload Application via FTP
+        timeout-minutes: 10
         uses: sebastianpopp/ftp-action@releases/v2
         with:
           host: ${{ secrets.FTP_SERVER }}
@@ -194,6 +199,7 @@ jobs:
   database_migrations:
     name: 🗄️ Run Database Migrations
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       actions: write
       contents: write

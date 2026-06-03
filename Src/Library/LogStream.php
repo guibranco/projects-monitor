@@ -30,10 +30,8 @@ class LogStream
             baseUrl: $logStreamServer,
             appKey: 'projects-monitor',
             appId: $logStreamAppId ?? 'production',
-            authMode: PancakeLogStream::AUTH_API_KEY,
-            apiSecret: '',
-            apiKey: '',
-            apiToken: $logStreamToken,
+            authMode: PancakeLogStream::AUTH_BEARER,
+            apiSecret: $logStreamToken,
             userAgent: defined('USER_AGENT_VENDOR') ? USER_AGENT_VENDOR : ''
         );
     }

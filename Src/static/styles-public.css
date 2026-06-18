@@ -183,3 +183,97 @@ footer {
   color: #0d6efd;
   font-weight: 600;
 }
+
+/* Recent Activity list */
+.activity-item {
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.15s ease;
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-item:hover {
+  background-color: rgba(13, 110, 253, 0.03);
+}
+
+.activity-name {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #343a40;
+  margin-bottom: 0.1rem;
+}
+
+.activity-time {
+  display: block;
+  font-size: 0.75rem;
+  color: #adb5bd;
+}
+
+.activity-empty {
+  padding: 1.5rem;
+  text-align: center;
+  color: #adb5bd;
+  font-size: 0.875rem;
+}
+
+/* System Status rows */
+.status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.status-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.status-row-label {
+  font-size: 0.875rem;
+  color: #495057;
+}
+
+/* Performance / Resource Usage rows */
+.perf-row {
+  margin-bottom: 1rem;
+}
+
+.perf-row:last-child {
+  margin-bottom: 0;
+}
+
+.perf-row-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.3rem;
+}
+
+.perf-label {
+  font-size: 0.875rem;
+  color: #495057;
+}
+
+.perf-value {
+  font-size: 0.8rem;
+  color: #6c757d;
+  font-variant-numeric: tabular-nums;
+}
+
+.perf-bar-track {
+  height: 6px;
+  background-color: #e9ecef;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.perf-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}

@@ -199,11 +199,11 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 </div>
 
                 <!-- Recent Activity -->
-                <div class="card mb-4">
+                <div class="card data-card mb-4">
                     <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            <i class="fas fa-clock me-2"></i>Recent Monitor Activity
-                        </h5>
+                        <h6 class="mb-0">
+                            <i class="fas fa-clock me-2 text-primary"></i>Recent Monitor Activity
+                        </h6>
                         <small class="text-muted" id="last-updated"></small>
                     </div>
                     <div class="card-body p-0" id="activity-list">
@@ -219,10 +219,10 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 <div class="row">
                     <!-- System Status -->
                     <div class="col-md-6 mb-4">
-                        <div class="card">
+                        <div class="card data-card">
                             <div class="card-header bg-white">
                                 <h6 class="mb-0">
-                                    <i class="fas fa-server me-2"></i>System Status
+                                    <i class="fas fa-server me-2 text-primary"></i>System Status
                                 </h6>
                             </div>
                             <div class="card-body" id="system-status">
@@ -236,10 +236,10 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
                     <!-- Performance Metrics -->
                     <div class="col-md-6 mb-4">
-                        <div class="card">
+                        <div class="card data-card">
                             <div class="card-header bg-white">
                                 <h6 class="mb-0">
-                                    <i class="fas fa-chart-line me-2"></i>Resource Usage
+                                    <i class="fas fa-chart-line me-2 text-primary"></i>Resource Usage
                                 </h6>
                             </div>
                             <div class="card-body" id="performance-metrics">
@@ -329,15 +329,15 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         function updateActivity(items) {
             const el = document.getElementById('activity-list');
             if (!items || items.length === 0) {
-                el.innerHTML = '<div class="list-group list-group-flush"><div class="list-group-item text-center text-muted py-4">No monitor data available</div></div>';
+                el.innerHTML = '<div class="list-group list-group-flush"><div class="activity-empty">No monitor data available</div></div>';
                 return;
             }
             const rows = items.map(item => `
-                <div class="list-group-item">
+                <div class="activity-item">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="mb-0">${escHtml(item.name)}</h6>
-                            <small class="text-muted">Last change: ${formatRelativeTime(item.lastChange)}</small>
+                            <span class="activity-name">${escHtml(item.name)}</span>
+                            <span class="activity-time">Last change: ${formatRelativeTime(item.lastChange)}</span>
                         </div>
                         ${statusBadge(item.status)}
                     </div>
@@ -352,12 +352,12 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 return;
             }
             const rows = Object.values(sys).map(item => {
-                const cfg  = STATUS_CONFIG[item.status] ?? STATUS_CONFIG.unknown;
-                const pct  = item.percent !== null ? `${item.percent}%` : cfg.text;
+                const cfg = STATUS_CONFIG[item.status] ?? STATUS_CONFIG.unknown;
+                const pct = item.percent !== null ? `${item.percent}%` : cfg.text;
                 return `
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span>${escHtml(item.label)}</span>
-                    <span class="badge ${cfg.badge}">${pct}</span>
+                <div class="status-row">
+                    <span class="status-row-label">${escHtml(item.label)}</span>
+                    <span class="badge ${cfg.badge} status-badge">${pct}</span>
                 </div>`;
             }).join('');
             el.innerHTML = rows;
@@ -381,13 +381,13 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                     ? `${item.value}${units[key] ?? ''} / ${item.max}${units[key] ?? ''}`
                     : '—';
                 return `
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between">
-                        <span>${labels[key] ?? key}</span>
-                        <span>${value}</span>
+                <div class="perf-row">
+                    <div class="perf-row-header">
+                        <span class="perf-label">${labels[key] ?? key}</span>
+                        <span class="perf-value">${value}</span>
                     </div>
-                    <div class="progress mt-1" style="height:6px;">
-                        <div class="progress-bar ${cfg.bar}" style="width:${Math.min(pct, 100)}%"></div>
+                    <div class="perf-bar-track">
+                        <div class="perf-bar-fill ${cfg.bar}" style="width:${Math.min(pct, 100)}%"></div>
                     </div>
                 </div>`;
             }).join('');

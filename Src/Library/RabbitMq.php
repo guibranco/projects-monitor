@@ -142,6 +142,36 @@ class RabbitMq
         return $data;
     }
 
+    public function getQueueSummary(): array
+    {
+        $queues = [];
+        foreach ($this->getServers() as $server) {
+            $headers = ["Authorization: Basic " . base64_encode($server["user"] . ":" . $server["password"])];
+            $url = "https://" . $server["host"] . "/api/queues/" . $server["vhost"] . "/";
+            $response = $this->request->get($url, $headers);
+            if ($response->getStatusCode() !== 200) {
+                continue;
+            }
+            $node = json_decode($response->getBody(), true);
+            foreach ($node as $queue) {
+                $name = $queue["name"];
+                $messages = $queue["messages"];
+                $consumers = $queue["consumers"];
+
+                if ($messages === 0 && str_ends_with($name, "-retry")) {
+                    continue;
+                }
+                if ($messages === 0 && $consumers === 0) {
+                    continue;
+                }
+
+                $queues[] = ["name" => $name, "messages" => $messages];
+            }
+        }
+        usort($queues, fn($a, $b) => strcmp($a["name"], $b["name"]));
+        return $queues;
+    }
+
     public function purgeQueue(string $host, string $vhost, string $queueName): bool
     {
         foreach ($this->getServers() as $server) {

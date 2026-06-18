@@ -42,10 +42,14 @@
   color: #0dcaf0;
 }
 
-.login-card {
+/* Login modal */
+#loginModal .modal-content {
   border: none;
   border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+#loginModal .modal-header {
+  padding-bottom: 0.25rem;
 }
 
 .project-card {

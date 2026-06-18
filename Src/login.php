@@ -94,112 +94,121 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 </head>
 
 <body class="bg-light">
-    <div class="container-fluid">
-        <div class="row bg-white shadow-sm mb-4">
-            <div class="col-12 py-3">
-                <h2 class="mb-0 text-center">
-                    <i class="fas fa-project-diagram text-primary me-2"></i>
-                    Projects Monitor
-                </h2>
+
+    <!-- Sticky top navbar with sign-in trigger -->
+    <nav class="navbar bg-white shadow-sm sticky-top">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0">
+                <i class="fas fa-project-diagram text-primary me-2"></i>
+                <strong>Projects Monitor</strong>
+            </span>
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#loginModal">
+                <i class="fas fa-sign-in-alt me-1"></i>Sign In
+            </button>
+        </div>
+    </nav>
+
+    <!-- Login modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-modal="true" role="dialog">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content shadow-lg">
+                <div class="modal-header py-2 px-3 border-bottom-0">
+                    <h6 class="modal-title mb-0" id="loginModalLabel">
+                        <i class="fas fa-sign-in-alt text-primary me-2"></i>Sign In
+                    </h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body pt-1 px-3 pb-3">
+                    <?php if ($error): ?>
+                        <div class="alert alert-danger alert-sm py-2 px-3 mb-3 small">
+                            <i class="fas fa-exclamation-circle me-1"></i><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?>
+                        </div>
+                    <?php endif; ?>
+                    <form method="POST" action="">
+                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
+                        <div class="mb-2">
+                            <label for="username" class="form-label small mb-1 text-muted">
+                                <i class="fas fa-user me-1"></i>Username
+                            </label>
+                            <input type="text" class="form-control form-control-sm" id="username" name="username"
+                                   required aria-required="true" autocomplete="username">
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label small mb-1 text-muted">
+                                <i class="fas fa-lock me-1"></i>Password
+                            </label>
+                            <input type="password" class="form-control form-control-sm" id="password" name="password"
+                                   required aria-required="true" autocomplete="current-password">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                            <i class="fas fa-sign-in-alt me-1"></i>Sign In
+                        </button>
+                    </form>
+                    <div class="text-center mt-2">
+                        <a href="recover.php" class="text-decoration-none small text-muted">
+                            <i class="fas fa-key me-1"></i>Forgot your password?
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Full-width dashboard -->
+    <div class="container-fluid py-4">
+
+        <!-- Stats -->
+        <div class="row g-3 mb-4" id="stats-row">
+            <div class="col-6 col-md-3">
+                <div class="card stats-card fade-in">
+                    <div class="card-body text-center">
+                        <div class="stats-icon bg-primary-light mx-auto">
+                            <i class="fas fa-satellite-dish"></i>
+                        </div>
+                        <h4 class="fw-bold mb-1" id="stat-total"><span class="placeholder-glow"><span class="placeholder col-4"></span></span></h4>
+                        <p class="text-muted mb-0">Monitors</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card stats-card fade-in">
+                    <div class="card-body text-center">
+                        <div class="stats-icon bg-success-light mx-auto">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <h4 class="fw-bold mb-1" id="stat-healthy"><span class="placeholder-glow"><span class="placeholder col-4"></span></span></h4>
+                        <p class="text-muted mb-0">Healthy</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card stats-card fade-in">
+                    <div class="card-body text-center">
+                        <div class="stats-icon bg-warning-light mx-auto">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <h4 class="fw-bold mb-1" id="stat-warning"><span class="placeholder-glow"><span class="placeholder col-4"></span></span></h4>
+                        <p class="text-muted mb-0">Warnings</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card stats-card fade-in">
+                    <div class="card-body text-center">
+                        <div class="stats-icon bg-danger-light mx-auto">
+                            <i class="fas fa-times-circle"></i>
+                        </div>
+                        <h4 class="fw-bold mb-1" id="stat-critical"><span class="placeholder-glow"><span class="placeholder col-4"></span></span></h4>
+                        <p class="text-muted mb-0">Critical</p>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="row">
-            <div class="col-lg-4 mb-4">
-                <div class="card login-card">
-                    <div class="card-body">
-                        <h3 class="card-title text-center mb-4">Login</h3>
-
-                        <?php if ($error): ?>
-                            <div class="alert alert-danger"><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?>
-                            </div>
-                        <?php endif; ?>
-
-                        <form method="POST" action="">
-                            <input type="hidden" name="csrf_token"
-                                value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
-
-                            <div class="mb-3">
-                                <label for="username" class="form-label">
-                                    <i class="fas fa-user me-1"></i>Username
-                                </label>
-                                <input type="text" class="form-control" id="username" name="username" required
-                                    aria-required="true" autocomplete="username">
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="password" class="form-label">
-                                    <i class="fas fa-lock me-1"></i>Password
-                                </label>
-                                <input type="password" class="form-control" id="password" name="password" required
-                                    aria-required="true" autocomplete="current-password">
-                            </div>
-
-                            <button type="submit" class="btn btn-primary w-100 mb-3">
-                                <i class="fas fa-sign-in-alt me-2"></i>Login
-                            </button>
-                        </form>
-
-                        <div class="text-center">
-                            <a href="recover.php" class="text-decoration-none">
-                                <i class="fas fa-key me-1"></i>Forgot your password?
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
+        <!-- Recent Activity + System Status -->
+        <div class="row g-3 mb-4">
             <div class="col-lg-8">
-                <!-- Stats Cards -->
-                <div class="row mb-4" id="stats-row">
-                    <div class="col-md-3 col-6 mb-3">
-                        <div class="card stats-card fade-in">
-                            <div class="card-body text-center">
-                                <div class="stats-icon bg-primary-light mx-auto">
-                                    <i class="fas fa-satellite-dish"></i>
-                                </div>
-                                <h4 class="fw-bold mb-1" id="stat-total"><span class="placeholder-glow"><span class="placeholder col-4"></span></span></h4>
-                                <p class="text-muted mb-0">Monitors</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-6 mb-3">
-                        <div class="card stats-card fade-in">
-                            <div class="card-body text-center">
-                                <div class="stats-icon bg-success-light mx-auto">
-                                    <i class="fas fa-check-circle"></i>
-                                </div>
-                                <h4 class="fw-bold mb-1" id="stat-healthy"><span class="placeholder-glow"><span class="placeholder col-4"></span></span></h4>
-                                <p class="text-muted mb-0">Healthy</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-6 mb-3">
-                        <div class="card stats-card fade-in">
-                            <div class="card-body text-center">
-                                <div class="stats-icon bg-warning-light mx-auto">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                </div>
-                                <h4 class="fw-bold mb-1" id="stat-warning"><span class="placeholder-glow"><span class="placeholder col-4"></span></span></h4>
-                                <p class="text-muted mb-0">Warnings</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-6 mb-3">
-                        <div class="card stats-card fade-in">
-                            <div class="card-body text-center">
-                                <div class="stats-icon bg-danger-light mx-auto">
-                                    <i class="fas fa-times-circle"></i>
-                                </div>
-                                <h4 class="fw-bold mb-1" id="stat-critical"><span class="placeholder-glow"><span class="placeholder col-4"></span></span></h4>
-                                <p class="text-muted mb-0">Critical</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Activity -->
-                <div class="card data-card mb-4">
+                <div class="card data-card h-100">
                     <div class="card-header bg-white d-flex justify-content-between align-items-center">
                         <h6 class="mb-0">
                             <i class="fas fa-clock me-2 text-primary"></i>Recent Monitor Activity
@@ -207,53 +216,49 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                         <small class="text-muted" id="last-updated"></small>
                     </div>
                     <div class="card-body p-0" id="activity-list">
-                        <div class="list-group list-group-flush">
-                            <div class="list-group-item text-center text-muted py-4">
-                                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                                Loading monitor data…
-                            </div>
+                        <div class="activity-empty">
+                            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                            Loading monitor data…
                         </div>
                     </div>
                 </div>
-
-                <div class="row">
-                    <!-- System Status -->
-                    <div class="col-md-6 mb-4">
-                        <div class="card data-card">
-                            <div class="card-header bg-white">
-                                <h6 class="mb-0">
-                                    <i class="fas fa-server me-2 text-primary"></i>System Status
-                                </h6>
-                            </div>
-                            <div class="card-body" id="system-status">
-                                <div class="text-center text-muted py-3">
-                                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                                    Loading…
-                                </div>
-                            </div>
-                        </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card data-card h-100">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-server me-2 text-primary"></i>System Status
+                        </h6>
                     </div>
-
-                    <!-- Performance Metrics -->
-                    <div class="col-md-6 mb-4">
-                        <div class="card data-card">
-                            <div class="card-header bg-white">
-                                <h6 class="mb-0">
-                                    <i class="fas fa-chart-line me-2 text-primary"></i>Resource Usage
-                                </h6>
-                            </div>
-                            <div class="card-body" id="performance-metrics">
-                                <div class="text-center text-muted py-3">
-                                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                                    Loading…
-                                </div>
-                            </div>
+                    <div class="card-body" id="system-status">
+                        <div class="text-center text-muted py-3">
+                            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                            Loading…
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <!-- Queue Lengths -->
-                <div class="card data-card mb-4">
+        <!-- Resource Usage + Queue Lengths -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-5">
+                <div class="card data-card h-100">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-line me-2 text-primary"></i>Resource Usage
+                        </h6>
+                    </div>
+                    <div class="card-body" id="performance-metrics">
+                        <div class="text-center text-muted py-3">
+                            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                            Loading…
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-7">
+                <div class="card data-card h-100">
                     <div class="card-header bg-white">
                         <h6 class="mb-0">
                             <i class="fas fa-layer-group me-2 text-primary"></i>Queue Lengths
@@ -266,9 +271,13 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <!-- Bot Processing State -->
-                <div class="card data-card mb-4">
+        <!-- Bot Processing State -->
+        <div class="row g-3">
+            <div class="col-12">
+                <div class="card data-card">
                     <div class="card-header bg-white">
                         <h6 class="mb-0">
                             <i class="fas fa-robot me-2 text-primary"></i>Bot Processing State
@@ -283,6 +292,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 </div>
             </div>
         </div>
+
     </div>
 
     <?php include_once __DIR__ . '/footer.php'; ?>
@@ -490,6 +500,10 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
         loadDashboard();
         setInterval(loadDashboard, 60000);
+
+        <?php if ($error): ?>
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('loginModal')).show();
+        <?php endif; ?>
     </script>
 </body>
 

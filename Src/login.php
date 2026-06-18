@@ -91,6 +91,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" integrity="sha384-XGjxtQfXaH2tnPFa9x+ruJTuLE3Aa6LhHSWRr1XeTyhezb4abCG4ccI5AkVDxqC+" crossorigin="anonymous">
     <link rel="stylesheet" href="static/styles-public.css?<?php echo filemtime("static/styles-public.css"); ?>">
+    <script>(function(){var t=localStorage.getItem('pm-theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-bs-theme',t);})();</script>
 </head>
 
 <body class="bg-light">
@@ -102,9 +103,14 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 <i class="fas fa-project-diagram text-primary me-2"></i>
                 <strong>Projects Monitor</strong>
             </span>
-            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#loginModal">
-                <i class="fas fa-sign-in-alt me-1"></i>Sign In
-            </button>
+            <div class="d-flex align-items-center gap-2">
+                <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle theme">
+                    <i class="fas fa-moon theme-toggle-icon"></i>
+                </button>
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#loginModal">
+                    <i class="fas fa-sign-in-alt me-1"></i>Sign In
+                </button>
+            </div>
         </div>
     </nav>
 

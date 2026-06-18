@@ -281,3 +281,135 @@ footer {
   border-radius: 3px;
   transition: width 0.4s ease;
 }
+
+/* ── Theme toggle button ────────────────────────────────────── */
+.theme-toggle-btn {
+  background: none;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 20px;
+  padding: 0.25rem 0.65rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #6c757d;
+  line-height: 1.5;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.theme-toggle-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #343a40;
+}
+
+/* ── Dark mode overrides ────────────────────────────────────── */
+
+/* bg-white used on navbars and card headers */
+[data-bs-theme="dark"] .bg-white {
+  background-color: var(--bs-tertiary-bg) !important;
+}
+
+[data-bs-theme="dark"] .navbar {
+  border-bottom: 1px solid var(--bs-border-color);
+}
+
+[data-bs-theme="dark"] .data-card {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.35);
+}
+
+[data-bs-theme="dark"] .data-card .card-header {
+  border-bottom-color: var(--bs-border-color);
+}
+
+[data-bs-theme="dark"] .stats-card {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.35);
+}
+
+/* Tables */
+[data-bs-theme="dark"] .public-table thead th {
+  background-color: rgba(110, 168, 254, 0.07);
+  color: var(--bs-secondary-color);
+  border-bottom-color: rgba(110, 168, 254, 0.15);
+}
+
+[data-bs-theme="dark"] .public-table tbody td {
+  color: var(--bs-body-color);
+  border-bottom-color: var(--bs-border-color);
+}
+
+[data-bs-theme="dark"] .public-table tbody tr:hover td {
+  background-color: rgba(110, 168, 254, 0.05);
+}
+
+/* Activity list */
+[data-bs-theme="dark"] .activity-item {
+  border-bottom-color: var(--bs-border-color);
+}
+
+[data-bs-theme="dark"] .activity-item:hover {
+  background-color: rgba(110, 168, 254, 0.05);
+}
+
+[data-bs-theme="dark"] .activity-name {
+  color: var(--bs-body-color);
+}
+
+[data-bs-theme="dark"] .activity-time {
+  color: var(--bs-secondary-color);
+}
+
+[data-bs-theme="dark"] .activity-empty {
+  color: var(--bs-secondary-color);
+}
+
+/* System status */
+[data-bs-theme="dark"] .status-row {
+  border-bottom-color: var(--bs-border-color);
+}
+
+[data-bs-theme="dark"] .status-row-label {
+  color: var(--bs-secondary-color);
+}
+
+/* Performance */
+[data-bs-theme="dark"] .perf-label {
+  color: var(--bs-secondary-color);
+}
+
+[data-bs-theme="dark"] .perf-value {
+  color: var(--bs-tertiary-color);
+}
+
+[data-bs-theme="dark"] .perf-bar-track {
+  background-color: var(--bs-secondary-bg);
+}
+
+/* Queue count pill */
+[data-bs-theme="dark"] .queue-count {
+  background-color: var(--bs-secondary-bg);
+  color: var(--bs-secondary-color);
+}
+
+[data-bs-theme="dark"] .queue-count.has-messages {
+  background-color: rgba(255, 193, 7, 0.15);
+  color: #ffc107;
+}
+
+/* Processing state */
+[data-bs-theme="dark"] .state-count {
+  color: var(--bs-tertiary-color);
+}
+
+/* Footer */
+[data-bs-theme="dark"] footer {
+  border-top-color: var(--bs-border-color);
+}
+
+/* Theme toggle button in dark mode */
+[data-bs-theme="dark"] .theme-toggle-btn {
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--bs-secondary-color);
+}
+
+[data-bs-theme="dark"] .theme-toggle-btn:hover {
+  background-color: rgba(255, 255, 255, 0.07);
+  color: var(--bs-body-color);
+}

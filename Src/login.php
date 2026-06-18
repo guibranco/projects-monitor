@@ -87,9 +87,9 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" integrity="sha384-XGjxtQfXaH2tnPFa9x+ruJTuLE3Aa6LhHSWRr1XeTyhezb4abCG4ccI5AkVDxqC+" crossorigin="anonymous">
     <link rel="stylesheet" href="static/styles-public.css?<?php echo filemtime("static/styles-public.css"); ?>">
 </head>
 
@@ -253,10 +253,10 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 </div>
 
                 <!-- Queue Lengths -->
-                <div class="card mb-4">
+                <div class="card data-card mb-4">
                     <div class="card-header bg-white">
                         <h6 class="mb-0">
-                            <i class="fas fa-layer-group me-2"></i>Queue Lengths
+                            <i class="fas fa-layer-group me-2 text-primary"></i>Queue Lengths
                         </h6>
                     </div>
                     <div class="card-body p-0" id="queue-lengths">
@@ -268,10 +268,10 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 </div>
 
                 <!-- Bot Processing State -->
-                <div class="card mb-4">
+                <div class="card data-card mb-4">
                     <div class="card-header bg-white">
                         <h6 class="mb-0">
-                            <i class="fas fa-robot me-2"></i>Bot Processing State
+                            <i class="fas fa-robot me-2 text-primary"></i>Bot Processing State
                         </h6>
                     </div>
                     <div class="card-body p-0" id="bot-processing-state">
@@ -407,14 +407,16 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 el.innerHTML = '<p class="text-muted mb-0 p-3">No active queues</p>';
                 return;
             }
-            const rows = queues.map(q => `
-                <tr>
+            const rows = queues.map(q => {
+                const cls = q.messages > 0 ? 'queue-count has-messages' : 'queue-count';
+                return `<tr>
                     <td>${escHtml(q.name)}</td>
-                    <td class="text-end">${q.messages}</td>
-                </tr>`).join('');
+                    <td class="text-end"><span class="${cls}">${q.messages}</span></td>
+                </tr>`;
+            }).join('');
             el.innerHTML = `
-                <table class="table table-sm table-hover mb-0">
-                    <thead class="table-light">
+                <table class="table public-table">
+                    <thead>
                         <tr><th>Queue</th><th class="text-end">Messages</th></tr>
                     </thead>
                     <tbody>${rows}</tbody>
@@ -427,9 +429,9 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 el.innerHTML = '<p class="text-muted mb-0 p-3">Data unavailable</p>';
                 return;
             }
-            const states  = ['NEW', 'RE_REQUESTED', 'UPDATED', 'PROCESSING'];
-            const labels  = ['New', 'Re-Requested', 'Updated', 'Processing'];
-            const tables  = [
+            const states = ['NEW', 'RE_REQUESTED', 'UPDATED', 'PROCESSING'];
+            const labels = ['New', 'Re-Requested', 'Updated', 'Processing'];
+            const tables = [
                 'github_branches', 'github_comments', 'github_installations',
                 'github_issues', 'github_pull_requests', 'github_pushes',
                 'github_repositories', 'github_signature', 'github_users'
@@ -437,12 +439,16 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
             const headerCols = labels.map(l => `<th class="text-end">${l}</th>`).join('');
             const rows = tables.map(table => {
                 const displayName = table.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-                const cells = states.map(s => `<td class="text-end">${stats[s]?.[table] ?? 0}</td>`).join('');
+                const cells = states.map(s => {
+                    const n = stats[s]?.[table] ?? 0;
+                    const cls = n > 0 ? 'state-count non-zero' : 'state-count';
+                    return `<td class="text-end"><span class="${cls}">${n}</span></td>`;
+                }).join('');
                 return `<tr><td>${displayName}</td>${cells}</tr>`;
             }).join('');
             el.innerHTML = `
-                <table class="table table-sm table-hover mb-0">
-                    <thead class="table-light">
+                <table class="table public-table">
+                    <thead>
                         <tr><th>Table</th>${headerCols}</tr>
                     </thead>
                     <tbody>${rows}</tbody>

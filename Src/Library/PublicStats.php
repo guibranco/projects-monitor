@@ -11,10 +11,12 @@ class PublicStats
 
     public static function generate(): array
     {
-        $upStats     = null;
-        $hcStats     = null;
-        $cpanelUsage = null;
-        $dbConnected = false;
+        $upStats      = null;
+        $hcStats      = null;
+        $cpanelUsage  = null;
+        $dbConnected  = false;
+        $queueSummary = null;
+        $webhookStats = null;
 
         try {
             $upStats = (new UpTimeRobot())->getStats();
@@ -33,6 +35,16 @@ class PublicStats
 
         try {
             $dbConnected = (new Database())->getConnection() !== null;
+        } catch (\Throwable) {
+        }
+
+        try {
+            $queueSummary = (new RabbitMq())->getQueueSummary();
+        } catch (\Throwable) {
+        }
+
+        try {
+            $webhookStats = (new Webhooks())->getStatistics();
         } catch (\Throwable) {
         }
 
@@ -97,7 +109,9 @@ class PublicStats
                 'memory'    => self::performanceEntry($memoryData,    'MB'),
                 'processes' => self::performanceEntry($processesData, ''),
             ],
-            'generatedAt' => gmdate('Y-m-d\TH:i:s\Z'),
+            'generatedAt'  => gmdate('Y-m-d\TH:i:s\Z'),
+            'queues'       => $queueSummary,
+            'webhookStats' => $webhookStats,
         ];
     }
 

@@ -251,6 +251,36 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                         </div>
                     </div>
                 </div>
+
+                <!-- Queue Lengths -->
+                <div class="card mb-4">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-layer-group me-2"></i>Queue Lengths
+                        </h6>
+                    </div>
+                    <div class="card-body p-0" id="queue-lengths">
+                        <div class="text-center text-muted py-3">
+                            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                            Loading…
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bot Processing State -->
+                <div class="card mb-4">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-robot me-2"></i>Bot Processing State
+                        </h6>
+                    </div>
+                    <div class="card-body p-0" id="bot-processing-state">
+                        <div class="text-center text-muted py-3">
+                            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                            Loading…
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -371,6 +401,54 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
             }
         }
 
+        function updateQueues(queues) {
+            const el = document.getElementById('queue-lengths');
+            if (!queues || queues.length === 0) {
+                el.innerHTML = '<p class="text-muted mb-0 p-3">No active queues</p>';
+                return;
+            }
+            const rows = queues.map(q => `
+                <tr>
+                    <td>${escHtml(q.name)}</td>
+                    <td class="text-end">${q.messages}</td>
+                </tr>`).join('');
+            el.innerHTML = `
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="table-light">
+                        <tr><th>Queue</th><th class="text-end">Messages</th></tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>`;
+        }
+
+        function updateBotProcessingState(stats) {
+            const el = document.getElementById('bot-processing-state');
+            if (!stats) {
+                el.innerHTML = '<p class="text-muted mb-0 p-3">Data unavailable</p>';
+                return;
+            }
+            const states  = ['NEW', 'RE_REQUESTED', 'UPDATED', 'PROCESSING'];
+            const labels  = ['New', 'Re-Requested', 'Updated', 'Processing'];
+            const tables  = [
+                'github_branches', 'github_comments', 'github_installations',
+                'github_issues', 'github_pull_requests', 'github_pushes',
+                'github_repositories', 'github_signature', 'github_users'
+            ];
+            const headerCols = labels.map(l => `<th class="text-end">${l}</th>`).join('');
+            const rows = tables.map(table => {
+                const displayName = table.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                const cells = states.map(s => `<td class="text-end">${stats[s]?.[table] ?? 0}</td>`).join('');
+                return `<tr><td>${displayName}</td>${cells}</tr>`;
+            }).join('');
+            el.innerHTML = `
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="table-light">
+                        <tr><th>Table</th>${headerCols}</tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>`;
+        }
+
         function showError() {
             ['stat-total','stat-healthy','stat-warning','stat-critical'].forEach(id => {
                 document.getElementById(id).textContent = '—';
@@ -379,6 +457,8 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 '<div class="list-group list-group-flush"><div class="list-group-item text-center text-danger py-4"><i class="fas fa-exclamation-circle me-2"></i>Could not load monitor data</div></div>';
             document.getElementById('system-status').innerHTML  = '<p class="text-muted mb-0">Data unavailable</p>';
             document.getElementById('performance-metrics').innerHTML = '<p class="text-muted mb-0">Data unavailable</p>';
+            document.getElementById('queue-lengths').innerHTML = '<p class="text-muted mb-0 p-3">Data unavailable</p>';
+            document.getElementById('bot-processing-state').innerHTML = '<p class="text-muted mb-0 p-3">Data unavailable</p>';
         }
 
         function loadDashboard() {
@@ -393,6 +473,8 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                     updateSystemStatus(data.systemStatus);
                     updatePerformance(data.performance);
                     updateLastUpdated(data.generatedAt);
+                    updateQueues(data.queues);
+                    updateBotProcessingState(data.webhookStats);
                 })
                 .catch(err => {
                     console.error('Failed to load dashboard data:', err);

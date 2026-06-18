@@ -16,6 +16,7 @@ $database = new Database();
 $conn = $database->getConnection();
 
 $message = '';
+$resetSuccess = false;
 $token = isset($_GET['token']) ? htmlspecialchars(trim($_GET['token'])) : '';
 if (empty($token)) {
     http_response_code(401);
@@ -60,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $update_stmt->bind_param('si', $hashed_password, $user['id']);
             $update_stmt->execute();
 
-            $message = 'Your password has been reset. You can now <a href="login.php">login</a>.';
+            $resetSuccess = true;
         } else {
             $message = 'Invalid or expired token.';
         }
@@ -104,11 +105,18 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                         <h5 class="card-title text-center mb-4">
                             <i class="fas fa-lock text-primary me-2"></i>Reset Password
                         </h5>
-                        <?php if ($message): ?>
-                            <div class="alert alert-info"><?php echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8'); ?>
+                        <?php if ($resetSuccess): ?>
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-1"></i>
+                                Your password has been reset. You can now <a href="login.php" class="alert-link">sign in</a>.
+                            </div>
+                        <?php elseif ($message): ?>
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle me-1"></i>
+                                <?php echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8'); ?>
                             </div>
                         <?php endif; ?>
-                        <?php if (!$message): ?>
+                        <?php if (!$resetSuccess): ?>
                             <form method="POST" action="" onsubmit="return validatePasswords()">
                                 <input type="hidden" name="csrf_token"
                                     value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
@@ -131,6 +139,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
             </div>
         </div>
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha256-CDOy6cOibCWEdsRiZuaHf8dSGGJRYuBGC+mjoJimHGw=" crossorigin="anonymous"></script>
     <?php include_once __DIR__ . '/footer.php'; ?>

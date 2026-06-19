@@ -165,7 +165,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
         <!-- Stats -->
         <div class="row g-3 mb-4" id="stats-row">
-            <div class="col-6 col-md-2">
+            <div class="col-6 col-md">
                 <div class="card stats-card fade-in">
                     <div class="card-body text-center">
                         <div class="stats-icon bg-primary-light mx-auto">
@@ -176,7 +176,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-md-2">
+            <div class="col-6 col-md">
                 <div class="card stats-card fade-in">
                     <div class="card-body text-center">
                         <div class="stats-icon bg-success-light mx-auto">
@@ -187,7 +187,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-md-2">
+            <div class="col-6 col-md">
                 <div class="card stats-card fade-in">
                     <div class="card-body text-center">
                         <div class="stats-icon bg-warning-light mx-auto">
@@ -198,7 +198,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-md-2">
+            <div class="col-6 col-md">
                 <div class="card stats-card fade-in">
                     <div class="card-body text-center">
                         <div class="stats-icon bg-danger-light mx-auto">
@@ -209,7 +209,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-md-2">
+            <div class="col-6 col-md">
                 <div class="card stats-card fade-in">
                     <div class="card-body text-center">
                         <div class="stats-icon bg-info-light mx-auto">
@@ -220,7 +220,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-md-2">
+            <div class="col-6 col-md">
                 <div class="card stats-card fade-in">
                     <div class="card-body text-center">
                         <div class="stats-icon bg-purple-light mx-auto">
@@ -228,6 +228,17 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                         </div>
                         <h4 class="fw-bold mb-1" id="stat-pull-requests"><span class="visually-hidden">Loading</span><span class="placeholder-glow" aria-hidden="true"><span class="placeholder col-4"></span></span></h4>
                         <p class="text-muted mb-0">Pull Requests</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md">
+                <div class="card stats-card fade-in">
+                    <div class="card-body text-center">
+                        <div class="stats-icon bg-orange-light mx-auto">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <h4 class="fw-bold mb-1" id="stat-bot-queue"><span class="visually-hidden">Loading</span><span class="placeholder-glow" aria-hidden="true"><span class="placeholder col-4"></span></span></h4>
+                        <p class="text-muted mb-0">Bot Queue</p>
                     </div>
                 </div>
             </div>
@@ -470,6 +481,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
             const el = document.getElementById('bot-processing-state');
             if (!stats) {
                 el.innerHTML = '<p class="text-muted mb-0 p-3">Data unavailable</p>';
+                document.getElementById('stat-bot-queue').textContent = '—';
                 return;
             }
             const states = ['NEW', 'RE_REQUESTED', 'UPDATED', 'PROCESSING'];
@@ -479,6 +491,11 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 'github_issues', 'github_pull_requests', 'github_pushes',
                 'github_repositories', 'github_signature', 'github_users'
             ];
+
+            const botQueueTotal = states.reduce((sum, state) => {
+                return sum + tables.reduce((s, table) => s + (stats[state]?.[table] ?? 0), 0);
+            }, 0);
+            document.getElementById('stat-bot-queue').textContent = botQueueTotal;
             const headerCols = labels.map(l => `<th class="text-end">${l}</th>`).join('');
             const rows = tables.map(table => {
                 const displayName = table.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
@@ -499,7 +516,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         }
 
         function showError() {
-            ['stat-total','stat-healthy','stat-warning','stat-critical','stat-branches','stat-pull-requests'].forEach(id => {
+            ['stat-total','stat-healthy','stat-warning','stat-critical','stat-branches','stat-pull-requests','stat-bot-queue'].forEach(id => {
                 document.getElementById(id).textContent = '—';
             });
             document.getElementById('activity-list').innerHTML =

@@ -45,6 +45,10 @@
   background-color: rgba(111, 66, 193, 0.1);
   color: #6f42c1;
 }
+.bg-orange-light {
+  background-color: rgba(253, 126, 20, 0.1);
+  color: #fd7e14;
+}
 
 /* Login modal */
 #loginModal .modal-content {

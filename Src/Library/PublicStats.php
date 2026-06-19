@@ -48,6 +48,16 @@ class PublicStats
         } catch (\Throwable) {
         }
 
+        $webhookDashboard = null;
+
+        try {
+            $webhookDashboard = (new Webhooks())->getDashboard('all', 0);
+        } catch (\Throwable) {
+        }
+
+        $totalBranches    = $webhookDashboard !== null ? max(0, count($webhookDashboard['branches'] ?? []) - 1) : null;
+        $totalPullRequests = $webhookDashboard !== null ? max(0, count($webhookDashboard['pull_requests'] ?? []) - 1) : null;
+
         $totalMonitors = 0;
         $totalUp       = 0;
         $totalWarning  = 0;
@@ -109,9 +119,13 @@ class PublicStats
                 'memory'    => self::performanceEntry($memoryData,    'MB'),
                 'processes' => self::performanceEntry($processesData, ''),
             ],
-            'generatedAt'  => gmdate('Y-m-d\TH:i:s\Z'),
-            'queues'       => $queueSummary,
-            'webhookStats' => $webhookStats,
+            'generatedAt'   => gmdate('Y-m-d\TH:i:s\Z'),
+            'queues'        => $queueSummary,
+            'webhookStats'  => $webhookStats,
+            'webhookCounts' => [
+                'branches'     => $totalBranches,
+                'pullRequests' => $totalPullRequests,
+            ],
         ];
     }
 

@@ -165,7 +165,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
         <!-- Stats -->
         <div class="row g-3 mb-4" id="stats-row">
-            <div class="col-6 col-md-3">
+            <div class="col-6 col-md-2">
                 <div class="card stats-card fade-in">
                     <div class="card-body text-center">
                         <div class="stats-icon bg-primary-light mx-auto">
@@ -176,7 +176,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-md-3">
+            <div class="col-6 col-md-2">
                 <div class="card stats-card fade-in">
                     <div class="card-body text-center">
                         <div class="stats-icon bg-success-light mx-auto">
@@ -187,7 +187,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-md-3">
+            <div class="col-6 col-md-2">
                 <div class="card stats-card fade-in">
                     <div class="card-body text-center">
                         <div class="stats-icon bg-warning-light mx-auto">
@@ -198,7 +198,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-md-3">
+            <div class="col-6 col-md-2">
                 <div class="card stats-card fade-in">
                     <div class="card-body text-center">
                         <div class="stats-icon bg-danger-light mx-auto">
@@ -206,6 +206,28 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                         </div>
                         <h4 class="fw-bold mb-1" id="stat-critical"><span class="placeholder-glow"><span class="placeholder col-4"></span></span></h4>
                         <p class="text-muted mb-0">Critical</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-2">
+                <div class="card stats-card fade-in">
+                    <div class="card-body text-center">
+                        <div class="stats-icon bg-info-light mx-auto">
+                            <i class="fas fa-code-branch"></i>
+                        </div>
+                        <h4 class="fw-bold mb-1" id="stat-branches"><span class="visually-hidden">Loading</span><span class="placeholder-glow" aria-hidden="true"><span class="placeholder col-4"></span></span></h4>
+                        <p class="text-muted mb-0">Branches</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-2">
+                <div class="card stats-card fade-in">
+                    <div class="card-body text-center">
+                        <div class="stats-icon bg-purple-light mx-auto">
+                            <i class="fas fa-code-pull-request"></i>
+                        </div>
+                        <h4 class="fw-bold mb-1" id="stat-pull-requests"><span class="visually-hidden">Loading</span><span class="placeholder-glow" aria-hidden="true"><span class="placeholder col-4"></span></span></h4>
+                        <p class="text-muted mb-0">Pull Requests</p>
                     </div>
                 </div>
             </div>
@@ -342,6 +364,11 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
             document.getElementById('stat-critical').textContent= monitors.critical;
         }
 
+        function updateWebhookSummaryStats(counts) {
+            document.getElementById('stat-branches').textContent      = counts?.branches     ?? '—';
+            document.getElementById('stat-pull-requests').textContent = counts?.pullRequests ?? '—';
+        }
+
         function updateActivity(items) {
             const el = document.getElementById('activity-list');
             if (!items || items.length === 0) {
@@ -472,7 +499,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         }
 
         function showError() {
-            ['stat-total','stat-healthy','stat-warning','stat-critical'].forEach(id => {
+            ['stat-total','stat-healthy','stat-warning','stat-critical','stat-branches','stat-pull-requests'].forEach(id => {
                 document.getElementById(id).textContent = '—';
             });
             document.getElementById('activity-list').innerHTML =
@@ -491,6 +518,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 })
                 .then(data => {
                     updateStats(data.monitors);
+                    updateWebhookSummaryStats(data.webhookCounts);
                     updateActivity(data.recentActivity);
                     updateSystemStatus(data.systemStatus);
                     updatePerformance(data.performance);

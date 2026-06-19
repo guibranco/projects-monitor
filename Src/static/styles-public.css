@@ -41,6 +41,10 @@
   background-color: rgba(13, 202, 240, 0.1);
   color: #0dcaf0;
 }
+.bg-purple-light {
+  background-color: rgba(111, 66, 193, 0.1);
+  color: #6f42c1;
+}
 
 /* Login modal */
 #loginModal .modal-content {

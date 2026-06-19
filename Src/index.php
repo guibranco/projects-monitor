@@ -5,20 +5,20 @@ require_once 'vendor/autoload.php';
 use GuiBranco\ProjectsMonitor\Library\Configuration;
 
 if (!isset($_SESSION['last_activity']) || time() - $_SESSION['last_activity'] > 1800) {
-    session_unset();
-    session_destroy();
-    header('Location: login.php');
-    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-    header('Pragma: no-cache');
-    exit;
+   session_unset();
+   session_destroy();
+   header('Location: login.php');
+   header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+   header('Pragma: no-cache');
+   exit;
 }
 $_SESSION['last_activity'] = time();
 
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
-    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-    header('Pragma: no-cache');
-    exit;
+   header('Location: login.php');
+   header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+   header('Pragma: no-cache');
+   exit;
 }
 $username = $_SESSION['username'] ?? '';
 $configuration = new Configuration();
@@ -32,7 +32,9 @@ $configuration = new Configuration();
    <meta http-equiv="X-UA-Compatible" content="IE=edge">
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" integrity="sha512-dPXYcDub/aeb08c63jRq/k6GaKccl256JQy/AnOq7CAnEZ9FzSL9wSbcZkMp4R26vBsMLFYH4kQ67/bbV8XaCQ==" crossorigin="anonymous">
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+      integrity="sha512-dPXYcDub/aeb08c63jRq/k6GaKccl256JQy/AnOq7CAnEZ9FzSL9wSbcZkMp4R26vBsMLFYH4kQ67/bbV8XaCQ=="
+      crossorigin="anonymous">
    <link rel="preconnect" href="https://fonts.googleapis.com">
    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
@@ -65,19 +67,22 @@ $configuration = new Configuration();
                <i class="bi bi-box-arrow-right"></i>
                <span class="d-none d-md-inline ms-1">Logout</span>
             </a>
-            <button class="btn btn-sm btn-nav-settings" type="button" data-bs-toggle="offcanvas" data-bs-target="#settingsPanel" aria-controls="settingsPanel" title="Settings">
+            <button class="btn btn-sm btn-nav-settings" type="button" data-bs-toggle="offcanvas"
+               data-bs-target="#settingsPanel" aria-controls="settingsPanel" title="Settings">
                <i class="bi bi-sliders"></i>
             </button>
          </div>
       </div>
    </nav>
 
-   <div class="offcanvas offcanvas-end settings-offcanvas" tabindex="-1" id="settingsPanel" aria-labelledby="settingsPanelLabel">
+   <div class="offcanvas offcanvas-end settings-offcanvas" tabindex="-1" id="settingsPanel"
+      aria-labelledby="settingsPanelLabel">
       <div class="offcanvas-header">
          <h5 class="offcanvas-title" id="settingsPanelLabel">
             <i class="bi bi-sliders me-2"></i>Options
          </h5>
-         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"
+            aria-label="Close"></button>
       </div>
       <div class="offcanvas-body">
          <p class="mb-3 settings-welcome">
@@ -102,8 +107,8 @@ $configuration = new Configuration();
          </div>
          <div id="workflowLimitContainer" class="mb-4" style="display: none;">
             <label for="workflowLimitInput" class="form-label small">Limit Results</label>
-            <input type="number" class="form-control form-control-sm settings-input" id="workflowLimitInput" min="1" max="10000"
-               placeholder="Enter limit (1–10,000)" required oninput="this.setCustomValidity('')"
+            <input type="number" class="form-control form-control-sm settings-input" id="workflowLimitInput" min="1"
+               max="10000" placeholder="Enter limit (1–10,000)" required oninput="this.setCustomValidity('')"
                oninvalid="this.setCustomValidity('Please enter a number between 1 and 10,000')" />
             <div class="invalid-feedback">Please enter a number between 1 and 10,000</div>
          </div>
@@ -123,7 +128,8 @@ $configuration = new Configuration();
    <div class="dashboard-container">
       <div class="full-width-section">
          <div class="section-header">
-            <i class="bi bi-bar-chart-line me-2"></i>GitHub Webhooks Statistics <span id="counter_webhooks_statistics_github" class="badge rounded-pill"></span>
+            <i class="bi bi-bar-chart-line me-2"></i>GitHub Webhooks Statistics <span
+               id="counter_webhooks_statistics_github" class="badge rounded-pill"></span>
          </div>
          <div id="webhooks_statistics_github" class="section-content"></div>
       </div>
@@ -194,7 +200,9 @@ $configuration = new Configuration();
          </div>
          <div class="chart-container">
             <div class="text-end mb-1">
-               <button id="btn_truncate_messages" class="btn btn-warning btn-sm" style="display:none" onclick="if(window.confirmTruncateMessages?.()) window.truncateMessages?.()">Truncate All Messages</button>
+               <button id="btn_truncate_messages" class="btn btn-warning btn-sm" style="display:none"
+                  onclick="if(window.confirmTruncateMessages?.()) window.truncateMessages?.()">Truncate All
+                  Messages</button>
             </div>
             <div id="messages_by_applications"></div>
          </div>
@@ -202,21 +210,24 @@ $configuration = new Configuration();
 
       <div class="full-width-section">
          <div class="section-header">
-            <i class="bi bi-collection me-2"></i>Messages Grouped <span id="counter_messages_grouped" class="badge rounded-pill"></span>
+            <i class="bi bi-collection me-2"></i>Messages Grouped <span id="counter_messages_grouped"
+               class="badge rounded-pill"></span>
          </div>
          <div id="messages_grouped" class="section-content"></div>
-      </div>      
+      </div>
 
       <div class="full-width-section">
          <div class="section-header">
-            <i class="bi bi-exclamation-triangle me-2"></i>Error Log Messages <span id="counter_error_log_messages" class="badge rounded-pill"></span>
+            <i class="bi bi-exclamation-triangle me-2"></i>Error Log Messages <span id="counter_error_log_messages"
+               class="badge rounded-pill"></span>
          </div>
          <div id="error_log_messages" class="section-content"></div>
       </div>
 
       <div class="full-width-section">
          <div class="section-header">
-            <i class="bi bi-database-exclamation me-2"></i>Error Log (Database) <span id="counter_db_error_messages" class="badge rounded-pill"></span>
+            <i class="bi bi-database-exclamation me-2"></i>Error Log (Database) <span id="counter_db_error_messages"
+               class="badge rounded-pill"></span>
          </div>
          <div class="section-content">
             <div class="text-end mb-1">
@@ -231,14 +242,16 @@ $configuration = new Configuration();
 
       <div class="full-width-section">
          <div class="section-header">
-            <i class="bi bi-stack me-2"></i>Processing State Counts <span id="counter_webhook_processing_stats" class="badge rounded-pill"></span>
+            <i class="bi bi-stack me-2"></i>Processing State Counts <span id="counter_webhook_processing_stats"
+               class="badge rounded-pill"></span>
          </div>
          <div id="webhook_processing_stats" class="section-content"></div>
       </div>
 
       <div class="full-width-section">
          <div class="section-header">
-            <i class="bi bi-gear me-2"></i>Workflow Runs <span id="counter_workflow_runs" class="badge rounded-pill"></span>
+            <i class="bi bi-gear me-2"></i>Workflow Runs <span id="counter_workflow_runs"
+               class="badge rounded-pill"></span>
          </div>
          <div id="workflow_runs" class="section-content"></div>
       </div>
@@ -252,7 +265,8 @@ $configuration = new Configuration();
 
       <div class="full-width-section">
          <div class="section-header">
-            <i class="bi bi-arrow-left-right me-2"></i>Pull Requests <span id="counter_pull_requests" class="badge rounded-pill"></span>
+            <i class="bi bi-arrow-left-right me-2"></i>Pull Requests <span id="counter_pull_requests"
+               class="badge rounded-pill"></span>
          </div>
          <div id="pull_requests" class="section-content"></div>
       </div>
@@ -261,37 +275,43 @@ $configuration = new Configuration();
          <div class="data-column">
             <div class="data-item">
                <div class="section-header">
-                  <i class="bi bi-slash-circle me-2"></i>Issues Blocked <span id="counter_issues_blocked" class="badge rounded-pill"></span>
+                  <i class="bi bi-slash-circle me-2"></i>Issues Blocked <span id="counter_issues_blocked"
+                     class="badge rounded-pill"></span>
                </div>
                <div id="issues_blocked" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
-                  <i class="bi bi-slash-circle me-2"></i>Pull Requests Blocked <span id="counter_pull_requests_blocked" class="badge rounded-pill"></span>
+                  <i class="bi bi-slash-circle me-2"></i>Pull Requests Blocked <span id="counter_pull_requests_blocked"
+                     class="badge rounded-pill"></span>
                </div>
                <div id="pull_requests_blocked" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
-                  <i class="bi bi-cloud me-2"></i>GitHub API Usage <span id="counter_api_usage" class="badge rounded-pill"></span>
+                  <i class="bi bi-cloud me-2"></i>GitHub API Usage <span id="counter_api_usage"
+                     class="badge rounded-pill"></span>
                </div>
                <div id="api_usage" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
-                  <i class="bi bi-shield-lock me-2"></i>WireGuard <span id="counter_wireguard" class="badge rounded-pill"></span>
+                  <i class="bi bi-shield-lock me-2"></i>WireGuard <span id="counter_wireguard"
+                     class="badge rounded-pill"></span>
                </div>
                <div id="wireguard" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
-                  <i class="bi bi-heart-pulse me-2"></i>HealthChecksIo <span id="counter_healthchecksio" class="badge rounded-pill"></span>
+                  <i class="bi bi-heart-pulse me-2"></i>HealthChecksIo <span id="counter_healthchecksio"
+                     class="badge rounded-pill"></span>
                </div>
                <div id="healthchecksio" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
-                  <i class="bi bi-robot me-2"></i>UpTimeRobot <span id="counter_uptimerobot" class="badge rounded-pill"></span>
+                  <i class="bi bi-robot me-2"></i>UpTimeRobot <span id="counter_uptimerobot"
+                     class="badge rounded-pill"></span>
                </div>
                <div id="uptimerobot" class="section-content"></div>
             </div>
@@ -303,19 +323,22 @@ $configuration = new Configuration();
             </div>
             <div class="data-item">
                <div class="section-header">
-                  <i class="bi bi-pencil me-2"></i>Pull Requests Authored <span id="counter_pull_requests_authored" class="badge rounded-pill"></span>
+                  <i class="bi bi-pencil me-2"></i>Pull Requests Authored <span id="counter_pull_requests_authored"
+                     class="badge rounded-pill"></span>
                </div>
                <div id="pull_requests_authored" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
-                  <i class="bi bi-pencil me-2"></i>Issues Authored <span id="counter_issues_authored" class="badge rounded-pill"></span>
+                  <i class="bi bi-pencil me-2"></i>Issues Authored <span id="counter_issues_authored"
+                     class="badge rounded-pill"></span>
                </div>
                <div id="issues_authored" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
-                  <i class="bi bi-box me-2"></i>Installed Repositories <span id="counter_installed_repositories" class="badge rounded-pill"></span>
+                  <i class="bi bi-box me-2"></i>Installed Repositories <span id="counter_installed_repositories"
+                     class="badge rounded-pill"></span>
                </div>
                <div id="installed_repositories" class="section-content"></div>
             </div>
@@ -327,7 +350,8 @@ $configuration = new Configuration();
             </div>
             <div class="data-item">
                <div class="section-header">
-                  <i class="bi bi-folder2 me-2"></i>Repositories <span id="counter_repositories" class="badge rounded-pill"></span>
+                  <i class="bi bi-folder2 me-2"></i>Repositories <span id="counter_repositories"
+                     class="badge rounded-pill"></span>
                </div>
                <div id="repositories" class="section-content"></div>
             </div>
@@ -335,25 +359,29 @@ $configuration = new Configuration();
          <div class="data-column">
             <div class="data-item">
                <div class="section-header">
-                  <i class="bi bi-question-circle me-2"></i>Issues Awaiting Triage <span id="counter_triage" class="badge rounded-pill"></span>
+                  <i class="bi bi-question-circle me-2"></i>Issues Awaiting Triage <span id="counter_triage"
+                     class="badge rounded-pill"></span>
                </div>
                <div id="triage" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
-                  <i class="bi bi-question-circle me-2"></i>Pull Requests Awaiting Triage <span id="counter_pull_requests_triage" class="badge rounded-pill"></span>
+                  <i class="bi bi-question-circle me-2"></i>Pull Requests Awaiting Triage <span
+                     id="counter_pull_requests_triage" class="badge rounded-pill"></span>
                </div>
                <div id="pull_requests_triage" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
-                  <i class="bi bi-arrow-left-right me-2"></i>Pull Requests <span id="counter_pull_requests_latest" class="badge rounded-pill"></span>
+                  <i class="bi bi-arrow-left-right me-2"></i>Pull Requests <span id="counter_pull_requests_latest"
+                     class="badge rounded-pill"></span>
                </div>
                <div id="pull_requests_latest" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
-                  <i class="bi bi-person-check me-2"></i>Issues Assigned <span id="counter_assigned" class="badge rounded-pill"></span>
+                  <i class="bi bi-person-check me-2"></i>Issues Assigned <span id="counter_assigned"
+                     class="badge rounded-pill"></span>
                </div>
                <div id="assigned" class="section-content"></div>
             </div>
@@ -371,19 +399,22 @@ $configuration = new Configuration();
             </div>
             <div class="data-item">
                <div class="section-header">
-                  <i class="bi bi-list-task me-2"></i>Issues <span id="counter_issues" class="badge rounded-pill"></span>
+                  <i class="bi bi-list-task me-2"></i>Issues <span id="counter_issues"
+                     class="badge rounded-pill"></span>
                </div>
                <div id="issues" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
-                  <i class="bi bi-clock me-2"></i>Cronjobs <span id="counter_cronjobs" class="badge rounded-pill"></span>
+                  <i class="bi bi-clock me-2"></i>Cronjobs <span id="counter_cronjobs"
+                     class="badge rounded-pill"></span>
                </div>
                <div id="cronjobs" class="section-content"></div>
             </div>
             <div class="data-item">
                <div class="section-header">
-                  <i class="bi bi-envelope me-2"></i>Senders <span id="counter_senders" class="badge rounded-pill"></span>
+                  <i class="bi bi-envelope me-2"></i>Senders <span id="counter_senders"
+                     class="badge rounded-pill"></span>
                </div>
                <div id="senders" class="section-content"></div>
             </div>
@@ -398,7 +429,8 @@ $configuration = new Configuration();
 
       <div class="full-width-section">
          <div class="section-header">
-            <i class="bi bi-broadcast me-2"></i>Webhooks Statistics <span id="counter_webhooks_statistics" class="badge rounded-pill"></span>
+            <i class="bi bi-broadcast me-2"></i>Webhooks Statistics <span id="counter_webhooks_statistics"
+               class="badge rounded-pill"></span>
          </div>
          <div id="webhooks_statistics" class="section-content"></div>
       </div>

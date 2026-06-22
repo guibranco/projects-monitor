@@ -80,7 +80,7 @@ $error = $_SERVER['REQUEST_METHOD'] === 'POST' ? login($conn) : '';
 $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 
 <head>
     <title>Projects Monitor | Login</title>
@@ -90,25 +90,24 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" integrity="sha384-XGjxtQfXaH2tnPFa9x+ruJTuLE3Aa6LhHSWRr1XeTyhezb4abCG4ccI5AkVDxqC+" crossorigin="anonymous">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="static/styles-public.css?<?php echo filemtime("static/styles-public.css"); ?>">
-    <script>(function(){var t=localStorage.getItem('pm-theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-bs-theme',t);})();</script>
 </head>
 
-<body class="bg-light">
+<body>
 
     <!-- Sticky top navbar with sign-in trigger -->
-    <nav class="navbar bg-white shadow-sm sticky-top">
+    <nav class="navbar navbar-dark sticky-top">
         <div class="container-fluid">
-            <span class="navbar-brand mb-0">
-                <i class="fas fa-project-diagram text-primary me-2"></i>
-                <strong>Projects Monitor</strong>
+            <span class="navbar-brand d-flex align-items-center gap-2">
+                <i class="bi bi-activity fs-5"></i>
+                <span class="fw-bold">Projects Monitor</span>
             </span>
             <div class="d-flex align-items-center gap-2">
-                <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle theme">
-                    <i class="fas fa-moon theme-toggle-icon"></i>
-                </button>
-                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#loginModal">
-                    <i class="fas fa-sign-in-alt me-1"></i>Sign In
+                <button class="btn btn-sign-in btn-sm" data-bs-toggle="modal" data-bs-target="#loginModal">
+                    <i class="bi bi-box-arrow-in-right me-1"></i>Sign In
                 </button>
             </div>
         </div>
@@ -120,7 +119,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
             <div class="modal-content shadow-lg">
                 <div class="modal-header py-2 px-3 border-bottom-0">
                     <h6 class="modal-title mb-0" id="loginModalLabel">
-                        <i class="fas fa-sign-in-alt text-primary me-2"></i>Sign In
+                        <i class="bi bi-box-arrow-in-right me-2" style="color:#ff6b35"></i>Sign In
                     </h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>

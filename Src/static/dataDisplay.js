@@ -609,6 +609,7 @@ export class DataDisplayManager {
    */
   showWebhookProcessingStats(response) {
     const states = ["NEW", "RE_REQUESTED", "UPDATED", "PROCESSING", "PROCESSED"];
+    const pendingStates = ["NEW", "RE_REQUESTED", "UPDATED", "PROCESSING"];
     const tables = [
       "github_branches",
       "github_comments",
@@ -636,6 +637,24 @@ export class DataDisplayManager {
       }, 0);
       counterEl.innerHTML = total;
     }
+
+    const botQueueTotal = pendingStates.reduce(
+      (sum, state) => sum + tables.reduce((s, table) => s + (response[state]?.[table] ?? 0), 0),
+      0
+    );
+
+    this.chartManager.drawGaugeChart("Bot Queue", botQueueTotal, "gauge_chart_bot_queue", {
+      width: "100%",
+      height: "100%",
+      min: 0,
+      max: 1000,
+      greenFrom: 0,
+      greenTo: 50,
+      yellowFrom: 50,
+      yellowTo: 200,
+      redFrom: 200,
+      redTo: 1000,
+    });
 
     this.chartManager.drawChartByType(data, "table", "webhook_processing_stats", CHART_OPTIONS.table);
   }

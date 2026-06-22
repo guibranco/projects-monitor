@@ -149,6 +149,7 @@ $configuration = new Configuration();
          <div id="gauge_chart_pm_messages" class="gauge"></div>
          <div id="gauge_chart_bot_installations" class="gauge"></div>
          <div id="gauge_chart_bot_repositories" class="gauge"></div>
+         <div id="gauge_chart_bot_queue" class="gauge"></div>
       </div>
 
       <div class="stats-section">

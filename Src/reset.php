@@ -5,7 +5,7 @@ require_once 'vendor/autoload.php';
 use GuiBranco\ProjectsMonitor\Library\Configuration;
 use GuiBranco\ProjectsMonitor\Library\Database;
 
-header("Content-Security-Policy: default-src 'self' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net;");
+header("Content-Security-Policy: default-src 'self' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com;");
 header("X-Content-Type-Options: nosniff");
 header("X-Frame-Options: DENY");
 header("Referrer-Policy: strict-origin-when-cross-origin");
@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 
 <head>
     <title>Projects Monitor | Reset Password</title>
@@ -78,22 +78,20 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" integrity="sha384-XGjxtQfXaH2tnPFa9x+ruJTuLE3Aa6LhHSWRr1XeTyhezb4abCG4ccI5AkVDxqC+" crossorigin="anonymous">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="static/styles-public.css?<?php echo filemtime("static/styles-public.css"); ?>">
-    <script>(function(){var t=localStorage.getItem('pm-theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-bs-theme',t);})();</script>
 </head>
 
 <body>
-    <nav class="navbar bg-white shadow-sm sticky-top">
+    <nav class="navbar navbar-dark sticky-top">
         <div class="container-fluid">
-            <a class="navbar-brand mb-0" href="login.php">
-                <i class="fas fa-project-diagram text-primary me-2"></i>
-                <strong>Projects Monitor</strong>
+            <a class="navbar-brand d-flex align-items-center gap-2" href="login.php">
+                <i class="bi bi-activity fs-5"></i>
+                <span class="fw-bold">Projects Monitor</span>
             </a>
-            <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle theme">
-                <i class="fas fa-moon theme-toggle-icon"></i>
-            </button>
         </div>
     </nav>
 
@@ -103,16 +101,16 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 <div class="card data-card">
                     <div class="card-body">
                         <h5 class="card-title text-center mb-4">
-                            <i class="fas fa-lock text-primary me-2"></i>Reset Password
+                            <i class="bi bi-lock me-2" style="color:#ff6b35"></i>Reset Password
                         </h5>
                         <?php if ($resetSuccess): ?>
                             <div class="alert alert-success">
-                                <i class="fas fa-check-circle me-1"></i>
+                                <i class="bi bi-check-circle me-1"></i>
                                 Your password has been reset. You can now <a href="login.php" class="alert-link">sign in</a>.
                             </div>
                         <?php elseif ($message): ?>
                             <div class="alert alert-danger">
-                                <i class="fas fa-exclamation-circle me-1"></i>
+                                <i class="bi bi-exclamation-circle me-1"></i>
                                 <?php echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8'); ?>
                             </div>
                         <?php endif; ?>

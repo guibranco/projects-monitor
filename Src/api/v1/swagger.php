@@ -95,7 +95,7 @@ $pageTitle = 'Projects Monitor API v' . htmlspecialchars($version) . ' - Swagger
     <script>
         window.onload = function () {
             SwaggerUIBundle({
-                url: '/projects-monitor/api/v1/openapi.yaml',
+                url: '/projects-monitor/api/v1/openapi',
                 dom_id: '#swagger-ui',
                 presets: [
                     SwaggerUIBundle.presets.apis,

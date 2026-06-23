@@ -242,14 +242,84 @@ class Logger
             return array();
         }
         while ($row = $result->fetch_array(MYSQLI_NUM)) {
+            $rawApplication = $row[0];
+            $rawMessage     = $row[1];
+            $rawUserAgent   = $row[2];
             $rowData = array_values($row);
             $rowData[1] = $this->convertUrlsToLinks($rowData[1]);
             $rowData[2] = $this->convertUserAgentToLink($rowData[2]);
+            // Indices 5, 6, 7 carry the unprocessed values for the JS detail/delete actions
+            $rowData[] = $rawApplication;
+            $rowData[] = $rawMessage;
+            $rowData[] = $rawUserAgent;
             $data[] = $rowData;
         }
         $stmt->close();
 
         return $data;
+    }
+
+    public function getMessagesByGroup(string $application, string $message, string $userAgent): array
+    {
+        $sql = "SELECT m.id, a.name, m.class, m.function, m.file, m.line, m.object, ";
+        $sql .= "m.type, m.args, m.message, m.details, m.correlation_id, m.user_agent, ";
+        $sql .= "CONVERT_TZ(m.created_at, '-03:00', '+00:00') AS `created_at` ";
+        $sql .= "FROM messages as m INNER JOIN applications as a ON m.application_id = a.id ";
+        $sql .= "WHERE a.name = ? AND m.message = ? AND m.user_agent = ? ";
+        $sql .= "ORDER BY m.id DESC";
+        $stmt = $this->connection->prepare($sql);
+        $stmt->bind_param("sss", $application, $message, $userAgent);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $data = [];
+        while ($row = $result->fetch_assoc()) {
+            $data[] = $row;
+        }
+        $stmt->close();
+        return $data;
+    }
+
+    public function deleteMessageById(int $id): bool
+    {
+        try {
+            $this->connection->begin_transaction();
+            $sql = "DELETE FROM messages WHERE id = ?";
+            $stmt = $this->connection->prepare($sql);
+            $stmt->bind_param("i", $id);
+            $result = $stmt->execute();
+            $stmt->close();
+            if ($result) {
+                $this->connection->commit();
+            } else {
+                $this->connection->rollback();
+            }
+            return $result;
+        } catch (\Exception $e) {
+            $this->connection->rollback();
+            throw $e;
+        }
+    }
+
+    public function deleteMessagesByGroup(string $application, string $message, string $userAgent): bool
+    {
+        try {
+            $this->connection->begin_transaction();
+            $sql = "DELETE m FROM messages as m INNER JOIN applications as a ON m.application_id = a.id ";
+            $sql .= "WHERE a.name = ? AND m.message = ? AND m.user_agent = ?";
+            $stmt = $this->connection->prepare($sql);
+            $stmt->bind_param("sss", $application, $message, $userAgent);
+            $result = $stmt->execute();
+            $stmt->close();
+            if ($result) {
+                $this->connection->commit();
+            } else {
+                $this->connection->rollback();
+            }
+            return $result;
+        } catch (\Exception $e) {
+            $this->connection->rollback();
+            throw $e;
+        }
     }
 
     public function showLastMessages($quantity)

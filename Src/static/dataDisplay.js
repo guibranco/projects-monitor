@@ -9,6 +9,7 @@ export class DataDisplayManager {
     this.eventAssignedError = false;
     this.eventAssignedQueues = false;
     this.eventAssignedDbErrors = false;
+    this.eventAssignedMsgDetails = false;
   }
 
   #escHtml(str) {
@@ -302,7 +303,46 @@ export class DataDisplayManager {
       legend: { position: "right" },
     };
 
-    this.chartManager.drawDataTable(response.grouped, "messages_grouped", CHART_OPTIONS.table);
+    // Build grouped table: inject an Actions column using the raw values (indices 5-7)
+    // that PHP appends after the five display values.
+    const rawGrouped = response.grouped;
+    let groupedDisplay = [];
+    if (rawGrouped.length > 1) {
+      groupedDisplay.push(["Actions", ...rawGrouped[0]]);
+      for (let i = 1; i < rawGrouped.length; i++) {
+        const row = rawGrouped[i];
+        const rawApp = row[5] ?? row[0];
+        const rawMsg = row[6] ?? row[1];
+        const rawUA  = row[7] ?? row[2];
+        const btn = `<button class="btn btn-sm btn-info py-0 px-2"
+          data-action="view-msg-details"
+          data-application="${encodeURIComponent(rawApp)}"
+          data-message="${encodeURIComponent(rawMsg)}"
+          data-user-agent="${encodeURIComponent(rawUA)}"
+          title="View individual messages">
+          <i class="bi bi-eye-fill"></i>
+        </button>`;
+        groupedDisplay.push([btn, row[0], row[1], row[2], row[3], row[4]]);
+      }
+    } else {
+      groupedDisplay = rawGrouped;
+    }
+    this.chartManager.drawDataTable(groupedDisplay, "messages_grouped", CHART_OPTIONS.table);
+
+    if (!this.eventAssignedMsgDetails) {
+      this.eventAssignedMsgDetails = true;
+      document.getElementById("messages_grouped")?.addEventListener("click", (e) => {
+        const btn = e.target.closest('[data-action="view-msg-details"]');
+        if (btn) {
+          window.openMessageDetails?.(
+            btn.dataset.application,
+            btn.dataset.message,
+            btn.dataset.userAgent
+          );
+        }
+      });
+    }
+
     this.chartManager.drawGaugeChart(
       "PM messages",
       response.total,

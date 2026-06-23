@@ -446,6 +446,36 @@ $configuration = new Configuration();
 
    </div>
 
+   <!-- Message detail modal -->
+   <div class="modal fade" id="messageDetailsModal" tabindex="-1"
+      aria-labelledby="messageDetailsModalLabel" aria-modal="true" role="dialog">
+      <div class="modal-dialog modal-xl modal-dialog-scrollable">
+         <div class="modal-content"
+            style="background:rgba(13,17,23,.97);border:1px solid rgba(255,255,255,.15);color:#fff;">
+            <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,.1);">
+               <div class="me-auto">
+                  <h5 class="modal-title mb-1" id="messageDetailsModalLabel">
+                     <i class="bi bi-list-ul me-2"></i>Message Details
+                  </h5>
+                  <small id="msgDetailSubtitle" class="opacity-75 d-block text-truncate" style="max-width:60vw;"></small>
+               </div>
+               <button type="button" class="btn btn-sm btn-danger me-3" id="btn_delete_message_group">
+                  <i class="bi bi-trash me-1"></i>Delete Group
+               </button>
+               <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                  aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0" id="msgDetailBody">
+               <div class="text-center py-4">
+                  <div class="spinner-border text-light" role="status">
+                     <span class="visually-hidden">Loading…</span>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+   </div>
+
    <?php include_once __DIR__ . '/footer.php'; ?>
 
    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"

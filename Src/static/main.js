@@ -91,6 +91,132 @@ class DashboardApp {
     window.confirmTruncateDbErrors = this.uiManager.confirmTruncateDbErrors.bind(this.uiManager);
     window.confirmDeleteErrorsByPath = this.uiManager.confirmDeleteErrorsByPath.bind(this.uiManager);
 
+    // ── Message detail modal ────────────────────────────────────────────────
+    const _apiMgr  = this.apiManager;
+    const _dispMgr = this.dataDisplayManager;
+    let   _msgDetailGroup = null;
+
+    const _esc = (s) =>
+      String(s ?? '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+    const _loadMsgDetails = async (application, message, userAgent) => {
+      const body = document.getElementById('msgDetailBody');
+      if (!body) return;
+      body.innerHTML = `<div class="text-center py-4">
+        <div class="spinner-border text-light" role="status">
+          <span class="visually-hidden">Loading…</span>
+        </div></div>`;
+
+      try {
+        const data = await _apiMgr.getMessageDetails(application, message, userAgent);
+        const msgs = data.messages ?? [];
+
+        if (msgs.length === 0) {
+          body.innerHTML = '<p class="text-center text-muted py-3">No messages found in this group.</p>';
+          return;
+        }
+
+        const rows = msgs.map(m => `
+          <tr>
+            <td class="text-nowrap">${m.id}</td>
+            <td class="text-nowrap">${_esc(m.class)}</td>
+            <td class="text-nowrap">${_esc(m.function)}</td>
+            <td class="text-nowrap">${_esc(m.file)}<span class="text-muted">:${_esc(m.line)}</span></td>
+            <td class="text-nowrap">${_esc(m.type)}</td>
+            <td class="text-nowrap">${_esc(m.correlation_id)}</td>
+            <td class="text-nowrap">${_esc(m.created_at)}</td>
+            <td class="text-nowrap">
+              <button class="btn btn-sm btn-outline-secondary py-0 me-1"
+                data-bs-toggle="collapse"
+                data-bs-target="#msg-extra-${m.id}"
+                title="View object / args / details">
+                <i class="bi bi-chevron-down"></i>
+              </button>
+              <button class="btn btn-sm btn-danger py-0"
+                data-action="delete-single-msg"
+                data-id="${m.id}"
+                title="Delete this message">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+          <tr id="msg-extra-${m.id}" class="collapse">
+            <td colspan="8" class="p-3" style="background:rgba(0,0,0,.35);">
+              <dl class="row mb-0 small">
+                <dt class="col-sm-2 text-warning">Object</dt>
+                <dd class="col-sm-10"><code class="text-break">${_esc(m.object)}</code></dd>
+                <dt class="col-sm-2 text-warning">Args</dt>
+                <dd class="col-sm-10"><code class="text-break">${_esc(m.args)}</code></dd>
+                <dt class="col-sm-2 text-warning">Details</dt>
+                <dd class="col-sm-10"><code class="text-break">${_esc(m.details)}</code></dd>
+              </dl>
+            </td>
+          </tr>`).join('');
+
+        body.innerHTML = `
+          <div class="table-responsive">
+            <table class="table table-dark table-sm table-hover align-middle mb-0">
+              <thead class="table-secondary">
+                <tr>
+                  <th>#ID</th><th>Class</th><th>Function</th><th>File : Line</th>
+                  <th>Type</th><th>Correlation ID</th><th>Created At</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>`;
+      } catch (_) {
+        body.innerHTML = '<div class="alert alert-danger m-3">Failed to load message details.</div>';
+      }
+    };
+
+    // Delegated click handler on the modal body (set up once; body element persists)
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('msgDetailBody')?.addEventListener('click', async (e) => {
+        const btn = e.target.closest('[data-action="delete-single-msg"]');
+        if (!btn) return;
+        const id = parseInt(btn.dataset.id, 10);
+        if (!confirm(`Delete message #${id}?`)) return;
+        await _apiMgr.deleteMessageById(id);
+        if (_msgDetailGroup) {
+          _loadMsgDetails(_msgDetailGroup.application, _msgDetailGroup.message, _msgDetailGroup.userAgent);
+        }
+      });
+
+      document.getElementById('btn_delete_message_group')?.addEventListener('click', () => {
+        window.deleteMessageGroup?.();
+      });
+    });
+
+    window.openMessageDetails = (application, message, userAgent) => {
+      _msgDetailGroup = { application, message, userAgent };
+      const subtitle = document.getElementById('msgDetailSubtitle');
+      if (subtitle) {
+        const app = decodeURIComponent(application);
+        const msg = decodeURIComponent(message);
+        subtitle.textContent = `${app} — ${msg.length > 90 ? msg.substring(0, 90) + '…' : msg}`;
+      }
+      const modalEl = document.getElementById('messageDetailsModal');
+      if (!modalEl) return;
+      bootstrap.Modal.getOrCreateInstance(modalEl).show();
+      _loadMsgDetails(application, message, userAgent);
+    };
+
+    window.deleteMessageGroup = async () => {
+      if (!_msgDetailGroup) return;
+      const { application, message, userAgent } = _msgDetailGroup;
+      const appLabel = decodeURIComponent(application);
+      if (!confirm(`Delete all "${appLabel}" messages in this group?`)) return;
+      const data = await _apiMgr.deleteMessageGroup(application, message, userAgent);
+      const modalEl = document.getElementById('messageDetailsModal');
+      bootstrap.Modal.getInstance(modalEl)?.hide();
+      _msgDetailGroup = null;
+      _dispMgr.showMessages(data);
+    };
+    // ── End message detail modal ────────────────────────────────────────────
+
     // Expose GitHub stats function
     window.showGitHubStatsAndWakatime = GitHubStatsManager.show;
 

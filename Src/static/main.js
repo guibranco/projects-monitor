@@ -279,7 +279,6 @@ class DashboardApp {
     CookieManager.set("timezone", timezone, 10);
     CookieManager.set("offset", offset, 10);
 
-    OptionsBoxState.handle();
     this.uiManager.initFeedToggle();
     this.uiManager.initWorkflowLimiter();
 

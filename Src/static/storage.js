@@ -25,28 +25,6 @@ export class OptionsBoxState {
     }
   }
 
-  static handle() {
-    const optionsBoxState = this.load();
-    const optionsBox = document.getElementById("userMenu");
-
-    if (!optionsBox) {
-      console.error("Options box element not found");
-      return;
-    }
-
-    if (optionsBoxState === VALID_STATES.COLLAPSED) {
-      optionsBox.classList.remove("show");
-    } else {
-      optionsBox.classList.add("show");
-    }
-
-    optionsBox.addEventListener("shown.bs.collapse", () =>
-      this.save(VALID_STATES.OPEN)
-    );
-    optionsBox.addEventListener("hidden.bs.collapse", () =>
-      this.save(VALID_STATES.COLLAPSED)
-    );
-  }
 }
 
 export class FeedState {

@@ -36,7 +36,8 @@ export const API_ENDPOINTS = {
   WIREGUARD: "api/v1/wireguard",
   POSTMAN: "api/v1/postman",
   WEBHOOKS: "api/v1/webhooks",
-  WEBHOOKS_STATISTICS: "api/v1/webhooks-statistics"
+  WEBHOOKS_STATISTICS: "api/v1/webhooks-statistics",
+  WEBHOOKS_PR_PROCESSING: "api/v1/webhooks-pull-requests-processing"
 };
 
 export const CHART_OPTIONS = {

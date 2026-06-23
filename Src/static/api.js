@@ -207,6 +207,50 @@ export class ApiManager {
     }
   }
 
+  async getMessageDetails(application, message, userAgent) {
+    try {
+      const params = new URLSearchParams({ application, message, user_agent: userAgent });
+      const response = await fetch(`${API_ENDPOINTS.MESSAGES_DETAILS}?${params}`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return await response.json();
+    } catch (error) {
+      NotificationManager.show("Error", `Failed to load message details: ${error.message}`, "error");
+      throw error;
+    }
+  }
+
+  async deleteMessageById(id) {
+    try {
+      const response = await fetch(API_ENDPOINTS.MESSAGES_DELETE_SEQUENCE, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      NotificationManager.show("Success", `Message #${id} deleted`, "success");
+      return await response.json();
+    } catch (error) {
+      NotificationManager.show("Error", `Failed to delete message: ${error.message}`, "error");
+      throw error;
+    }
+  }
+
+  async deleteMessageGroup(application, message, userAgent) {
+    try {
+      const response = await fetch(API_ENDPOINTS.MESSAGES_DELETE_GROUP, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ application, message, user_agent: userAgent }),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      NotificationManager.show("Success", "Message group deleted", "success");
+      return await response.json();
+    } catch (error) {
+      NotificationManager.show("Error", `Failed to delete message group: ${error.message}`, "error");
+      throw error;
+    }
+  }
+
   /**
    * Deletes an error log file from a specified directory using the cPanel API.
    * This function makes an asynchronous POST request to delete the file and handles

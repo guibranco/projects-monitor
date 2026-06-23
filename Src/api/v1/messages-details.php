@@ -5,17 +5,15 @@ require_once '../../vendor/autoload.php';
 
 use GuiBranco\ProjectsMonitor\Library\Logger;
 
-$application = filter_var($_GET['application'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-$message     = $_GET['message'] ?? '';
-$userAgent   = $_GET['user_agent'] ?? '';
+$sampleId = filter_var($_GET['id'] ?? 0, FILTER_VALIDATE_INT);
 
-if (empty($application) || empty($message)) {
+if (!$sampleId || $sampleId < 1) {
     http_response_code(400);
-    echo json_encode(["error" => "Application and message are required"]);
+    echo json_encode(["error" => "A valid message ID is required"]);
     exit;
 }
 
 $log      = new Logger();
-$messages = $log->getMessagesByGroup($application, $message, $userAgent);
+$messages = $log->getMessagesByGroupSampleId((int)$sampleId);
 
 echo json_encode(["messages" => $messages]);

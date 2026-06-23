@@ -14,18 +14,16 @@ if (json_last_error() !== JSON_ERROR_NONE) {
     exit;
 }
 
-if (!isset($input['application']) || !isset($input['message'])) {
+$sampleId = filter_var($input['id'] ?? 0, FILTER_VALIDATE_INT);
+
+if (!$sampleId || $sampleId < 1) {
     http_response_code(400);
-    echo json_encode(["error" => "Application and message are required"]);
+    echo json_encode(["error" => "A valid message ID is required"]);
     exit;
 }
 
-$application = filter_var(urldecode($input['application']), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-$message     = $input['message'];
-$userAgent   = $input['user_agent'] ?? '';
-
 $log    = new Logger();
-$result = $log->deleteMessagesByGroup($application, $message, $userAgent);
+$result = $log->deleteMessagesByGroupSampleId((int)$sampleId);
 
 if ($result === false) {
     http_response_code(500);

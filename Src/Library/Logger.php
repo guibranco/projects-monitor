@@ -230,9 +230,12 @@ class Logger
 
     public function getGroupedMessages()
     {
-        $sql = "SELECT `name`, `message`, `user_agent`, `messages_count`, ";
-        $sql .= "CONVERT_TZ(`created_at_most_recent`, '-03:00', '+00:00') AS `created_at_most_recent` ";
-        $sql .= "FROM `messages_view` ORDER BY `messages_count` DESC";
+        $sql = "SELECT a.name, m.message, m.user_agent, COUNT(m.id) AS messages_count, ";
+        $sql .= "CONVERT_TZ(MAX(m.created_at), '-03:00', '+00:00') AS created_at_most_recent, ";
+        $sql .= "MIN(m.id) AS sample_id ";
+        $sql .= "FROM messages m INNER JOIN applications a ON m.application_id = a.id ";
+        $sql .= "GROUP BY m.application_id, m.class, m.function, m.file, m.line, m.message, m.user_agent ";
+        $sql .= "ORDER BY messages_count DESC";
         $stmt = $this->connection->prepare($sql);
         $stmt->execute();
         $data = array();
@@ -244,14 +247,12 @@ class Logger
         while ($row = $result->fetch_array(MYSQLI_NUM)) {
             $rawApplication = $row[0];
             $rawMessage     = $row[1];
-            $rawUserAgent   = $row[2];
             $rowData = array_values($row);
             $rowData[1] = $this->convertUrlsToLinks($rowData[1]);
             $rowData[2] = $this->convertUserAgentToLink($rowData[2]);
-            // Indices 5, 6, 7 carry the unprocessed values for the JS detail/delete actions
+            // [5] = sample_id (integer), [6] = rawApplication, [7] = rawMessage (for JS modal)
             $rowData[] = $rawApplication;
             $rowData[] = $rawMessage;
-            $rowData[] = $rawUserAgent;
             $data[] = $rowData;
         }
         $stmt->close();
@@ -259,16 +260,21 @@ class Logger
         return $data;
     }
 
-    public function getMessagesByGroup(string $application, string $message, string $userAgent): array
+    public function getMessagesByGroupSampleId(int $sampleId): array
     {
-        $sql = "SELECT m.id, a.name, m.class, m.function, m.file, m.line, m.object, ";
-        $sql .= "m.type, m.args, m.message, m.details, m.correlation_id, m.user_agent, ";
-        $sql .= "CONVERT_TZ(m.created_at, '-03:00', '+00:00') AS `created_at` ";
-        $sql .= "FROM messages as m INNER JOIN applications as a ON m.application_id = a.id ";
-        $sql .= "WHERE a.name = ? AND m.message = ? AND m.user_agent = ? ";
-        $sql .= "ORDER BY m.id DESC";
+        $sql = "SELECT m2.id, a.name, m2.class, m2.function, m2.file, m2.line, m2.object, ";
+        $sql .= "m2.type, m2.args, m2.message, m2.details, m2.correlation_id, m2.user_agent, ";
+        $sql .= "CONVERT_TZ(m2.created_at, '-03:00', '+00:00') AS `created_at` ";
+        $sql .= "FROM messages m1 ";
+        $sql .= "INNER JOIN messages m2 ON m2.application_id = m1.application_id ";
+        $sql .= "  AND m2.class = m1.class AND m2.function = m1.function ";
+        $sql .= "  AND m2.file = m1.file AND m2.line = m1.line ";
+        $sql .= "  AND m2.message = m1.message AND m2.user_agent = m1.user_agent ";
+        $sql .= "INNER JOIN applications a ON m2.application_id = a.id ";
+        $sql .= "WHERE m1.id = ? ";
+        $sql .= "ORDER BY m2.id DESC";
         $stmt = $this->connection->prepare($sql);
-        $stmt->bind_param("sss", $application, $message, $userAgent);
+        $stmt->bind_param("i", $sampleId);
         $stmt->execute();
         $result = $stmt->get_result();
         $data = [];
@@ -300,14 +306,18 @@ class Logger
         }
     }
 
-    public function deleteMessagesByGroup(string $application, string $message, string $userAgent): bool
+    public function deleteMessagesByGroupSampleId(int $sampleId): bool
     {
         try {
             $this->connection->begin_transaction();
-            $sql = "DELETE m FROM messages as m INNER JOIN applications as a ON m.application_id = a.id ";
-            $sql .= "WHERE a.name = ? AND m.message = ? AND m.user_agent = ?";
+            $sql = "DELETE m2 FROM messages m1 ";
+            $sql .= "INNER JOIN messages m2 ON m2.application_id = m1.application_id ";
+            $sql .= "  AND m2.class = m1.class AND m2.function = m1.function ";
+            $sql .= "  AND m2.file = m1.file AND m2.line = m1.line ";
+            $sql .= "  AND m2.message = m1.message AND m2.user_agent = m1.user_agent ";
+            $sql .= "WHERE m1.id = ?";
             $stmt = $this->connection->prepare($sql);
-            $stmt->bind_param("sss", $application, $message, $userAgent);
+            $stmt->bind_param("i", $sampleId);
             $result = $stmt->execute();
             $stmt->close();
             if ($result) {

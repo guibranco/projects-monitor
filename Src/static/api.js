@@ -264,6 +264,7 @@ export class DataLoader {
       (data) => window.showWebhook?.(data)
     );
     this.apiManager.load(API_ENDPOINTS.WEBHOOKS_STATISTICS, (data) => window.showWebhookProcessingStats?.(data));
+    this.apiManager.load(API_ENDPOINTS.WEBHOOKS_PR_PROCESSING, (data) => window.showWebhookPullRequestsProcessing?.(data));
   }
 
   /**

@@ -126,4 +126,10 @@ class Webhooks
         LogStream::debug("Fetching webhooks statistics", null, "webhooks");
         return $this->doRequest("processing-state", "get", 200);
     }
+
+    public function getPullRequestsProcessing(): mixed
+    {
+        LogStream::debug("Fetching pull requests pending processing", null, "webhooks");
+        return $this->doRequest("pull-requests/processing", "get", 200);
+    }
 }

@@ -251,6 +251,14 @@ $configuration = new Configuration();
 
       <div class="full-width-section">
          <div class="section-header">
+            <i class="bi bi-hourglass-split me-2"></i>Pull Requests Pending Processing <span id="counter_pr_processing"
+               class="badge rounded-pill"></span>
+         </div>
+         <div id="pr_processing" class="section-content"></div>
+      </div>
+
+      <div class="full-width-section">
+         <div class="section-header">
             <i class="bi bi-gear me-2"></i>Workflow Runs <span id="counter_workflow_runs"
                class="badge rounded-pill"></span>
          </div>

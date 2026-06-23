@@ -597,6 +597,78 @@ export class DataDisplayManager {
   }
 
   /**
+   * Renders pull requests pending processing from the webhooks /pull-requests/processing endpoint.
+   */
+  showWebhookPullRequestsProcessing(response) {
+    const container = document.getElementById("pr_processing");
+    const counterEl = document.getElementById("counter_pr_processing");
+    if (!container) return;
+
+    const items = Array.isArray(response) ? response : [];
+    if (counterEl) counterEl.textContent = items.length;
+
+    if (items.length === 0) {
+      container.innerHTML = '<p class="text-muted text-center py-3 mb-0">No pull requests pending processing.</p>';
+      return;
+    }
+
+    const stateBadgeClass = (state) => {
+      switch (state) {
+        case "NEW":        return "bg-primary";
+        case "RE_REQUESTED": return "bg-warning text-dark";
+        case "UPDATED":    return "bg-info text-dark";
+        case "PROCESSING": return "bg-danger";
+        default:           return "bg-secondary";
+      }
+    };
+
+    const rows = items.map(item => {
+      const repo = `${this.#escHtml(item.repositoryOwner)}/${this.#escHtml(item.repositoryName)}`;
+      const prLink = `<a href="https://github.com/${this.#escHtml(item.repositoryOwner)}/${this.#escHtml(item.repositoryName)}/pull/${item.number}" target="_blank" rel="noopener noreferrer">#${item.number}</a>`;
+      const stateBadge = `<span class="badge ${stateBadgeClass(item.processingState)}">${this.#escHtml(item.processingState)}</span>`;
+      const ref = item.ref ? this.#escHtml(item.ref.replace('refs/heads/', '')) : '—';
+      const sender = item.senderLogin ? this.#escHtml(item.senderLogin) : (item.sender ? this.#escHtml(item.sender) : '—');
+      const processingDate = item.processingDate ? this.#escHtml(item.processingDate) : '—';
+      const receiverVer = item.webhooksReceiverVersion ? this.#escHtml(item.webhooksReceiverVersion) : '—';
+      const handlerVer = item.webhooksHandlerVersion ? this.#escHtml(item.webhooksHandlerVersion) : '—';
+      const botVer = item.gstracciniBotVersion ? this.#escHtml(item.gstracciniBotVersion) : '—';
+      return `<tr>
+        <td class="text-nowrap small text-muted">${item.sequence}</td>
+        <td class="small font-monospace">${repo}</td>
+        <td class="small">${prLink}</td>
+        <td class="small">${sender}</td>
+        <td class="small font-monospace text-truncate" style="max-width:140px" title="${this.#escHtml(item.ref ?? '')}">${ref}</td>
+        <td class="text-nowrap">${stateBadge}</td>
+        <td class="small text-nowrap">${processingDate}</td>
+        <td class="small text-center">${receiverVer}</td>
+        <td class="small text-center">${handlerVer}</td>
+        <td class="small text-center">${botVer}</td>
+      </tr>`;
+    }).join('');
+
+    container.innerHTML = `
+      <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th class="text-muted">#Seq</th>
+              <th>Repository</th>
+              <th>PR</th>
+              <th>Sender</th>
+              <th>Branch</th>
+              <th>State</th>
+              <th>Processing Date</th>
+              <th class="text-center">Receiver</th>
+              <th class="text-center">Handler</th>
+              <th class="text-center">Bot</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }
+
+  /**
    * Draws a wire guard data table using the chart manager.
    */
   showWireGuard(response) {

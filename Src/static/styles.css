@@ -368,12 +368,15 @@ code {
   grid-template-columns: 1fr 1fr;
   gap: 20px;
   margin-bottom: 30px;
+  max-width: 100%;
 }
 
 .data-column {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 /* ===========================================

@@ -101,7 +101,7 @@ class DashboardApp {
         .replace(/&/g, '&amp;').replace(/</g, '&lt;')
         .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-    const _loadMsgDetails = async (application, message, userAgent) => {
+    const _loadMsgDetails = async (sampleId) => {
       const body = document.getElementById('msgDetailBody');
       if (!body) return;
       body.innerHTML = `<div class="text-center py-4">
@@ -110,7 +110,7 @@ class DashboardApp {
         </div></div>`;
 
       try {
-        const data = await _apiMgr.getMessageDetails(application, message, userAgent);
+        const data = await _apiMgr.getMessageDetails(sampleId);
         const msgs = data.messages ?? [];
 
         if (msgs.length === 0) {
@@ -181,7 +181,7 @@ class DashboardApp {
         if (!confirm(`Delete message #${id}?`)) return;
         await _apiMgr.deleteMessageById(id);
         if (_msgDetailGroup) {
-          _loadMsgDetails(_msgDetailGroup.application, _msgDetailGroup.message, _msgDetailGroup.userAgent);
+          _loadMsgDetails(_msgDetailGroup.sampleId);
         }
       });
 
@@ -190,26 +190,23 @@ class DashboardApp {
       });
     });
 
-    window.openMessageDetails = (application, message, userAgent) => {
-      _msgDetailGroup = { application, message, userAgent };
+    window.openMessageDetails = (sampleId, rawApp, rawMsg) => {
+      _msgDetailGroup = { sampleId, rawApp, rawMsg };
       const subtitle = document.getElementById('msgDetailSubtitle');
       if (subtitle) {
-        const app = decodeURIComponent(application);
-        const msg = decodeURIComponent(message);
-        subtitle.textContent = `${app} — ${msg.length > 90 ? msg.substring(0, 90) + '…' : msg}`;
+        subtitle.textContent = `${rawApp} — ${rawMsg.length > 90 ? rawMsg.substring(0, 90) + '…' : rawMsg}`;
       }
       const modalEl = document.getElementById('messageDetailsModal');
       if (!modalEl) return;
       bootstrap.Modal.getOrCreateInstance(modalEl).show();
-      _loadMsgDetails(application, message, userAgent);
+      _loadMsgDetails(sampleId);
     };
 
     window.deleteMessageGroup = async () => {
       if (!_msgDetailGroup) return;
-      const { application, message, userAgent } = _msgDetailGroup;
-      const appLabel = decodeURIComponent(application);
-      if (!confirm(`Delete all "${appLabel}" messages in this group?`)) return;
-      const data = await _apiMgr.deleteMessageGroup(application, message, userAgent);
+      const { sampleId, rawApp } = _msgDetailGroup;
+      if (!confirm(`Delete all "${rawApp}" messages in this group?`)) return;
+      const data = await _apiMgr.deleteMessageGroup(sampleId);
       const modalEl = document.getElementById('messageDetailsModal');
       bootstrap.Modal.getInstance(modalEl)?.hide();
       _msgDetailGroup = null;

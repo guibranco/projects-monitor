@@ -207,10 +207,9 @@ export class ApiManager {
     }
   }
 
-  async getMessageDetails(application, message, userAgent) {
+  async getMessageDetails(sampleId) {
     try {
-      const params = new URLSearchParams({ application, message, user_agent: userAgent });
-      const response = await fetch(`${API_ENDPOINTS.MESSAGES_DETAILS}?${params}`);
+      const response = await fetch(`${API_ENDPOINTS.MESSAGES_DETAILS}?id=${encodeURIComponent(sampleId)}`);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       return await response.json();
     } catch (error) {
@@ -235,12 +234,12 @@ export class ApiManager {
     }
   }
 
-  async deleteMessageGroup(application, message, userAgent) {
+  async deleteMessageGroup(sampleId) {
     try {
       const response = await fetch(API_ENDPOINTS.MESSAGES_DELETE_GROUP, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ application, message, user_agent: userAgent }),
+        body: JSON.stringify({ id: sampleId }),
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       NotificationManager.show("Success", "Message group deleted", "success");

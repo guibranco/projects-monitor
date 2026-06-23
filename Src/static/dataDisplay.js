@@ -303,22 +303,22 @@ export class DataDisplayManager {
       legend: { position: "right" },
     };
 
-    // Build grouped table: inject an Actions column using the raw values (indices 5-7)
-    // that PHP appends after the five display values.
+    // Build grouped table: inject an Actions column using the sample_id (index 5)
+    // and raw text values (indices 6-7) that PHP appends after the five display values.
     const rawGrouped = response.grouped;
     let groupedDisplay = [];
     if (rawGrouped.length > 1) {
       groupedDisplay.push(["Actions", ...rawGrouped[0]]);
       for (let i = 1; i < rawGrouped.length; i++) {
         const row = rawGrouped[i];
-        const rawApp = row[5] ?? row[0];
-        const rawMsg = row[6] ?? row[1];
-        const rawUA  = row[7] ?? row[2];
+        const sampleId = row[5] ?? 0;
+        const rawApp   = row[6] ?? row[0];
+        const rawMsg   = row[7] ?? row[1];
         const btn = `<button class="btn btn-sm btn-info py-0 px-2"
           data-action="view-msg-details"
-          data-application="${encodeURIComponent(rawApp)}"
-          data-message="${encodeURIComponent(rawMsg)}"
-          data-user-agent="${encodeURIComponent(rawUA)}"
+          data-sample-id="${sampleId}"
+          data-app="${this.#escHtml(rawApp)}"
+          data-msg="${this.#escHtml(rawMsg)}"
           title="View individual messages">
           <i class="bi bi-eye-fill"></i>
         </button>`;
@@ -335,9 +335,9 @@ export class DataDisplayManager {
         const btn = e.target.closest('[data-action="view-msg-details"]');
         if (btn) {
           window.openMessageDetails?.(
-            btn.dataset.application,
-            btn.dataset.message,
-            btn.dataset.userAgent
+            btn.dataset.sampleId,
+            btn.dataset.app,
+            btn.dataset.msg
           );
         }
       });

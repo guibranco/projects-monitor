@@ -78,10 +78,10 @@ class LoggerTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
-    // getMessagesByGroup
+    // getMessagesByGroupSampleId
     // -------------------------------------------------------------------------
 
-    public function testGetMessagesByGroupReturnsMappedRows(): void
+    public function testGetMessagesByGroupSampleIdReturnsMappedRows(): void
     {
         $row = [
             'id'             => 42,
@@ -109,7 +109,7 @@ class LoggerTest extends TestCase
 
         $this->connMock->method('prepare')->willReturn($stmtMock);
 
-        $result = $this->logger->getMessagesByGroup('TestApp', 'Something went wrong', 'TestAgent/1.0');
+        $result = $this->logger->getMessagesByGroupSampleId(42);
 
         $this->assertCount(1, $result);
         $this->assertSame(42, $result[0]['id']);
@@ -119,7 +119,7 @@ class LoggerTest extends TestCase
         $this->assertSame('abc-123', $result[0]['correlation_id']);
     }
 
-    public function testGetMessagesByGroupReturnsEmptyArrayWhenNoRows(): void
+    public function testGetMessagesByGroupSampleIdReturnsEmptyArrayWhenNoRows(): void
     {
         $resultMock = $this->createMock(mysqli_result::class);
         $resultMock->method('fetch_assoc')->willReturn(null);
@@ -129,12 +129,12 @@ class LoggerTest extends TestCase
 
         $this->connMock->method('prepare')->willReturn($stmtMock);
 
-        $result = $this->logger->getMessagesByGroup('App', 'msg', 'UA');
+        $result = $this->logger->getMessagesByGroupSampleId(1);
 
         $this->assertSame([], $result);
     }
 
-    public function testGetMessagesByGroupReturnsAllRowsFromResult(): void
+    public function testGetMessagesByGroupSampleIdReturnsAllRowsFromResult(): void
     {
         $makeRow = static fn(int $id) => [
             'id'             => $id,
@@ -162,7 +162,7 @@ class LoggerTest extends TestCase
 
         $this->connMock->method('prepare')->willReturn($stmtMock);
 
-        $result = $this->logger->getMessagesByGroup('App', 'err', 'UA');
+        $result = $this->logger->getMessagesByGroupSampleId(1);
 
         $this->assertCount(3, $result);
         $this->assertSame(1, $result[0]['id']);
@@ -217,10 +217,10 @@ class LoggerTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
-    // deleteMessagesByGroup
+    // deleteMessagesByGroupSampleId
     // -------------------------------------------------------------------------
 
-    public function testDeleteMessagesByGroupReturnsTrueOnSuccess(): void
+    public function testDeleteMessagesByGroupSampleIdReturnsTrueOnSuccess(): void
     {
         $stmtMock = $this->createMock(mysqli_stmt::class);
         $stmtMock->method('execute')->willReturn(true);
@@ -229,12 +229,12 @@ class LoggerTest extends TestCase
         $this->connMock->method('prepare')->willReturn($stmtMock);
         $this->connMock->method('commit')->willReturn(true);
 
-        $result = $this->logger->deleteMessagesByGroup('MyApp', 'Error occurred', 'Agent/1.0');
+        $result = $this->logger->deleteMessagesByGroupSampleId(42);
 
         $this->assertTrue($result);
     }
 
-    public function testDeleteMessagesByGroupReturnsFalseAndRollsBackWhenExecuteFails(): void
+    public function testDeleteMessagesByGroupSampleIdReturnsFalseAndRollsBackWhenExecuteFails(): void
     {
         $stmtMock = $this->createMock(mysqli_stmt::class);
         $stmtMock->method('execute')->willReturn(false);
@@ -244,12 +244,12 @@ class LoggerTest extends TestCase
         $this->connMock->expects($this->once())->method('rollback')->willReturn(true);
         $this->connMock->expects($this->never())->method('commit');
 
-        $result = $this->logger->deleteMessagesByGroup('MyApp', 'Error occurred', 'Agent/1.0');
+        $result = $this->logger->deleteMessagesByGroupSampleId(99);
 
         $this->assertFalse($result);
     }
 
-    public function testDeleteMessagesByGroupRethrowsExceptionAfterRollback(): void
+    public function testDeleteMessagesByGroupSampleIdRethrowsExceptionAfterRollback(): void
     {
         $this->connMock->method('begin_transaction')->willReturn(true);
         $this->connMock->method('prepare')
@@ -259,6 +259,6 @@ class LoggerTest extends TestCase
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('Deadlock detected');
 
-        $this->logger->deleteMessagesByGroup('MyApp', 'msg', 'UA');
+        $this->logger->deleteMessagesByGroupSampleId(1);
     }
 }

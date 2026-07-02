@@ -24,7 +24,11 @@ export class NotificationManager {
 
     if (typeof bootstrap === "undefined") {
       console.error("Bootstrap is not loaded");
-      window.alert(`${title}: ${message}`);
+      if (typeof $ !== "undefined" && typeof $.alert === "function") {
+        $.alert({ title, content: message, theme: "dark" });
+      } else {
+        window.alert(`${title}: ${message}`);
+      }
       return;
     }
 
@@ -52,12 +56,51 @@ export class NotificationManager {
   }
 }
 
+/**
+ * Shows a themed confirmation dialog via jQuery.confirm, invoking onConfirm
+ * only if the user confirms. Falls back to a native window.confirm if
+ * jQuery/jquery-confirm isn't loaded (content is stripped of markup first,
+ * since it's authored as HTML for the jQuery.confirm path).
+ */
+function showConfirm({ title, content, onConfirm }) {
+  if (typeof $ === "undefined" || typeof $.confirm !== "function") {
+    console.error("jQuery.confirm is not loaded");
+    if (window.confirm(`${title}\n\n${content.replace(/<[^>]+>/g, "")}`)) {
+      onConfirm?.();
+    }
+    return;
+  }
+
+  $.confirm({
+    title,
+    content,
+    theme: "dark",
+    type: "red",
+    buttons: {
+      confirm: {
+        text: "Yes",
+        btnClass: "btn-danger",
+        action: () => onConfirm?.(),
+      },
+      cancel: {
+        text: "Cancel",
+      },
+    },
+  });
+}
+
 export class UIManager {
   constructor(feedState, workflowLimiterState) {
     this.feedState = feedState;
     this.workflowLimiterState = workflowLimiterState;
     this.eventAssigned = false;
     this.eventAssignedError = false;
+  }
+
+  #esc(str) {
+    return String(str ?? '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
   updateFeedPreference(toggle) {
@@ -113,30 +156,58 @@ export class UIManager {
     toggle.addEventListener("change", () => this.updateFeedPreference(toggle));
   }
 
-  confirmDelete(application) {
-    const message = `Are you sure you want to delete messages for ${decodeURIComponent(application)}?`;
-    return window.confirm(message);
+  confirmDelete(application, onConfirm) {
+    const message = `Are you sure you want to delete messages for ${this.#esc(decodeURIComponent(application))}?`;
+    showConfirm({ title: "Delete Messages", content: message, onConfirm });
   }
 
-  confirmTruncateMessages() {
-    return window.confirm("Are you sure you want to truncate all messages? This action cannot be undone.");
+  confirmTruncateMessages(onConfirm) {
+    showConfirm({
+      title: "Truncate All Messages",
+      content: "Are you sure you want to truncate all messages? This action cannot be undone.",
+      onConfirm,
+    });
   }
 
-  confirmPurgeQueue(queueName) {
-    return window.confirm(`Are you sure you want to purge all messages from queue "${queueName}"? This action cannot be undone.`);
+  confirmPurgeQueue(queueName, onConfirm) {
+    showConfirm({
+      title: "Purge Queue",
+      content: `Are you sure you want to purge all messages from queue "${this.#esc(queueName)}"? This action cannot be undone.`,
+      onConfirm,
+    });
   }
 
-  confirmDeleteError(directory) {
-    const message = `Are you sure you want to delete error_log file located at ${directory}?`;
-    return window.confirm(message);
+  confirmDeleteError(directory, onConfirm) {
+    const message = `Are you sure you want to delete error_log file located at ${this.#esc(directory)}?`;
+    showConfirm({ title: "Delete Error Log", content: message, onConfirm });
   }
 
-  confirmTruncateDbErrors() {
-    return window.confirm("Are you sure you want to truncate all DB error records? This action cannot be undone.");
+  confirmTruncateDbErrors(onConfirm) {
+    showConfirm({
+      title: "Truncate DB Errors",
+      content: "Are you sure you want to truncate all DB error records? This action cannot be undone.",
+      onConfirm,
+    });
   }
 
-  confirmDeleteErrorsByPath(path) {
-    return window.confirm(`Delete all DB error records for:\n${path}\n\nThis action cannot be undone.`);
+  confirmDeleteErrorsByPath(path, onConfirm) {
+    showConfirm({
+      title: "Delete DB Error Records",
+      content: `Delete all DB error records for:<br><code>${this.#esc(path)}</code><br><br>This action cannot be undone.`,
+      onConfirm,
+    });
+  }
+
+  confirmDeleteMessage(id, onConfirm) {
+    showConfirm({ title: "Delete Message", content: `Delete message #${this.#esc(id)}?`, onConfirm });
+  }
+
+  confirmDeleteMessageGroup(rawApp, onConfirm) {
+    showConfirm({
+      title: "Delete Message Group",
+      content: `Are you sure you want to delete all "${this.#esc(rawApp)}" messages in this group?`,
+      onConfirm,
+    });
   }
 }
 

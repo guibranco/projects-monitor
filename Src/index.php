@@ -36,6 +36,7 @@ $configuration = new Configuration();
       integrity="sha512-dPXYcDub/aeb08c63jRq/k6GaKccl256JQy/AnOq7CAnEZ9FzSL9wSbcZkMp4R26vBsMLFYH4kQ67/bbV8XaCQ=="
       crossorigin="anonymous">
    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridjs@6.2.0/dist/theme/mermaid.min.css">
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-confirm@3.3.4/css/jquery-confirm.min.css">
    <link rel="preconnect" href="https://fonts.googleapis.com">
    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
@@ -203,7 +204,7 @@ $configuration = new Configuration();
          <div class="chart-container">
             <div class="text-end mb-1">
                <button id="btn_truncate_messages" class="btn btn-warning btn-sm" style="display:none"
-                  onclick="if(window.confirmTruncateMessages?.()) window.truncateMessages?.()">Truncate All
+                  onclick="window.confirmTruncateMessages?.(() => window.truncateMessages?.())">Truncate All
                   Messages</button>
             </div>
             <div id="messages_by_applications"></div>
@@ -234,7 +235,7 @@ $configuration = new Configuration();
          <div class="section-content">
             <div class="text-end mb-1">
                <button id="btn_truncate_db_errors" class="btn btn-warning btn-sm" style="display:none"
-                  onclick="if(window.confirmTruncateDbErrors?.()) window.truncateDbErrors?.()">
+                  onclick="window.confirmTruncateDbErrors?.(() => window.truncateDbErrors?.())">
                   <i class="bi bi-trash me-1"></i>Truncate All
                </button>
             </div>
@@ -483,6 +484,8 @@ $configuration = new Configuration();
       integrity="sha256-CDOy6cOibCWEdsRiZuaHf8dSGGJRYuBGC+mjoJimHGw=" crossorigin="anonymous"></script>
    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
    <script src="https://cdn.jsdelivr.net/npm/gridjs@6.2.0/dist/gridjs.umd.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/jquery-confirm@3.3.4/js/jquery-confirm.min.js"></script>
    <script type="module" src="static/main.js?<?php echo filemtime("static/main.js"); ?>"></script>
    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
    <script>

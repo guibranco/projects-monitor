@@ -141,9 +141,7 @@ export class DataDisplayManager {
             const deleteButton = e.target.closest('[data-action="delete"]');
             if (deleteButton) {
               const { directory } = deleteButton.dataset;
-              if (window.confirmDeleteError && window.confirmDeleteError(directory)) {
-                window.deleteErrorLogFile?.(directory);
-              }
+              window.confirmDeleteError?.(directory, () => window.deleteErrorLogFile?.(directory));
             }
           });
       }
@@ -388,9 +386,7 @@ export class DataDisplayManager {
             const deleteButton = e.target.closest('[data-action="delete"]');
             if (deleteButton) {
               const { application } = deleteButton.dataset;
-              if (window.confirmDelete && window.confirmDelete(application)) {
-                window.deleteMessageByApplication?.(application);
-              }
+              window.confirmDelete?.(application, () => window.deleteMessageByApplication?.(application));
             }
           });
       }
@@ -445,9 +441,7 @@ export class DataDisplayManager {
         const btn = e.target.closest('[data-action="delete-path"]');
         if (!btn) return;
         const decoded = decodeURIComponent(btn.dataset.path ?? '');
-        if (window.confirmDeleteErrorsByPath?.(decoded)) {
-          window.deleteErrorsByPath?.(decoded);
-        }
+        window.confirmDeleteErrorsByPath?.(decoded, () => window.deleteErrorsByPath?.(decoded));
       });
     }
   }
@@ -491,9 +485,7 @@ export class DataDisplayManager {
           if (purgeButton) {
             const { host, vhost, queue } = purgeButton.dataset;
             const decodedQueue = decodeURIComponent(queue);
-            if (window.confirmPurgeQueue && window.confirmPurgeQueue(decodedQueue)) {
-              window.purgeQueue?.(host, vhost, queue);
-            }
+            window.confirmPurgeQueue?.(decodedQueue, () => window.purgeQueue?.(host, vhost, queue));
           }
         });
     }

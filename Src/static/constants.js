@@ -48,7 +48,7 @@ export const CHART_OPTIONS = {
     allowHtml: true,
     showRowNumber: true,
     sort: false,
-    pagination: false,
+    pagination: true,
     search: false,
     width: "100%",
     height: "100%",

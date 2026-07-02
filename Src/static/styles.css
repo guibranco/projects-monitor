@@ -439,6 +439,32 @@ code {
 }
 
 /* ===========================================
+   GRID.JS PAGE-SIZE TOOLBAR
+   =========================================== */
+.gridjs-page-size-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.gridjs-page-size-toolbar label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, .65);
+}
+
+.gridjs-page-size-select {
+  background: rgba(0, 0, 0, .2);
+  color: var(--text-primary);
+  border: 1px solid var(--glass-border-light);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 12px;
+}
+
+/* ===========================================
    GRID.JS DARK THEME OVERRIDES
    (mermaid.min.css is Grid.js's only official theme and is light-mode by
    default, so every surface needs a dark override here to match the rest
@@ -496,6 +522,23 @@ th.gridjs-th {
   border-color: rgba(255, 255, 255, .15);
 }
 
+.gridjs-pagination .gridjs-pages button.gridjs-currentPage {
+  background-color: var(--accent-gradient);
+  background: var(--accent-gradient);
+  color: #ffffff;
+}
+
+.gridjs-pagination .gridjs-pages button:hover,
+.gridjs-pagination .gridjs-pages button:focus {
+  background: rgba(255, 255, 255, .18);
+  color: #ffffff;
+}
+
+.gridjs-pagination .gridjs-pages button:disabled {
+  background: rgba(255, 255, 255, .04);
+  color: rgba(255, 255, 255, .35);
+}
+
 input.gridjs-input {
   background: rgba(0, 0, 0, .2);
   color: #ffffff;
@@ -529,7 +572,7 @@ input.gridjs-input {
    =========================================== */
 .gauges-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(5, 1fr);
   gap: 0;
   margin-bottom: 0;
   padding: 20px;
@@ -576,7 +619,6 @@ input.gridjs-input {
   flex-direction: column;
   gap: 20px;
   min-width: 0;
-  overflow: hidden;
 }
 
 /* ===========================================
@@ -726,13 +768,19 @@ input.gridjs-input {
 /* Section content animations */
 .section-content {
   transition: var(--transition-smooth);
-  overflow: hidden;
+  overflow: visible;
   opacity: 1;
   transform: translateY(0);
-  max-height: 2000px;
+  /* Large but finite so the collapse/expand transition still animates
+     smoothly (transitions can't interpolate to/from "none"); paired with
+     overflow: visible above so content taller than this never gets
+     silently clipped, it just stops the height-transition early while
+     still rendering in full. */
+  max-height: 10000px;
 }
 
 .section-content.collapsed {
+  overflow: hidden;
   max-height: 0 !important;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
@@ -840,6 +888,7 @@ input.gridjs-input {
   }
 
   .gauges-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     padding: 10px;
   }
 

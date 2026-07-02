@@ -1,7 +1,12 @@
 // gridManager.js
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
+const DEFAULT_PAGE_SIZE = 10;
+
 export class GridManager {
   constructor() {
     this.gridjs = window.gridjs;
+    this.grids = new Map();     // elementId -> live Grid instance
+    this.pageSizes = new Map(); // elementId -> user-selected page size, persists across redraws/polls
   }
 
   /**
@@ -23,6 +28,7 @@ export class GridManager {
     // Always fully recreate, matching the old "new google.visualization.Table()
     // fresh on every redraw" semantics, instead of diffing/updateConfig.
     el.innerHTML = '';
+    this.grids.delete(elementId);
 
     if (!headerRow || headerRow.length === 0) {
       // "[[]]" empty-state sentinel: render nothing, matching the old
@@ -32,6 +38,7 @@ export class GridManager {
 
     const showRowNumber = options.showRowNumber !== false;
     const allowHtml = options.allowHtml === true;
+    const paginated = options.pagination !== false;
 
     let columns = headerRow.map((h, i) => ({
       name: String(h ?? ''),
@@ -50,17 +57,50 @@ export class GridManager {
       return cells.map(wrapCell);
     });
 
+    if (paginated) {
+      el.appendChild(this.#buildPageSizeToolbar(elementId));
+    }
+
+    const gridContainer = document.createElement('div');
+    el.appendChild(gridContainer);
+
+    const pageSize = this.pageSizes.get(elementId) ?? DEFAULT_PAGE_SIZE;
+
     const grid = new this.gridjs.Grid({
       columns,
       data: gridData,
       sort: false,
-      pagination: false,
+      pagination: paginated ? { limit: pageSize, summary: true } : false,
       search: false,
       resizable: false,
       className: { table: 'gridjs-table-dark' },
     });
 
-    grid.render(el);
+    grid.render(gridContainer);
+    this.grids.set(elementId, grid);
     return grid;
+  }
+
+  #buildPageSizeToolbar(elementId) {
+    const currentSize = this.pageSizes.get(elementId) ?? DEFAULT_PAGE_SIZE;
+
+    const toolbar = document.createElement('div');
+    toolbar.className = 'gridjs-page-size-toolbar';
+    toolbar.innerHTML = `
+      <label>
+        Rows per page:
+        <select class="gridjs-page-size-select" aria-label="Rows per page">
+          ${PAGE_SIZE_OPTIONS.map((n) => `<option value="${n}"${n === currentSize ? ' selected' : ''}>${n}</option>`).join('')}
+        </select>
+      </label>`;
+
+    toolbar.querySelector('select').addEventListener('change', (e) => {
+      const newSize = parseInt(e.target.value, 10);
+      this.pageSizes.set(elementId, newSize);
+      const grid = this.grids.get(elementId);
+      grid?.updateConfig({ pagination: { limit: newSize, summary: true } }).forceRender();
+    });
+
+    return toolbar;
   }
 }

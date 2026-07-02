@@ -90,6 +90,8 @@ class DashboardApp {
     window.confirmDeleteError = this.uiManager.confirmDeleteError.bind(this.uiManager);
     window.confirmTruncateDbErrors = this.uiManager.confirmTruncateDbErrors.bind(this.uiManager);
     window.confirmDeleteErrorsByPath = this.uiManager.confirmDeleteErrorsByPath.bind(this.uiManager);
+    window.confirmDeleteMessage = this.uiManager.confirmDeleteMessage.bind(this.uiManager);
+    window.confirmDeleteMessageGroup = this.uiManager.confirmDeleteMessageGroup.bind(this.uiManager);
 
     // ── Message detail modal ────────────────────────────────────────────────
     const _apiMgr  = this.apiManager;
@@ -240,11 +242,12 @@ class DashboardApp {
         const deleteBtn = e.target.closest('[data-action="delete-single-msg"]');
         if (deleteBtn) {
           const id = parseInt(deleteBtn.dataset.id, 10);
-          if (!confirm(`Delete message #${id}?`)) return;
-          await _apiMgr.deleteMessageById(id);
-          if (_msgDetailGroup) {
-            _loadMsgDetails(_msgDetailGroup.sampleId);
-          }
+          window.confirmDeleteMessage?.(id, async () => {
+            await _apiMgr.deleteMessageById(id);
+            if (_msgDetailGroup) {
+              _loadMsgDetails(_msgDetailGroup.sampleId);
+            }
+          });
         }
       });
 
@@ -265,15 +268,16 @@ class DashboardApp {
       _loadMsgDetails(sampleId);
     };
 
-    window.deleteMessageGroup = async () => {
+    window.deleteMessageGroup = () => {
       if (!_msgDetailGroup) return;
       const { sampleId, rawApp } = _msgDetailGroup;
-      if (!confirm(`Delete all "${rawApp}" messages in this group?`)) return;
-      const data = await _apiMgr.deleteMessageGroup(sampleId);
-      const modalEl = document.getElementById('messageDetailsModal');
-      bootstrap.Modal.getInstance(modalEl)?.hide();
-      _msgDetailGroup = null;
-      _dispMgr.showMessages(data);
+      window.confirmDeleteMessageGroup?.(rawApp, async () => {
+        const data = await _apiMgr.deleteMessageGroup(sampleId);
+        const modalEl = document.getElementById('messageDetailsModal');
+        bootstrap.Modal.getInstance(modalEl)?.hide();
+        _msgDetailGroup = null;
+        _dispMgr.showMessages(data);
+      });
     };
     // ── End message detail modal ────────────────────────────────────────────
 

@@ -303,6 +303,142 @@ code {
 }
 
 /* ===========================================
+   RELEASE NOTES
+   =========================================== */
+.release-notes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.release-notes-eyebrow {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, .55);
+  margin-bottom: 4px;
+}
+
+.release-notes-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.release-notes-title:hover {
+  color: #ff9d5c;
+  text-decoration: underline;
+}
+
+.release-notes-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.release-notes-badges img {
+  display: block;
+  height: 20px;
+}
+
+.release-notes-meta {
+  font-size: 12px;
+  color: rgba(255, 255, 255, .55);
+  margin: 10px 0 12px;
+}
+
+.release-notes-body {
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 10px;
+  border-top: 1px solid var(--glass-border-light);
+  padding-top: 12px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, .85);
+}
+
+.release-notes-body h1,
+.release-notes-body h2,
+.release-notes-body h3,
+.release-notes-body h4,
+.release-notes-body h5,
+.release-notes-body h6 {
+  color: var(--text-primary);
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 14px 0 6px;
+}
+
+.release-notes-body h1:first-child,
+.release-notes-body h2:first-child,
+.release-notes-body h3:first-child {
+  margin-top: 0;
+}
+
+.release-notes-body h1 { font-size: 18px; }
+.release-notes-body h2 { font-size: 16px; }
+.release-notes-body h3,
+.release-notes-body h4,
+.release-notes-body h5,
+.release-notes-body h6 { font-size: 14px; }
+
+.release-notes-body p {
+  margin: 0 0 10px;
+}
+
+.release-notes-body ul,
+.release-notes-body ol {
+  margin: 0 0 10px;
+  padding-left: 22px;
+}
+
+.release-notes-body li {
+  margin-bottom: 4px;
+}
+
+.release-notes-body a {
+  color: #ff9d5c;
+}
+
+.release-notes-body pre {
+  background: rgba(0, 0, 0, .35);
+  padding: 10px 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0 0 10px;
+}
+
+.release-notes-body pre code {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.release-notes-body blockquote {
+  border-left: 3px solid var(--glass-border);
+  margin: 0 0 10px;
+  padding: 4px 12px;
+  color: rgba(255, 255, 255, .65);
+}
+
+.release-notes-body hr {
+  border: none;
+  border-top: 1px solid var(--glass-border-light);
+  margin: 14px 0;
+}
+
+.release-notes-body img {
+  max-width: 100%;
+}
+
+/* ===========================================
    GRID.JS DARK THEME OVERRIDES
    (mermaid.min.css is Grid.js's only official theme and is light-mode by
    default, so every surface needs a dark override here to match the rest

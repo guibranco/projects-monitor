@@ -167,14 +167,26 @@ export class DataDisplayManager {
    */
   showGitHub(response) {
     if (typeof response.latest_release !== "undefined") {
-      const latestRelease = response.latest_release;
-      document.getElementById("latest_release").innerHTML =
-        `<b>Release Notes:</b> ${latestRelease.description}<b>Date:</b> ${latestRelease.published} | ` +
-        `<b>Version:</b> <a href='${latestRelease.release_url}'>${latestRelease.title}</a> | ` +
-        `<a href='https://github.com/${latestRelease.repository}' target='_blank' rel='noopener noreferrer'>` +
-        `<img alt='Static Badge' src='https://img.shields.io/badge/${latestRelease.repository}-black?style=flat&amp;logo=github'></a> | ` +
-        `<a href='https://github.com/${latestRelease.author}' target='_blank' rel='noopener noreferrer'>` +
-        `<img alt='author' src='https://img.shields.io/badge/${latestRelease.author}-black?style=social&amp;logo=github'></a>`;
+      const r = response.latest_release;
+      document.getElementById("latest_release").innerHTML = `
+        <div class="release-notes">
+          <div class="release-notes-header">
+            <div class="release-notes-heading">
+              <span class="release-notes-eyebrow">Latest Release</span>
+              <a class="release-notes-title" href="${r.release_url}" target="_blank" rel="noopener noreferrer">${this.#escHtml(r.title)}</a>
+            </div>
+            <div class="release-notes-badges">
+              <a href="https://github.com/${r.repository}" target="_blank" rel="noopener noreferrer">
+                <img alt="repository" src="https://img.shields.io/badge/${r.repository}-black?style=flat&amp;logo=github">
+              </a>
+              <a href="https://github.com/${r.author}" target="_blank" rel="noopener noreferrer">
+                <img alt="author" src="https://img.shields.io/badge/${r.author}-black?style=social&amp;logo=github">
+              </a>
+            </div>
+          </div>
+          <div class="release-notes-meta"><i class="bi bi-clock-history me-1"></i>${this.#escHtml(r.published)}</div>
+          <div class="release-notes-body">${r.description}</div>
+        </div>`;
     }
 
     const gaugeOptions = {

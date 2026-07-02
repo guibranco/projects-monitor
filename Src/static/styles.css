@@ -302,8 +302,59 @@ code {
   min-height: 300px;
 }
 
-.google-visualization-table {
-  color: #000;
+/* ===========================================
+   GRID.JS DARK THEME OVERRIDES
+   (mermaid.min.css is Grid.js's only official theme and is light-mode by
+   default, so every surface needs a dark override here to match the rest
+   of the dashboard's glass/dark aesthetic.)
+   =========================================== */
+.gridjs-wrapper {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.gridjs-table {
+  color: #ffffff;
+  background: rgba(0, 0, 0, .05);
+  width: 100%;
+}
+
+.gridjs-th {
+  background: rgba(255, 255, 255, .08);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, .15);
+}
+
+.gridjs-td {
+  background: transparent;
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, .08);
+}
+
+.gridjs-tr:hover .gridjs-td {
+  background: rgba(255, 255, 255, .06);
+}
+
+.gridjs-footer {
+  background: transparent;
+  border: none;
+}
+
+.gridjs-pagination .gridjs-pages button {
+  background: rgba(255, 255, 255, .08);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, .15);
+}
+
+.gridjs-search-input {
+  background: rgba(0, 0, 0, .2);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, .15);
+}
+
+.msg-detail-row {
+  background: rgba(0, 0, 0, .35) !important;
 }
 
 /* ===========================================

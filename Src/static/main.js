@@ -95,15 +95,113 @@ class DashboardApp {
     const _apiMgr  = this.apiManager;
     const _dispMgr = this.dataDisplayManager;
     let   _msgDetailGroup = null;
+    let   _msgDetailGrid = null;
+    let   _msgDetailMsgs = [];
+    const _expandedMsgIds = new Set();
 
     const _esc = (s) =>
       String(s ?? '')
         .replace(/&/g, '&amp;').replace(/</g, '&lt;')
         .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+    const MSG_DETAIL_COLUMNS = ['#ID', 'Class', 'Function', 'File : Line',
+      'Type', 'Correlation ID', 'Created At', 'Actions'];
+
+    // Detail (expanded) rows are represented by giving every cell the same
+    // marker object; column 0's formatter renders the real content spanning
+    // the full row width (via a colSpan attribute), the rest render empty
+    // and are hidden — Grid.js has no native "extra sibling row" concept.
+    const _detailMarker = (html) => ({ __detail: true, html });
+
+    const _msgDetailRow = (m) => [
+      m.id,
+      _esc(m.class),
+      _esc(m.function),
+      `${_esc(m.file)}<span class="text-muted">:${_esc(m.line)}</span>`,
+      _esc(m.type),
+      _esc(m.correlation_id),
+      _esc(m.created_at),
+      `<button class="btn btn-sm btn-outline-secondary py-0 me-1"
+         data-action="toggle-msg-detail" data-id="${m.id}"
+         title="View object / args / details">
+         <i class="bi bi-chevron-${_expandedMsgIds.has(m.id) ? 'up' : 'down'}"></i>
+       </button>
+       <button class="btn btn-sm btn-danger py-0"
+         data-action="delete-single-msg" data-id="${m.id}"
+         title="Delete this message">
+         <i class="bi bi-trash"></i>
+       </button>`,
+    ];
+
+    const _msgDetailExtraRow = (m) => {
+      const html = `<dl class="row mb-0 small">
+          <dt class="col-sm-2 text-warning">Object</dt>
+          <dd class="col-sm-10"><code class="text-break">${_esc(m.object)}</code></dd>
+          <dt class="col-sm-2 text-warning">Args</dt>
+          <dd class="col-sm-10"><code class="text-break">${_esc(m.args)}</code></dd>
+          <dt class="col-sm-2 text-warning">Details</dt>
+          <dd class="col-sm-10"><code class="text-break">${_esc(m.details)}</code></dd>
+        </dl>`;
+      const marker = _detailMarker(html);
+      return MSG_DETAIL_COLUMNS.map(() => marker);
+    };
+
+    const _buildMsgDetailGridData = () => {
+      const data = [];
+      for (const m of _msgDetailMsgs) {
+        data.push(_msgDetailRow(m));
+        if (_expandedMsgIds.has(m.id)) {
+          data.push(_msgDetailExtraRow(m));
+        }
+      }
+      return data;
+    };
+
+    const _renderMsgDetailGrid = () => {
+      const body = document.getElementById('msgDetailBody');
+      if (!body) return;
+
+      const columns = MSG_DETAIL_COLUMNS.map((name, colIndex) => ({
+        name,
+        formatter: (cell) => {
+          if (cell && typeof cell === 'object' && cell.__detail) {
+            return colIndex === 0 ? gridjs.html(cell.html) : '';
+          }
+          return typeof cell === 'string' ? gridjs.html(cell) : cell;
+        },
+        attributes: (cell) => {
+          if (cell && typeof cell === 'object' && cell.__detail) {
+            return colIndex === 0
+              ? { colSpan: MSG_DETAIL_COLUMNS.length, class: 'msg-detail-row' }
+              : { style: 'display:none' };
+          }
+          return {};
+        },
+      }));
+
+      if (_msgDetailGrid) {
+        _msgDetailGrid.updateConfig({ columns, data: _buildMsgDetailGridData() }).forceRender();
+        return;
+      }
+
+      body.innerHTML = '';
+      _msgDetailGrid = new gridjs.Grid({
+        columns,
+        data: _buildMsgDetailGridData(),
+        sort: false,
+        pagination: false,
+        search: false,
+        resizable: false,
+        className: { table: 'gridjs-table-dark' },
+      });
+      _msgDetailGrid.render(body);
+    };
+
     const _loadMsgDetails = async (sampleId) => {
       const body = document.getElementById('msgDetailBody');
       if (!body) return;
+      _msgDetailGrid = null;
+      _expandedMsgIds.clear();
       body.innerHTML = `<div class="text-center py-4">
         <div class="spinner-border text-light" role="status">
           <span class="visually-hidden">Loading…</span>
@@ -111,62 +209,14 @@ class DashboardApp {
 
       try {
         const data = await _apiMgr.getMessageDetails(sampleId);
-        const msgs = data.messages ?? [];
+        _msgDetailMsgs = data.messages ?? [];
 
-        if (msgs.length === 0) {
+        if (_msgDetailMsgs.length === 0) {
           body.innerHTML = '<p class="text-center text-muted py-3">No messages found in this group.</p>';
           return;
         }
 
-        const rows = msgs.map(m => `
-          <tr>
-            <td class="text-nowrap">${m.id}</td>
-            <td class="text-nowrap">${_esc(m.class)}</td>
-            <td class="text-nowrap">${_esc(m.function)}</td>
-            <td class="text-nowrap">${_esc(m.file)}<span class="text-muted">:${_esc(m.line)}</span></td>
-            <td class="text-nowrap">${_esc(m.type)}</td>
-            <td class="text-nowrap">${_esc(m.correlation_id)}</td>
-            <td class="text-nowrap">${_esc(m.created_at)}</td>
-            <td class="text-nowrap">
-              <button class="btn btn-sm btn-outline-secondary py-0 me-1"
-                data-bs-toggle="collapse"
-                data-bs-target="#msg-extra-${m.id}"
-                title="View object / args / details">
-                <i class="bi bi-chevron-down"></i>
-              </button>
-              <button class="btn btn-sm btn-danger py-0"
-                data-action="delete-single-msg"
-                data-id="${m.id}"
-                title="Delete this message">
-                <i class="bi bi-trash"></i>
-              </button>
-            </td>
-          </tr>
-          <tr id="msg-extra-${m.id}" class="collapse">
-            <td colspan="8" class="p-3" style="background:rgba(0,0,0,.35);">
-              <dl class="row mb-0 small">
-                <dt class="col-sm-2 text-warning">Object</dt>
-                <dd class="col-sm-10"><code class="text-break">${_esc(m.object)}</code></dd>
-                <dt class="col-sm-2 text-warning">Args</dt>
-                <dd class="col-sm-10"><code class="text-break">${_esc(m.args)}</code></dd>
-                <dt class="col-sm-2 text-warning">Details</dt>
-                <dd class="col-sm-10"><code class="text-break">${_esc(m.details)}</code></dd>
-              </dl>
-            </td>
-          </tr>`).join('');
-
-        body.innerHTML = `
-          <div class="table-responsive">
-            <table class="table table-dark table-sm table-hover align-middle mb-0">
-              <thead class="table-secondary">
-                <tr>
-                  <th>#ID</th><th>Class</th><th>Function</th><th>File : Line</th>
-                  <th>Type</th><th>Correlation ID</th><th>Created At</th><th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>${rows}</tbody>
-            </table>
-          </div>`;
+        _renderMsgDetailGrid();
       } catch (_) {
         body.innerHTML = '<div class="alert alert-danger m-3">Failed to load message details.</div>';
       }
@@ -175,13 +225,26 @@ class DashboardApp {
     // Delegated click handler on the modal body (set up once; body element persists)
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('msgDetailBody')?.addEventListener('click', async (e) => {
-        const btn = e.target.closest('[data-action="delete-single-msg"]');
-        if (!btn) return;
-        const id = parseInt(btn.dataset.id, 10);
-        if (!confirm(`Delete message #${id}?`)) return;
-        await _apiMgr.deleteMessageById(id);
-        if (_msgDetailGroup) {
-          _loadMsgDetails(_msgDetailGroup.sampleId);
+        const toggleBtn = e.target.closest('[data-action="toggle-msg-detail"]');
+        if (toggleBtn) {
+          const id = parseInt(toggleBtn.dataset.id, 10);
+          if (_expandedMsgIds.has(id)) {
+            _expandedMsgIds.delete(id);
+          } else {
+            _expandedMsgIds.add(id);
+          }
+          _renderMsgDetailGrid();
+          return;
+        }
+
+        const deleteBtn = e.target.closest('[data-action="delete-single-msg"]');
+        if (deleteBtn) {
+          const id = parseInt(deleteBtn.dataset.id, 10);
+          if (!confirm(`Delete message #${id}?`)) return;
+          await _apiMgr.deleteMessageById(id);
+          if (_msgDetailGroup) {
+            _loadMsgDetails(_msgDetailGroup.sampleId);
+          }
         }
       });
 
@@ -307,9 +370,13 @@ class DashboardApp {
     document.addEventListener('sectionToggled', (e) => {
       const { sectionId, collapsed } = e.detail;
       console.log(`Dashboard: Section ${sectionId} ${collapsed ? 'collapsed' : 'expanded'}`);
-      
-      // You can add custom logic here when sections are toggled
-      // For example, pause/resume chart updates, save analytics, etc.
+
+      // ECharts measures its container's pixel size at draw time, so a chart
+      // drawn while its section was collapsed (max-height: 0) renders 0x0.
+      // Resize every known chart instance whenever a section expands.
+      if (!collapsed) {
+        this.dataDisplayManager.chartManager.resizeAll();
+      }
     });
 
     // Add keyboard shortcuts
@@ -362,14 +429,13 @@ class DashboardApp {
 // Initialize the application
 const app = new DashboardApp();
 
-// Set up Google Charts
-if (typeof google !== 'undefined') {
-  google.charts.load("current", { packages: ["corechart", "table", "gauge"] });
-  google.charts.setOnLoadCallback(() => app.drawChart());
-}
-
-// Set up window load event
-window.addEventListener("load", () => app.init());
+// ECharts and Grid.js are loaded via plain synchronous <script> tags in
+// index.php, before this module executes, so window.echarts/window.gridjs
+// are already defined by the time DashboardApp's constructor runs.
+window.addEventListener("load", () => {
+  app.init();
+  app.drawChart();
+});
 
 // Export the app instance for debugging
 window.dashboardApp = app;

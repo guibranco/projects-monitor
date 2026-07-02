@@ -407,54 +407,37 @@ export class DataDisplayManager {
     if (!container) return;
 
     const total = response.total ?? 0;
-    if (counterEl) counterEl.textContent = total;
 
     if (!response.errors || response.errors.length === 0) {
       if (truncateBtn) truncateBtn.style.display = "none";
-      container.innerHTML = '<p class="text-muted text-center py-3 mb-0">No error records in the database.</p>';
+      this.chartManager.drawDataTable([[]], "db_error_messages", CHART_OPTIONS.table);
+      if (counterEl) counterEl.textContent = total;
       return;
     }
 
     if (truncateBtn) truncateBtn.style.display = "";
 
+    const header = ["Date", "Log File", "Error", "Location", "Actions"];
     const rows = response.errors.map(err => {
       const basePath       = (err.error_log_path ?? '').split('/').pop();
       const truncatedError = (err.error ?? '').length > 120
         ? err.error.substring(0, 120) + '…'
         : (err.error ?? '');
       const safePath = encodeURIComponent(err.error_log_path ?? '');
-      return `<tr>
-        <td class="text-nowrap small">${this.#escHtml(err.date)}</td>
-        <td class="small font-monospace" title="${this.#escHtml(err.error_log_path)}">${this.#escHtml(basePath)}</td>
-        <td class="small" title="${this.#escHtml(err.error)}">${this.#escHtml(truncatedError)}</td>
-        <td class="small font-monospace text-nowrap">${this.#escHtml(err.file)}:${err.line}</td>
-        <td class="text-center">
-          <button class="btn btn-danger btn-sm"
+      const btn = `<button class="btn btn-danger btn-sm"
                   data-action="delete-path"
                   data-path="${safePath}"
                   title="Delete all errors for this log file"
                   aria-label="Delete all errors for ${this.#escHtml(basePath)}">
             <i class="bi bi-trash2"></i>
-          </button>
-        </td>
-      </tr>`;
-    }).join('');
+          </button>`;
+      const logFile = `<span title="${this.#escHtml(err.error_log_path)}">${this.#escHtml(basePath)}</span>`;
+      const errorCell = `<span title="${this.#escHtml(err.error)}">${this.#escHtml(truncatedError)}</span>`;
+      return [this.#escHtml(err.date), logFile, errorCell, this.#escHtml(`${err.file}:${err.line}`), btn];
+    });
 
-    container.innerHTML = `
-      <div class="table-responsive">
-        <table class="table table-sm table-hover align-middle mb-0 db-errors-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Log File</th>
-              <th>Error</th>
-              <th>Location</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>`;
+    this.chartManager.drawDataTable([header, ...rows], "db_error_messages", CHART_OPTIONS.table);
+    if (counterEl) counterEl.textContent = total;
 
     if (!this.eventAssignedDbErrors) {
       this.eventAssignedDbErrors = true;
@@ -645,9 +628,9 @@ export class DataDisplayManager {
     if (!container) return;
 
     const items = Array.isArray(response) ? response : [];
-    if (counterEl) counterEl.textContent = items.length;
 
     if (items.length === 0) {
+      if (counterEl) counterEl.textContent = 0;
       container.innerHTML = '<p class="text-muted text-center py-3 mb-0">No pull requests pending processing.</p>';
       return;
     }
@@ -662,50 +645,26 @@ export class DataDisplayManager {
       }
     };
 
+    const header = ["#Seq", "Repository", "PR", "Sender", "Branch", "State",
+      "Processing Date", "Receiver", "Handler", "Bot"];
+
     const rows = items.map(item => {
       const repo = `${this.#escHtml(item.repositoryOwner)}/${this.#escHtml(item.repositoryName)}`;
       const prLink = `<a href="https://github.com/${this.#escHtml(item.repositoryOwner)}/${this.#escHtml(item.repositoryName)}/pull/${item.number}" target="_blank" rel="noopener noreferrer">#${item.number}</a>`;
       const stateBadge = `<span class="badge ${stateBadgeClass(item.processingState)}">${this.#escHtml(item.processingState)}</span>`;
       const ref = item.ref ? this.#escHtml(item.ref.replace('refs/heads/', '')) : '—';
+      const refCell = `<span title="${this.#escHtml(item.ref ?? '')}">${ref}</span>`;
       const sender = item.senderLogin ? this.#escHtml(item.senderLogin) : (item.sender ? this.#escHtml(item.sender) : '—');
       const processingDate = item.processingDate ? this.#escHtml(item.processingDate) : '—';
       const receiverVer = item.webhooksReceiverVersion ? this.#escHtml(item.webhooksReceiverVersion) : '—';
       const handlerVer = item.webhooksHandlerVersion ? this.#escHtml(item.webhooksHandlerVersion) : '—';
       const botVer = item.gstracciniBotVersion ? this.#escHtml(item.gstracciniBotVersion) : '—';
-      return `<tr>
-        <td class="text-nowrap small text-muted">${item.sequence}</td>
-        <td class="small font-monospace">${repo}</td>
-        <td class="small">${prLink}</td>
-        <td class="small">${sender}</td>
-        <td class="small font-monospace text-truncate" style="max-width:140px" title="${this.#escHtml(item.ref ?? '')}">${ref}</td>
-        <td class="text-nowrap">${stateBadge}</td>
-        <td class="small text-nowrap">${processingDate}</td>
-        <td class="small text-center">${receiverVer}</td>
-        <td class="small text-center">${handlerVer}</td>
-        <td class="small text-center">${botVer}</td>
-      </tr>`;
-    }).join('');
+      return [item.sequence, repo, prLink, sender, refCell, stateBadge,
+        processingDate, receiverVer, handlerVer, botVer];
+    });
 
-    container.innerHTML = `
-      <div class="table-responsive">
-        <table class="table table-sm table-hover align-middle mb-0">
-          <thead>
-            <tr>
-              <th class="text-muted">#Seq</th>
-              <th>Repository</th>
-              <th>PR</th>
-              <th>Sender</th>
-              <th>Branch</th>
-              <th>State</th>
-              <th>Processing Date</th>
-              <th class="text-center">Receiver</th>
-              <th class="text-center">Handler</th>
-              <th class="text-center">Bot</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>`;
+    this.chartManager.drawDataTable([header, ...rows], "pr_processing", CHART_OPTIONS.table);
+    if (counterEl) counterEl.textContent = items.length;
   }
 
   /**

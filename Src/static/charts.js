@@ -181,7 +181,7 @@ export class ChartManager {
         splitLine: { length: 10, lineStyle: { color: '#ffffff', width: 2 } },
         axisLabel: { color: '#ffffff', fontSize: 10, distance: 18 },
         pointer: { itemStyle: { color: '#ffffff' } },
-        title: { fontSize: 13, offsetCenter: [0, '70%'] },
+        title: { fontSize: 13, offsetCenter: [0, '70%'], color: '#ffffff' },
         detail: { fontSize: 18, offsetCenter: [0, '40%'], color: '#ffffff', formatter: '{value}' },
         data: [{ value, name: label }],
       }],

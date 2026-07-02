@@ -45,17 +45,15 @@ export const API_ENDPOINTS = {
 
 export const CHART_OPTIONS = {
   table: {
-    legend: { position: "none" },
     allowHtml: true,
     showRowNumber: true,
+    sort: false,
+    pagination: false,
+    search: false,
     width: "100%",
     height: "100%",
-    background: {
-      fill: '#000000',
-      opacity: .05,
-    }
   },
-  
+
   gauge: {
     width: "100%",
     height: "100%",

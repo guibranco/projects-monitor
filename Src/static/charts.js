@@ -1,7 +1,11 @@
 // charts.js
+import { GridManager } from './gridManager.js';
+
 export class ChartManager {
   constructor() {
-    this.google = window.google;
+    this.echarts = window.echarts;
+    this.gridManager = new GridManager();
+    this._echartsIds = new Set();
   }
 
   /**
@@ -18,7 +22,7 @@ export class ChartManager {
    */
   deepMerge(target, source) {
     const result = { ...target };
-    
+
     for (const key in source) {
       if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
         result[key] = this.deepMerge(result[key] || {}, source[key]);
@@ -26,102 +30,81 @@ export class ChartManager {
         result[key] = source[key];
       }
     }
-    
+
     return result;
   }
 
+  #getOrInitChart(elementId) {
+    const el = document.getElementById(elementId);
+    if (!el) {
+      console.error(`Element with id ${elementId} not found`);
+      return null;
+    }
+    let instance = this.echarts.getInstanceByDom(el);
+    if (!instance) {
+      instance = this.echarts.init(el);
+      this._echartsIds.add(elementId);
+    }
+    return instance;
+  }
+
   /**
-   * Draws a Google Visualization chart of the specified type.
-   *
-   * This function initializes a chart based on the provided data, chart type,
-   * element ID, and custom options. It handles various chart types including table,
-   * line, pie, and gauge. The function also manages hiding a specific column if
-   * requested and adds an event listener to log selections made in the chart.
+   * Converts Google-style {min,max,greenTo,yellowTo,redTo} zone thresholds
+   * into ECharts axisLine.lineStyle.color stop-array format.
+   */
+  #zonesToColorStops(options) {
+    const min = options.min ?? 0;
+    const max = options.max ?? 100;
+    const range = (max - min) || 1;
+    const frac = (v) => Math.min(1, Math.max(0, (v - min) / range));
+    return [
+      [frac(options.greenTo ?? max), '#2ecc71'],
+      [frac(options.yellowTo ?? max), '#f1c40f'],
+      [frac(options.redTo ?? max), '#e74c3c'],
+    ];
+  }
+
+  #baseText() {
+    return {
+      backgroundColor: 'transparent',
+      textStyle: { color: '#ffffff' },
+      title: { textStyle: { color: '#ffffff' } },
+    };
+  }
+
+  #legendOff(options) {
+    return options.legend === 'none' || options.legend?.position === 'none';
+  }
+
+  /**
+   * Draws a chart of the specified type (table, line, pie, gauge) into elementId.
    *
    * @param {Array<Array<any>>} data - The dataset for the chart.
    * @param {string} chartType - The type of chart to draw (e.g., 'table', 'line', 'pie', 'gauge').
    * @param {string} elementId - The ID of the HTML element where the chart will be rendered.
    * @param {Object} customOptions - Custom options for the chart.
-   * @param {number} [hideColumn=-1] - Index of the column to hide in the chart (default is -1, indicating no column hidden).
-   * @returns {Object|null} An object containing chart details or null if an error occurs.
+   * @param {number} [hideColumn=-1] - Index of the column to hide (table charts only).
+   * @returns {Object|null} The underlying chart/grid instance, or null on error.
    */
   drawChartByType(data, chartType, elementId, customOptions, hideColumn = -1) {
-    if (!this.google.visualization) {
-      console.error("Google Visualization API not loaded");
-      return null;
-    }
-
     if (!data || !elementId || !customOptions) {
       console.error("Invalid parameters passed to drawChartByType");
       return null;
     }
 
-    const element = document.getElementById(elementId);
-    if (!element) {
-      console.error(`Element with id ${elementId} not found`);
-      return null;
-    }
-
-    const result = {
-      chartType,
-      elementId,
-    };
-
     switch (chartType) {
       case "table":
-        result.chart = new this.google.visualization.Table(element);
-        break;
+        return this.gridManager.draw(data, elementId, customOptions, hideColumn);
       case "line":
-        result.chart = new this.google.visualization.LineChart(element);
-        break;
+        return this.#drawLine(data, elementId, customOptions);
       case "pie":
-        result.chart = new this.google.visualization.PieChart(element);
-        break;
+        return this.#drawPie(data, elementId, customOptions);
       case "gauge":
-        result.chart = new this.google.visualization.Gauge(element);
-        break;
+        return this.#drawGauge(data, elementId, customOptions);
       default:
         console.error(`Invalid chart type: ${chartType}`);
         return null;
     }
-
-    result.dataTable = this.google.visualization.arrayToDataTable(data);
-
-    const defaultOptions = {
-      backgroundColor: 'transparent',
-      titleTextStyle: { color: '#ffffff' },
-      hAxis: { textStyle: { color: '#ffffff' } },
-      vAxis: { textStyle: { color: '#ffffff' } },
-      legend: { textStyle: { color: '#ffffff' } }
-    };
-
-    const options = this.deepMerge(defaultOptions, customOptions);
-
-    if (hideColumn >= 0 && data.length > 0) {
-      result.view = new this.google.visualization.DataView(result.dataTable);
-      if (data[0].length > hideColumn) {
-        result.view.hideColumns([hideColumn]);
-      }
-
-      result.chart.draw(result.view, options);
-
-      this.google.visualization.events.addListener(result.chart, "select", () => {
-        const selection = result.chart.getSelection();
-        if (selection.length > 0) {
-          const { row } = selection[0];
-          const item = result.dataTable.getValue(row, 0);
-          const hiddenInfo = result.dataTable.getValue(
-            row,
-            data[0].length > hideColumn ? hideColumn : 0
-          );
-          console.log(`You clicked on ${item}\nHidden Info: ${hiddenInfo}`);
-        }
-      });
-    } else {
-      result.chart.draw(result.dataTable, options);
-    }
-
-    return result;
   }
 
   /**
@@ -164,5 +147,133 @@ export class ChartManager {
       elementId,
       options
     );
+  }
+
+  /**
+   * Resizes every ECharts instance this manager has ever initialized. Used
+   * to fix charts drawn while their container was hidden (e.g. inside a
+   * collapsed section), since ECharts measures pixel dimensions at draw time.
+   */
+  resizeAll() {
+    for (const id of this._echartsIds) {
+      const el = document.getElementById(id);
+      if (el) {
+        this.echarts.getInstanceByDom(el)?.resize();
+      }
+    }
+  }
+
+  #drawGauge(data, elementId, options) {
+    const chart = this.#getOrInitChart(elementId);
+    if (!chart) return null;
+
+    const [, [label, value]] = data;
+    const option = this.deepMerge(this.#baseText(), {
+      series: [{
+        type: 'gauge',
+        min: options.min ?? 0,
+        max: options.max ?? 100,
+        startAngle: 200,
+        endAngle: -20,
+        progress: { show: false },
+        axisLine: { lineStyle: { width: 14, color: this.#zonesToColorStops(options) } },
+        axisTick: { show: false },
+        splitLine: { length: 10, lineStyle: { color: '#ffffff', width: 2 } },
+        axisLabel: { color: '#ffffff', fontSize: 10, distance: 18 },
+        pointer: { itemStyle: { color: '#ffffff' } },
+        title: { fontSize: 13, offsetCenter: [0, '70%'] },
+        detail: { fontSize: 18, offsetCenter: [0, '40%'], color: '#ffffff', formatter: '{value}' },
+        data: [{ value, name: label }],
+      }],
+    });
+
+    chart.setOption(option, true);
+    chart.resize();
+    return chart;
+  }
+
+  #drawLine(data, elementId, options) {
+    const chart = this.#getOrInitChart(elementId);
+    if (!chart) return null;
+
+    const [header, ...rows] = data;
+    const categories = rows.map((r) => r[0]);
+    const seriesNames = header.slice(1);
+    const legendOff = this.#legendOff(options);
+    const legendRight = options.legend?.position === 'right';
+
+    const series = seriesNames.map((name, i) => ({
+      name,
+      type: 'line',
+      symbolSize: options.pointSize ?? 4,
+      data: rows.map((r) => r[i + 1]),
+      ...(options.series?.[i]?.color ? {
+        itemStyle: { color: options.series[i].color },
+        lineStyle: { color: options.series[i].color },
+      } : {}),
+    }));
+
+    const option = this.deepMerge(this.#baseText(), {
+      title: options.title ? { text: options.title, textStyle: { fontSize: 14 } } : undefined,
+      tooltip: { trigger: 'axis' },
+      legend: legendOff
+        ? { show: false }
+        : { show: true, textStyle: { color: '#fff' }, ...(legendRight ? { orient: 'vertical', right: 0, top: 'middle' } : {}) },
+      grid: { left: 45, right: legendRight ? 110 : 20, bottom: 55, top: options.title ? 45 : 25, containLabel: true },
+      xAxis: {
+        type: 'category',
+        data: categories,
+        name: options.hAxis?.title,
+        nameLocation: 'middle',
+        nameGap: 30,
+        axisLabel: { color: '#fff', fontSize: options.hAxis?.textStyle?.fontSize ?? 11, rotate: 30 },
+        axisLine: { lineStyle: { color: '#fff' } },
+      },
+      yAxis: {
+        type: 'value',
+        axisLabel: { color: '#fff' },
+        splitLine: { lineStyle: { color: 'rgba(255,255,255,.15)' } },
+      },
+      series,
+    });
+
+    chart.setOption(option, true);
+    chart.resize();
+    return chart;
+  }
+
+  #drawPie(data, elementId, options) {
+    const chart = this.#getOrInitChart(elementId);
+    if (!chart) return null;
+
+    const [, ...rows] = data;
+    const seriesData = rows.map((r) => ({ name: r[0], value: r[1] }));
+    const legendOff = this.#legendOff(options);
+    const legendRight = options.legend?.position === 'right';
+
+    const option = this.deepMerge(this.#baseText(), {
+      title: options.title ? { text: options.title, left: 'center', textStyle: { fontSize: 14 } } : undefined,
+      tooltip: { trigger: 'item' },
+      legend: legendOff
+        ? { show: false }
+        : {
+          show: true,
+          textStyle: { color: '#fff' },
+          orient: legendRight ? 'vertical' : 'horizontal',
+          ...(legendRight ? { right: 0, top: 'middle' } : { bottom: 0 }),
+        },
+      series: [{
+        type: 'pie',
+        radius: legendRight ? ['0%', '65%'] : ['0%', '70%'],
+        center: legendRight ? ['40%', '50%'] : ['50%', '50%'],
+        data: seriesData,
+        label: { color: '#fff' },
+        labelLine: { lineStyle: { color: '#fff' } },
+      }],
+    });
+
+    chart.setOption(option, true);
+    chart.resize();
+    return chart;
   }
 }

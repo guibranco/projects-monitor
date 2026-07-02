@@ -5,20 +5,20 @@ require_once 'vendor/autoload.php';
 use GuiBranco\ProjectsMonitor\Library\Configuration;
 
 if (!isset($_SESSION['last_activity']) || time() - $_SESSION['last_activity'] > 1800) {
-   session_unset();
-   session_destroy();
-   header('Location: login.php');
-   header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-   header('Pragma: no-cache');
-   exit;
+    session_unset();
+    session_destroy();
+    header('Location: login.php');
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    exit;
 }
 $_SESSION['last_activity'] = time();
 
 if (!isset($_SESSION['user_id'])) {
-   header('Location: login.php');
-   header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-   header('Pragma: no-cache');
-   exit;
+    header('Location: login.php');
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    exit;
 }
 $username = $_SESSION['username'] ?? '';
 $configuration = new Configuration();
@@ -35,6 +35,7 @@ $configuration = new Configuration();
    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
       integrity="sha512-dPXYcDub/aeb08c63jRq/k6GaKccl256JQy/AnOq7CAnEZ9FzSL9wSbcZkMp4R26vBsMLFYH4kQ67/bbV8XaCQ=="
       crossorigin="anonymous">
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridjs@6.2.0/dist/theme/mermaid.min.css">
    <link rel="preconnect" href="https://fonts.googleapis.com">
    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
@@ -480,7 +481,8 @@ $configuration = new Configuration();
 
    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
       integrity="sha256-CDOy6cOibCWEdsRiZuaHf8dSGGJRYuBGC+mjoJimHGw=" crossorigin="anonymous"></script>
-   <script src="https://www.gstatic.com/charts/loader.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/gridjs@6.2.0/dist/gridjs.umd.js"></script>
    <script type="module" src="static/main.js?<?php echo filemtime("static/main.js"); ?>"></script>
    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
    <script>

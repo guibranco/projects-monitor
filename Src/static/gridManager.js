@@ -1,12 +1,14 @@
 // gridManager.js
+import { TablePageSizeState } from './storage.js';
+
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 const DEFAULT_PAGE_SIZE = 10;
 
 export class GridManager {
   constructor() {
     this.gridjs = window.gridjs;
-    this.grids = new Map();     // elementId -> live Grid instance
-    this.pageSizes = new Map(); // elementId -> user-selected page size, persists across redraws/polls
+    this.grids = new Map(); // elementId -> live Grid instance
+    this.pageSizeState = new TablePageSizeState(); // elementId -> persisted page size (localStorage-backed)
   }
 
   /**
@@ -58,19 +60,17 @@ export class GridManager {
     });
 
     if (paginated) {
-      el.appendChild(this.#buildPageSizeToolbar(elementId));
+      el.appendChild(this.#buildPageSizeToolbar(elementId, gridData.length));
     }
 
     const gridContainer = document.createElement('div');
     el.appendChild(gridContainer);
 
-    const pageSize = this.pageSizes.get(elementId) ?? DEFAULT_PAGE_SIZE;
-
     const grid = new this.gridjs.Grid({
       columns,
       data: gridData,
       sort: false,
-      pagination: paginated ? { limit: pageSize, summary: true } : false,
+      pagination: paginated ? { limit: this.#resolveLimit(elementId, gridData.length), summary: true } : false,
       search: false,
       resizable: false,
       className: { table: 'gridjs-table-dark' },
@@ -81,8 +81,20 @@ export class GridManager {
     return grid;
   }
 
-  #buildPageSizeToolbar(elementId) {
-    const currentSize = this.pageSizes.get(elementId) ?? DEFAULT_PAGE_SIZE;
+  /** Resolves the persisted page-size preference into a concrete Grid.js
+   *  pagination "limit". 'all' maps to the current row count so every row
+   *  renders on a single page (never 0, in case the table is empty). */
+  #resolveLimit(elementId, totalRows) {
+    const selected = this.pageSizeState.getPageSize(elementId, DEFAULT_PAGE_SIZE);
+    return selected === 'all' ? Math.max(totalRows, 1) : selected;
+  }
+
+  #buildPageSizeToolbar(elementId, totalRows) {
+    const currentSize = this.pageSizeState.getPageSize(elementId, DEFAULT_PAGE_SIZE);
+
+    const optionsHtml = PAGE_SIZE_OPTIONS
+      .map((n) => `<option value="${n}"${n === currentSize ? ' selected' : ''}>${n}</option>`)
+      .join('') + `<option value="all"${currentSize === 'all' ? ' selected' : ''}>All</option>`;
 
     const toolbar = document.createElement('div');
     toolbar.className = 'gridjs-page-size-toolbar';
@@ -90,15 +102,17 @@ export class GridManager {
       <label>
         Rows per page:
         <select class="gridjs-page-size-select" aria-label="Rows per page">
-          ${PAGE_SIZE_OPTIONS.map((n) => `<option value="${n}"${n === currentSize ? ' selected' : ''}>${n}</option>`).join('')}
+          ${optionsHtml}
         </select>
       </label>`;
 
     toolbar.querySelector('select').addEventListener('change', (e) => {
-      const newSize = parseInt(e.target.value, 10);
-      this.pageSizes.set(elementId, newSize);
+      const raw = e.target.value;
+      const newSize = raw === 'all' ? 'all' : parseInt(raw, 10);
+      this.pageSizeState.setPageSize(elementId, newSize);
       const grid = this.grids.get(elementId);
-      grid?.updateConfig({ pagination: { limit: newSize, summary: true } }).forceRender();
+      const newLimit = newSize === 'all' ? Math.max(totalRows, 1) : newSize;
+      grid?.updateConfig({ pagination: { limit: newLimit, summary: true } }).forceRender();
     });
 
     return toolbar;

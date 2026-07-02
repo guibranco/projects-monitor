@@ -130,6 +130,79 @@ export class WorkflowLimiterState {
   }
 }
 
+// TablePageSizeState class
+export class TablePageSizeState {
+  constructor() {
+    this._pageSizes = this.loadPageSizes();
+  }
+
+  /**
+   * Gets the persisted page size for a table, or defaultValue if none is stored.
+   * @param {string} elementId - The table's container element ID
+   * @param {number} defaultValue - Fallback page size
+   * @returns {number|'all'}
+   */
+  getPageSize(elementId, defaultValue = 10) {
+    if (!elementId) {
+      return defaultValue;
+    }
+    const stored = this._pageSizes[elementId];
+    return stored !== undefined ? stored : defaultValue;
+  }
+
+  /**
+   * Persists the page size for a table. Accepts a positive integer or the
+   * string 'all' (show every row).
+   */
+  setPageSize(elementId, size) {
+    if (!elementId) {
+      console.warn("TablePageSizeState: No element ID provided to setPageSize");
+      return;
+    }
+    if (size !== 'all' && (!Number.isInteger(size) || size <= 0)) {
+      console.warn(`TablePageSizeState: Invalid page size: ${size}`);
+      return;
+    }
+    this._pageSizes[elementId] = size;
+    this.savePageSizes();
+  }
+
+  loadPageSizes() {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEYS.TABLE_PAGE_SIZES);
+      if (!stored) {
+        return {};
+      }
+
+      const parsed = JSON.parse(stored);
+      if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+        console.warn("TablePageSizeState: Invalid stored data format, resetting to empty state");
+        return {};
+      }
+
+      const validated = {};
+      Object.entries(parsed).forEach(([key, value]) => {
+        if (typeof key === 'string' && key.length > 0 && (value === 'all' || (Number.isInteger(value) && value > 0))) {
+          validated[key] = value;
+        }
+      });
+
+      return validated;
+    } catch (e) {
+      console.error("TablePageSizeState: Failed to load table page sizes:", e);
+      return {};
+    }
+  }
+
+  savePageSizes() {
+    try {
+      localStorage.setItem(STORAGE_KEYS.TABLE_PAGE_SIZES, JSON.stringify(this._pageSizes));
+    } catch (e) {
+      console.error("TablePageSizeState: Failed to save table page sizes:", e);
+    }
+  }
+}
+
 // CollapsibleSectionsState class
 export class CollapsibleSectionsState {
   constructor() {

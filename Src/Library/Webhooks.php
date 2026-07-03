@@ -124,4 +124,52 @@ class Webhooks
         LogStream::debug("Fetching pull requests pending processing", null, "webhooks");
         return $this->doRequest("pull-requests/processing", "get", 200);
     }
+
+    public function getBranchesProcessing(): mixed
+    {
+        LogStream::debug("Fetching branches pending processing", null, "webhooks");
+        return $this->doRequest("branches/processing", "get", 200);
+    }
+
+    public function getCommentsProcessing(): mixed
+    {
+        LogStream::debug("Fetching comments pending processing", null, "webhooks");
+        return $this->doRequest("comments/processing", "get", 200);
+    }
+
+    public function getInstallationsProcessing(): mixed
+    {
+        LogStream::debug("Fetching installations pending processing", null, "webhooks");
+        return $this->doRequest("installations/processing", "get", 200);
+    }
+
+    public function getIssuesProcessing(): mixed
+    {
+        LogStream::debug("Fetching issues pending processing", null, "webhooks");
+        return $this->doRequest("issues/processing", "get", 200);
+    }
+
+    public function getPushesProcessing(): mixed
+    {
+        LogStream::debug("Fetching pushes pending processing", null, "webhooks");
+        return $this->doRequest("pushes/processing", "get", 200);
+    }
+
+    public function getRepositoriesProcessing(): mixed
+    {
+        LogStream::debug("Fetching repositories pending processing", null, "webhooks");
+        return $this->doRequest("repositories/processing", "get", 200);
+    }
+
+    public function getSignatureProcessing(): mixed
+    {
+        LogStream::debug("Fetching signature pending processing", null, "webhooks");
+        return $this->doRequest("signature/processing", "get", 200);
+    }
+
+    public function getUsersProcessing(): mixed
+    {
+        LogStream::debug("Fetching users pending processing", null, "webhooks");
+        return $this->doRequest("users/processing", "get", 200);
+    }
 }

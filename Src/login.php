@@ -125,6 +125,10 @@ function recover(mysqli $conn): string
     $stmt->execute();
     $result = $stmt->get_result();
 
+    // Always return this same message whether or not the identifier matches an
+    // account, so the response can't be used to enumerate valid usernames/emails.
+    $genericMessage = 'If an account matches that username or email, a password reset link has been sent.';
+
     if ($result->num_rows === 1) {
         $user = $result->fetch_assoc();
         $reset_token = bin2hex(random_bytes(16));
@@ -154,10 +158,11 @@ function recover(mysqli $conn): string
             'Content-Transfer-Encoding: 8bit',
             'From: ' . sprintf('=?UTF-8?B?%s?= <noreply@%s>', base64_encode("Projects Monitor"), $_SERVER['HTTP_HOST'])
         ];
-        if (mail($to, $subject, $body, implode("\r\n", $headers))) {
-            return 'A password reset link has been sent to your email.';
+        if (!mail($to, $subject, $body, implode("\r\n", $headers))) {
+            $logger = new Logger();
+            $logger->logMessage("Failed to send password reset email to user id {$user['id']}");
         }
-        return 'Failed to send the email. Try again later.';
+        return $genericMessage;
     }
 
     $errorMessage = sprintf(
@@ -188,7 +193,7 @@ function recover(mysqli $conn): string
         return 'An error occurred. Please try again later.';
     }
 
-    return 'No account found with that username or email.';
+    return $genericMessage;
 }
 
 $error = '';

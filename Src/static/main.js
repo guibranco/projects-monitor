@@ -46,6 +46,14 @@ class DashboardApp {
     window.showWebhook = this.dataDisplayManager.showWebhook.bind(this.dataDisplayManager);
     window.showWebhookProcessingStats = this.dataDisplayManager.showWebhookProcessingStats.bind(this.dataDisplayManager);
     window.showWebhookPullRequestsProcessing = this.dataDisplayManager.showWebhookPullRequestsProcessing.bind(this.dataDisplayManager);
+    window.showBranchesProcessing = this.dataDisplayManager.showBranchesProcessing.bind(this.dataDisplayManager);
+    window.showCommentsProcessing = this.dataDisplayManager.showCommentsProcessing.bind(this.dataDisplayManager);
+    window.showInstallationsProcessing = this.dataDisplayManager.showInstallationsProcessing.bind(this.dataDisplayManager);
+    window.showIssuesProcessing = this.dataDisplayManager.showIssuesProcessing.bind(this.dataDisplayManager);
+    window.showPushesProcessing = this.dataDisplayManager.showPushesProcessing.bind(this.dataDisplayManager);
+    window.showRepositoriesProcessing = this.dataDisplayManager.showRepositoriesProcessing.bind(this.dataDisplayManager);
+    window.showSignatureProcessing = this.dataDisplayManager.showSignatureProcessing.bind(this.dataDisplayManager);
+    window.showUsersProcessing = this.dataDisplayManager.showUsersProcessing.bind(this.dataDisplayManager);
     window.showWireGuard = this.dataDisplayManager.showWireGuard.bind(this.dataDisplayManager);
 
     // Expose API functions
@@ -133,15 +141,18 @@ class DashboardApp {
        </button>`,
     ];
 
+    const _msgDetailField = (icon, label, value) => `
+      <div class="msg-detail-field">
+        <span class="msg-detail-label"><i class="bi ${icon} me-1"></i>${label}</span>
+        <code class="msg-detail-value">${_esc(value)}</code>
+      </div>`;
+
     const _msgDetailExtraRow = (m) => {
-      const html = `<dl class="row mb-0 small">
-          <dt class="col-sm-2 text-warning">Object</dt>
-          <dd class="col-sm-10"><code class="text-break">${_esc(m.object)}</code></dd>
-          <dt class="col-sm-2 text-warning">Args</dt>
-          <dd class="col-sm-10"><code class="text-break">${_esc(m.args)}</code></dd>
-          <dt class="col-sm-2 text-warning">Details</dt>
-          <dd class="col-sm-10"><code class="text-break">${_esc(m.details)}</code></dd>
-        </dl>`;
+      const html = `<div class="msg-detail-panel">
+          ${_msgDetailField('bi-box-seam', 'Object', m.object)}
+          ${_msgDetailField('bi-sliders', 'Args', m.args)}
+          ${_msgDetailField('bi-info-circle', 'Details', m.details)}
+        </div>`;
       const marker = _detailMarker(html);
       return MSG_DETAIL_COLUMNS.map(() => marker);
     };

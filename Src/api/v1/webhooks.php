@@ -11,20 +11,7 @@ $feedOptionsFilter = isset($_GET["feedOptionsFilter"]) && in_array($_GET["feedOp
     ? $_GET["feedOptionsFilter"]
     : "all";
 
-$workflowsLimiterEnabled = filter_var(
-    $_GET["workflowsLimiterEnabled"] ?? false,
-    FILTER_VALIDATE_BOOLEAN
-);
-$maxLimit = 10000;
-$workflowsLimiterQuantity = $workflowsLimiterEnabled
-    ? filter_var(
-        $_GET["workflowsLimiterQuantity"] ?? 0,
-        FILTER_VALIDATE_INT,
-        ["options" => ["min_range" => 1, "max_range" => $maxLimit]]
-    ) ?: 0
-    : 0;
-
-LogStream::info("API request received", ["endpoint" => "GET /api/v1/webhooks", "filter" => $feedOptionsFilter, "limit" => $workflowsLimiterQuantity], "api");
+LogStream::info("API request received", ["endpoint" => "GET /api/v1/webhooks", "filter" => $feedOptionsFilter], "api");
 $webhooks = new Webhooks();
-$data = $webhooks->getDashboard($feedOptionsFilter, $workflowsLimiterQuantity);
+$data = $webhooks->getDashboard($feedOptionsFilter);
 echo json_encode($data);

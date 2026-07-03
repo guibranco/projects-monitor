@@ -1,5 +1,5 @@
 // main.js
-import { OptionsBoxState, FeedState, WorkflowLimiterState } from './storage.js';
+import { OptionsBoxState, FeedState } from './storage.js';
 import { ApiManager, DataLoader } from './api.js';
 import { UIManager, GitHubStatsManager, CookieManager } from './ui.js';
 import { DataDisplayManager } from './dataDisplay.js';
@@ -15,8 +15,7 @@ class DashboardApp {
 
     // Initialize state objects
     this.feedState = new FeedState();
-    this.workflowLimiterState = new WorkflowLimiterState();
-    this.uiManager = new UIManager(this.feedState, this.workflowLimiterState);
+    this.uiManager = new UIManager(this.feedState);
 
     // Expose necessary objects to global scope for backwards compatibility
     this.exposeGlobals();
@@ -33,7 +32,6 @@ class DashboardApp {
   exposeGlobals() {
     // Expose state objects
     window.feedState = this.feedState;
-    window.workflowLimiterState = this.workflowLimiterState;
 
     // Expose display functions for API callbacks
     window.showAppVeyor = this.dataDisplayManager.showAppVeyor.bind(this.dataDisplayManager);
@@ -344,7 +342,6 @@ class DashboardApp {
     CookieManager.set("offset", offset, 10);
 
     this.uiManager.initFeedToggle();
-    this.uiManager.initWorkflowLimiter();
 
     // Initialize collapsible sections
     this.collapsibleSectionsManager.init();
@@ -354,8 +351,6 @@ class DashboardApp {
 
     console.log("Options box state on load:", OptionsBoxState.load());
     console.log("Feed filter on load:", this.feedState.filter);
-    console.log("Workflow limiter enabled:", this.workflowLimiterState.enabled);
-    console.log("Workflow limit value:", this.workflowLimiterState.limitValue);
   }
 
   /**

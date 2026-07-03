@@ -300,10 +300,9 @@ export class DataLoader {
     this.apiManager.load(API_ENDPOINTS.QUEUES, (data) => window.showQueues?.(data));
     
     const feedState = window.feedState || { filter: 'all' };
-    const workflowLimiterState = window.workflowLimiterState || { enabled: false, limitValue: 10 };
-    
+
     this.apiManager.load(
-      `${API_ENDPOINTS.WEBHOOKS}?feedOptionsFilter=${feedState.filter}&workflowsLimiterEnabled=${workflowLimiterState.enabled}&workflowsLimiterQuantity=${workflowLimiterState.limitValue}`,
+      `${API_ENDPOINTS.WEBHOOKS}?feedOptionsFilter=${feedState.filter}`,
       (data) => window.showWebhook?.(data)
     );
     this.apiManager.load(API_ENDPOINTS.WEBHOOKS_STATISTICS, (data) => window.showWebhookProcessingStats?.(data));

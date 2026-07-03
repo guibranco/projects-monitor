@@ -2,8 +2,6 @@
 export const STORAGE_KEYS = {
   OPTIONS_BOX_STATE: 'optionsBoxState',
   FEED_FILTER: 'feedFilter',
-  WORKFLOW_LIMITER: 'workflowLimiter',
-  WORKFLOW_LIMIT_VALUE: 'workflowLimitValue',
   COLLAPSIBLE_SECTIONS: 'collapsibleSections',
   TABLE_PAGE_SIZES: 'tablePageSizes',
 };

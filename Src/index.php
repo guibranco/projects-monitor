@@ -100,21 +100,6 @@ $configuration = new Configuration();
             </label>
          </div>
          <hr class="settings-divider">
-         <h6 class="settings-section-label">Workflow</h6>
-         <div class="form-check form-switch mb-3">
-            <input type="checkbox" class="form-check-input" id="workflowToggle" />
-            <label class="form-check-label" for="workflowToggle">
-               <i class="bi bi-funnel me-1"></i> Workflow Limiter
-            </label>
-         </div>
-         <div id="workflowLimitContainer" class="mb-4" style="display: none;">
-            <label for="workflowLimitInput" class="form-label small">Limit Results</label>
-            <input type="number" class="form-control form-control-sm settings-input" id="workflowLimitInput" min="1"
-               max="10000" placeholder="Enter limit (1–10,000)" required oninput="this.setCustomValidity('')"
-               oninvalid="this.setCustomValidity('Please enter a number between 1 and 10,000')" />
-            <div class="invalid-feedback">Please enter a number between 1 and 10,000</div>
-         </div>
-         <hr class="settings-divider">
          <h6 class="settings-section-label">Sections</h6>
          <div class="d-grid gap-2">
             <button type="button" class="btn btn-outline-light btn-sm" onclick="collapseAllSections()">

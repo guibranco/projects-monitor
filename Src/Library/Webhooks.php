@@ -75,24 +75,16 @@ class Webhooks
         throw new RequestException("Code: {$response->getStatusCode()} - Error: {$error}");
     }
 
-    public function getDashboard($feedOptionsFilter, $workflowsLimiterQuantity)
+    public function getDashboard($feedOptionsFilter)
     {
         $allowedFilters = ['all', 'mine'];
         if (!in_array($feedOptionsFilter, $allowedFilters)) {
             throw new \InvalidArgumentException('Invalid filter value provided');
         }
         $endpoint = sprintf("github?feedOptionsFilter=%s", urlencode($feedOptionsFilter));
-        LogStream::info("Fetching webhooks dashboard", ["filter" => $feedOptionsFilter, "limit" => $workflowsLimiterQuantity], "webhooks");
+        LogStream::info("Fetching webhooks dashboard", ["filter" => $feedOptionsFilter], "webhooks");
         $response = $this->doRequest($endpoint, "get", 200);
-        if ($workflowsLimiterQuantity <= 0) {
-            LogStream::debug("Webhooks dashboard fetched", ["total_runs" => count($response["workflow_runs"] ?? [])], "webhooks");
-            return $response;
-        }
-
-        $workflowsLimiterQuantity++; // The table header is the first row.
-        $min = min($workflowsLimiterQuantity, count($response["workflow_runs"]));
-        $response["workflow_runs"] = array_slice($response["workflow_runs"], 0, $min);
-        LogStream::debug("Webhooks dashboard fetched (limited)", ["returned_runs" => $min], "webhooks");
+        LogStream::debug("Webhooks dashboard fetched", ["total_runs" => count($response["workflow_runs"] ?? [])], "webhooks");
 
         return $response;
     }

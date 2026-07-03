@@ -90,9 +90,8 @@ function showConfirm({ title, content, onConfirm }) {
 }
 
 export class UIManager {
-  constructor(feedState, workflowLimiterState) {
+  constructor(feedState) {
     this.feedState = feedState;
-    this.workflowLimiterState = workflowLimiterState;
     this.eventAssigned = false;
     this.eventAssignedError = false;
   }
@@ -109,39 +108,6 @@ export class UIManager {
       return;
     }
     this.feedState.filter = toggle.checked ? FEED_FILTERS.MINE : FEED_FILTERS.ALL;
-  }
-
-  initWorkflowLimiter() {
-    const workflowToggle = document.getElementById("workflowToggle");
-    const workflowLimitContainer = document.getElementById("workflowLimitContainer");
-    const workflowLimitInput = document.getElementById("workflowLimitInput");
-
-    if (!workflowToggle || !workflowLimitContainer || !workflowLimitInput) {
-      console.error("Workflow limiter elements not found");
-      return;
-    }
-
-    workflowToggle.checked = this.workflowLimiterState.enabled;
-    workflowLimitContainer.style.display = this.workflowLimiterState.enabled
-      ? "block"
-      : "none";
-
-    workflowLimitInput.value = this.workflowLimiterState.limitValue;
-
-    workflowToggle.addEventListener("change", () => {
-      this.workflowLimiterState.enabled = workflowToggle.checked;
-      workflowLimitContainer.style.display = this.workflowLimiterState.enabled
-        ? "block"
-        : "none";
-    });
-
-    workflowLimitInput.addEventListener("input", () => {
-      try {
-        this.workflowLimiterState.limitValue = workflowLimitInput.value;
-      } catch (e) {
-        console.error(e.message);
-      }
-    });
   }
 
   initFeedToggle() {

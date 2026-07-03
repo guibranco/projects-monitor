@@ -51,7 +51,7 @@ class PublicStats
         $webhookDashboard = null;
 
         try {
-            $webhookDashboard = (new Webhooks())->getDashboard('all', 0);
+            $webhookDashboard = (new Webhooks())->getDashboard('all');
         } catch (\Throwable) {
         }
 

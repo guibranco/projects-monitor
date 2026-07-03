@@ -130,11 +130,6 @@ The Projects Monitor includes a REST-like API to retrieve data from integrated s
 The login page, with basic (public) information:
 ![Dashboard Preview](projects-monitor-login.png)
 
-### Recovery Password
-
-The recovery password form:
-![Dashboard Preview](projects-monitor-recovery-password.png)
-
 ### Dashboard
 
 The authenticated dashboard, with full (restricted) information:

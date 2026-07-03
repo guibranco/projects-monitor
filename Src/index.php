@@ -121,22 +121,27 @@ $configuration = new Configuration();
          <div id="webhooks_statistics_github" class="section-content"></div>
       </div>
 
-      <div class="gauges-grid">
-         <div id="gauge_chart_cpu" class="gauge"></div>
-         <div id="gauge_chart_memory" class="gauge"></div>
-         <div id="gauge_chart_process" class="gauge"></div>
-         <div id="gauge_chart_emails" class="gauge"></div>
-         <div id="gauge_chart_log_errors" class="gauge"></div>
-         <div id="gauge_chart_github_usage" class="gauge"></div>
-         <div id="gauge_chart_webhooks" class="gauge"></div>
-         <div id="gauge_chart_issues" class="gauge"></div>
-         <div id="gauge_chart_pull_requests" class="gauge"></div>
-         <div id="gauge_chart_workflows_runs" class="gauge"></div>
-         <div id="gauge_chart_queues" class="gauge"></div>
-         <div id="gauge_chart_pm_messages" class="gauge"></div>
-         <div id="gauge_chart_bot_installations" class="gauge"></div>
-         <div id="gauge_chart_bot_repositories" class="gauge"></div>
-         <div id="gauge_chart_bot_queue" class="gauge"></div>
+      <div class="full-width-section">
+         <div class="section-header">
+            <i class="bi bi-speedometer2 me-2"></i>Gauges
+         </div>
+         <div id="gauges_section" class="gauges-grid section-content">
+            <div id="gauge_chart_cpu" class="gauge"></div>
+            <div id="gauge_chart_memory" class="gauge"></div>
+            <div id="gauge_chart_process" class="gauge"></div>
+            <div id="gauge_chart_emails" class="gauge"></div>
+            <div id="gauge_chart_log_errors" class="gauge"></div>
+            <div id="gauge_chart_github_usage" class="gauge"></div>
+            <div id="gauge_chart_webhooks" class="gauge"></div>
+            <div id="gauge_chart_issues" class="gauge"></div>
+            <div id="gauge_chart_pull_requests" class="gauge"></div>
+            <div id="gauge_chart_workflows_runs" class="gauge"></div>
+            <div id="gauge_chart_queues" class="gauge"></div>
+            <div id="gauge_chart_pm_messages" class="gauge"></div>
+            <div id="gauge_chart_bot_installations" class="gauge"></div>
+            <div id="gauge_chart_bot_repositories" class="gauge"></div>
+            <div id="gauge_chart_bot_queue" class="gauge"></div>
+         </div>
       </div>
 
       <div class="stats-section">
@@ -238,10 +243,74 @@ $configuration = new Configuration();
 
       <div class="full-width-section">
          <div class="section-header">
+            <i class="bi bi-signpost-split me-2"></i>Branches Pending Processing <span id="counter_branches_processing"
+               class="badge rounded-pill"></span>
+         </div>
+         <div id="branches_processing" class="section-content"></div>
+      </div>
+
+      <div class="full-width-section">
+         <div class="section-header">
+            <i class="bi bi-chat-left-text me-2"></i>Comments Pending Processing <span id="counter_comments_processing"
+               class="badge rounded-pill"></span>
+         </div>
+         <div id="comments_processing" class="section-content"></div>
+      </div>
+
+      <div class="full-width-section">
+         <div class="section-header">
+            <i class="bi bi-box-arrow-in-down me-2"></i>Installations Pending Processing <span id="counter_installations_processing"
+               class="badge rounded-pill"></span>
+         </div>
+         <div id="installations_processing" class="section-content"></div>
+      </div>
+
+      <div class="full-width-section">
+         <div class="section-header">
+            <i class="bi bi-exclamation-circle me-2"></i>Issues Pending Processing <span id="counter_issues_processing"
+               class="badge rounded-pill"></span>
+         </div>
+         <div id="issues_processing" class="section-content"></div>
+      </div>
+
+      <div class="full-width-section">
+         <div class="section-header">
             <i class="bi bi-hourglass-split me-2"></i>Pull Requests Pending Processing <span id="counter_pr_processing"
                class="badge rounded-pill"></span>
          </div>
          <div id="pr_processing" class="section-content"></div>
+      </div>
+
+      <div class="full-width-section">
+         <div class="section-header">
+            <i class="bi bi-upload me-2"></i>Pushes Pending Processing <span id="counter_pushes_processing"
+               class="badge rounded-pill"></span>
+         </div>
+         <div id="pushes_processing" class="section-content"></div>
+      </div>
+
+      <div class="full-width-section">
+         <div class="section-header">
+            <i class="bi bi-folder2 me-2"></i>Repositories Pending Processing <span id="counter_repositories_processing"
+               class="badge rounded-pill"></span>
+         </div>
+         <div id="repositories_processing" class="section-content"></div>
+      </div>
+
+      <div class="full-width-section">
+         <div class="section-header">
+            <i class="bi bi-shield-check me-2"></i>Signature Pending Processing <span id="counter_signature_processing"
+               class="badge rounded-pill"></span>
+         </div>
+         <div id="signature_processing" class="section-content"></div>
+      </div>
+
+      <div class="full-width-section">
+         <div class="section-header">
+            <i class="bi bi-people me-2"></i>Users Pending Processing <span id="counter_users_processing"
+               class="badge rounded-pill"></span>
+         </div>
+         <div id="users_processing" class="section-content"></div>
       </div>
 
       <div class="full-width-section">

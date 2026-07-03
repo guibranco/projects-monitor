@@ -4,6 +4,7 @@ require_once 'vendor/autoload.php';
 
 use GuiBranco\ProjectsMonitor\Library\Configuration;
 use GuiBranco\ProjectsMonitor\Library\Database;
+use GuiBranco\ProjectsMonitor\Library\Logger;
 
 if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
     header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
@@ -76,7 +77,138 @@ function login(mysqli $conn): string
     return 'Invalid username or password.';
 }
 
-$error = $_SERVER['REQUEST_METHOD'] === 'POST' ? login($conn) : '';
+function recover(mysqli $conn): string
+{
+    if (!isset($_POST['csrf_token']) || !isset($_SESSION['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        return 'Invalid request';
+    }
+
+    $ip_address = isset($_SERVER['HTTP_X_FORWARDED_FOR'])
+        ? trim(explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0])
+        : $_SERVER['REMOTE_ADDR'];
+
+    if (!filter_var($ip_address, FILTER_VALIDATE_IP)) {
+        return 'Invalid IP address';
+    }
+
+    $attempt_count = 0;
+    try {
+        $stmt = $conn->prepare('SELECT COUNT(1) FROM password_recovery_attempts WHERE ip_address = ? AND created_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)');
+        if (!$stmt) {
+            throw new Exception("Database error: " . $conn->error);
+        }
+        $stmt->bind_param('s', $ip_address);
+        if (!$stmt->execute()) {
+            throw new Exception("Query failed: " . $stmt->error);
+        }
+        $stmt->bind_result($attempt_count);
+        $stmt->fetch();
+        $stmt->close();
+    } catch (Exception $e) {
+        $logger = new Logger();
+        $logger->logMessage("Rate limiting check failed: " . $e->getMessage());
+        return 'Internal server error';
+    }
+
+    $max_attempts = 3;
+    if ($attempt_count >= $max_attempts) {
+        return 'Too many password recovery attempts. Please try again later.';
+    }
+
+    $identifier = filter_input(INPUT_POST, 'identifier', FILTER_SANITIZE_EMAIL);
+    if (!$identifier) {
+        return 'Invalid input provided';
+    }
+
+    $stmt = $conn->prepare("SELECT id, email FROM users WHERE username = ? OR email = ?");
+    $stmt->bind_param('ss', $identifier, $identifier);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    // Always return this same message whether or not the identifier matches an
+    // account, so the response can't be used to enumerate valid usernames/emails.
+    $genericMessage = 'If an account matches that username or email, a password reset link has been sent.';
+
+    if ($result->num_rows === 1) {
+        $user = $result->fetch_assoc();
+        $reset_token = bin2hex(random_bytes(16));
+        $reset_token_expiration = gmdate('Y-m-d H:i:s', strtotime('+1 hour UTC'));
+
+        $conn->begin_transaction();
+        try {
+            $cleanup_stmt = $conn->prepare("UPDATE users SET reset_token = NULL, reset_token_expiration = NULL WHERE reset_token_expiration < NOW()");
+            $cleanup_stmt->execute();
+
+            $update_stmt = $conn->prepare("UPDATE users SET reset_token = ?, reset_token_expiration = ? WHERE id = ?");
+            $update_stmt->bind_param('ssi', $reset_token, $reset_token_expiration, $user['id']);
+            $update_stmt->execute();
+            $conn->commit();
+        } catch (Exception $e) {
+            $conn->rollback();
+            throw $e;
+        }
+
+        $reset_link = sprintf('%s://%s/projects-monitor/reset.php?token=%s', isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off' ? 'https' : 'http', $_SERVER['HTTP_HOST'], urlencode($reset_token));
+        $to = $user['email'];
+        $subject = '=?UTF-8?B?' . base64_encode('Password Reset Request') . '?=';
+        $body = wordwrap("Click the link below to reset your password:\n\n{$reset_link}\n\nThis link is valid for 1 hour.\n\nIf you didn't request this reset, please ignore this email.", 70);
+        $headers = [
+            'MIME-Version: 1.0',
+            'Content-Type: text/plain; charset=UTF-8; format=flowed',
+            'Content-Transfer-Encoding: 8bit',
+            'From: ' . sprintf('=?UTF-8?B?%s?= <noreply@%s>', base64_encode("Projects Monitor"), $_SERVER['HTTP_HOST'])
+        ];
+        if (!mail($to, $subject, $body, implode("\r\n", $headers))) {
+            $logger = new Logger();
+            $logger->logMessage("Failed to send password reset email to user id {$user['id']}");
+        }
+        return $genericMessage;
+    }
+
+    $errorMessage = sprintf(
+        'Failed password recovery attempt for identifier: %s, IP: %s',
+        preg_replace('/[^\w\-\.\@]/', '', $identifier),
+        filter_var($_SERVER['REMOTE_ADDR'], FILTER_VALIDATE_IP)
+    );
+    $logger = new Logger();
+    $logger->logMessage($errorMessage);
+
+    try {
+        $conn->begin_transaction();
+
+        $cleanup = $conn->prepare('DELETE FROM password_recovery_attempts WHERE created_at < DATE_SUB(NOW(), INTERVAL 24 HOUR)');
+        $cleanup->execute();
+        $cleanup->close();
+
+        $stmt = $conn->prepare('INSERT INTO password_recovery_attempts (ip_address, created_at) VALUES (?, NOW())');
+        $stmt->bind_param('s', $ip_address);
+        $stmt->execute();
+        $stmt->close();
+
+        $conn->commit();
+    } catch (Exception $e) {
+        $conn->rollback();
+        $logger = new Logger();
+        $logger->logMessage("Failed to log recovery attempt: " . $e->getMessage());
+        return 'An error occurred. Please try again later.';
+    }
+
+    return $genericMessage;
+}
+
+$error = '';
+$recoverMessage = '';
+$openRecoverModal = false;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (($_POST['form_action'] ?? 'login') === 'recover') {
+        $recoverMessage = recover($conn);
+        $openRecoverModal = true;
+    } else {
+        $error = login($conn);
+    }
+}
+
 $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 ?>
 <!DOCTYPE html>
@@ -130,6 +262,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                         </div>
                     <?php endif; ?>
                     <form method="POST" action="">
+                        <input type="hidden" name="form_action" value="login">
                         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
                         <div class="mb-2">
                             <label for="username" class="form-label small mb-1 text-muted">
@@ -150,8 +283,49 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                         </button>
                     </form>
                     <div class="text-center mt-2">
-                        <a href="recover.php" class="text-decoration-none small text-muted">
+                        <a href="#" id="showRecoverModal" class="text-decoration-none small text-muted">
                             <i class="fas fa-key me-1"></i>Forgot your password?
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password recovery modal -->
+    <div class="modal fade" id="recoverModal" tabindex="-1" aria-labelledby="recoverModalLabel" aria-modal="true" role="dialog">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content shadow-lg">
+                <div class="modal-header py-2 px-3 border-bottom-0">
+                    <h6 class="modal-title mb-0" id="recoverModalLabel">
+                        <i class="bi bi-key me-2" style="color:#ff6b35"></i>Recover Password
+                    </h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body pt-1 px-3 pb-3">
+                    <?php if ($recoverMessage): ?>
+                        <div class="alert alert-info alert-sm py-2 px-3 mb-3 small">
+                            <i class="fas fa-info-circle me-1"></i><?php echo htmlspecialchars($recoverMessage, ENT_QUOTES, 'UTF-8'); ?>
+                        </div>
+                    <?php endif; ?>
+                    <form method="POST" action="">
+                        <input type="hidden" name="form_action" value="recover">
+                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
+                        <div class="mb-3">
+                            <label for="identifier" class="form-label small mb-1 text-muted">
+                                <i class="fas fa-user me-1"></i>Username or Email
+                            </label>
+                            <input type="text" class="form-control form-control-sm" id="identifier" name="identifier"
+                                   pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$|^[a-zA-Z0-9_]{3,}$"
+                                   required aria-required="true" maxlength="255" autocomplete="username">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                            <i class="fas fa-paper-plane me-1"></i>Send Recovery Email
+                        </button>
+                    </form>
+                    <div class="text-center mt-2">
+                        <a href="#" id="showLoginModal" class="text-decoration-none small text-muted">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Sign In
                         </a>
                     </div>
                 </div>
@@ -551,8 +725,33 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         loadDashboard();
         setInterval(loadDashboard, 60000);
 
+        // Switch between the Sign In and Recover Password modals without
+        // stacking them (Bootstrap doesn't support two shown modals cleanly).
+        function switchModal(fromId, toId) {
+            const fromEl = document.getElementById(fromId);
+            const toEl = document.getElementById(toId);
+            fromEl.addEventListener('hidden.bs.modal', function handler() {
+                fromEl.removeEventListener('hidden.bs.modal', handler);
+                bootstrap.Modal.getOrCreateInstance(toEl).show();
+            });
+            bootstrap.Modal.getOrCreateInstance(fromEl).hide();
+        }
+
+        document.getElementById('showRecoverModal')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            switchModal('loginModal', 'recoverModal');
+        });
+
+        document.getElementById('showLoginModal')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            switchModal('recoverModal', 'loginModal');
+        });
+
         <?php if ($error): ?>
         bootstrap.Modal.getOrCreateInstance(document.getElementById('loginModal')).show();
+        <?php endif; ?>
+        <?php if ($openRecoverModal): ?>
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('recoverModal')).show();
         <?php endif; ?>
     </script>
 </body>

@@ -307,6 +307,14 @@ export class DataLoader {
     );
     this.apiManager.load(API_ENDPOINTS.WEBHOOKS_STATISTICS, (data) => window.showWebhookProcessingStats?.(data));
     this.apiManager.load(API_ENDPOINTS.WEBHOOKS_PR_PROCESSING, (data) => window.showWebhookPullRequestsProcessing?.(data));
+    this.apiManager.load(API_ENDPOINTS.WEBHOOKS_BRANCHES_PROCESSING, (data) => window.showBranchesProcessing?.(data));
+    this.apiManager.load(API_ENDPOINTS.WEBHOOKS_COMMENTS_PROCESSING, (data) => window.showCommentsProcessing?.(data));
+    this.apiManager.load(API_ENDPOINTS.WEBHOOKS_INSTALLATIONS_PROCESSING, (data) => window.showInstallationsProcessing?.(data));
+    this.apiManager.load(API_ENDPOINTS.WEBHOOKS_ISSUES_PROCESSING, (data) => window.showIssuesProcessing?.(data));
+    this.apiManager.load(API_ENDPOINTS.WEBHOOKS_PUSHES_PROCESSING, (data) => window.showPushesProcessing?.(data));
+    this.apiManager.load(API_ENDPOINTS.WEBHOOKS_REPOSITORIES_PROCESSING, (data) => window.showRepositoriesProcessing?.(data));
+    this.apiManager.load(API_ENDPOINTS.WEBHOOKS_SIGNATURE_PROCESSING, (data) => window.showSignatureProcessing?.(data));
+    this.apiManager.load(API_ENDPOINTS.WEBHOOKS_USERS_PROCESSING, (data) => window.showUsersProcessing?.(data));
   }
 
   /**

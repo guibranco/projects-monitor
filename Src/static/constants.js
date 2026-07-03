@@ -39,7 +39,15 @@ export const API_ENDPOINTS = {
   POSTMAN: "api/v1/postman",
   WEBHOOKS: "api/v1/webhooks",
   WEBHOOKS_STATISTICS: "api/v1/webhooks-statistics",
-  WEBHOOKS_PR_PROCESSING: "api/v1/webhooks-pull-requests-processing"
+  WEBHOOKS_PR_PROCESSING: "api/v1/webhooks-pull-requests-processing",
+  WEBHOOKS_BRANCHES_PROCESSING: "api/v1/webhooks-branches-processing",
+  WEBHOOKS_COMMENTS_PROCESSING: "api/v1/webhooks-comments-processing",
+  WEBHOOKS_INSTALLATIONS_PROCESSING: "api/v1/webhooks-installations-processing",
+  WEBHOOKS_ISSUES_PROCESSING: "api/v1/webhooks-issues-processing",
+  WEBHOOKS_PUSHES_PROCESSING: "api/v1/webhooks-pushes-processing",
+  WEBHOOKS_REPOSITORIES_PROCESSING: "api/v1/webhooks-repositories-processing",
+  WEBHOOKS_SIGNATURE_PROCESSING: "api/v1/webhooks-signature-processing",
+  WEBHOOKS_USERS_PROCESSING: "api/v1/webhooks-users-processing"
 };
 
 export const CHART_OPTIONS = {

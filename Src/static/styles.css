@@ -549,6 +549,82 @@ input.gridjs-input {
   background: rgba(0, 0, 0, .35) !important;
 }
 
+.footer-link {
+  color: rgba(255, 255, 255, .55);
+  text-decoration: none;
+}
+
+.footer-link:hover,
+.footer-link:focus {
+  color: #ff9d5c;
+  text-decoration: underline;
+}
+
+#messageDetailsModal .modal-dialog {
+  max-width: min(1400px, 95vw);
+}
+
+.btn-view-details {
+  background: linear-gradient(135deg, #1f9dd6 0%, #0dcaf0 100%);
+  border: none;
+  color: #ffffff;
+  transition: var(--transition);
+}
+
+.btn-view-details:hover,
+.btn-view-details:focus {
+  background: linear-gradient(135deg, #2bb3f0 0%, #3ad8ff 100%);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.btn-view-details i {
+  color: inherit;
+}
+
+.msg-detail-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px;
+}
+
+.msg-detail-field {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.msg-detail-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: #ffb454;
+  padding-top: 8px;
+}
+
+.msg-detail-value {
+  display: block;
+  background: rgba(0, 0, 0, .4);
+  border: 1px solid var(--glass-border-light);
+  border-left: 3px solid #ffb454;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, .9);
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 576px) {
+  .msg-detail-field {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ===========================================
    GAUGES
    =========================================== */
@@ -575,7 +651,6 @@ input.gridjs-input {
   grid-template-columns: repeat(5, 1fr);
   gap: 0;
   margin-bottom: 0;
-  padding: 20px;
 }
 
 .stats-section {
@@ -889,7 +964,6 @@ input.gridjs-input {
 
   .gauges-grid {
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    padding: 10px;
   }
 
   .bottom-grid {

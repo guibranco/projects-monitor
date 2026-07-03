@@ -324,11 +324,12 @@ export class DataDisplayManager {
         const sampleId = row[5] ?? 0;
         const rawApp   = row[6] ?? row[0];
         const rawMsg   = row[7] ?? row[1];
-        const btn = `<button class="btn btn-sm btn-info py-0 px-2"
+        const btn = `<button class="btn btn-sm btn-view-details py-0 px-2"
           data-action="view-msg-details"
           data-sample-id="${sampleId}"
           data-app="${this.#escHtml(rawApp)}"
           data-msg="${this.#escHtml(rawMsg)}"
+          aria-label="View individual messages"
           title="View individual messages">
           <i class="bi bi-eye-fill"></i>
         </button>`;
@@ -626,49 +627,222 @@ export class DataDisplayManager {
   /**
    * Renders pull requests pending processing from the webhooks /pull-requests/processing endpoint.
    */
-  showWebhookPullRequestsProcessing(response) {
-    const container = document.getElementById("pr_processing");
-    const counterEl = document.getElementById("counter_pr_processing");
+  #stateBadgeClass(state) {
+    switch (state) {
+      case "NEW":          return "bg-primary";
+      case "RE_REQUESTED": return "bg-warning text-dark";
+      case "UPDATED":      return "bg-info text-dark";
+      case "PROCESSING":   return "bg-danger";
+      default:             return "bg-secondary";
+    }
+  }
+
+  #stateBadge(state) {
+    return `<span class="badge ${this.#stateBadgeClass(state)}">${this.#escHtml(state)}</span>`;
+  }
+
+  #fmt(value) {
+    return value ? this.#escHtml(value) : '—';
+  }
+
+  #repoLink(owner, name) {
+    return `<a href="https://github.com/${this.#escHtml(owner)}/${this.#escHtml(name)}" target="_blank" rel="noopener noreferrer">${this.#escHtml(owner)}/${this.#escHtml(name)}</a>`;
+  }
+
+  #refCell(ref) {
+    const short = ref ? this.#escHtml(ref.replace('refs/heads/', '')) : '—';
+    return `<span title="${this.#escHtml(ref ?? '')}">${short}</span>`;
+  }
+
+  /**
+   * Shared renderer for every "<Entity> Pending Processing" section: builds a
+   * [header, ...rows] table from a flat array of processing items, updates
+   * the section's counter badge, and shows a friendly empty state.
+   */
+  #renderProcessingList(response, elementId, emptyMessage, columns) {
+    const container = document.getElementById(elementId);
+    const counterEl = document.getElementById(`counter_${elementId}`);
     if (!container) return;
 
     const items = Array.isArray(response) ? response : [];
 
     if (items.length === 0) {
       if (counterEl) counterEl.textContent = 0;
-      container.innerHTML = '<p class="text-muted text-center py-3 mb-0">No pull requests pending processing.</p>';
+      container.innerHTML = `<p class="text-muted text-center py-3 mb-0">${emptyMessage}</p>`;
       return;
     }
 
-    const stateBadgeClass = (state) => {
-      switch (state) {
-        case "NEW":        return "bg-primary";
-        case "RE_REQUESTED": return "bg-warning text-dark";
-        case "UPDATED":    return "bg-info text-dark";
-        case "PROCESSING": return "bg-danger";
-        default:           return "bg-secondary";
-      }
-    };
+    const header = columns.map((c) => c.label);
+    const rows = items.map((item) => columns.map((c) => c.render(item)));
 
-    const header = ["#Seq", "Repository", "PR", "Sender", "Branch", "State",
-      "Processing Date", "Receiver", "Handler", "Bot"];
-
-    const rows = items.map(item => {
-      const repo = `${this.#escHtml(item.repositoryOwner)}/${this.#escHtml(item.repositoryName)}`;
-      const prLink = `<a href="https://github.com/${this.#escHtml(item.repositoryOwner)}/${this.#escHtml(item.repositoryName)}/pull/${item.number}" target="_blank" rel="noopener noreferrer">#${item.number}</a>`;
-      const stateBadge = `<span class="badge ${stateBadgeClass(item.processingState)}">${this.#escHtml(item.processingState)}</span>`;
-      const ref = item.ref ? this.#escHtml(item.ref.replace('refs/heads/', '')) : '—';
-      const refCell = `<span title="${this.#escHtml(item.ref ?? '')}">${ref}</span>`;
-      const sender = item.senderLogin ? this.#escHtml(item.senderLogin) : (item.sender ? this.#escHtml(item.sender) : '—');
-      const processingDate = item.processingDate ? this.#escHtml(item.processingDate) : '—';
-      const receiverVer = item.webhooksReceiverVersion ? this.#escHtml(item.webhooksReceiverVersion) : '—';
-      const handlerVer = item.webhooksHandlerVersion ? this.#escHtml(item.webhooksHandlerVersion) : '—';
-      const botVer = item.gstracciniBotVersion ? this.#escHtml(item.gstracciniBotVersion) : '—';
-      return [item.sequence, repo, prLink, sender, refCell, stateBadge,
-        processingDate, receiverVer, handlerVer, botVer];
-    });
-
-    this.chartManager.drawDataTable([header, ...rows], "pr_processing", CHART_OPTIONS.table);
+    this.chartManager.drawDataTable([header, ...rows], elementId, CHART_OPTIONS.table);
     if (counterEl) counterEl.textContent = items.length;
+  }
+
+  /**
+   * Renders branch create/delete events pending processing.
+   */
+  showBranchesProcessing(response) {
+    this.#renderProcessingList(response, "branches_processing", "No branch events pending processing.", [
+      { label: "#Seq", render: (i) => i.sequence },
+      { label: "Repository", render: (i) => this.#repoLink(i.repositoryOwner, i.repositoryName) },
+      { label: "Ref", render: (i) => this.#refCell(i.ref) },
+      { label: "Ref Type", render: (i) => this.#fmt(i.refType) },
+      { label: "Event", render: (i) => this.#fmt(i.event) },
+      { label: "Sender", render: (i) => this.#fmt(i.senderLogin) },
+      { label: "State", render: (i) => this.#stateBadge(i.processingState) },
+      { label: "Processing Date", render: (i) => this.#fmt(i.processingDate) },
+      { label: "Receiver", render: (i) => this.#fmt(i.webhooksReceiverVersion) },
+      { label: "Handler", render: (i) => this.#fmt(i.webhooksHandlerVersion) },
+      { label: "Bot", render: (i) => this.#fmt(i.gstracciniBotVersion) },
+    ]);
+  }
+
+  /**
+   * Renders pull request comment events pending processing.
+   */
+  showCommentsProcessing(response) {
+    this.#renderProcessingList(response, "comments_processing", "No comment events pending processing.", [
+      { label: "#Seq", render: (i) => i.sequence },
+      { label: "Repository", render: (i) => this.#repoLink(i.repositoryOwner, i.repositoryName) },
+      { label: "PR", render: (i) => `<a href="https://github.com/${this.#escHtml(i.repositoryOwner)}/${this.#escHtml(i.repositoryName)}/pull/${i.pullRequestNumber}" target="_blank" rel="noopener noreferrer">#${i.pullRequestNumber}</a>` },
+      { label: "Comment ID", render: (i) => this.#fmt(i.commentId) },
+      { label: "Comment Sender", render: (i) => this.#fmt(i.commentSender) },
+      { label: "Sender", render: (i) => this.#fmt(i.senderLogin) },
+      { label: "State", render: (i) => this.#stateBadge(i.processingState) },
+      { label: "Processing Date", render: (i) => this.#fmt(i.processingDate) },
+      { label: "Receiver", render: (i) => this.#fmt(i.webhooksReceiverVersion) },
+      { label: "Handler", render: (i) => this.#fmt(i.webhooksHandlerVersion) },
+      { label: "Bot", render: (i) => this.#fmt(i.gstracciniBotVersion) },
+    ]);
+  }
+
+  /**
+   * Renders GitHub App installation events pending processing.
+   */
+  showInstallationsProcessing(response) {
+    this.#renderProcessingList(response, "installations_processing", "No installation events pending processing.", [
+      { label: "#Seq", render: (i) => i.sequence },
+      { label: "Account", render: (i) => this.#fmt(i.accountLogin) },
+      { label: "Account Type", render: (i) => this.#fmt(i.accountType) },
+      { label: "Repo Selection", render: (i) => this.#fmt(i.repositorySelection) },
+      { label: "Sender", render: (i) => this.#fmt(i.senderLogin) },
+      { label: "Status", render: (i) => this.#fmt(i.status) },
+      { label: "State", render: (i) => this.#stateBadge(i.processingState) },
+      { label: "Processing Date", render: (i) => this.#fmt(i.processingDate) },
+      { label: "Receiver", render: (i) => this.#fmt(i.webhooksReceiverVersion) },
+      { label: "Handler", render: (i) => this.#fmt(i.webhooksHandlerVersion) },
+      { label: "Bot", render: (i) => this.#fmt(i.gstracciniBotVersion) },
+    ]);
+  }
+
+  /**
+   * Renders issue events pending processing.
+   */
+  showIssuesProcessing(response) {
+    this.#renderProcessingList(response, "issues_processing", "No issue events pending processing.", [
+      { label: "#Seq", render: (i) => i.sequence },
+      { label: "Repository", render: (i) => this.#repoLink(i.repositoryOwner, i.repositoryName) },
+      { label: "Issue", render: (i) => `<a href="https://github.com/${this.#escHtml(i.repositoryOwner)}/${this.#escHtml(i.repositoryName)}/issues/${i.number}" target="_blank" rel="noopener noreferrer">#${i.number}</a>` },
+      { label: "Sender", render: (i) => this.#fmt(i.senderLogin) },
+      { label: "State", render: (i) => this.#stateBadge(i.processingState) },
+      { label: "Processing Date", render: (i) => this.#fmt(i.processingDate) },
+      { label: "Receiver", render: (i) => this.#fmt(i.webhooksReceiverVersion) },
+      { label: "Handler", render: (i) => this.#fmt(i.webhooksHandlerVersion) },
+      { label: "Bot", render: (i) => this.#fmt(i.gstracciniBotVersion) },
+    ]);
+  }
+
+  /**
+   * Renders push events pending processing.
+   */
+  showPushesProcessing(response) {
+    this.#renderProcessingList(response, "pushes_processing", "No push events pending processing.", [
+      { label: "#Seq", render: (i) => i.sequence },
+      { label: "Repository", render: (i) => this.#repoLink(i.repositoryOwner, i.repositoryName) },
+      { label: "Ref", render: (i) => this.#refCell(i.ref) },
+      { label: "Sender", render: (i) => this.#fmt(i.senderLogin) },
+      { label: "State", render: (i) => this.#stateBadge(i.processingState) },
+      { label: "Processing Date", render: (i) => this.#fmt(i.processingDate) },
+      { label: "Receiver", render: (i) => this.#fmt(i.webhooksReceiverVersion) },
+      { label: "Handler", render: (i) => this.#fmt(i.webhooksHandlerVersion) },
+      { label: "Bot", render: (i) => this.#fmt(i.gstracciniBotVersion) },
+    ]);
+  }
+
+  /**
+   * Renders pull request events pending processing.
+   */
+  showWebhookPullRequestsProcessing(response) {
+    this.#renderProcessingList(response, "pr_processing", "No pull requests pending processing.", [
+      { label: "#Seq", render: (i) => i.sequence },
+      { label: "Repository", render: (i) => this.#repoLink(i.repositoryOwner, i.repositoryName) },
+      { label: "PR", render: (i) => `<a href="https://github.com/${this.#escHtml(i.repositoryOwner)}/${this.#escHtml(i.repositoryName)}/pull/${i.number}" target="_blank" rel="noopener noreferrer">#${i.number}</a>` },
+      { label: "Sender", render: (i) => this.#fmt(i.senderLogin ?? i.sender) },
+      { label: "Branch", render: (i) => this.#refCell(i.ref) },
+      { label: "State", render: (i) => this.#stateBadge(i.processingState) },
+      { label: "Processing Date", render: (i) => this.#fmt(i.processingDate) },
+      { label: "Receiver", render: (i) => this.#fmt(i.webhooksReceiverVersion) },
+      { label: "Handler", render: (i) => this.#fmt(i.webhooksHandlerVersion) },
+      { label: "Bot", render: (i) => this.#fmt(i.gstracciniBotVersion) },
+    ]);
+  }
+
+  /**
+   * Renders repository events pending processing.
+   */
+  showRepositoriesProcessing(response) {
+    this.#renderProcessingList(response, "repositories_processing", "No repository events pending processing.", [
+      { label: "#Seq", render: (i) => i.sequence },
+      { label: "Repository", render: (i) => this.#fmt(i.fullName) },
+      { label: "Owner", render: (i) => this.#fmt(i.ownerLogin) },
+      { label: "Last Action", render: (i) => this.#fmt(i.lastAction) },
+      { label: "Installation Action", render: (i) => this.#fmt(i.installationAction) },
+      { label: "Sender", render: (i) => this.#fmt(i.senderLogin) },
+      { label: "State", render: (i) => this.#stateBadge(i.processingState) },
+      { label: "Processing Date", render: (i) => this.#fmt(i.processingDate) },
+      { label: "Receiver", render: (i) => this.#fmt(i.webhooksReceiverVersion) },
+      { label: "Handler", render: (i) => this.#fmt(i.webhooksHandlerVersion) },
+      { label: "Bot", render: (i) => this.#fmt(i.gstracciniBotVersion) },
+    ]);
+  }
+
+  /**
+   * Renders signature-verification events pending processing. Unlike other
+   * entities, github_signature has no Sender* columns.
+   */
+  showSignatureProcessing(response) {
+    this.#renderProcessingList(response, "signature_processing", "No signature events pending processing.", [
+      { label: "#Seq", render: (i) => i.sequence },
+      { label: "Repository", render: (i) => this.#repoLink(i.repositoryOwner, i.repositoryName) },
+      { label: "Event", render: (i) => this.#fmt(i.event) },
+      { label: "Error", render: (i) => this.#fmt(i.error) },
+      { label: "State", render: (i) => this.#stateBadge(i.processingState) },
+      { label: "Processing Date", render: (i) => this.#fmt(i.processingDate) },
+      { label: "Receiver", render: (i) => this.#fmt(i.webhooksReceiverVersion) },
+      { label: "Handler", render: (i) => this.#fmt(i.webhooksHandlerVersion) },
+      { label: "Bot", render: (i) => this.#fmt(i.gstracciniBotVersion) },
+    ]);
+  }
+
+  /**
+   * Renders user records pending processing. Unlike other entities,
+   * github_users is a global table with no repository/PR context and no
+   * Sender* columns.
+   */
+  showUsersProcessing(response) {
+    this.#renderProcessingList(response, "users_processing", "No user records pending processing.", [
+      { label: "#Seq", render: (i) => i.sequence },
+      { label: "Login", render: (i) => this.#fmt(i.login) },
+      { label: "Full Name", render: (i) => this.#fmt(i.fullName) },
+      { label: "Email", render: (i) => this.#fmt(i.email) },
+      { label: "User ID", render: (i) => this.#fmt(i.userId) },
+      { label: "State", render: (i) => this.#stateBadge(i.processingState) },
+      { label: "Processing Date", render: (i) => this.#fmt(i.processingDate) },
+      { label: "Receiver", render: (i) => this.#fmt(i.webhooksReceiverVersion) },
+      { label: "Handler", render: (i) => this.#fmt(i.webhooksHandlerVersion) },
+      { label: "Bot", render: (i) => this.#fmt(i.gstracciniBotVersion) },
+    ]);
   }
 
   /**

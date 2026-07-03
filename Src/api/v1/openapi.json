@@ -711,28 +711,6 @@
               "enum": ["all", "mine"],
               "default": "all"
             }
-          },
-          {
-            "name": "workflowsLimiterEnabled",
-            "in": "query",
-            "required": false,
-            "description": "Whether to cap the number of workflow run rows returned.",
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
-          },
-          {
-            "name": "workflowsLimiterQuantity",
-            "in": "query",
-            "required": false,
-            "description": "Maximum number of workflow run rows. Only used when workflowsLimiterEnabled is true. Range: 1-10000.",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 10000,
-              "example": 50
-            }
           }
         ],
         "responses": {

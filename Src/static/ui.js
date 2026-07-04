@@ -183,6 +183,14 @@ export class UIManager {
       onConfirm,
     });
   }
+
+  confirmRunJob(name, onConfirm) {
+    showConfirm({
+      title: "Run Job",
+      content: `Are you sure you want to trigger the "${this.#esc(name)}" GStraccini bot job now?`,
+      onConfirm,
+    });
+  }
 }
 
 export class GitHubStatsManager {

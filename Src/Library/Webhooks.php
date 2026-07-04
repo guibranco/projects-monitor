@@ -51,10 +51,10 @@ class Webhooks
                 $response = $this->request->get("{$this->apiUrl}{$endpoint}", $this->headers);
                 break;
             case "post":
-                $response = $this->request->post("{$this->apiUrl}{$endpoint}", json_encode($data), $this->headers);
+                $response = $this->request->post("{$this->apiUrl}{$endpoint}", $this->headers, json_encode($data));
                 break;
             case "put":
-                $response = $this->request->put("{$this->apiUrl}{$endpoint}", json_encode($data), $this->headers);
+                $response = $this->request->put("{$this->apiUrl}{$endpoint}", $this->headers, json_encode($data));
                 break;
             case "delete":
                 $response = $this->request->delete("{$this->apiUrl}{$endpoint}", $this->headers);

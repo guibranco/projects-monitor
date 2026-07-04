@@ -49,7 +49,9 @@ export const API_ENDPOINTS = {
   WEBHOOKS_SIGNATURE_PROCESSING: "api/v1/webhooks-signature-processing",
   WEBHOOKS_USERS_PROCESSING: "api/v1/webhooks-users-processing",
   WEBHOOKS_WORKERS: "api/v1/webhooks-workers",
-  WEBHOOKS_WORKERS_RUN: "api/v1/webhooks-workers/run"
+  WEBHOOKS_WORKERS_RUN: "api/v1/webhooks-workers/run",
+  GSTRACCINI_JOBS: "api/v1/gstraccini-jobs",
+  GSTRACCINI_JOBS_RUN: "api/v1/gstraccini-jobs/run"
 };
 
 export const CHART_OPTIONS = {

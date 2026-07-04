@@ -56,6 +56,7 @@ class DashboardApp {
     window.showUsersProcessing = this.dataDisplayManager.showUsersProcessing.bind(this.dataDisplayManager);
     window.showWireGuard = this.dataDisplayManager.showWireGuard.bind(this.dataDisplayManager);
     window.showWorkers = this.dataDisplayManager.showWorkers.bind(this.dataDisplayManager);
+    window.showGStracciniJobs = this.dataDisplayManager.showGStracciniJobs.bind(this.dataDisplayManager);
 
     // Expose API functions
     window.deleteMessageByApplication = async (application) => {
@@ -82,6 +83,10 @@ class DashboardApp {
       await this.apiManager.runWorker(name);
     };
 
+    window.runJob = async (name) => {
+      await this.apiManager.runJob(name);
+    };
+
     window.showDbErrors = this.dataDisplayManager.showDbErrors.bind(this.dataDisplayManager);
 
     window.truncateDbErrors = async () => {
@@ -104,6 +109,7 @@ class DashboardApp {
     window.confirmDeleteMessage = this.uiManager.confirmDeleteMessage.bind(this.uiManager);
     window.confirmDeleteMessageGroup = this.uiManager.confirmDeleteMessageGroup.bind(this.uiManager);
     window.confirmRunWorker = this.uiManager.confirmRunWorker.bind(this.uiManager);
+    window.confirmRunJob = this.uiManager.confirmRunJob.bind(this.uiManager);
 
     // ── Message detail modal ────────────────────────────────────────────────
     const _apiMgr  = this.apiManager;

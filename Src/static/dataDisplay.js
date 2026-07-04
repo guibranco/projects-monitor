@@ -11,6 +11,7 @@ export class DataDisplayManager {
     this.eventAssignedDbErrors = false;
     this.eventAssignedMsgDetails = false;
     this.eventAssignedWorkers = false;
+    this.eventAssignedGStracciniJobs = false;
   }
 
   #escHtml(str) {
@@ -866,6 +867,28 @@ export class DataDisplayManager {
 
       const { name } = runButton.dataset;
       window.confirmRunWorker?.(name, () => window.runWorker?.(name));
+    });
+  }
+
+  /**
+   * Renders the GStraccini bot background jobs list, each row carrying an
+   * embedded "Run" button (same pattern as the webhooks workers table).
+   */
+  showGStracciniJobs(response) {
+    const counterEl = document.getElementById("counter_gstraccini_jobs");
+    if (counterEl) counterEl.textContent = response.total ?? 0;
+
+    this.chartManager.drawDataTable(response.jobs, "gstraccini_jobs", CHART_OPTIONS.table);
+
+    if (this.eventAssignedGStracciniJobs === true) return;
+    this.eventAssignedGStracciniJobs = true;
+
+    document.getElementById("gstraccini_jobs")?.addEventListener("click", (e) => {
+      const runButton = e.target.closest('[data-action="run-job"]');
+      if (!runButton) return;
+
+      const { name } = runButton.dataset;
+      window.confirmRunJob?.(name, () => window.runJob?.(name));
     });
   }
 

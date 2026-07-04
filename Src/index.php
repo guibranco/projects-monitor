@@ -251,6 +251,14 @@ $configuration = new Configuration();
 
       <div class="full-width-section">
          <div class="section-header">
+            <i class="bi bi-robot me-2"></i>GStraccini Bot Jobs <span id="counter_gstraccini_jobs"
+               class="badge rounded-pill"></span>
+         </div>
+         <div id="gstraccini_jobs" class="section-content"></div>
+      </div>
+
+      <div class="full-width-section">
+         <div class="section-header">
             <i class="bi bi-signpost-split me-2"></i>Branches Pending Processing <span id="counter_branches_processing"
                class="badge rounded-pill"></span>
          </div>

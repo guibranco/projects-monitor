@@ -27,6 +27,7 @@
     { "name": "Domains",     "description": "Domain SSL/expiry validity information" },
     { "name": "Errors",      "description": "Database-backed error log management" },
     { "name": "GitHub",      "description": "GitHub API stats, issues, pull requests, and releases" },
+    { "name": "GStraccini Bot", "description": "Trigger background jobs on the GStraccini GitHub bot" },
     { "name": "HealthChecks","description": "HealthChecks.io monitor status" },
     { "name": "Messages",    "description": "Application log-message management" },
     { "name": "Postman",     "description": "Postman API usage stats" },
@@ -428,6 +429,84 @@
             }
           },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/gstraccini-jobs": {
+      "get": {
+        "summary": "List GStraccini bot jobs",
+        "description": "Returns the fixed set of background jobs exposed by the GStraccini GitHub bot (branches, comments, issues, pullRequests, pushes, repositories, signature) as a table with an embedded 'Run' action button per row.",
+        "operationId": "getGStracciniJobs",
+        "tags": ["GStraccini Bot"],
+        "responses": {
+          "200": {
+            "description": "Jobs table.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "jobs": {
+                      "type": "array",
+                      "description": "Header row followed by one row per job: Job, Actions (HTML Run button).",
+                      "items": { "type": "array", "items": {} }
+                    },
+                    "total": { "type": "integer", "example": 7 }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/gstraccini-jobs/run": {
+      "post": {
+        "summary": "Trigger a GStraccini bot job",
+        "description": "Triggers a GStraccini bot background job to run via the upstream GStraccini Bot API (POST /jobs/{job}/). `job` must be one of: branches, comments, issues, pullRequests, pushes, repositories, signature.",
+        "operationId": "runGStracciniJob",
+        "tags": ["GStraccini Bot"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["job"],
+                "properties": {
+                  "job": {
+                    "type": "string",
+                    "enum": ["branches", "comments", "issues", "pullRequests", "pushes", "repositories", "signature"],
+                    "example": "pullRequests"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Job accepted and running in the background.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "accepted" },
+                    "job": { "type": "string", "example": "pullRequests" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Missing required 'job' field or invalid JSON." },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "422": { "description": "Unknown job name." },
           "429": { "$ref": "#/components/responses/RateLimited" },
           "500": { "$ref": "#/components/responses/ServerError" }
         }

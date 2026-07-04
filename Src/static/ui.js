@@ -175,6 +175,14 @@ export class UIManager {
       onConfirm,
     });
   }
+
+  confirmRunWorker(name, onConfirm) {
+    showConfirm({
+      title: "Run Worker",
+      content: `Are you sure you want to trigger a run of the "${this.#esc(name)}" worker now?`,
+      onConfirm,
+    });
+  }
 }
 
 export class GitHubStatsManager {

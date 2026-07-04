@@ -10,6 +10,7 @@ export class DataDisplayManager {
     this.eventAssignedQueues = false;
     this.eventAssignedDbErrors = false;
     this.eventAssignedMsgDetails = false;
+    this.eventAssignedWorkers = false;
   }
 
   #escHtml(str) {
@@ -843,6 +844,29 @@ export class DataDisplayManager {
       { label: "Handler", render: (i) => this.#fmt(i.webhooksHandlerVersion) },
       { label: "Bot", render: (i) => this.#fmt(i.gstracciniBotVersion) },
     ]);
+  }
+
+  /**
+   * Renders the background workers list from the webhooks /workers endpoint,
+   * each row carrying an embedded "Run" button (rendered server-side, same
+   * pattern as the queues purge button).
+   */
+  showWorkers(response) {
+    const counterEl = document.getElementById("counter_webhooks_workers");
+    if (counterEl) counterEl.textContent = response.total ?? 0;
+
+    this.chartManager.drawDataTable(response.workers, "webhooks_workers", CHART_OPTIONS.table);
+
+    if (this.eventAssignedWorkers === true) return;
+    this.eventAssignedWorkers = true;
+
+    document.getElementById("webhooks_workers")?.addEventListener("click", (e) => {
+      const runButton = e.target.closest('[data-action="run-worker"]');
+      if (!runButton) return;
+
+      const { name } = runButton.dataset;
+      window.confirmRunWorker?.(name, () => window.runWorker?.(name));
+    });
   }
 
   /**

@@ -55,6 +55,7 @@ class DashboardApp {
     window.showSignatureProcessing = this.dataDisplayManager.showSignatureProcessing.bind(this.dataDisplayManager);
     window.showUsersProcessing = this.dataDisplayManager.showUsersProcessing.bind(this.dataDisplayManager);
     window.showWireGuard = this.dataDisplayManager.showWireGuard.bind(this.dataDisplayManager);
+    window.showWorkers = this.dataDisplayManager.showWorkers.bind(this.dataDisplayManager);
 
     // Expose API functions
     window.deleteMessageByApplication = async (application) => {
@@ -75,6 +76,10 @@ class DashboardApp {
     window.deleteErrorLogFile = async (directory) => {
       const data = await this.apiManager.deleteErrorLogFile(directory);
       this.dataDisplayManager.showCPanel(data);
+    };
+
+    window.runWorker = async (name) => {
+      await this.apiManager.runWorker(name);
     };
 
     window.showDbErrors = this.dataDisplayManager.showDbErrors.bind(this.dataDisplayManager);
@@ -98,6 +103,7 @@ class DashboardApp {
     window.confirmDeleteErrorsByPath = this.uiManager.confirmDeleteErrorsByPath.bind(this.uiManager);
     window.confirmDeleteMessage = this.uiManager.confirmDeleteMessage.bind(this.uiManager);
     window.confirmDeleteMessageGroup = this.uiManager.confirmDeleteMessageGroup.bind(this.uiManager);
+    window.confirmRunWorker = this.uiManager.confirmRunWorker.bind(this.uiManager);
 
     // ── Message detail modal ────────────────────────────────────────────────
     const _apiMgr  = this.apiManager;

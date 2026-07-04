@@ -251,6 +251,35 @@ export class ApiManager {
   }
 
   /**
+   * Triggers a one-shot run of the named background worker via the Webhooks API.
+   *
+   * @param {string} name - Worker identifier (service, cleanup, database-service, maintenance).
+   */
+  async runWorker(name) {
+    try {
+      const response = await fetch(API_ENDPOINTS.WEBHOOKS_WORKERS_RUN, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      NotificationManager.show("Success", `Worker "${name}" run triggered`, "success");
+      return await response.json();
+    } catch (error) {
+      NotificationManager.show(
+        "Error",
+        `Failed to trigger worker "${name}": ${error.message}`,
+        "error"
+      );
+      throw error;
+    }
+  }
+
+  /**
    * Deletes an error log file from a specified directory using the cPanel API.
    * This function makes an asynchronous POST request to delete the file and handles
    * responses, showing success or error notifications accordingly.
@@ -334,5 +363,6 @@ export class DataLoader {
    */
   load300Interval() {
     this.apiManager.load(API_ENDPOINTS.POSTMAN, (data) => window.showPostman?.(data));
+    this.apiManager.load(API_ENDPOINTS.WEBHOOKS_WORKERS, (data) => window.showWorkers?.(data));
   }
 }

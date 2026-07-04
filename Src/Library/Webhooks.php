@@ -8,6 +8,8 @@ use GuiBranco\ProjectsMonitor\Library\LogStream;
 
 class Webhooks
 {
+    private const WORKER_NAMES = ["service", "cleanup", "database-service", "maintenance"];
+
     private $apiUrl;
 
     private $headers;
@@ -171,5 +173,43 @@ class Webhooks
     {
         LogStream::debug("Fetching users pending processing", null, "webhooks");
         return $this->doRequest("users/processing", "get", 200);
+    }
+
+    public function getWorkers(): mixed
+    {
+        LogStream::debug("Fetching workers list", null, "webhooks");
+        $workers = $this->doRequest("workers", "get", 200);
+        return $this->formatWorkersTable($workers);
+    }
+
+    public function runWorker($name): mixed
+    {
+        if (!in_array($name, self::WORKER_NAMES, true)) {
+            throw new \InvalidArgumentException("Invalid worker name provided");
+        }
+
+        LogStream::info("Triggering worker run", ["worker" => $name], "webhooks");
+        return $this->doRequest("workers/{$name}/run", "post", 202);
+    }
+
+    private function formatWorkersTable(array $workers): array
+    {
+        $header = ["Worker", "Description", "Run Modes", "Sleep (s)", "Memory Limit", "Systemd Service", "Actions"];
+        $rows = [$header];
+
+        foreach ($workers as $worker) {
+            $name = htmlspecialchars($worker["name"] ?? "", ENT_QUOTES);
+            $description = htmlspecialchars($worker["description"] ?? "", ENT_QUOTES);
+            $runModes = htmlspecialchars(implode(", ", $worker["run_modes"] ?? []), ENT_QUOTES);
+            $sleep = htmlspecialchars((string) ($worker["daemon_sleep_seconds"] ?? "—"), ENT_QUOTES);
+            $memoryLimit = htmlspecialchars($worker["memory_limit"] ?? "—", ENT_QUOTES);
+            $systemdService = htmlspecialchars($worker["systemd_service"] ?? "", ENT_QUOTES);
+            $runBtn = "<button class=\"btn btn-primary btn-sm\" data-action=\"run-worker\" data-name=\"{$name}\" aria-label=\"Run {$name} now\">"
+                . "<i class=\"bi bi-play-fill\"></i> Run</button>";
+
+            $rows[] = [$name, $description, $runModes, $sleep, $memoryLimit, $systemdService, $runBtn];
+        }
+
+        return ["workers" => $rows, "total" => count($workers)];
     }
 }

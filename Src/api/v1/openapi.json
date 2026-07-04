@@ -768,6 +768,84 @@
         }
       }
     },
+    "/api/v1/webhooks-workers": {
+      "get": {
+        "summary": "List background workers",
+        "description": "Returns the Webhooks API's background workers (service, cleanup, database-service, maintenance) as a table with an embedded 'Run' action button per row. Calls the upstream /workers endpoint on the Webhooks API.",
+        "operationId": "getWebhooksWorkers",
+        "tags": ["Webhooks"],
+        "responses": {
+          "200": {
+            "description": "Workers table.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "workers": {
+                      "type": "array",
+                      "description": "Header row followed by one row per worker: Worker, Description, Run Modes, Sleep (s), Memory Limit, Systemd Service, Actions (HTML Run button).",
+                      "items": { "type": "array", "items": {} }
+                    },
+                    "total": { "type": "integer", "example": 4 }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/webhooks-workers/run": {
+      "post": {
+        "summary": "Trigger a one-shot worker run",
+        "description": "Triggers a background worker to run once via the upstream Webhooks API (POST /workers/{name}/run). `name` must be one of: service, cleanup, database-service, maintenance.",
+        "operationId": "runWebhooksWorker",
+        "tags": ["Webhooks"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "enum": ["service", "cleanup", "database-service", "maintenance"],
+                    "example": "service"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Worker run accepted and spawned in the background.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "accepted" },
+                    "worker": { "type": "string", "example": "service" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Missing required 'name' field or invalid JSON." },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "422": { "description": "Unknown worker name." },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
     "/api/v1/wireguard": {
       "get": {
         "summary": "WireGuard peers",

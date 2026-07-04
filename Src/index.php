@@ -315,14 +315,6 @@ $configuration = new Configuration();
 
       <div class="full-width-section">
          <div class="section-header">
-            <i class="bi bi-shield-check me-2"></i>Signature Pending Processing <span id="counter_signature_processing"
-               class="badge rounded-pill"></span>
-         </div>
-         <div id="signature_processing" class="section-content"></div>
-      </div>
-
-      <div class="full-width-section">
-         <div class="section-header">
             <i class="bi bi-people me-2"></i>Users Pending Processing <span id="counter_users_processing"
                class="badge rounded-pill"></span>
          </div>

@@ -14,7 +14,6 @@ class GStracciniBot
         "pullRequests",
         "pushes",
         "repositories",
-        "signature",
     ];
 
     private $apiUrl;

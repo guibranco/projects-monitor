@@ -157,13 +157,12 @@
           "github_pull_requests": { "type": "integer", "example": 88 },
           "github_pushes":        { "type": "integer", "example": 217},
           "github_repositories":  { "type": "integer", "example": 0  },
-          "github_signature":     { "type": "integer", "example": 0  },
           "github_users":         { "type": "integer", "example": 3  }
         }
       },
       "ProcessingStateCounts": {
         "type": "object",
-        "description": "Record counts for every processing state. RE_REQUESTED and UPDATED are always 0 for github_signature.",
+        "description": "Record counts for every processing state.",
         "properties": {
           "NEW":          { "$ref": "#/components/schemas/ProcessingStateTableCounts" },
           "RE_REQUESTED": { "$ref": "#/components/schemas/ProcessingStateTableCounts" },
@@ -437,7 +436,7 @@
     "/api/v1/gstraccini-jobs": {
       "get": {
         "summary": "List GStraccini bot jobs",
-        "description": "Returns the fixed set of background jobs exposed by the GStraccini GitHub bot (branches, comments, issues, pullRequests, pushes, repositories, signature) as a table with an embedded 'Run' action button per row.",
+        "description": "Returns the fixed set of background jobs exposed by the GStraccini GitHub bot (branches, comments, issues, pullRequests, pushes, repositories) as a table with an embedded 'Run' action button per row.",
         "operationId": "getGStracciniJobs",
         "tags": ["GStraccini Bot"],
         "responses": {
@@ -453,7 +452,7 @@
                       "description": "Header row followed by one row per job: Job, Actions (HTML Run button).",
                       "items": { "type": "array", "items": {} }
                     },
-                    "total": { "type": "integer", "example": 7 }
+                    "total": { "type": "integer", "example": 6 }
                   }
                 }
               }
@@ -468,7 +467,7 @@
     "/api/v1/gstraccini-jobs/run": {
       "post": {
         "summary": "Trigger a GStraccini bot job",
-        "description": "Triggers a GStraccini bot background job to run via the upstream GStraccini Bot API (POST /jobs/{job}/). `job` must be one of: branches, comments, issues, pullRequests, pushes, repositories, signature.",
+        "description": "Triggers a GStraccini bot background job to run via the upstream GStraccini Bot API (POST /jobs/{job}/). `job` must be one of: branches, comments, issues, pullRequests, pushes, repositories.",
         "operationId": "runGStracciniJob",
         "tags": ["GStraccini Bot"],
         "requestBody": {
@@ -481,7 +480,7 @@
                 "properties": {
                   "job": {
                     "type": "string",
-                    "enum": ["branches", "comments", "issues", "pullRequests", "pushes", "repositories", "signature"],
+                    "enum": ["branches", "comments", "issues", "pullRequests", "pushes", "repositories"],
                     "example": "pullRequests"
                   }
                 }

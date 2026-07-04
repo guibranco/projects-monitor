@@ -163,12 +163,6 @@ class Webhooks
         return $this->doRequest("repositories/processing", "get", 200);
     }
 
-    public function getSignatureProcessing(): mixed
-    {
-        LogStream::debug("Fetching signature pending processing", null, "webhooks");
-        return $this->doRequest("signature/processing", "get", 200);
-    }
-
     public function getUsersProcessing(): mixed
     {
         LogStream::debug("Fetching users pending processing", null, "webhooks");

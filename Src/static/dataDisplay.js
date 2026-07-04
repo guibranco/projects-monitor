@@ -810,24 +810,6 @@ export class DataDisplayManager {
   }
 
   /**
-   * Renders signature-verification events pending processing. Unlike other
-   * entities, github_signature has no Sender* columns.
-   */
-  showSignatureProcessing(response) {
-    this.#renderProcessingList(response, "signature_processing", "No signature events pending processing.", [
-      { label: "#Seq", render: (i) => i.sequence },
-      { label: "Repository", render: (i) => this.#repoLink(i.repositoryOwner, i.repositoryName) },
-      { label: "Event", render: (i) => this.#fmt(i.event) },
-      { label: "Error", render: (i) => this.#fmt(i.error) },
-      { label: "State", render: (i) => this.#stateBadge(i.processingState) },
-      { label: "Processing Date", render: (i) => this.#fmt(i.processingDate) },
-      { label: "Receiver", render: (i) => this.#fmt(i.webhooksReceiverVersion) },
-      { label: "Handler", render: (i) => this.#fmt(i.webhooksHandlerVersion) },
-      { label: "Bot", render: (i) => this.#fmt(i.gstracciniBotVersion) },
-    ]);
-  }
-
-  /**
    * Renders user records pending processing. Unlike other entities,
    * github_users is a global table with no repository/PR context and no
    * Sender* columns.
@@ -914,7 +896,6 @@ export class DataDisplayManager {
       "github_pull_requests",
       "github_pushes",
       "github_repositories",
-      "github_signature",
       "github_users",
     ];
 

@@ -282,7 +282,7 @@ export class ApiManager {
   /**
    * Triggers a one-shot run of the named GStraccini bot background job.
    *
-   * @param {string} job - Job identifier (branches, comments, issues, pullRequests, pushes, repositories, signature).
+   * @param {string} job - Job identifier (branches, comments, issues, pullRequests, pushes, repositories).
    */
   async runJob(job) {
     try {
@@ -371,7 +371,6 @@ export class DataLoader {
     this.apiManager.load(API_ENDPOINTS.WEBHOOKS_ISSUES_PROCESSING, (data) => window.showIssuesProcessing?.(data));
     this.apiManager.load(API_ENDPOINTS.WEBHOOKS_PUSHES_PROCESSING, (data) => window.showPushesProcessing?.(data));
     this.apiManager.load(API_ENDPOINTS.WEBHOOKS_REPOSITORIES_PROCESSING, (data) => window.showRepositoriesProcessing?.(data));
-    this.apiManager.load(API_ENDPOINTS.WEBHOOKS_SIGNATURE_PROCESSING, (data) => window.showSignatureProcessing?.(data));
     this.apiManager.load(API_ENDPOINTS.WEBHOOKS_USERS_PROCESSING, (data) => window.showUsersProcessing?.(data));
   }
 

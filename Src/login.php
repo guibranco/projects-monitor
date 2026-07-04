@@ -662,7 +662,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
             const tables = [
                 'github_branches', 'github_comments', 'github_installations',
                 'github_issues', 'github_pull_requests', 'github_pushes',
-                'github_repositories', 'github_signature', 'github_users'
+                'github_repositories', 'github_users'
             ];
 
             const botQueueTotal = states.reduce((sum, state) => {

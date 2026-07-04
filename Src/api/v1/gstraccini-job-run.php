@@ -24,7 +24,7 @@ if (!isset($input['job'])) {
     exit;
 }
 
-$allowedJobs = ['branches', 'comments', 'issues', 'pullRequests', 'pushes', 'repositories', 'signature'];
+$allowedJobs = ['branches', 'comments', 'issues', 'pullRequests', 'pushes', 'repositories'];
 $job = filter_var($input['job'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 if (!in_array($job, $allowedJobs, true)) {

@@ -52,7 +52,6 @@ class DashboardApp {
     window.showIssuesProcessing = this.dataDisplayManager.showIssuesProcessing.bind(this.dataDisplayManager);
     window.showPushesProcessing = this.dataDisplayManager.showPushesProcessing.bind(this.dataDisplayManager);
     window.showRepositoriesProcessing = this.dataDisplayManager.showRepositoriesProcessing.bind(this.dataDisplayManager);
-    window.showSignatureProcessing = this.dataDisplayManager.showSignatureProcessing.bind(this.dataDisplayManager);
     window.showUsersProcessing = this.dataDisplayManager.showUsersProcessing.bind(this.dataDisplayManager);
     window.showWireGuard = this.dataDisplayManager.showWireGuard.bind(this.dataDisplayManager);
     window.showWorkers = this.dataDisplayManager.showWorkers.bind(this.dataDisplayManager);

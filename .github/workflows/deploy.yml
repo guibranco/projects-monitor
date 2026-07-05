@@ -169,6 +169,15 @@ jobs:
           echo "\$logStreamToken  = \"${{ secrets.LOGSTREAM_TOKEN }}\";" >> logStream.secrets.php
           echo "\$logStreamAppId  = \"${{ vars.LOGSTREAM_APP_ID }}\";" >> logStream.secrets.php
 
+      - name: 🔑 Generate GStraccini Bot Configuration
+        run: |
+          cd Src
+          mkdir -p secrets
+          cd secrets
+          echo "<?php" >> gstracciniBot.secrets.php
+          echo "\$gstracciniBotApiUrl = \"${{ secrets.GSTRACCINI_API_URL }}\";" >> gstracciniBot.secrets.php
+          echo "\$gstracciniBotApiKey = \"${{ secrets.GSTRACCINI_API_TOKEN }}\";" >> gstracciniBot.secrets.php
+
       - name: 📝 Create Version File for API
         run: |
           cd Src       

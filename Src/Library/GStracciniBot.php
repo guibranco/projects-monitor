@@ -24,6 +24,9 @@ class GStracciniBot
 
     public function __construct()
     {
+        $config = new Configuration();
+        $config->init();
+
         global $gstracciniBotApiKey, $gstracciniBotApiUrl;
 
         if (!file_exists(__DIR__ . "/../secrets/gstracciniBot.secrets.php")) {

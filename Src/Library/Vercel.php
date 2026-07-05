@@ -15,6 +15,9 @@ class Vercel
 
     public function __construct()
     {
+        $config = new Configuration();
+        $config->init();
+
         global $vercelToken;
 
         if (!file_exists(__DIR__ . "/../secrets/vercel.secrets.php")) {

@@ -84,10 +84,13 @@ class Vercel
             $status = $this->mapStatus($state);
             $color = $this->mapColor($state);
 
-            $link = "https://{$project->name}.vercel.app";
+            $domain = $deployment->alias[0] ?? $deployment->url ?? null;
+            $link = $domain !== null ? "https://{$domain}" : null;
             $badgeUrl = $shields->generateBadgeUrl($status, $project->name, $color, "for-the-badge", "white", null);
-            $badgeLink = "<a href='{$link}' title='{$state}' target='_blank' rel='noopener noreferrer'>"
-                . "<img src='{$badgeUrl}' alt='{$project->name}' /></a>";
+            $badgeImg = "<img src='{$badgeUrl}' alt='{$project->name}' />";
+            $badgeLink = $link !== null
+                ? "<a href='{$link}' title='{$state}' target='_blank' rel='noopener noreferrer'>{$badgeImg}</a>"
+                : $badgeImg;
 
             $lastDeployment = isset($deployment->createdAt)
                 ? date("H:i:s d/m/Y", intdiv($deployment->createdAt, 1000))

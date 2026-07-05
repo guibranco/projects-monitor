@@ -33,6 +33,7 @@
     { "name": "Postman",     "description": "Postman API usage stats" },
     { "name": "Queues",      "description": "RabbitMQ queue monitoring and management" },
     { "name": "UpTimeRobot", "description": "UpTimeRobot monitor status" },
+    { "name": "Vercel",      "description": "Vercel project deployments and status" },
     { "name": "Webhooks",    "description": "GitHub webhook dashboard and processing-state statistics" },
     { "name": "WireGuard",   "description": "WireGuard VPN peer data" },
     { "name": "Public",      "description": "Endpoints that do not require a session" }
@@ -758,6 +759,35 @@
                   "type": "object",
                   "properties": {
                     "monitors": {
+                      "type": "array",
+                      "items": { "type": "object" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/vercel": {
+      "get": {
+        "summary": "Vercel projects",
+        "description": "Returns all Vercel projects with a link to the deployed application and the current deployment status.",
+        "operationId": "getVercel",
+        "tags": ["Vercel"],
+        "responses": {
+          "200": {
+            "description": "Project list.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "projects": {
                       "type": "array",
                       "items": { "type": "object" }
                     }

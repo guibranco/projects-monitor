@@ -383,6 +383,7 @@ export class DataLoader {
     this.apiManager.load(API_ENDPOINTS.GITHUB, (data) => window.showGitHub?.(data));
     this.apiManager.load(API_ENDPOINTS.HEALTHCHECKS, (data) => window.showHealthChecksIo?.(data));
     this.apiManager.load(API_ENDPOINTS.UPTIMEROBOT, (data) => window.showUpTimeRobot?.(data));
+    this.apiManager.load(API_ENDPOINTS.VERCEL, (data) => window.showVercel?.(data));
     this.apiManager.load(API_ENDPOINTS.WIREGUARD, (data) => window.showWireGuard?.(data));
   }
 

@@ -35,6 +35,7 @@ export const API_ENDPOINTS = {
   GITHUB: "api/v1/github",
   HEALTHCHECKS: "api/v1/healthchecksio",
   UPTIMEROBOT: "api/v1/uptimerobot",
+  VERCEL: "api/v1/vercel",
   WIREGUARD: "api/v1/wireguard",
   POSTMAN: "api/v1/postman",
   WEBHOOKS: "api/v1/webhooks",

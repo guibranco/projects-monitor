@@ -390,6 +390,13 @@ $configuration = new Configuration();
             </div>
             <div class="data-item">
                <div class="section-header">
+                  <i class="bi bi-triangle me-2"></i>Vercel <span id="counter_vercel"
+                     class="badge rounded-pill"></span>
+               </div>
+               <div id="vercel" class="section-content"></div>
+            </div>
+            <div class="data-item">
+               <div class="section-header">
                   <i class="bi bi-globe me-2"></i>Domains <span id="counter_domains" class="badge rounded-pill"></span>
                </div>
                <div id="domains" class="section-content"></div>

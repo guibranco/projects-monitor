@@ -514,6 +514,13 @@ export class DataDisplayManager {
   }
 
   /**
+   * Draws a data table listing Vercel projects with their deployment status.
+   */
+  showVercel(response) {
+    this.chartManager.drawDataTable(response.projects, "vercel", CHART_OPTIONS.table);
+  }
+
+  /**
    * Updates charts and displays webhook statistics based on response data.
    */
   showWebhook(response) {

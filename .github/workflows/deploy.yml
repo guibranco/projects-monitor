@@ -1,4 +1,4 @@
-name: Deploy via FTP with Database Migrations
+name: Deploy via FTP
 
 on:
   push:

@@ -3,6 +3,7 @@
 ⚙️ 🔔 A centralized dashboard to monitor and manage the health and status of GitHub repositories, personal projects, and infrastructure.
 
 [![wakatime](https://wakatime.com/badge/github/guibranco/projects-monitor.svg)](https://wakatime.com/badge/github/guibranco/projects-monitor)
+[![Build](https://github.com/guibranco/Projects-Monitor/actions/workflows/build.yml/badge.svg)](https://github.com/guibranco/Projects-Monitor/actions/workflows/build.yml)
 [![Deploy via ftp](https://github.com/guibranco/Projects-Monitor/actions/workflows/deploy.yml/badge.svg)](https://github.com/guibranco/Projects-Monitor/actions/workflows/deploy.yml)
 [![Maintainability](https://api.codeclimate.com/v1/badges/576a4ac11de09db48520/maintainability)](https://codeclimate.com/github/guibranco/projects-monitor/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/576a4ac11de09db48520/test_coverage)](https://codeclimate.com/github/guibranco/projects-monitor/test_coverage)

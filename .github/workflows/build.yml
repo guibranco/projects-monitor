@@ -267,7 +267,7 @@ jobs:
       
       - name: 🔐 Acquire WireGuard connection lock
         if: github.actor != 'dependabot[bot]'
-        uses: guibranco/github-artifact-lock-action@v3.0.23
+        uses: guibranco/github-artifact-lock-action@v3.0.24
         with:
           lock-name: wireguard-connection
 
@@ -300,7 +300,7 @@ jobs:
 
       - name: 🔑 Release WireGuard connection lock
         if: always() && github.actor != 'dependabot[bot]'
-        uses: guibranco/github-artifact-lock-action/release-lock@v3.0.23
+        uses: guibranco/github-artifact-lock-action/release-lock@v3.0.24
         with:
           lock-name: wireguard-connection
 

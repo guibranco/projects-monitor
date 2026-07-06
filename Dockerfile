@@ -11,6 +11,7 @@ RUN apt-get update \
        ca-certificates \
        curl \
        git \
+       libonig-dev \
        libzip-dev \
        unzip \
        zip \
@@ -18,6 +19,7 @@ RUN apt-get update \
     && a2enmod rewrite \
     # Install PHP extensions
     && docker-php-ext-install -j$(nproc) \
+       mbstring \
        mysqli \
        sockets \
        shmop \
@@ -34,6 +36,11 @@ RUN apt-get update \
     && go install github.com/mailhog/mhsendmail@latest \
     && cp ${GOPATH}/bin/mhsendmail /usr/local/bin/mhsendmail \
     && chmod +x /usr/local/bin/mhsendmail
+
+# Fail fast if required extensions are missing
+RUN php -m | grep -qi mbstring \
+    && php -m | grep -qi mysqli \
+    && php -m | grep -qi zip
 
 # Configure PHP base settings (can be overridden by mounted config)
 RUN php -i | grep "Configuration File" || true \

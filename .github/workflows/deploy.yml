@@ -18,27 +18,27 @@ jobs:
 
     steps:
       - name: 📥 Checkout Repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           fetch-depth: 0
 
       - name: 🔧 Install GitVersion
-        uses: gittools/actions/gitversion/setup@v4.7.0
+        uses: gittools/actions/gitversion/setup@7417b1089e2c7de93510f1901d656ddf60bb024f # v4.7.0
         with:
           versionSpec: "6.x"
 
       - name: 🏷️ Determine Version Number
         id: gitversion
-        uses: gittools/actions/gitversion/execute@v4.7.0
+        uses: gittools/actions/gitversion/execute@7417b1089e2c7de93510f1901d656ddf60bb024f # v4.7.0
 
       - name: 💾 Cache Composer Dependencies
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: /tmp/composer-cache
           key: ${{ runner.os }}-${{ hashFiles('**/composer.lock') }}
 
       - name: 📚 Install PHP Dependencies
-        uses: "php-actions/composer@v6"
+        uses: "php-actions/composer@8a65f0d3c6a1d17ca4800491a40b5756a4c164f3" # v6
         with:
           php_extensions: sockets
           dev: no
@@ -202,7 +202,7 @@ jobs:
 
       - name: 📤 Upload Application via FTP
         timeout-minutes: 10
-        uses: sebastianpopp/ftp-action@releases/v2
+        uses: sebastianpopp/ftp-action@ca3f8d253d20ddd6aa658f8cb27fc847fd610882 # releases/v2
         with:
           host: ${{ secrets.FTP_SERVER }}
           user: ${{ secrets.FTP_USERNAME }}
@@ -224,12 +224,12 @@ jobs:
 
     steps:
       - name: 📥 Checkout Repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           fetch-depth: 0
 
       - name: 🔍 Detect Changes in SQL Scripts
-        uses: dorny/paths-filter@v4
+        uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4
         id: changes
         with:
           filters: |
@@ -238,7 +238,7 @@ jobs:
               - "Tools/**"
       
       - name: 🔐 Acquire WireGuard Connection Lock
-        uses: guibranco/github-artifact-lock-action@v3.0.24
+        uses: guibranco/github-artifact-lock-action@6d965a4d06be6a2a8e0aa5583745696c5f23ab46 # v3.0.24
         with:
           lock-name: wireguard-connection
 
@@ -275,7 +275,7 @@ jobs:
 
       - name: 🔓 Release WireGuard Connection Lock
         if: always()
-        uses: guibranco/github-artifact-lock-action/release-lock@v3.0.24
+        uses: guibranco/github-artifact-lock-action/release-lock@6d965a4d06be6a2a8e0aa5583745696c5f23ab46 # v3.0.24
         with:
           lock-name: wireguard-connection
 
@@ -311,7 +311,7 @@ jobs:
 
     steps:
       - name: 🏷️ Create and Publish Release
-        uses: ncipollo/release-action@v1.21.0
+        uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1.21.0
         with:
           skipIfReleaseExists: true
           allowUpdates: false

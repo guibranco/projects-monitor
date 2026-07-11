@@ -17,18 +17,18 @@ jobs:
 
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           fetch-depth: 0
 
       - name: 💾 Cache Composer dependencies
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: /tmp/composer-cache
           key: ${{ runner.os }}-${{ hashFiles('**/composer.lock') }}
 
       - name: 📦 Install PHP dependencies
-        uses: "php-actions/composer@v6"
+        uses: "php-actions/composer@8a65f0d3c6a1d17ca4800491a40b5756a4c164f3" # v6
         with:
           php_extensions: sockets
           dev: no
@@ -80,7 +80,7 @@ jobs:
 
       - name: ❌ Update PR with comment (migration error)
         if: failure() && steps.db_migration.outputs.error == 'true'
-        uses: mshick/add-pr-comment@v3
+        uses: mshick/add-pr-comment@ec328af66588ab8f77cdeb2c264f14aba45bbf59 # v3
         with:
           refresh-message-position: true
           message-id: "migrations-local"
@@ -93,7 +93,7 @@ jobs:
 
       - name: ✅ Update PR with comment (migration steps - no changes)
         if: steps.db_migration.outputs.files == ''
-        uses: mshick/add-pr-comment@v3
+        uses: mshick/add-pr-comment@ec328af66588ab8f77cdeb2c264f14aba45bbf59 # v3
         with:
           refresh-message-position: true
           message-id: "migrations-local"
@@ -123,7 +123,7 @@ jobs:
 
       - name: ℹ️ Comment Postman is disabled
         if: ${{ vars.POSTMAN_ENABLED != 'true' }}
-        uses: mshick/add-pr-comment@v3
+        uses: mshick/add-pr-comment@ec328af66588ab8f77cdeb2c264f14aba45bbf59 # v3
         with:
           refresh-message-position: true
           message-id: "postman-disabled"
@@ -147,7 +147,7 @@ jobs:
 
       - name: ❌ Update PR with comment (request tests - failed)
         if: failure() && steps.test_requests.outputs.error == 'true'
-        uses: mshick/add-pr-comment@v3
+        uses: mshick/add-pr-comment@ec328af66588ab8f77cdeb2c264f14aba45bbf59 # v3
         with:
           refresh-message-position: true
           message-id: "requests"
@@ -169,7 +169,7 @@ jobs:
 
       - name: ✅ Update PR with comment (request tests - succeeded)
         if: success()
-        uses: mshick/add-pr-comment@v3
+        uses: mshick/add-pr-comment@ec328af66588ab8f77cdeb2c264f14aba45bbf59 # v3
         with:
           refresh-message-position: true
           message-id: "requests"
@@ -188,7 +188,7 @@ jobs:
 
       - name: ❌ Update PR with comment (database integrity - failed)
         if: failure() && steps.db_integrity.outputs.error == 'true'
-        uses: mshick/add-pr-comment@v3
+        uses: mshick/add-pr-comment@ec328af66588ab8f77cdeb2c264f14aba45bbf59 # v3
         with:
           refresh-message-position: true
           message-id: "db-integrity"
@@ -201,7 +201,7 @@ jobs:
 
       - name: ✅ Update PR with comment (database integrity - succeeded)
         if: success()
-        uses: mshick/add-pr-comment@v3
+        uses: mshick/add-pr-comment@ec328af66588ab8f77cdeb2c264f14aba45bbf59 # v3
         with:
           refresh-message-position: true
           message-id: "db-integrity"
@@ -219,7 +219,7 @@ jobs:
       
       - name: ❌ Update PR with comment (smoke tests - failed)
         if: failure() && steps.smoke_tests.outputs.error == 'true'
-        uses: mshick/add-pr-comment@v3
+        uses: mshick/add-pr-comment@ec328af66588ab8f77cdeb2c264f14aba45bbf59 # v3
         with:
           refresh-message-position: true
           message-id: "smoke-tests"
@@ -235,7 +235,7 @@ jobs:
 
       - name: ✅ Update PR with comment (smoke tests - succeeded)
         if: steps.smoke_tests.outputs.error != 'true'
-        uses: mshick/add-pr-comment@v3
+        uses: mshick/add-pr-comment@ec328af66588ab8f77cdeb2c264f14aba45bbf59 # v3
         with:
           refresh-message-position: true
           message-id: "smoke-tests"
@@ -255,7 +255,7 @@ jobs:
     
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           fetch-depth: 0
       
@@ -267,7 +267,7 @@ jobs:
       
       - name: 🔐 Acquire WireGuard connection lock
         if: github.actor != 'dependabot[bot]'
-        uses: guibranco/github-artifact-lock-action@v3.0.24
+        uses: guibranco/github-artifact-lock-action@6d965a4d06be6a2a8e0aa5583745696c5f23ab46 # v3.0.24
         with:
           lock-name: wireguard-connection
 
@@ -300,13 +300,13 @@ jobs:
 
       - name: 🔑 Release WireGuard connection lock
         if: always() && github.actor != 'dependabot[bot]'
-        uses: guibranco/github-artifact-lock-action/release-lock@v3.0.24
+        uses: guibranco/github-artifact-lock-action/release-lock@6d965a4d06be6a2a8e0aa5583745696c5f23ab46 # v3.0.24
         with:
           lock-name: wireguard-connection
 
       - name: ❌ Update PR with comment (migration error)
         if: failure() && steps.dry_run.outputs.error == 'true' && github.actor != 'dependabot[bot]'
-        uses: mshick/add-pr-comment@v3
+        uses: mshick/add-pr-comment@ec328af66588ab8f77cdeb2c264f14aba45bbf59 # v3
         with:
           refresh-message-position: true
           message-id: "migrations"
@@ -319,7 +319,7 @@ jobs:
 
       - name: 🚀 Update PR with comment (migration steps - changed)
         if: steps.dry_run.outputs.files != '' && github.actor != 'dependabot[bot]'
-        uses: mshick/add-pr-comment@v3
+        uses: mshick/add-pr-comment@ec328af66588ab8f77cdeb2c264f14aba45bbf59 # v3
         with:
           refresh-message-position: true
           message-id: "migrations"
@@ -332,7 +332,7 @@ jobs:
 
       - name: ✅ Update PR with comment (migration steps - no changes)
         if: steps.dry_run.outputs.files == '' && github.actor != 'dependabot[bot]'
-        uses: mshick/add-pr-comment@v3
+        uses: mshick/add-pr-comment@ec328af66588ab8f77cdeb2c264f14aba45bbf59 # v3
         with:
           refresh-message-position: true
           message-id: "migrations"

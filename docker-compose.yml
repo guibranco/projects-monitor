@@ -38,16 +38,16 @@ services:
       retries: 5
       start_period: 10s
 
-  smtp:
-    container_name: smtp
-    image: mailhog/mailhog:latest
+  mailpit:
+    container_name: mailpit
+    image: axllent/mailpit:latest
     ports:
       - "1025:1025"
       - "8025:8025"
     networks:
       - default
     healthcheck:
-      test: ["CMD", "wget", "--spider", "--quiet", "http://localhost:8025/"]
+      test: ["CMD", "wget", "--spider", "--quiet", "http://localhost:8025/readyz"]
       interval: 30s
       timeout: 10s
       retries: 5

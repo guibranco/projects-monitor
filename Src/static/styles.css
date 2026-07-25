@@ -260,7 +260,11 @@ code {
 }
 
 .action-panel {
-  @extend .glass-card;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius);
+  color: var(--text-primary);
+  transition: var(--transition);
   padding: 16px;
 }
 

@@ -70,6 +70,10 @@ $configuration = new Configuration();
                <span class="d-none d-md-inline ms-1">Logout</span>
             </a>
             <button class="btn btn-sm btn-nav-settings" type="button" data-bs-toggle="offcanvas"
+               data-bs-target="#actionsPanel" aria-controls="actionsPanel" title="Actions">
+               <i class="bi bi-hdd-rack"></i>
+            </button>
+            <button class="btn btn-sm btn-nav-settings" type="button" data-bs-toggle="offcanvas"
                data-bs-target="#settingsPanel" aria-controls="settingsPanel" title="Settings">
                <i class="bi bi-sliders"></i>
             </button>
@@ -112,8 +116,16 @@ $configuration = new Configuration();
       </div>
    </div>
 
-   <div class="dashboard-layout">
-      <aside class="action-sidebar">
+   <div class="offcanvas offcanvas-end action-sidebar" tabindex="-1" id="actionsPanel"
+      aria-labelledby="actionsPanelLabel">
+      <div class="offcanvas-header">
+         <h5 class="offcanvas-title" id="actionsPanelLabel">
+            <i class="bi bi-hdd-rack me-2"></i>Actions
+         </h5>
+         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"
+            aria-label="Close"></button>
+      </div>
+      <div class="offcanvas-body">
          <div class="action-panel">
             <div class="action-panel-header">
                <span><i class="bi bi-hdd-rack me-2"></i>Webhooks Management</span>
@@ -129,8 +141,10 @@ $configuration = new Configuration();
             </div>
             <div id="gstraccini_jobs" class="action-list"></div>
          </div>
-      </aside>
+      </div>
+   </div>
 
+   <div class="dashboard-layout">
       <div class="dashboard-container">
       <div class="full-width-section">
          <div class="section-header">

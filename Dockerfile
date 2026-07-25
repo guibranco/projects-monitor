@@ -25,7 +25,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* \
     # Install Mailpit (sendmail-compatible shim for email testing, replaces mhsendmail)
     && ARCH="$(dpkg --print-architecture)" \
-    && curl -sSL "https://github.com/axllent/mailpit/releases/download/v1.30.5/mailpit-linux-${ARCH}.tar.gz" -o mailpit.tar.gz \
+    && curl --proto '=https' --tlsv1.2 -sSL "https://github.com/axllent/mailpit/releases/download/v1.30.5/mailpit-linux-${ARCH}.tar.gz" -o mailpit.tar.gz \
     && tar -C /usr/local/bin -xzf mailpit.tar.gz mailpit \
     && rm mailpit.tar.gz \
     && chmod +x /usr/local/bin/mailpit \

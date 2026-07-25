@@ -837,15 +837,40 @@ export class DataDisplayManager {
   }
 
   /**
-   * Renders the background workers list from the webhooks /workers endpoint,
-   * each row carrying an embedded "Run" button (rendered server-side, same
-   * pattern as the queues purge button).
+   * Renders a compact action-panel list (name + optional description +
+   * embedded "Run" button per row) into the sidebar, shared by the webhooks
+   * workers and GStraccini jobs panels.
+   */
+  #renderActionList(rows, elementId, descriptionIndex = null) {
+    const container = document.getElementById(elementId);
+    if (!container) return;
+
+    container.innerHTML = rows
+      .map((row) => {
+        const name = row[0];
+        const runBtn = row[row.length - 1];
+        const description = descriptionIndex !== null ? row[descriptionIndex] : "";
+        return `<div class="action-item">
+          <div class="action-item-info">
+            <span class="action-item-name">${name}</span>
+            ${description ? `<span class="action-item-desc" title="${description}">${description}</span>` : ""}
+          </div>
+          ${runBtn}
+        </div>`;
+      })
+      .join("");
+  }
+
+  /**
+   * Renders the background workers list from the webhooks /workers endpoint
+   * as an action panel, each row carrying an embedded "Run" button (rendered
+   * server-side, same pattern as the queues purge button).
    */
   showWorkers(response) {
     const counterEl = document.getElementById("counter_webhooks_workers");
     if (counterEl) counterEl.textContent = response.total ?? 0;
 
-    this.chartManager.drawDataTable(response.workers, "webhooks_workers", CHART_OPTIONS.table);
+    this.#renderActionList(response.workers.slice(1), "webhooks_workers", 1);
 
     if (this.eventAssignedWorkers === true) return;
     this.eventAssignedWorkers = true;
@@ -860,14 +885,15 @@ export class DataDisplayManager {
   }
 
   /**
-   * Renders the GStraccini bot background jobs list, each row carrying an
-   * embedded "Run" button (same pattern as the webhooks workers table).
+   * Renders the GStraccini bot background jobs list as an action panel, each
+   * row carrying an embedded "Run" button (same pattern as the webhooks
+   * workers panel).
    */
   showGStracciniJobs(response) {
     const counterEl = document.getElementById("counter_gstraccini_jobs");
     if (counterEl) counterEl.textContent = response.total ?? 0;
 
-    this.chartManager.drawDataTable(response.jobs, "gstraccini_jobs", CHART_OPTIONS.table);
+    this.#renderActionList(response.jobs.slice(1), "gstraccini_jobs");
 
     if (this.eventAssignedGStracciniJobs === true) return;
     this.eventAssignedGStracciniJobs = true;

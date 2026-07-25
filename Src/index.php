@@ -112,7 +112,26 @@ $configuration = new Configuration();
       </div>
    </div>
 
-   <div class="dashboard-container">
+   <div class="dashboard-layout">
+      <aside class="action-sidebar">
+         <div class="action-panel">
+            <div class="action-panel-header">
+               <span><i class="bi bi-hdd-rack me-2"></i>Webhooks Management</span>
+               <span id="counter_webhooks_workers" class="badge rounded-pill"></span>
+            </div>
+            <div id="webhooks_workers" class="action-list"></div>
+         </div>
+
+         <div class="action-panel">
+            <div class="action-panel-header">
+               <span><i class="bi bi-robot me-2"></i>GStraccini Bot Jobs</span>
+               <span id="counter_gstraccini_jobs" class="badge rounded-pill"></span>
+            </div>
+            <div id="gstraccini_jobs" class="action-list"></div>
+         </div>
+      </aside>
+
+      <div class="dashboard-container">
       <div class="full-width-section">
          <div class="section-header">
             <i class="bi bi-bar-chart-line me-2"></i>GitHub Webhooks Statistics <span
@@ -241,84 +260,70 @@ $configuration = new Configuration();
          <div id="webhook_processing_stats" class="section-content"></div>
       </div>
 
-      <div class="full-width-section">
-         <div class="section-header">
-            <i class="bi bi-hdd-rack me-2"></i>Webhooks Management <span id="counter_webhooks_workers"
-               class="badge rounded-pill"></span>
+      <div class="processing-grid">
+         <div class="full-width-section">
+            <div class="section-header">
+               <i class="bi bi-signpost-split me-2"></i>Branches Pending Processing <span id="counter_branches_processing"
+                  class="badge rounded-pill"></span>
+            </div>
+            <div id="branches_processing" class="section-content"></div>
          </div>
-         <div id="webhooks_workers" class="section-content"></div>
-      </div>
 
-      <div class="full-width-section">
-         <div class="section-header">
-            <i class="bi bi-robot me-2"></i>GStraccini Bot Jobs <span id="counter_gstraccini_jobs"
-               class="badge rounded-pill"></span>
+         <div class="full-width-section">
+            <div class="section-header">
+               <i class="bi bi-chat-left-text me-2"></i>Comments Pending Processing <span id="counter_comments_processing"
+                  class="badge rounded-pill"></span>
+            </div>
+            <div id="comments_processing" class="section-content"></div>
          </div>
-         <div id="gstraccini_jobs" class="section-content"></div>
-      </div>
 
-      <div class="full-width-section">
-         <div class="section-header">
-            <i class="bi bi-signpost-split me-2"></i>Branches Pending Processing <span id="counter_branches_processing"
-               class="badge rounded-pill"></span>
+         <div class="full-width-section">
+            <div class="section-header">
+               <i class="bi bi-box-arrow-in-down me-2"></i>Installations Pending Processing <span id="counter_installations_processing"
+                  class="badge rounded-pill"></span>
+            </div>
+            <div id="installations_processing" class="section-content"></div>
          </div>
-         <div id="branches_processing" class="section-content"></div>
-      </div>
 
-      <div class="full-width-section">
-         <div class="section-header">
-            <i class="bi bi-chat-left-text me-2"></i>Comments Pending Processing <span id="counter_comments_processing"
-               class="badge rounded-pill"></span>
+         <div class="full-width-section">
+            <div class="section-header">
+               <i class="bi bi-exclamation-circle me-2"></i>Issues Pending Processing <span id="counter_issues_processing"
+                  class="badge rounded-pill"></span>
+            </div>
+            <div id="issues_processing" class="section-content"></div>
          </div>
-         <div id="comments_processing" class="section-content"></div>
-      </div>
 
-      <div class="full-width-section">
-         <div class="section-header">
-            <i class="bi bi-box-arrow-in-down me-2"></i>Installations Pending Processing <span id="counter_installations_processing"
-               class="badge rounded-pill"></span>
+         <div class="full-width-section">
+            <div class="section-header">
+               <i class="bi bi-hourglass-split me-2"></i>Pull Requests Pending Processing <span id="counter_pr_processing"
+                  class="badge rounded-pill"></span>
+            </div>
+            <div id="pr_processing" class="section-content"></div>
          </div>
-         <div id="installations_processing" class="section-content"></div>
-      </div>
 
-      <div class="full-width-section">
-         <div class="section-header">
-            <i class="bi bi-exclamation-circle me-2"></i>Issues Pending Processing <span id="counter_issues_processing"
-               class="badge rounded-pill"></span>
+         <div class="full-width-section">
+            <div class="section-header">
+               <i class="bi bi-upload me-2"></i>Pushes Pending Processing <span id="counter_pushes_processing"
+                  class="badge rounded-pill"></span>
+            </div>
+            <div id="pushes_processing" class="section-content"></div>
          </div>
-         <div id="issues_processing" class="section-content"></div>
-      </div>
 
-      <div class="full-width-section">
-         <div class="section-header">
-            <i class="bi bi-hourglass-split me-2"></i>Pull Requests Pending Processing <span id="counter_pr_processing"
-               class="badge rounded-pill"></span>
+         <div class="full-width-section">
+            <div class="section-header">
+               <i class="bi bi-folder2 me-2"></i>Repositories Pending Processing <span id="counter_repositories_processing"
+                  class="badge rounded-pill"></span>
+            </div>
+            <div id="repositories_processing" class="section-content"></div>
          </div>
-         <div id="pr_processing" class="section-content"></div>
-      </div>
 
-      <div class="full-width-section">
-         <div class="section-header">
-            <i class="bi bi-upload me-2"></i>Pushes Pending Processing <span id="counter_pushes_processing"
-               class="badge rounded-pill"></span>
+         <div class="full-width-section">
+            <div class="section-header">
+               <i class="bi bi-people me-2"></i>Users Pending Processing <span id="counter_users_processing"
+                  class="badge rounded-pill"></span>
+            </div>
+            <div id="users_processing" class="section-content"></div>
          </div>
-         <div id="pushes_processing" class="section-content"></div>
-      </div>
-
-      <div class="full-width-section">
-         <div class="section-header">
-            <i class="bi bi-folder2 me-2"></i>Repositories Pending Processing <span id="counter_repositories_processing"
-               class="badge rounded-pill"></span>
-         </div>
-         <div id="repositories_processing" class="section-content"></div>
-      </div>
-
-      <div class="full-width-section">
-         <div class="section-header">
-            <i class="bi bi-people me-2"></i>Users Pending Processing <span id="counter_users_processing"
-               class="badge rounded-pill"></span>
-         </div>
-         <div id="users_processing" class="section-content"></div>
       </div>
 
       <div class="full-width-section">
@@ -515,6 +520,7 @@ $configuration = new Configuration();
          <div id="webhooks_statistics" class="section-content"></div>
       </div>
 
+   </div>
    </div>
 
    <!-- Message detail modal -->

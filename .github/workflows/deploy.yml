@@ -170,21 +170,26 @@ jobs:
           echo "\$logStreamAppId  = \"${{ vars.LOGSTREAM_APP_ID }}\";" >> logStream.secrets.php
 
       - name: 🔑 Generate Vercel Configuration
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           cd Src
           mkdir -p secrets
           cd secrets
           echo "<?php" >> vercel.secrets.php
-          echo "\$vercelToken = \"${{ secrets.VERCEL_TOKEN }}\";" >> vercel.secrets.php
+          echo "\$vercelToken = \"$VERCEL_TOKEN\";" >> vercel.secrets.php
 
       - name: 🔑 Generate GStraccini Bot Configuration
+        env:
+          GSTRACCINI_API_URL: ${{ secrets.GSTRACCINI_API_URL }}
+          GSTRACCINI_API_TOKEN: ${{ secrets.GSTRACCINI_API_TOKEN }}
         run: |
           cd Src
           mkdir -p secrets
           cd secrets
           echo "<?php" >> gstracciniBot.secrets.php
-          echo "\$gstracciniBotApiUrl = \"${{ secrets.GSTRACCINI_API_URL }}\";" >> gstracciniBot.secrets.php
-          echo "\$gstracciniBotApiKey = \"${{ secrets.GSTRACCINI_API_TOKEN }}\";" >> gstracciniBot.secrets.php
+          echo "\$gstracciniBotApiUrl = \"$GSTRACCINI_API_URL\";" >> gstracciniBot.secrets.php
+          echo "\$gstracciniBotApiKey = \"$GSTRACCINI_API_TOKEN\";" >> gstracciniBot.secrets.php
 
       - name: 📝 Create Version File for API
         run: |
@@ -290,7 +295,7 @@ jobs:
 
       - name: 🔧 Install Postman CLI
         if: ${{ vars.POSTMAN_ENABLED == 'true' }}
-        run: curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh
+        run: npm install -g postman-cli
 
       - name: 🔑 Authenticate with Postman
         if: ${{ vars.POSTMAN_ENABLED == 'true' }}

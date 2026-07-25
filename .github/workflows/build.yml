@@ -111,7 +111,7 @@ jobs:
 
       - name: 📥 Install Postman CLI
         if: ${{ vars.POSTMAN_ENABLED == 'true' }}
-        run: curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh
+        run: npm install -g postman-cli
 
       - name: 🔑 Login to Postman CLI
         if: ${{ vars.POSTMAN_ENABLED == 'true' }}

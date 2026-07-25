@@ -225,9 +225,96 @@ code {
    =========================================== */
 .dashboard-container {
   width: 100%;
+  min-width: 0;
   margin: 0;
   padding: 0 20px;
   padding-top: 72px;
+}
+
+.dashboard-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 0 20px;
+}
+
+.dashboard-layout .dashboard-container {
+  flex: 1;
+  padding: 0;
+  padding-top: 72px;
+}
+
+/* ===========================================
+   ACTION SIDEBAR (Webhooks Management / GStraccini Bot Jobs)
+   =========================================== */
+.action-sidebar {
+  width: 320px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: sticky;
+  top: 88px;
+  max-height: calc(100vh - 108px);
+  overflow-y: auto;
+}
+
+.action-panel {
+  @extend .glass-card;
+  padding: 16px;
+}
+
+.action-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 1.05em;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.action-panel-header .badge {
+  background: var(--accent-gradient) !important;
+  font-size: 0.85em;
+}
+
+.action-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.action-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--glass-bg-light);
+  border: 1px solid var(--glass-border-light);
+  border-radius: var(--border-radius-small);
+}
+
+.action-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.action-item-name {
+  font-weight: 600;
+  font-size: 0.9em;
+  color: var(--text-primary);
+}
+
+.action-item-desc {
+  font-size: 0.75em;
+  color: rgba(255, 255, 255, 0.6);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ===========================================
@@ -735,6 +822,17 @@ input.gridjs-input {
   margin-bottom: 30px;
 }
 
+.processing-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.processing-grid .full-width-section {
+  margin-bottom: 0;
+}
+
 .data-item {
   @extend .glass-card-light;
   padding: 20px;
@@ -931,15 +1029,51 @@ input.gridjs-input {
 /* ===========================================
    RESPONSIVE DESIGN
    =========================================== */
+@media (max-width: 1100px) {
+  .dashboard-layout {
+    flex-direction: column;
+    padding: 0;
+  }
+
+  .action-sidebar {
+    width: 100%;
+    position: static;
+    max-height: none;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 0 20px;
+  }
+
+  .action-sidebar .action-panel {
+    flex: 1 1 280px;
+  }
+
+  .dashboard-layout .dashboard-container {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}
+
 @media (max-width: 768px) {
   .dashboard-container {
     padding: 0 10px;
     padding-top: 66px;
   }
 
+  .dashboard-layout .dashboard-container {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .action-sidebar {
+    flex-direction: column;
+    padding: 0 10px;
+  }
+
   .stats-section,
   .bottom-grid,
-  .data-lists {
+  .data-lists,
+  .processing-grid {
     grid-template-columns: 1fr;
   }
 

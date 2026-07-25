@@ -1,10 +1,11 @@
 # Projects Monitor
 
-⚙️ 🔔 A centralized dashboard to monitor and manage the health and status of GitHub repositories, personal projects, and infrastructure.
+⚙️ 🔔 A single-page "flight control panel" for GitHub repositories, personal projects, and the infrastructure behind them — pull requests, issues, webhooks, health checks, DNS, queues, and error logs, all in one authenticated dashboard.
 
 [![wakatime](https://wakatime.com/badge/github/guibranco/projects-monitor.svg)](https://wakatime.com/badge/github/guibranco/projects-monitor)
 [![Build](https://github.com/guibranco/Projects-Monitor/actions/workflows/build.yml/badge.svg)](https://github.com/guibranco/Projects-Monitor/actions/workflows/build.yml)
 [![Deploy via ftp](https://github.com/guibranco/Projects-Monitor/actions/workflows/deploy.yml/badge.svg)](https://github.com/guibranco/Projects-Monitor/actions/workflows/deploy.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=guibranco_projects-monitor&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=guibranco_projects-monitor)
 [![Maintainability](https://api.codeclimate.com/v1/badges/576a4ac11de09db48520/maintainability)](https://codeclimate.com/github/guibranco/projects-monitor/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/576a4ac11de09db48520/test_coverage)](https://codeclimate.com/github/guibranco/projects-monitor/test_coverage)
 [![CodeFactor](https://www.codefactor.io/repository/github/guibranco/projects-monitor/badge)](https://www.codefactor.io/repository/github/guibranco/projects-monitor)
@@ -13,114 +14,128 @@
 
 ## Overview
 
-Projects Monitor is a single-page dashboard powered by a REST-like API in PHP. It is designed to provide a "flight control panel" for managing and visualizing the status of various projects, services, and infrastructure in one place. 
-You can find a preview of the current dashboard at the bottom of this README.md file.
+Projects Monitor is a PHP dashboard backed by a REST-like API (`Src/api/v1`). It logs in over a session-based auth flow, then renders live tiles and gauges for every service the author's projects depend on — GitHub, cPanel, RabbitMQ, WireGuard, Vercel, and more — so an outage or a stuck queue is visible at a glance instead of buried in a dozen separate dashboards. A preview of the login and dashboard screens is at the bottom of this README.
 
 ### Features
 
-- **GitHub Integration**:
-  - View pending and open pull requests.
-  - Monitor issues across repositories.
-  - Track webhook activity.
-  - Highlight workflow runs, emphasizing failures.
-  - Monitor API usage and track the latest releases of specific projects.
+- **GitHub integration** — open/pending pull requests, issues across repositories, workflow runs (failures highlighted), API rate-limit usage, and the latest releases of tracked projects.
+- **Webhooks & automation** — GitHub webhook statistics and processing-state counts, plus a right-hand **Actions** panel (offcanvas, top-right of the dashboard) listing live webhook workers and GStraccini Bot job runs.
+- **Infrastructure health** — HealthChecks.io, UpTimeRobot, AppVeyor CI, and Vercel deployment status; CloudAMQP/RabbitMQ queue, message, consumer, and connection stats; WireGuard VPN client/connection status over SSH.
+- **Domains** — DNS, registrar, and lifecycle information (expiration, transfer status) via IP2WHOIS.
+- **Logs & errors** — cPanel error logs and SQL-backed application errors, aggregated with grouping and statistics by application or error content.
+- **Public stats** — a pre-computed, unauthenticated stats page fed by a cron worker (see [Background workers](#background-workers)).
+- **Interactive API docs** — a Swagger UI served at `/api/v1/swagger`, backed by the OpenAPI spec at `/api/v1/openapi` (both behind login).
 
-- **Infrastructure Health**:
-  - View domain lifecycle, DNS, and registrar information, including expiration dates and transfer statuses.
-  - Monitor health checks from various services such as HealthChecks.io, UpTimeRobot, AppVeyor CI, GitHub Actions, etc.
-  - Retrieve CloudAMQP stats, including queues, messages, consumers, and connections.
+---
 
-- **Logs and Errors**:
-  - Aggregate error logs from the filesystem and SQL tables.
-  - Analyze logs with detailed statistics and grouping options, such as by application or error content.
+## Tech stack
 
-- **Continuous Integration**:
-  - Display AppVeyor CI build statuses.
-
-- **WireGuard VPN**:
-  - List the status of the WireGuard VPN clients and connections.
+- **PHP 8.2+** (the Docker image tracks `php:8.6-rc-apache`), Apache, Composer.
+- **MariaDB/MySQL** for errors, messages, and user accounts.
+- **[guibranco/pancake](https://github.com/guibranco/pancake)** for HTTP requests and shared helpers, `phpseclib/phpseclib` for SSH/WireGuard checks, `fastvolt/markdown` for rendering release notes.
+- **Docker Compose** for local development: an Apache/PHP app container, a MariaDB container, and [Mailpit](https://github.com/axllent/mailpit) standing in for a real mailserver.
+- **PHPUnit** for unit tests; shell scripts under `Tests/` and `Tools/` for smoke tests, DB integrity checks, and migrations.
 
 ---
 
 ## Requirements
 
-- PHP 8.0 or later.
-- A web server (e.g., Apache, Nginx).
-- MySQL or another supported database.
-- Composer for dependency management.
+- PHP 8.2 or later, with the `mbstring`, `mysqli`, `sockets`, `shmop`, and `zip` extensions.
+- Composer.
+- MariaDB or MySQL.
+- Docker and Docker Compose (recommended for local development — see below).
+
+---
+
+## Local development
+
+The repo ships a `docker-compose.yml` with everything needed to run the app locally:
+
+```bash
+git clone https://github.com/guibranco/projects-monitor.git
+cd projects-monitor
+docker compose up -d
+```
+
+This starts three containers:
+
+| Service    | Purpose                              | Local address           |
+| ---------- | ------------------------------------- | ------------------------ |
+| `www`      | Apache + PHP 8.6-rc app               | http://localhost:8000    |
+| `database` | MariaDB (`test`/`test`)               | localhost:3306            |
+| `mailpit`  | Catches outbound mail from `mail()`   | http://localhost:8025 (UI), `1025` (SMTP) |
+
+Apply the SQL migrations in `Sql/` (in order) to the `test` database — `Tools/db-migration.sh` does this in CI and can be run the same way locally.
+
+### Secrets
+
+Each integration lazily loads its own file from `Src/secrets/`, so you only need to create the ones for the integrations you're working with — everything else fails closed with a `SecretsFileNotFoundException` instead of breaking the rest of the dashboard. At minimum, local development needs `mySql.secrets.php`:
+
+```php
+<?php
+$mySqlHost     = "database";
+$mySqlUser     = "test";
+$mySqlPassword = "test";
+$mySqlDatabase = "test";
+```
+
+The full set of integrations and their secrets files:
+
+| Integration                | Secrets file                        |
+| --------------------------- | ------------------------------------ |
+| MySQL/MariaDB               | `mySql.secrets.php`                  |
+| GitHub                      | `gitHub.secrets.php`                 |
+| AppVeyor CI                 | `appVeyor.secrets.php`               |
+| cPanel                      | `cPanel.secrets.php`                 |
+| HealthChecks.io             | `healthChecksIo.secrets.php`         |
+| UptimeRobot                 | `upTimeRobot.secrets.php`            |
+| Vercel                      | `vercel.secrets.php`                 |
+| RabbitMQ / CloudAMQP        | `rabbitMq.secrets.php`               |
+| SSH (also used for WireGuard status) | `ssh.secrets.php`            |
+| IP2WHOIS (domain lookups)   | `Ip2WhoIsSecrets.php`                |
+| Postman                     | `postman.secrets.php`                |
+| Webhooks project            | `webhooks.secrets.php`               |
+| GStraccini Bot              | `gstracciniBot.secrets.php`          |
+| LogStream                   | `logStream.secrets.php`              |
+
+### Tests
+
+```bash
+composer install --working-dir=Src
+vendor/bin/phpunit -c Tests/phpunit.xml   # unit tests
+bash Tests/smoke-tests.sh                  # hits the running app's key endpoints
+bash Tests/db-integrity.sh                 # checks the applied schema
+```
+
+### Background workers
+
+Two CLI workers are meant to run on a cron schedule against the deployed instance (see the docblock in each file for the exact crontab line):
+
+- `Src/Worker/GeneratePublicStats.php` — pre-computes the public stats page every 5 minutes.
+- `Src/Worker/ProcessErrorLogs.php` — polls cPanel for `error_log` files, persists them to the `errors` table, and cleans them up.
 
 ---
 
 ## Authentication
 
-Access to the live dashboard requires login credentials. This ensures the privacy of sensitive information and restricts unauthorized access.
+Access to the dashboard requires login credentials, stored in the `users` table. A password-recovery flow is available at `reset.php`.
 
 ---
 
-## Installation
+## API
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/guibranco/projects-monitor.git
-   cd projects-monitor
-   ```
+The dashboard is backed by a REST-like API under `/api/v1`, documented with a live Swagger UI:
 
-2. Install dependencies:
-   ```bash
-   composer install
-   ```
+- **Swagger UI:** `/api/v1/swagger`
+- **OpenAPI spec:** `/api/v1/openapi`
 
-3. Configure the `.secrets.php` files:
-   - Provide your GitHub API token for repository data fetching.
-   - Add credentials for UpTimeRobot, AppVeyor, and other integrated services.
-   - Set database credentials for storing logs and configurations.
-
-4. Start the application on your local server or deploy it to a hosting environment.
+Both require an authenticated session. Key endpoint groups: `github`, `webhooks*` (statistics, per-entity processing, worker control), `gstraccini-jobs` / `gstraccini-job-run`, `appveyor`, `cpanel`, `domains`, `healthchecksio`, `uptimerobot`, `vercel`, `queues` / `queues-purge`, `wireguard`, `messages*` / `errors*` (log retrieval, details, deletion), and `public-stats`.
 
 ---
 
-## API Endpoints
+## Deployment
 
-The Projects Monitor includes a REST-like API to retrieve data from integrated services. Below is the list of available endpoints:
-
-- `/api/v1/appveyor`  
-  Retrieve the data from AppVeyor CI.
-
-- `/api/v1/cpanel`  
-  Retrieve cPanel stats, including error logs and usage statistics.
-
-- `/api/v1/domains`  
-  Retrieve DNS and registrar information about domains, such as lifetime, expiration dates, and transfer status.
-
-- `/api/v1/github`  
-  Retrieve GitHub data like issues, pull requests, account usage, API usage, and the latest releases of specific projects.
-
-- `/api/v1/healthchecksio`  
-  Retrieve the status of health checks from HealthChecks.io.
-
-- `/api/v1/log-message`  
-  Save a structured log message to an SQL table.
-
-- `/api/v1/message`  
-  Retrieve a single message from the SQL table.
-
-- `/api/v1/messages`  
-  Retrieve a list of messages and related statistics, such as total error messages and groupings by application or error content.
-
-- `/api/v1/postman`  
-  Retrieve usage statistics from the Postman API.
-
-- `/api/v1/queues`  
-  Retrieve CloudAMQP stats, including queue details, message counts, consumers, and connections.
-
-- `/api/v1/uptimerobot`  
-  Retrieve the status of monitored services from UpTimeRobot.com.
-
-- `/api/v1/webhooks`  
-  Retrieve stats and data from the WebHooks project, focusing on GitHub webhook handlers.
-
-- `/api/v1/wireguard`  
-  Retrieve the status of the WireGuard VPN client and connection.
+`deploy.yml` builds a versioned release (via [GitVersion](https://gitversion.net/), GitHubFlow), writes each integration's secrets file from GitHub Actions secrets, zips `Src/` into `deploy.zip`, and ships it over FTP. `install.php` unpacks the zip on the target server and removes itself. The workflow runs on every push to `main`.
 
 ---
 
@@ -129,7 +144,7 @@ The Projects Monitor includes a REST-like API to retrieve data from integrated s
 ### Login
 
 The login page, with basic (public) information:
-![Dashboard Preview](projects-monitor-login.png)
+![Login Preview](projects-monitor-login.png)
 
 ### Dashboard
 
@@ -140,10 +155,10 @@ The authenticated dashboard, with full (restricted) information:
 
 ## Contributing
 
-Contributions are welcome! Feel free to fork this repository, submit a pull request, or create an issue to suggest and request improvements.
+Contributions are welcome! Feel free to fork this repository, submit a pull request, or open an issue to suggest or request improvements.
 
 ---
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+MIT — see `composer.json`.

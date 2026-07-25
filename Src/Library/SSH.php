@@ -119,13 +119,13 @@ class SSH
             '10.207.124.5/32' => 'GH Actions - GStraccini Bot',
             '10.207.124.6/32' => 'GH Actions - Currencies',
             '10.207.124.7/32' => 'GH Actions - POC',
-            '10.207.124.8/32' => 'Smartphone',
+            '10.207.124.8/32' => 'Samsung Galaxy S25 Ultra',
             '10.207.124.9/32' => 'GH Actions - Projects Monitor',
             '10.207.124.10/32' => 'GH Actions - Sports Agenda',
             '10.207.124.11/32' => 'GH Actions - Vagas Aggregator',
             '10.207.124.12/32' => 'GH Actions - Bancos Brasileiros',
             '10.207.124.13/32' => 'GH Actions - Sports Agenda Worker',
-            '10.207.124.14/32' => 'Laptop Tamara',
+            '10.207.124.14/32' => 'iPhone Beatriz Jesus',
         ];
 
         return $peers[$peerName] ?? $peerName;

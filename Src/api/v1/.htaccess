@@ -6,6 +6,7 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^appveyor$ appveyor.php [NC,L]
 RewriteRule ^cpanel$ cpanel.php [NC,L]
 RewriteRule ^cpanel/delete$ cpanel-delete.php [NC,L]
+RewriteRule ^dns-records$ dns-records.php [NC,L]
 RewriteRule ^domains$ domains.php [NC,L]
 RewriteRule ^errors$ errors.php [NC,L]
 RewriteRule ^errors/truncate$ errors-truncate.php [NC,L]

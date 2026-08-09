@@ -55,6 +55,7 @@ class DashboardApp {
     window.showRepositoriesProcessing = this.dataDisplayManager.showRepositoriesProcessing.bind(this.dataDisplayManager);
     window.showUsersProcessing = this.dataDisplayManager.showUsersProcessing.bind(this.dataDisplayManager);
     window.showWireGuard = this.dataDisplayManager.showWireGuard.bind(this.dataDisplayManager);
+    window.showSystemReport = this.dataDisplayManager.showSystemReport.bind(this.dataDisplayManager);
     window.showWorkers = this.dataDisplayManager.showWorkers.bind(this.dataDisplayManager);
     window.showGStracciniJobs = this.dataDisplayManager.showGStracciniJobs.bind(this.dataDisplayManager);
 

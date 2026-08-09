@@ -20,7 +20,7 @@ Projects Monitor is a PHP dashboard backed by a REST-like API (`Src/api/v1`). It
 
 - **GitHub integration** — open/pending pull requests, issues across repositories, workflow runs (failures highlighted), API rate-limit usage, and the latest releases of tracked projects.
 - **Webhooks & automation** — GitHub webhook statistics and processing-state counts, plus a right-hand **Actions** panel (offcanvas, top-right of the dashboard) listing live webhook workers and GStraccini Bot job runs.
-- **Infrastructure health** — HealthChecks.io, UpTimeRobot, AppVeyor CI, and Vercel deployment status; CloudAMQP/RabbitMQ queue, message, consumer, and connection stats; WireGuard VPN client/connection status over SSH.
+- **Infrastructure health** — HealthChecks.io, UpTimeRobot, AppVeyor CI, and Vercel deployment status; CloudAMQP/RabbitMQ queue, message, consumer, and connection stats; WireGuard VPN client/connection status over SSH; a remote server health report (load average, CPU/memory/swap/disk usage, pending-reboot flag, and key systemd service states) collected by running a `monitor-report` script on the host over the same SSH connection.
 - **Domains** — registrar and lifecycle information (expiration, transfer status) via IP2WHOIS, plus a dedicated [DNS Records page](Src/dns.php) listing every zone record (A, CNAME, MX, TXT, ...) pulled live from cPanel, filterable by source domain/record type and sortable by any column.
 - **Logs & errors** — cPanel error logs and SQL-backed application errors, aggregated with grouping and statistics by application or error content.
 - **Public stats** — a pre-computed, unauthenticated stats page fed by a cron worker (see [Background workers](#background-workers)).
@@ -91,7 +91,7 @@ The full set of integrations and their secrets files:
 | UptimeRobot                 | `upTimeRobot.secrets.php`            |
 | Vercel                      | `vercel.secrets.php`                 |
 | RabbitMQ / CloudAMQP        | `rabbitMq.secrets.php`               |
-| SSH (also used for WireGuard status) | `ssh.secrets.php`            |
+| SSH (also used for WireGuard status and the server health report) | `ssh.secrets.php` |
 | IP2WHOIS (domain lookups)   | `Ip2WhoIsSecrets.php`                |
 | Postman                     | `postman.secrets.php`                |
 | Webhooks project            | `webhooks.secrets.php`               |
@@ -129,7 +129,7 @@ The dashboard is backed by a REST-like API under `/api/v1`, documented with a li
 - **Swagger UI:** `/api/v1/swagger`
 - **OpenAPI spec:** `/api/v1/openapi`
 
-Both require an authenticated session. Key endpoint groups: `github`, `webhooks*` (statistics, per-entity processing, worker control), `gstraccini-jobs` / `gstraccini-job-run`, `appveyor`, `cpanel`, `dns-records`, `domains`, `healthchecksio`, `uptimerobot`, `vercel`, `queues` / `queues-purge`, `wireguard`, `messages*` / `errors*` (log retrieval, details, deletion), and `public-stats`.
+Both require an authenticated session. Key endpoint groups: `github`, `webhooks*` (statistics, per-entity processing, worker control), `gstraccini-jobs` / `gstraccini-job-run`, `appveyor`, `cpanel`, `dns-records`, `domains`, `healthchecksio`, `uptimerobot`, `vercel`, `queues` / `queues-purge`, `wireguard`, `system-report`, `messages*` / `errors*` (log retrieval, details, deletion), and `public-stats`.
 
 ---
 

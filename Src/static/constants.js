@@ -38,6 +38,7 @@ export const API_ENDPOINTS = {
   UPTIMEROBOT: "api/v1/uptimerobot",
   VERCEL: "api/v1/vercel",
   WIREGUARD: "api/v1/wireguard",
+  SYSTEM_REPORT: "api/v1/system-report",
   POSTMAN: "api/v1/postman",
   WEBHOOKS: "api/v1/webhooks",
   WEBHOOKS_STATISTICS: "api/v1/webhooks-statistics",

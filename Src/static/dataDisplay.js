@@ -915,6 +915,14 @@ export class DataDisplayManager {
   }
 
   /**
+   * Draws the remote server health report (load, memory, disk, services)
+   * collected via SSH from vinhedo1.
+   */
+  showSystemReport(response) {
+    this.chartManager.drawDataTable(response.system_report, "system_report", CHART_OPTIONS.table);
+  }
+
+  /**
    * Renders processing state counts from the webhooks /statistics endpoint as a table.
    * Rows = database tables, columns = processing states (NEW, RE_REQUESTED, UPDATED, PROCESSING, PROCESSED).
    */

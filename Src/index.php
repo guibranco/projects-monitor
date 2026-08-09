@@ -536,6 +536,14 @@ $configuration = new Configuration();
 
       <div class="full-width-section">
          <div class="section-header">
+            <i class="bi bi-hdd-rack me-2"></i>Server Health (vinhedo1) <span id="counter_system_report"
+               class="badge rounded-pill"></span>
+         </div>
+         <div id="system_report" class="section-content"></div>
+      </div>
+
+      <div class="full-width-section">
+         <div class="section-header">
             <i class="bi bi-broadcast me-2"></i>Webhooks Statistics <span id="counter_webhooks_statistics"
                class="badge rounded-pill"></span>
          </div>

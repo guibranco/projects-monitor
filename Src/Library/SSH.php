@@ -49,67 +49,6 @@ class SSH
         }
     }
 
-    private function listWireGuardConnections(): array
-    {
-        try {
-            $command = 'sudo wg show';
-            $response = $this->ssh->exec($command);
-
-            if (empty($response)) {
-                throw new \Exception('Command execution failed or no output received');
-            }
-
-            $groups = explode("\n\n", $response);
-
-            $parsedResponse = [];
-            foreach ($groups as $group) {
-                $parsedGroup = [];
-                $lines = explode("\n", $group);
-
-                foreach ($lines as $line) {
-                    $line = trim($line);
-
-                    if (empty($line)) {
-                        continue;
-                    }
-
-                    if (strpos($line, 'interface:') === 0) {
-                        $parsedGroup['interface'] = trim(substr($line, strlen('interface:')));
-                        continue;
-                    }
-
-                    if (strpos($line, 'peer:') === 0) {
-                        $parsedGroup['peer'] = trim(substr($line, strlen('peer:')));
-                        continue;
-                    }
-
-                    if (strpos($line, ':') !== false) {
-                        list($key, $value) = array_map('trim', explode(':', $line, 2));
-
-                        if ($key == 'transfer') {
-                            preg_match('/([0-9.]+ \w+) received, ([0-9.]+ \w+) sent/', $value, $matches);
-                            $parsedGroup['transfer'] = [
-                                'received' => $matches[1] ?? '',
-                                'sent' => $matches[2] ?? ''
-                            ];
-                        } else {
-                            $parsedGroup[$key] = $value;
-                        }
-                    }
-                }
-
-                $parsedResponse[] = $parsedGroup;
-            }
-
-            return $parsedResponse;
-
-        } catch (\Exception $e) {
-            echo 'Error: ' . $e->getMessage();
-        }
-
-        return [];
-    }
-
     private function mapPeerToHostname($peerName)
     {
         $peers = [
@@ -120,32 +59,68 @@ class SSH
         return $peers[$peerName] ?? $peerName;
     }
 
+    /**
+     * Runs the `monitor-report` script on the remote host (installed at
+     * /usr/local/bin/monitor-report) and returns its decoded JSON payload.
+     * This single script run is the source of both the system health report
+     * and the WireGuard peer list — vinhedo1's sudoers no longer permits
+     * running `wg show` directly, only this wrapped script.
+     */
+    private function fetchMonitorReport(): array
+    {
+        $response = $this->ssh->exec('/usr/local/bin/monitor-report');
+
+        if (empty($response)) {
+            throw new \Exception('Command execution failed or no output received');
+        }
+
+        $report = json_decode($response, true);
+
+        if (!is_array($report)) {
+            throw new \Exception('Unable to parse monitor-report output');
+        }
+
+        return $report;
+    }
+
+    /**
+     * Returns WireGuard peer connection data, parsed from the
+     * `wireguard_peers` array of the `monitor-report` script's output.
+     */
     public function getWireGuardConnections(): array
     {
-        $data = $this->listWireGuardConnections();
+        try {
+            $report = $this->fetchMonitorReport();
+            return $this->formatWireGuardPeers((array) ($report['wireguard_peers'] ?? []));
+        } catch (\Exception $e) {
+            echo 'Error: ' . $e->getMessage();
+        }
+
+        return [];
+    }
+
+    private function formatWireGuardPeers(array $peers): array
+    {
         $shields = new ShieldsIo();
 
-        $peers = array();
-        $peers[] = array("Peer", "Status", "Last Handshake", "Received", "Sent");
-        foreach ($data as $peer) {
-            if (array_key_exists('peer', $peer) === false) {
-                continue;
-            }
+        $rows = [];
+        $rows[] = ["Peer", "Status", "Last Handshake", "Received", "Sent"];
 
-            $handshake = array_key_exists('latest handshake', $peer) ? true : false;
-            $time = $handshake ? strtotime($peer["latest handshake"]) : 0;
-            $diff = time() - $time;
+        foreach ($peers as $peer) {
+            $handshakeTimestamp = (int) ($peer['latest_handshake'] ?? 0);
+            $hasHandshake = $handshakeTimestamp > 0;
+            $diff = $hasHandshake ? time() - $handshakeTimestamp : PHP_INT_MAX;
 
             $label = "🔴";
             $content = "Disconnected";
             $color = "red";
 
-            if ($handshake === true && $diff > 600) {
+            if ($hasHandshake && $diff > 600) {
                 $label = "🟠";
                 $content = "Inactive";
                 $color = "orange";
-            } elseif ($handshake === true) {
-                $label =  "🟢";
+            } elseif ($hasHandshake) {
+                $label = "🟢";
                 $content = "Active";
                 $color = "brightgreen";
             }
@@ -153,39 +128,28 @@ class SSH
             $status = $shields->generateBadgeUrl($label, $content, $color, "for-the-badge", "white", null);
             $statusImg = "<img src='$status' alt='Status' />";
 
-            $peers[] = array(
-                $this->mapPeerToHostname($peer['allowed ips']),
+            $rows[] = array(
+                $this->mapPeerToHostname($peer['allowed_ips'] ?? ''),
                 $statusImg,
-                $peer['latest handshake'] ?? '',
-                $peer['transfer']['received'] ?? '0',
-                $peer['transfer']['sent'] ?? '0'
+                $hasHandshake ? date("Y-m-d H:i:s", $handshakeTimestamp) : 'Never',
+                $this->formatBytes((int) ($peer['rx'] ?? 0)),
+                $this->formatBytes((int) ($peer['tx'] ?? 0))
             );
         }
 
-        return $peers;
+        return $rows;
     }
 
     /**
-     * Runs the `monitor-report` script on the remote host (installed at
-     * /usr/local/bin/monitor-report) and returns its parsed system health
-     * data as a Metric/Value table: load average, CPU count, memory, swap,
-     * disk usage, pending-reboot flag, and systemd service states.
+     * Runs the `monitor-report` script on the remote host and returns its
+     * parsed system health data as a Metric/Value table: load average, CPU
+     * count, memory, swap, disk usage, pending-reboot flag, and systemd
+     * service states.
      */
     public function getSystemReport(): array
     {
         try {
-            $response = $this->ssh->exec('/usr/local/bin/monitor-report');
-
-            if (empty($response)) {
-                throw new \Exception('Command execution failed or no output received');
-            }
-
-            $report = json_decode($response, true);
-
-            if (!is_array($report)) {
-                throw new \Exception('Unable to parse monitor-report output');
-            }
-
+            $report = $this->fetchMonitorReport();
             return $this->formatSystemReport($report);
         } catch (\Exception $e) {
             echo 'Error: ' . $e->getMessage();
@@ -270,8 +234,13 @@ class SSH
 
     private function formatKilobytes(int $kilobytes): string
     {
-        $units = ['KB', 'MB', 'GB', 'TB'];
-        $value = max(0, $kilobytes);
+        return $this->formatBytes($kilobytes * 1024);
+    }
+
+    private function formatBytes(int $bytes): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        $value = max(0, $bytes);
         $i = 0;
         while ($value >= 1024 && $i < count($units) - 1) {
             $value /= 1024;

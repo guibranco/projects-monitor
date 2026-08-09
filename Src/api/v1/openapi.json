@@ -24,6 +24,7 @@
   "tags": [
     { "name": "AppVeyor",    "description": "AppVeyor CI build data" },
     { "name": "cPanel",      "description": "cPanel server stats and error-log file management" },
+    { "name": "DNS",         "description": "cPanel DNS zone records for all hosted domains" },
     { "name": "Domains",     "description": "Domain SSL/expiry validity information" },
     { "name": "Errors",      "description": "Database-backed error log management" },
     { "name": "GitHub",      "description": "GitHub API stats, issues, pull requests, and releases" },
@@ -259,6 +260,45 @@
             }
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/dns-records": {
+      "get": {
+        "summary": "DNS zone records",
+        "description": "Returns every DNS zone record (A, AAAA, CNAME, MX, TXT, NS, and more) across every domain hosted on the cPanel account, each tagged with its source (zone) domain.",
+        "operationId": "getDnsRecords",
+        "tags": ["DNS"],
+        "responses": {
+          "200": {
+            "description": "DNS zone record data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "records": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "domain": { "type": "string", "description": "Source (zone) domain." },
+                          "name": { "type": "string", "description": "Full record name." },
+                          "type": { "type": "string", "description": "Record type (A, CNAME, MX, TXT, ...)." },
+                          "destination": { "type": "string", "description": "Record value/destination." },
+                          "ttl": { "type": "string" }
+                        }
+                      }
+                    },
+                    "error": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "429": { "$ref": "#/components/responses/RateLimited" },
           "500": { "$ref": "#/components/responses/ServerError" }

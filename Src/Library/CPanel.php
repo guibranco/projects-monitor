@@ -509,4 +509,156 @@ class CPanel
             return false;
         }
     }
+
+    /**
+     * Retrieves every domain that owns its own DNS zone on this cPanel account
+     * (main domain, addon domains, and parked domains). Subdomains are excluded
+     * since they live inside their parent domain's zone rather than owning one.
+     *
+     * @return array<int, string> Deduplicated list of zone domain names.
+     */
+    public function getZoneDomains(): array
+    {
+        $endpoint = 'execute/DomainInfo/list_domains';
+        $response = $this->getRequest($endpoint, '', []);
+
+        if ($response === null || empty($response->data)) {
+            return [];
+        }
+
+        $data = $response->data;
+        $domains = [];
+
+        if (!empty($data->main_domain)) {
+            $domains[] = $data->main_domain;
+        }
+
+        foreach (['addon_domains', 'parked_domains'] as $group) {
+            if (!empty($data->{$group}) && is_array($data->{$group})) {
+                foreach ($data->{$group} as $domain) {
+                    $domains[] = $domain;
+                }
+            }
+        }
+
+        return array_values(array_unique($domains));
+    }
+
+    /**
+     * Derives a human-readable destination value for a single DNS zone record,
+     * based on the record type. cPanel's ZoneEdit::fetchzone response stores the
+     * record's value under different fields depending on its type.
+     *
+     * @param object $record Raw record object from ZoneEdit::fetchzone.
+     * @param string $type Uppercased DNS record type (A, CNAME, MX, TXT, ...).
+     * @return string The record's destination/value.
+     */
+    private function resolveRecordDestination($record, string $type): string
+    {
+        switch ($type) {
+            case 'A':
+            case 'AAAA':
+                return $record->address ?? '';
+            case 'CNAME':
+                return rtrim($record->cname ?? '', '.');
+            case 'MX':
+                $preference = $record->preference ?? '';
+                $exchange = rtrim($record->exchange ?? '', '.');
+                return trim("{$preference} {$exchange}");
+            case 'TXT':
+                return $record->txtdata ?? '';
+            case 'NS':
+                return rtrim($record->nsdname ?? '', '.');
+            case 'PTR':
+                return rtrim($record->ptrdname ?? '', '.');
+            case 'SOA':
+                return rtrim($record->mname ?? '', '.');
+            case 'SRV':
+                $priority = $record->priority ?? '';
+                $weight = $record->weight ?? '';
+                $port = $record->port ?? '';
+                $target = rtrim($record->target ?? '', '.');
+                return trim("{$priority} {$weight} {$port} {$target}");
+            case 'CAA':
+                $flag = $record->flag ?? '';
+                $tag = $record->tag ?? '';
+                $value = $record->value ?? '';
+                return trim("{$flag} {$tag} {$value}");
+            default:
+                $skip = ['name', 'ttl', 'type', 'class', 'Line', 'line'];
+                $parts = [];
+                foreach ($record as $key => $value) {
+                    if (in_array($key, $skip, true) || $value === null || $value === '') {
+                        continue;
+                    }
+                    $parts[] = is_string($value) ? rtrim($value, '.') : $value;
+                }
+                return implode(' ', $parts);
+        }
+    }
+
+    /**
+     * Fetches and normalizes every DNS zone record for a single domain.
+     *
+     * @param string $domain The zone domain to fetch records for.
+     * @return array<int, array{domain: string, name: string, type: string, destination: string, ttl: string}>
+     */
+    private function parseZoneRecords(string $domain): array
+    {
+        $parameters = array(
+            "cpanel_jsonapi_module" => "ZoneEdit",
+            "cpanel_jsonapi_func"   => "fetchzone",
+            "cpanel_jsonapi_apiversion" => "2",
+            "domain" => $domain
+        );
+
+        $response = $this->getRequest("json-api", "cpanel", $parameters);
+        $records = $response->cpanelresult->data[0]->record ?? null;
+
+        if (empty($records)) {
+            return [];
+        }
+
+        $result = [];
+        foreach ($records as $record) {
+            if (empty($record->type)) {
+                continue;
+            }
+
+            $type = strtoupper($record->type);
+            $name = rtrim($record->name ?? $domain, '.');
+
+            $result[] = [
+                "domain" => $domain,
+                "name" => $name,
+                "type" => $type,
+                "destination" => $this->resolveRecordDestination($record, $type),
+                "ttl" => (string) ($record->ttl ?? '')
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Retrieves and normalizes every DNS zone record across every domain (and
+     * addon/parked domain) on this cPanel account. A domain whose zone fails to
+     * load is skipped rather than failing the whole request.
+     *
+     * @return array<int, array{domain: string, name: string, type: string, destination: string, ttl: string}>
+     */
+    public function getAllDnsRecords(): array
+    {
+        $result = [];
+
+        foreach ($this->getZoneDomains() as $domain) {
+            try {
+                $result = array_merge($result, $this->parseZoneRecords($domain));
+            } catch (RequestException) {
+                continue;
+            }
+        }
+
+        return $result;
+    }
 }

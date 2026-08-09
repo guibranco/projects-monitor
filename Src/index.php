@@ -414,6 +414,10 @@ $configuration = new Configuration();
             <div class="data-item">
                <div class="section-header">
                   <i class="bi bi-globe me-2"></i>Domains <span id="counter_domains" class="badge rounded-pill"></span>
+                  <a href="dns.php" class="btn btn-sm btn-nav-action ms-2" title="View DNS Records"
+                     onclick="event.stopPropagation()">
+                     <i class="bi bi-hdd-network"></i>
+                  </a>
                </div>
                <div id="domains" class="section-content"></div>
             </div>

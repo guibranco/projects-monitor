@@ -1,0 +1,74 @@
+[
+    {
+        "domain": "guilhermebranco.com.br",
+        "ip2whois": true,
+        "registrar": "Registro.br",
+        "dnsManager": "Nuvem Hospedagem"
+    },
+    {
+        "domain": "guilhermestraccini.com.br",
+        "ip2whois": true,
+        "registrar": "Registro.br",
+        "dnsManager": "Registro.br"
+    },
+    {
+        "domain": "guilhermestracini.com.br",
+        "ip2whois": true,
+        "registrar": "Registro.br",
+        "dnsManager": "Registro.br"
+    },
+    {
+        "domain": "zerocool.com.br",
+        "ip2whois": true,
+        "registrar": "Registro.br",
+        "dnsManager": "Nuvem Hospedagem"
+    },
+    {
+        "domain": "apibr.com",
+        "ip2whois": true,
+        "registrar": "NameCheap",
+        "dnsManager": "Nuvem Hospedagem"
+    },
+    {
+        "domain": "gstraccini.bot",
+        "ip2whois": false,
+        "registrar": "NameCheap",
+        "dnsManager": "NameCheap"
+    },
+    {
+        "domain": "gstraccini.dev",
+        "ip2whois": true,
+        "registrar": "NameCheap",
+        "dnsManager": "NameCheap"
+    },
+    {
+        "domain": "progress-bar.xyz",
+        "ip2whois": true,
+        "registrar": "NameCheap",
+        "dnsManager": "NameCheap"
+    },
+    {
+        "domain": "straccini.com",
+        "ip2whois": true,
+        "registrar": "NameCheap",
+        "dnsManager": "Nuvem Hospedagem"
+    },
+    {
+        "domain": "straccini.com.br",
+        "ip2whois": true,
+        "registrar": "Registro.br",
+        "dnsManager": "Nuvem Hospedagem"
+    },
+    {
+        "domain": "stracini.com",
+        "ip2whois": true,
+        "registrar": "NameCheap",
+        "dnsManager": "Nuvem Hospedagem"
+    },
+    {
+        "domain": "stracini.com.br",
+        "ip2whois": true,
+        "registrar": "Registro.br",
+        "dnsManager": "Nuvem Hospedagem"
+    }
+]

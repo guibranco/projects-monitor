@@ -3,3 +3,4 @@
 **/secrets/**
 **/vendor/**
 **/domains.json
+!Src/Library/domains.json

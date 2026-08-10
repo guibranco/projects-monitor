@@ -39,26 +39,36 @@ class Ip2WhoIs
         return json_decode($response->getBody());
     }
 
+    private function getDomains()
+    {
+        $file = __DIR__ . "/domains.json";
+        return json_decode(file_get_contents($file), true);
+    }
+
     public function getDomainValidity()
     {
-        $domains = [
-            "guilhermebranco.com.br",
-            "guilhermestraccini.com.br",
-            "guilhermestracini.com.br",
-            "zerocool.com.br",
-            "apibr.com",
-            //"gstraccini.bot",
-            "gstraccini.dev",
-            "progress-bar.xyz",
-            "straccini.com",
-            "straccini.com.br",
-            "stracini.com",
-            "stracini.com.br"
-        ];
+        $domains = $this->getDomains();
         $pattern = '/https?:\/\/[^\s]+/';
 
         $data = array();
-        foreach ($domains as $domain) {
+        foreach ($domains as $domainConfig) {
+            $domain = $domainConfig["domain"];
+            $link = "<a href='https://whois.domaintools.com/$domain' target='_blank' rel='noopener noreferrer'>$domain</a>";
+            $registrar = $domainConfig["registrar"];
+            $dnsManager = $domainConfig["dnsManager"];
+
+            if (empty($domainConfig["ip2whois"])) {
+                $data[] = [
+                    $link,
+                    $registrar,
+                    $dnsManager,
+                    "-",
+                    "-",
+                    "-",
+                    "-"
+                ];
+                continue;
+            }
 
             $cache = "cache/domain_" . str_replace(".", "_", $domain) . ".json";
             if (file_exists($cache) && filemtime($cache) > strtotime("-1 day")) {
@@ -67,8 +77,6 @@ class Ip2WhoIs
                 $response = $this->getWhoIs($domain);
                 file_put_contents($cache, json_encode($response));
             }
-
-            $link = "<a href='https://whois.domaintools.com/$domain' target='_blank' rel='noopener noreferrer'>$domain</a>";
 
             $createdTime = strtotime($response->create_date);
             $createdDate = date("d/m/Y", $createdTime);
@@ -101,6 +109,8 @@ class Ip2WhoIs
             $nameservers = implode(" ", $response->nameservers);
             $data[] = [
                 $link,
+                $registrar,
+                $dnsManager,
                 $createdImg,
                 $expireImg,
                 $status,
@@ -110,6 +120,8 @@ class Ip2WhoIs
 
         $columns = [
             "Domain",
+            "Registrar",
+            "DNS Manager",
             "Created Date",
             "Expire Date",
             "Status",

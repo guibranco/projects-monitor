@@ -31,7 +31,7 @@
     },
     {
         "domain": "gstraccini.bot",
-        "ip2whois": false,
+        "ip2whois": true,
         "registrar": "NameCheap",
         "dnsManager": "NameCheap"
     },

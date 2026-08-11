@@ -38,15 +38,25 @@ class PublicStats
             foreach (SSH::getHosts() as $hostConfig) {
                 try {
                     $sshServers[] = (new SSH($hostConfig))->getResourceUsage();
-                } catch (\Throwable) {
+                } catch (\Throwable $e) {
+                    $hostName = $hostConfig['name'] ?? $hostConfig['host'] ?? 'Unknown';
+                    LogStream::warning(
+                        "Failed to query SSH host resource usage",
+                        [
+                            "host"   => $hostName,
+                            "reason" => $e->getMessage(),
+                        ],
+                        "public-stats"
+                    );
                     $sshServers[] = [
-                        'name' => $hostConfig['name'] ?? ($hostConfig['host'] ?? 'Unknown'),
-                        'status' => 'unknown',
+                        'name'    => $hostName,
+                        'status'  => 'unknown',
                         'metrics' => [],
                     ];
                 }
             }
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
+            LogStream::warning("Failed to load SSH hosts configuration", ["reason" => $e->getMessage()], "public-stats");
         }
 
         try {
@@ -123,17 +133,29 @@ class PublicStats
         }
 
         $systemStatus = [
-            ['label' => 'Osasco (cPanel)', 'status' => self::cpanelStatus($cpuData, $memoryData, $processesData), 'percent' => null],
+            [
+                'label'   => 'Osasco (cPanel)',
+                'status'  => self::cpanelStatus($cpuData, $memoryData, $processesData),
+                'percent' => null,
+            ],
         ];
         foreach ($sshServers as $server) {
-            $systemStatus[] = ['label' => $server['name'], 'status' => $server['status'], 'percent' => null];
+            $systemStatus[] = [
+                'label'   => $server['name'],
+                'status'  => $server['status'],
+                'percent' => null,
+            ];
         }
-        $systemStatus[] = ['label' => 'Database', 'status' => $dbConnected ? 'operational' : 'critical', 'percent' => null];
+        $systemStatus[] = [
+            'label'   => 'Database',
+            'status'  => ($dbConnected ? 'operational' : 'critical'),
+            'percent' => null,
+        ];
 
         $performance = [];
         if ($cpanelUsage !== null) {
             $performance[] = [
-                'name' => 'Osasco (cPanel)',
+                'name'    => 'Osasco (cPanel)',
                 'metrics' => [
                     'cpu'       => self::performanceEntry($cpuData, '%'),
                     'memory'    => self::performanceEntry($memoryData, 'MB'),
@@ -145,7 +167,11 @@ class PublicStats
             if ($server['status'] === 'unknown') {
                 continue;
             }
-            $performance[] = ['name' => $server['name'], 'metrics' => $server['metrics']];
+
+            $performance[] = [
+                'name'    => $server['name'],
+                'metrics' => $server['metrics'],
+            ];
         }
 
         return [
@@ -170,7 +196,11 @@ class PublicStats
 
     private static function cpanelStatus(?array $cpuData, ?array $memoryData, ?array $processesData): string
     {
-        $rank = ['operational' => 0, 'warning' => 1, 'critical' => 2];
+        $rank = [
+            'operational' => 0,
+            'warning'     => 1,
+            'critical'    => 2,
+        ];
         $statuses = array_filter(
             [self::resourceStatus($cpuData), self::resourceStatus($memoryData), self::resourceStatus($processesData)],
             static fn ($status) => $status !== 'unknown'
@@ -180,7 +210,7 @@ class PublicStats
             return 'unknown';
         }
 
-        usort($statuses, static fn ($a, $b) => $rank[$b] <=> $rank[$a]);
+        usort($statuses, static fn ($left, $right) => $rank[$right] <=> $rank[$left]);
         return $statuses[0];
     }
 

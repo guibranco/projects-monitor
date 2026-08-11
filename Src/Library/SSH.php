@@ -9,19 +9,25 @@ use phpseclib3\Crypt\PublicKeyLoader;
 
 class SSH
 {
+    /** @var SSH2 Underlying SSH2 connection handle. */
     private $ssh;
 
+    /** @var string Human-readable host name (e.g. "Vinhedo1"), used in logs and dashboard labels. */
     private $name;
+
     private $host;
     private $port = 22;
     private $username;
     private $privateKey;
+
+    /** @var bool Whether login() succeeded for this connection. */
     private $connected = false;
 
     /**
-     * @param array{name?: string, host: string, port?: int, username: string, privateKey: string}|null $hostConfig
      * Connects to the given host, or to the default host (the entry named
      * "Vinhedo1" in ssh.secrets.php, falling back to the first entry) when omitted.
+     *
+     * @param array{name?: string, host: string, port?: int, username: string, privateKey: string}|null $hostConfig Host to connect to; null uses the default host.
      */
     public function __construct(?array $hostConfig = null)
     {
@@ -49,14 +55,19 @@ class SSH
             throw new SecretsFileNotFoundException("File not found: ssh.secrets.php");
         }
 
+        $sshHosts = [];
         require __DIR__ . "/../secrets/ssh.secrets.php";
 
-        return $sshHosts ?? [];
+        return $sshHosts;
     }
 
     private static function getDefaultHostConfig(): array
     {
         $hosts = self::getHosts();
+
+        if ($hosts === []) {
+            throw new \Exception('No SSH hosts configured');
+        }
 
         foreach ($hosts as $hostConfig) {
             if (($hostConfig['name'] ?? null) === 'Vinhedo1') {
@@ -64,7 +75,7 @@ class SSH
             }
         }
 
-        return $hosts[0] ?? [];
+        return $hosts[0];
     }
 
     public function getName(): string
@@ -207,66 +218,100 @@ class SSH
      */
     public function getResourceUsage(): array
     {
-        $emptyMetric = ['value' => null, 'max' => null, 'percent' => null, 'unit' => ''];
-
         try {
             $report = $this->fetchMonitorReport();
         } catch (\Exception $e) {
             LogStream::warning("Failed to fetch resource usage", ["host" => $this->name, "reason" => $e->getMessage()], "ssh");
-            return [
-                'name' => $this->name,
-                'status' => 'unknown',
-                'metrics' => [
-                    'cpu'    => $emptyMetric,
-                    'memory' => $emptyMetric,
-                    'disk'   => $emptyMetric,
-                ],
-            ];
+            return $this->unknownResourceUsage();
         }
-
-        $cpuCount = (int) ($report['cpu_count'] ?? 0);
-        $load1m = (float) ($report['load']['1m'] ?? 0);
-        $cpuPercent = $cpuCount > 0 ? round(min(100, ($load1m / $cpuCount) * 100), 1) : null;
-
-        $memTotal = (int) ($report['memory_kb']['total'] ?? 0);
-        $memAvailable = (int) ($report['memory_kb']['available'] ?? 0);
-        $memPercent = $memTotal > 0 ? round((($memTotal - $memAvailable) / $memTotal) * 100, 1) : null;
-
-        $diskPercent = isset($report['disk_root_used_pct']) ? round((float) $report['disk_root_used_pct'], 1) : null;
 
         $metrics = [
-            'cpu' => [
-                'value' => $cpuCount > 0 ? $load1m : null,
-                'max' => $cpuCount > 0 ? (float) $cpuCount : null,
-                'percent' => $cpuPercent,
-                'unit' => '',
-            ],
-            'memory' => [
-                'value' => $memTotal > 0 ? round(($memTotal - $memAvailable) / 1024, 1) : null,
-                'max' => $memTotal > 0 ? round($memTotal / 1024, 1) : null,
-                'percent' => $memPercent,
-                'unit' => 'MB',
-            ],
-            'disk' => [
-                'value' => $diskPercent,
-                'max' => $diskPercent !== null ? 100.0 : null,
-                'percent' => $diskPercent,
-                'unit' => '%',
-            ],
+            'cpu'    => $this->buildCpuMetric($report),
+            'memory' => $this->buildMemoryMetric($report),
+            'disk'   => $this->buildDiskMetric($report),
         ];
-
-        $percents = array_filter(array_column($metrics, 'percent'), static fn ($p) => $p !== null);
-        $status = 'operational';
-        if ($percents !== []) {
-            $maxPercent = max($percents);
-            $status = $maxPercent >= 90 ? 'critical' : ($maxPercent >= 75 ? 'warning' : 'operational');
-        }
 
         return [
-            'name' => $this->name,
-            'status' => $status,
+            'name'    => $this->name,
+            'status'  => $this->deriveResourceStatus($metrics),
             'metrics' => $metrics,
         ];
+    }
+
+    private function unknownResourceUsage(): array
+    {
+        $emptyMetric = [
+            'value'   => null,
+            'max'     => null,
+            'percent' => null,
+            'unit'    => '',
+        ];
+
+        return [
+            'name'    => $this->name,
+            'status'  => 'unknown',
+            'metrics' => [
+                'cpu'    => $emptyMetric,
+                'memory' => $emptyMetric,
+                'disk'   => $emptyMetric,
+            ],
+        ];
+    }
+
+    private function buildCpuMetric(array $report): array
+    {
+        $cpuCount = (int) ($report['cpu_count'] ?? 0);
+        $load1m = (float) ($report['load']['1m'] ?? 0);
+        $percent = $cpuCount > 0 ? round(min(100, ($load1m / $cpuCount) * 100), 1) : null;
+
+        return [
+            'value'   => $cpuCount > 0 ? $load1m : null,
+            'max'     => $cpuCount > 0 ? (float) $cpuCount : null,
+            'percent' => $percent,
+            'unit'    => '',
+        ];
+    }
+
+    private function buildMemoryMetric(array $report): array
+    {
+        $memTotal = (int) ($report['memory_kb']['total'] ?? 0);
+        $memAvailable = (int) ($report['memory_kb']['available'] ?? 0);
+        $percent = $memTotal > 0 ? round((($memTotal - $memAvailable) / $memTotal) * 100, 1) : null;
+
+        return [
+            'value'   => $memTotal > 0 ? round(($memTotal - $memAvailable) / 1024, 1) : null,
+            'max'     => $memTotal > 0 ? round($memTotal / 1024, 1) : null,
+            'percent' => $percent,
+            'unit'    => 'MB',
+        ];
+    }
+
+    private function buildDiskMetric(array $report): array
+    {
+        $percent = isset($report['disk_root_used_pct']) ? round((float) $report['disk_root_used_pct'], 1) : null;
+
+        return [
+            'value'   => $percent,
+            'max'     => $percent !== null ? 100.0 : null,
+            'percent' => $percent,
+            'unit'    => '%',
+        ];
+    }
+
+    private function deriveResourceStatus(array $metrics): string
+    {
+        $percents = array_filter(array_column($metrics, 'percent'), static fn ($percent) => $percent !== null);
+
+        if ($percents === []) {
+            return 'operational';
+        }
+
+        $maxPercent = max($percents);
+        if ($maxPercent >= 90) {
+            return 'critical';
+        }
+
+        return $maxPercent >= 75 ? 'warning' : 'operational';
     }
 
     private function formatSystemReport(array $report): array

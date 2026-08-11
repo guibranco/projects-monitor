@@ -255,7 +255,7 @@ class SSH
             ],
         ];
 
-        $percents = array_filter(array_column($metrics, 'percent'), static fn($p) => $p !== null);
+        $percents = array_filter(array_column($metrics, 'percent'), static fn ($p) => $p !== null);
         $status = 'operational';
         if ($percents !== []) {
             $maxPercent = max($percents);

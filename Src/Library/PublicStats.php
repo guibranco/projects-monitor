@@ -95,9 +95,15 @@ class PublicStats
 
         $allActivity = array_merge($upStats['monitors'] ?? [], $hcStats['checks'] ?? []);
         usort($allActivity, static function ($a, $b) {
-            if ($a['lastChange'] === null && $b['lastChange'] === null) return 0;
-            if ($a['lastChange'] === null) return 1;
-            if ($b['lastChange'] === null) return -1;
+            if ($a['lastChange'] === null && $b['lastChange'] === null) {
+                return 0;
+            }
+            if ($a['lastChange'] === null) {
+                return 1;
+            }
+            if ($b['lastChange'] === null) {
+                return -1;
+            }
             return strcmp($b['lastChange'], $a['lastChange']);
         });
 
@@ -129,8 +135,8 @@ class PublicStats
             $performance[] = [
                 'name' => 'Osasco (cPanel)',
                 'metrics' => [
-                    'cpu'       => self::performanceEntry($cpuData,       '%'),
-                    'memory'    => self::performanceEntry($memoryData,    'MB'),
+                    'cpu'       => self::performanceEntry($cpuData, '%'),
+                    'memory'    => self::performanceEntry($memoryData, 'MB'),
                     'processes' => self::performanceEntry($processesData, ''),
                 ],
             ];
@@ -167,37 +173,45 @@ class PublicStats
         $rank = ['operational' => 0, 'warning' => 1, 'critical' => 2];
         $statuses = array_filter(
             [self::resourceStatus($cpuData), self::resourceStatus($memoryData), self::resourceStatus($processesData)],
-            static fn($status) => $status !== 'unknown'
+            static fn ($status) => $status !== 'unknown'
         );
 
         if ($statuses === []) {
             return 'unknown';
         }
 
-        usort($statuses, static fn($a, $b) => $rank[$b] <=> $rank[$a]);
+        usort($statuses, static fn ($a, $b) => $rank[$b] <=> $rank[$a]);
         return $statuses[0];
     }
 
     private static function resourceStatus(?array $item): string
     {
-        if ($item === null || $item['maximum'] == 0) return 'unknown';
+        if ($item === null || $item['maximum'] == 0) {
+            return 'unknown';
+        }
         $pct = ($item['usage'] / $item['maximum']) * 100;
-        if ($pct >= 90) return 'critical';
-        if ($pct >= 75) return 'warning';
+        if ($pct >= 90) {
+            return 'critical';
+        }
+        if ($pct >= 75) {
+            return 'warning';
+        }
         return 'operational';
     }
 
     private static function resourcePercent(?array $item): ?float
     {
-        if ($item === null || $item['maximum'] == 0) return null;
+        if ($item === null || $item['maximum'] == 0) {
+            return null;
+        }
         return round(($item['usage'] / $item['maximum']) * 100, 1);
     }
 
     private static function performanceEntry(?array $item, string $unit): array
     {
         return [
-            'value'   => $item ? (float)$item['usage']   : null,
-            'max'     => $item ? (float)$item['maximum']  : null,
+            'value'   => $item ? (float)$item['usage'] : null,
+            'max'     => $item ? (float)$item['maximum'] : null,
             'percent' => self::resourcePercent($item),
             'unit'    => $unit,
         ];

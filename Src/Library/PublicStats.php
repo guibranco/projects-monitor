@@ -39,15 +39,12 @@ class PublicStats
                 try {
                     $sshServers[] = (new SSH($hostConfig))->getResourceUsage();
                 } catch (\Throwable $e) {
-                    $hostName = $hostConfig['name'] ?? $hostConfig['host'] ?? 'Unknown';
-                    LogStream::warning(
-                        "Failed to query SSH host resource usage",
-                        [
-                            "host"   => $hostName,
-                            "reason" => $e->getMessage(),
-                        ],
-                        "public-stats"
-                    );
+                    $hostName = $hostConfig['name'] ?? ($hostConfig['host'] ?? 'Unknown');
+                    $context = [
+                        'host'   => $hostName,
+                        'reason' => $e->getMessage(),
+                    ];
+                    LogStream::warning('Failed to query SSH host resource usage', $context, 'public-stats');
                     $sshServers[] = [
                         'name'    => $hostName,
                         'status'  => 'unknown',
@@ -108,12 +105,15 @@ class PublicStats
             if ($a['lastChange'] === null && $b['lastChange'] === null) {
                 return 0;
             }
+
             if ($a['lastChange'] === null) {
                 return 1;
             }
+
             if ($b['lastChange'] === null) {
                 return -1;
             }
+
             return strcmp($b['lastChange'], $a['lastChange']);
         });
 

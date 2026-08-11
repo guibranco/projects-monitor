@@ -20,8 +20,11 @@ class SSH
     private $username;
     private $privateKey;
 
-    /** @var bool Whether login() succeeded for this connection. */
+    /** @var boolean Whether login() succeeded for this connection. */
     private $connected = false;
+
+    /** @var array<int, array{name: string, host: string, port?: int, username: string, privateKey: string}>|null Cached hosts from ssh.secrets.php. */
+    private static $hostsCache = null;
 
     /**
      * Connects to the given host, or to the default host (the entry named
@@ -36,7 +39,7 @@ class SSH
 
         $hostConfig ??= self::getDefaultHostConfig();
 
-        $this->name = $hostConfig['name'] ?? $hostConfig['host'];
+        $this->name = ($hostConfig['name'] ?? $hostConfig['host']);
         $this->host = $hostConfig['host'];
         $this->port = $hostConfig['port'] ?? 22;
         $this->username = $hostConfig['username'];
@@ -51,14 +54,18 @@ class SSH
      */
     public static function getHosts(): array
     {
+        if (self::$hostsCache !== null) {
+            return self::$hostsCache;
+        }
+
         if (!file_exists(__DIR__ . "/../secrets/ssh.secrets.php")) {
             throw new SecretsFileNotFoundException("File not found: ssh.secrets.php");
         }
 
         $sshHosts = [];
-        require __DIR__ . "/../secrets/ssh.secrets.php";
+        require_once __DIR__ . "/../secrets/ssh.secrets.php";
 
-        return $sshHosts;
+        return self::$hostsCache = $sshHosts;
     }
 
     private static function getDefaultHostConfig(): array
@@ -66,7 +73,7 @@ class SSH
         $hosts = self::getHosts();
 
         if ($hosts === []) {
-            throw new \Exception('No SSH hosts configured');
+            throw new SshException('No SSH hosts configured');
         }
 
         foreach ($hosts as $hostConfig) {
@@ -115,7 +122,7 @@ class SSH
     private function fetchMonitorReport(): array
     {
         if (!$this->connected) {
-            throw new \Exception('Not connected');
+            throw new SshException('Not connected');
         }
 
         $response = $this->ssh->exec('/usr/local/bin/monitor-report');
@@ -240,59 +247,80 @@ class SSH
 
     private function unknownResourceUsage(): array
     {
-        $emptyMetric = [
-            'value'   => null,
-            'max'     => null,
-            'percent' => null,
-            'unit'    => '',
-        ];
-
         return [
             'name'    => $this->name,
             'status'  => 'unknown',
             'metrics' => [
-                'cpu'    => $emptyMetric,
-                'memory' => $emptyMetric,
-                'disk'   => $emptyMetric,
+                'cpu'    => $this->emptyMetric(''),
+                'memory' => $this->emptyMetric('MB'),
+                'disk'   => $this->emptyMetric('%'),
             ],
+        ];
+    }
+
+    private function emptyMetric(string $unit): array
+    {
+        return [
+            'value'   => null,
+            'max'     => null,
+            'percent' => null,
+            'unit'    => $unit,
         ];
     }
 
     private function buildCpuMetric(array $report): array
     {
-        $cpuCount = (int) ($report['cpu_count'] ?? 0);
-        $load1m = (float) ($report['load']['1m'] ?? 0);
-        $percent = $cpuCount > 0 ? round(min(100, ($load1m / $cpuCount) * 100), 1) : null;
+        if (!isset($report['cpu_count'], $report['load']['1m'])) {
+            return $this->emptyMetric('');
+        }
+
+        $cpuCount = (int) $report['cpu_count'];
+        $load1m = (float) $report['load']['1m'];
+
+        if ($cpuCount <= 0) {
+            return $this->emptyMetric('');
+        }
 
         return [
-            'value'   => $cpuCount > 0 ? $load1m : null,
-            'max'     => $cpuCount > 0 ? (float) $cpuCount : null,
-            'percent' => $percent,
+            'value'   => $load1m,
+            'max'     => (float) $cpuCount,
+            'percent' => round(min(100, ($load1m / $cpuCount) * 100), 1),
             'unit'    => '',
         ];
     }
 
     private function buildMemoryMetric(array $report): array
     {
-        $memTotal = (int) ($report['memory_kb']['total'] ?? 0);
-        $memAvailable = (int) ($report['memory_kb']['available'] ?? 0);
-        $percent = $memTotal > 0 ? round((($memTotal - $memAvailable) / $memTotal) * 100, 1) : null;
+        if (!isset($report['memory_kb']['total'], $report['memory_kb']['available'])) {
+            return $this->emptyMetric('MB');
+        }
+
+        $memTotal = (int) $report['memory_kb']['total'];
+        $memAvailable = (int) $report['memory_kb']['available'];
+
+        if ($memTotal <= 0) {
+            return $this->emptyMetric('MB');
+        }
 
         return [
-            'value'   => $memTotal > 0 ? round(($memTotal - $memAvailable) / 1024, 1) : null,
-            'max'     => $memTotal > 0 ? round($memTotal / 1024, 1) : null,
-            'percent' => $percent,
+            'value'   => round(($memTotal - $memAvailable) / 1024, 1),
+            'max'     => round($memTotal / 1024, 1),
+            'percent' => round((($memTotal - $memAvailable) / $memTotal) * 100, 1),
             'unit'    => 'MB',
         ];
     }
 
     private function buildDiskMetric(array $report): array
     {
-        $percent = isset($report['disk_root_used_pct']) ? round((float) $report['disk_root_used_pct'], 1) : null;
+        if (!isset($report['disk_root_used_pct'])) {
+            return $this->emptyMetric('%');
+        }
+
+        $percent = round((float) $report['disk_root_used_pct'], 1);
 
         return [
             'value'   => $percent,
-            'max'     => $percent !== null ? 100.0 : null,
+            'max'     => 100.0,
             'percent' => $percent,
             'unit'    => '%',
         ];

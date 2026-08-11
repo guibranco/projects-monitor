@@ -11,28 +11,65 @@ class SSH
 {
     private $ssh;
 
+    private $name;
     private $host;
     private $port = 22;
     private $username;
     private $privateKey;
+    private $connected = false;
 
-    public function __construct()
+    /**
+     * @param array{name?: string, host: string, port?: int, username: string, privateKey: string}|null $hostConfig
+     * Connects to the given host, or to the default host (the entry named
+     * "Vinhedo1" in ssh.secrets.php, falling back to the first entry) when omitted.
+     */
+    public function __construct(?array $hostConfig = null)
     {
-        global $sshHost, $sshUsername, $sshPrivateKey;
-
         $config = new Configuration();
         $config->init();
 
+        $hostConfig ??= self::getDefaultHostConfig();
+
+        $this->name = $hostConfig['name'] ?? $hostConfig['host'];
+        $this->host = $hostConfig['host'];
+        $this->port = $hostConfig['port'] ?? 22;
+        $this->username = $hostConfig['username'];
+        $this->privateKey = $hostConfig['privateKey'];
+        $this->connect();
+    }
+
+    /**
+     * Reads the list of configured SSH hosts from ssh.secrets.php.
+     *
+     * @return array<int, array{name: string, host: string, port?: int, username: string, privateKey: string}>
+     */
+    public static function getHosts(): array
+    {
         if (!file_exists(__DIR__ . "/../secrets/ssh.secrets.php")) {
             throw new SecretsFileNotFoundException("File not found: ssh.secrets.php");
         }
 
-        require_once __DIR__ . "/../secrets/ssh.secrets.php";
+        require __DIR__ . "/../secrets/ssh.secrets.php";
 
-        $this->host = $sshHost;
-        $this->username = $sshUsername;
-        $this->privateKey = $sshPrivateKey;
-        $this->connect();
+        return $sshHosts ?? [];
+    }
+
+    private static function getDefaultHostConfig(): array
+    {
+        $hosts = self::getHosts();
+
+        foreach ($hosts as $hostConfig) {
+            if (($hostConfig['name'] ?? null) === 'Vinhedo1') {
+                return $hostConfig;
+            }
+        }
+
+        return $hosts[0] ?? [];
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
     }
 
     private function connect(): void
@@ -40,12 +77,10 @@ class SSH
         try {
             $privateKey = PublicKeyLoader::loadPrivateKey($this->privateKey);
             $this->ssh = new SSH2($this->host, $this->port);
-
-            if (!$this->ssh->login($this->username, $privateKey)) {
-                throw new \Exception('Login failed');
-            }
-        } catch (\Exception $e) {
-            echo 'Error: ' . $e->getMessage();
+            $this->connected = $this->ssh->login($this->username, $privateKey);
+        } catch (\Throwable $e) {
+            $this->connected = false;
+            LogStream::warning("SSH connection failed", ["host" => $this->name, "reason" => $e->getMessage()], "ssh");
         }
     }
 
@@ -68,6 +103,10 @@ class SSH
      */
     private function fetchMonitorReport(): array
     {
+        if (!$this->connected) {
+            throw new \Exception('Not connected');
+        }
+
         $response = $this->ssh->exec('/usr/local/bin/monitor-report');
 
         if (empty($response)) {
@@ -93,7 +132,7 @@ class SSH
             $report = $this->fetchMonitorReport();
             return $this->formatWireGuardPeers((array) ($report['wireguard_peers'] ?? []));
         } catch (\Exception $e) {
-            echo 'Error: ' . $e->getMessage();
+            LogStream::warning("Failed to fetch WireGuard connections", ["host" => $this->name, "reason" => $e->getMessage()], "ssh");
         }
 
         return [];
@@ -152,10 +191,82 @@ class SSH
             $report = $this->fetchMonitorReport();
             return $this->formatSystemReport($report);
         } catch (\Exception $e) {
-            echo 'Error: ' . $e->getMessage();
+            LogStream::warning("Failed to fetch system report", ["host" => $this->name, "reason" => $e->getMessage()], "ssh");
         }
 
         return [];
+    }
+
+    /**
+     * Returns a compact CPU/memory/disk usage summary for this host, suitable
+     * for the public dashboard. When the host is unreachable or doesn't have
+     * the `monitor-report` script installed, returns a status of "unknown"
+     * with no metrics rather than throwing.
+     *
+     * @return array{name: string, status: string, metrics: array<string, array{value: float|null, max: float|null, percent: float|null, unit: string}>}
+     */
+    public function getResourceUsage(): array
+    {
+        $emptyMetric = ['value' => null, 'max' => null, 'percent' => null, 'unit' => ''];
+
+        try {
+            $report = $this->fetchMonitorReport();
+        } catch (\Exception $e) {
+            LogStream::warning("Failed to fetch resource usage", ["host" => $this->name, "reason" => $e->getMessage()], "ssh");
+            return [
+                'name' => $this->name,
+                'status' => 'unknown',
+                'metrics' => [
+                    'cpu'    => $emptyMetric,
+                    'memory' => $emptyMetric,
+                    'disk'   => $emptyMetric,
+                ],
+            ];
+        }
+
+        $cpuCount = (int) ($report['cpu_count'] ?? 0);
+        $load1m = (float) ($report['load']['1m'] ?? 0);
+        $cpuPercent = $cpuCount > 0 ? round(min(100, ($load1m / $cpuCount) * 100), 1) : null;
+
+        $memTotal = (int) ($report['memory_kb']['total'] ?? 0);
+        $memAvailable = (int) ($report['memory_kb']['available'] ?? 0);
+        $memPercent = $memTotal > 0 ? round((($memTotal - $memAvailable) / $memTotal) * 100, 1) : null;
+
+        $diskPercent = isset($report['disk_root_used_pct']) ? round((float) $report['disk_root_used_pct'], 1) : null;
+
+        $metrics = [
+            'cpu' => [
+                'value' => $cpuCount > 0 ? $load1m : null,
+                'max' => $cpuCount > 0 ? (float) $cpuCount : null,
+                'percent' => $cpuPercent,
+                'unit' => '',
+            ],
+            'memory' => [
+                'value' => $memTotal > 0 ? round(($memTotal - $memAvailable) / 1024, 1) : null,
+                'max' => $memTotal > 0 ? round($memTotal / 1024, 1) : null,
+                'percent' => $memPercent,
+                'unit' => 'MB',
+            ],
+            'disk' => [
+                'value' => $diskPercent,
+                'max' => $diskPercent !== null ? 100.0 : null,
+                'percent' => $diskPercent,
+                'unit' => '%',
+            ],
+        ];
+
+        $percents = array_filter(array_column($metrics, 'percent'), static fn($p) => $p !== null);
+        $status = 'operational';
+        if ($percents !== []) {
+            $maxPercent = max($percents);
+            $status = $maxPercent >= 90 ? 'critical' : ($maxPercent >= 75 ? 'warning' : 'operational');
+        }
+
+        return [
+            'name' => $this->name,
+            'status' => $status,
+            'metrics' => $metrics,
+        ];
     }
 
     private function formatSystemReport(array $report): array

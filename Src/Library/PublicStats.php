@@ -33,6 +33,22 @@ class PublicStats
         } catch (\Throwable) {
         }
 
+        $sshServers = [];
+        try {
+            foreach (SSH::getHosts() as $hostConfig) {
+                try {
+                    $sshServers[] = (new SSH($hostConfig))->getResourceUsage();
+                } catch (\Throwable) {
+                    $sshServers[] = [
+                        'name' => $hostConfig['name'] ?? ($hostConfig['host'] ?? 'Unknown'),
+                        'status' => 'unknown',
+                        'metrics' => [],
+                    ];
+                }
+            }
+        } catch (\Throwable) {
+        }
+
         try {
             $dbConnected = (new Database())->getConnection() !== null;
         } catch (\Throwable) {
@@ -100,6 +116,32 @@ class PublicStats
             }
         }
 
+        $systemStatus = [
+            ['label' => 'Osasco (cPanel)', 'status' => self::cpanelStatus($cpuData, $memoryData, $processesData), 'percent' => null],
+        ];
+        foreach ($sshServers as $server) {
+            $systemStatus[] = ['label' => $server['name'], 'status' => $server['status'], 'percent' => null];
+        }
+        $systemStatus[] = ['label' => 'Database', 'status' => $dbConnected ? 'operational' : 'critical', 'percent' => null];
+
+        $performance = [];
+        if ($cpanelUsage !== null) {
+            $performance[] = [
+                'name' => 'Osasco (cPanel)',
+                'metrics' => [
+                    'cpu'       => self::performanceEntry($cpuData,       '%'),
+                    'memory'    => self::performanceEntry($memoryData,    'MB'),
+                    'processes' => self::performanceEntry($processesData, ''),
+                ],
+            ];
+        }
+        foreach ($sshServers as $server) {
+            if ($server['status'] === 'unknown') {
+                continue;
+            }
+            $performance[] = ['name' => $server['name'], 'metrics' => $server['metrics']];
+        }
+
         return [
             'monitors' => [
                 'total'    => $totalMonitors,
@@ -108,17 +150,8 @@ class PublicStats
                 'critical' => $totalDown,
             ],
             'recentActivity' => array_slice($allActivity, 0, 5),
-            'systemStatus' => [
-                'cpu'       => self::resourceEntry($cpuData,       $cpuData['description']       ?? 'CPU'),
-                'memory'    => self::resourceEntry($memoryData,    $memoryData['description']    ?? 'Memory'),
-                'processes' => self::resourceEntry($processesData, $processesData['description'] ?? 'Processes'),
-                'database'  => ['status' => $dbConnected ? 'operational' : 'critical', 'percent' => null, 'label' => 'Database'],
-            ],
-            'performance' => [
-                'cpu'       => self::performanceEntry($cpuData,       '%'),
-                'memory'    => self::performanceEntry($memoryData,    'MB'),
-                'processes' => self::performanceEntry($processesData, ''),
-            ],
+            'systemStatus'   => $systemStatus,
+            'performance'    => $performance,
             'generatedAt'   => gmdate('Y-m-d\TH:i:s\Z'),
             'queues'        => $queueSummary,
             'webhookStats'  => $webhookStats,
@@ -127,6 +160,22 @@ class PublicStats
                 'pullRequests' => $totalPullRequests,
             ],
         ];
+    }
+
+    private static function cpanelStatus(?array $cpuData, ?array $memoryData, ?array $processesData): string
+    {
+        $rank = ['operational' => 0, 'warning' => 1, 'critical' => 2];
+        $statuses = array_filter(
+            [self::resourceStatus($cpuData), self::resourceStatus($memoryData), self::resourceStatus($processesData)],
+            static fn($status) => $status !== 'unknown'
+        );
+
+        if ($statuses === []) {
+            return 'unknown';
+        }
+
+        usort($statuses, static fn($a, $b) => $rank[$b] <=> $rank[$a]);
+        return $statuses[0];
     }
 
     private static function resourceStatus(?array $item): string
@@ -142,11 +191,6 @@ class PublicStats
     {
         if ($item === null || $item['maximum'] == 0) return null;
         return round(($item['usage'] / $item['maximum']) * 100, 1);
-    }
-
-    private static function resourceEntry(?array $item, string $label): array
-    {
-        return ['status' => self::resourceStatus($item), 'percent' => self::resourcePercent($item), 'label' => $label];
     }
 
     private static function performanceEntry(?array $item, string $unit): array

@@ -252,6 +252,23 @@ footer {
 }
 
 /* Performance / Resource Usage rows */
+.perf-server-group {
+  margin-bottom: 1.25rem;
+}
+
+.perf-server-group:last-child {
+  margin-bottom: 0;
+}
+
+.perf-server-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+}
+
 .perf-row {
   margin-bottom: 1rem;
 }
@@ -378,6 +395,10 @@ footer {
 }
 
 /* Performance */
+[data-bs-theme="dark"] .perf-server-name {
+  color: var(--bs-secondary-color);
+}
+
 [data-bs-theme="dark"] .perf-label {
   color: var(--bs-secondary-color);
 }

@@ -915,11 +915,63 @@ export class DataDisplayManager {
   }
 
   /**
-   * Draws the remote server health report (load, memory, disk, services)
-   * collected via SSH from vinhedo1.
+   * Renders per-host server health for every configured OCI host
+   * (Vinhedo1-4): a CPU/Memory/Disk gauge row plus the detailed metrics
+   * table (load, memory, disk, services), one card per host. Osasco's
+   * gauges live in a separate static card populated by showCPanel().
    */
   showSystemReport(response) {
-    this.chartManager.drawDataTable(response.system_report, "system_report", CHART_OPTIONS.table);
+    const container = document.getElementById("server_health_ssh_hosts");
+    const counterEl = document.getElementById("counter_server_health");
+    if (!container) return;
+
+    const reports = Array.isArray(response.system_reports) ? response.system_reports : [];
+    if (counterEl) counterEl.textContent = 1 + reports.length;
+
+    if (reports.length === 0) {
+      container.innerHTML = '<p class="text-muted text-center py-3 mb-0">No additional servers configured</p>';
+      return;
+    }
+
+    container.innerHTML = reports
+      .map((report, i) => `
+        <div class="server-health-card">
+          <div class="server-health-name">${this.#escHtml(report.name)}</div>
+          <div class="server-health-gauges">
+            <div id="gauge_chart_ssh_${i}_cpu" class="gauge"></div>
+            <div id="gauge_chart_ssh_${i}_memory" class="gauge"></div>
+            <div id="gauge_chart_ssh_${i}_disk" class="gauge"></div>
+          </div>
+          <div id="system_report_${i}" class="section-content"></div>
+        </div>`)
+      .join('');
+
+    const gaugeOptions = {
+      width: "100%",
+      height: "100%",
+      min: 0,
+      max: 100,
+      greenFrom: 0,
+      greenTo: 75,
+      yellowFrom: 75,
+      yellowTo: 90,
+      redFrom: 90,
+      redTo: 100,
+    };
+
+    reports.forEach((report, i) => {
+      const metrics = report.metrics ?? {};
+      this.chartManager.drawGaugeChart("CPU", metrics.cpu?.percent ?? 0, `gauge_chart_ssh_${i}_cpu`, gaugeOptions);
+      this.chartManager.drawGaugeChart("Memory", metrics.memory?.percent ?? 0, `gauge_chart_ssh_${i}_memory`, gaugeOptions);
+      this.chartManager.drawGaugeChart("Disk", metrics.disk?.percent ?? 0, `gauge_chart_ssh_${i}_disk`, gaugeOptions);
+
+      const tableEl = document.getElementById(`system_report_${i}`);
+      if (report.rows && report.rows.length > 0) {
+        this.chartManager.drawDataTable(report.rows, `system_report_${i}`, CHART_OPTIONS.table);
+      } else if (tableEl) {
+        tableEl.innerHTML = '<p class="text-muted text-center py-2 mb-0 small">Unable to reach this host</p>';
+      }
+    });
   }
 
   /**

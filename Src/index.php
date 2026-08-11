@@ -163,9 +163,6 @@ $configuration = new Configuration();
             <i class="bi bi-speedometer2 me-2"></i>Gauges
          </div>
          <div id="gauges_section" class="gauges-grid section-content">
-            <div id="gauge_chart_cpu" class="gauge"></div>
-            <div id="gauge_chart_memory" class="gauge"></div>
-            <div id="gauge_chart_process" class="gauge"></div>
             <div id="gauge_chart_emails" class="gauge"></div>
             <div id="gauge_chart_log_errors" class="gauge"></div>
             <div id="gauge_chart_github_usage" class="gauge"></div>
@@ -536,10 +533,20 @@ $configuration = new Configuration();
 
       <div class="full-width-section">
          <div class="section-header">
-            <i class="bi bi-hdd-rack me-2"></i>Server Health (vinhedo1) <span id="counter_system_report"
+            <i class="bi bi-hdd-rack me-2"></i>Server Health <span id="counter_server_health"
                class="badge rounded-pill"></span>
          </div>
-         <div id="system_report" class="section-content"></div>
+         <div id="server_health" class="section-content">
+            <div class="server-health-card">
+               <div class="server-health-name">Osasco (cPanel)</div>
+               <div class="server-health-gauges">
+                  <div id="gauge_chart_cpu" class="gauge"></div>
+                  <div id="gauge_chart_memory" class="gauge"></div>
+                  <div id="gauge_chart_process" class="gauge"></div>
+               </div>
+            </div>
+            <div id="server_health_ssh_hosts"></div>
+         </div>
       </div>
 
       <div class="full-width-section">

@@ -752,6 +752,33 @@ input.gridjs-input {
 }
 
 /* ===========================================
+   SERVER HEALTH
+   =========================================== */
+.server-health-card {
+  @extend .glass-card-light;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.server-health-card:last-child {
+  margin-bottom: 0;
+}
+
+.server-health-name {
+  font-weight: 600;
+  font-size: 1.05rem;
+  margin-bottom: 10px;
+  color: var(--text-primary);
+}
+
+.server-health-gauges {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  margin-bottom: 10px;
+}
+
+/* ===========================================
    GRID LAYOUTS
    =========================================== */
 .gauges-grid {

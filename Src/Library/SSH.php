@@ -26,6 +26,9 @@ class SSH
     /** @var array<int, array{name: string, host: string, port?: int, username: string, privateKey: string}>|null Cached hosts from ssh.secrets.php. */
     private static $hostsCache = null;
 
+    /** @var array|null Memoized monitor-report payload, so a single instance never runs the remote script twice. */
+    private $reportCache = null;
+
     /**
      * Connects to the given host, or to the default host (the entry named
      * "Vinhedo1" in ssh.secrets.php, falling back to the first entry) when omitted.
@@ -117,10 +120,16 @@ class SSH
      * /usr/local/bin/monitor-report) and returns its decoded JSON payload.
      * This single script run is the source of both the system health report
      * and the WireGuard peer list — vinhedo1's sudoers no longer permits
-     * running `wg show` directly, only this wrapped script.
+     * running `wg show` directly, only this wrapped script. The result is
+     * memoized per instance since callers (getSystemReport(), getResourceUsage())
+     * may both need it for the same host within one request.
      */
     private function fetchMonitorReport(): array
     {
+        if ($this->reportCache !== null) {
+            return $this->reportCache;
+        }
+
         if (!$this->connected) {
             throw new SshException('Not connected');
         }
@@ -137,7 +146,7 @@ class SSH
             throw new \Exception('Unable to parse monitor-report output');
         }
 
-        return $report;
+        return $this->reportCache = $report;
     }
 
     /**

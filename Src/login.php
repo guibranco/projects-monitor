@@ -572,13 +572,13 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
             el.innerHTML = `<div class="list-group list-group-flush">${rows}</div>`;
         }
 
-        function updateSystemStatus(sys) {
+        function updateSystemStatus(statuses) {
             const el = document.getElementById('system-status');
-            if (!sys) {
+            if (!statuses || statuses.length === 0) {
                 el.innerHTML = '<p class="text-muted mb-0">Data unavailable</p>';
                 return;
             }
-            const rows = Object.values(sys).map(item => {
+            const rows = statuses.map(item => {
                 const cfg = STATUS_CONFIG[item.status] ?? STATUS_CONFIG.unknown;
                 const pct = item.percent !== null ? `${item.percent}%` : cfg.text;
                 return `
@@ -590,35 +590,42 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
             el.innerHTML = rows;
         }
 
-        function updatePerformance(perf) {
+        const PERF_LABELS = { cpu: 'CPU Usage', memory: 'Memory Usage', processes: 'Processes', disk: 'Disk Usage' };
+
+        function updatePerformance(servers) {
             const el = document.getElementById('performance-metrics');
-            if (!perf) {
-                el.innerHTML = '<p class="text-muted mb-0">Data unavailable</p>';
+            if (!servers || servers.length === 0) {
+                el.innerHTML = '<p class="text-muted mb-0">No resource data available</p>';
                 return;
             }
 
-            const labels = { cpu: 'CPU Usage', memory: 'Memory Usage', processes: 'Processes' };
-            const units  = { cpu: '%', memory: ' MB', processes: '' };
-
-            const rows = Object.entries(perf).map(([key, item]) => {
-                if (item.percent === null && item.value === null) return '';
-                const pct   = item.percent ?? 0;
-                const cfg   = pct >= 90 ? STATUS_CONFIG.critical : pct >= 75 ? STATUS_CONFIG.warning : STATUS_CONFIG.healthy;
-                const value = item.value !== null
-                    ? `${item.value}${units[key] ?? ''} / ${item.max}${units[key] ?? ''}`
-                    : '—';
+            const groups = servers.map(server => {
+                const rows = Object.entries(server.metrics).map(([key, item]) => {
+                    if (item.percent === null && item.value === null) return '';
+                    const pct   = item.percent ?? 0;
+                    const cfg   = pct >= 90 ? STATUS_CONFIG.critical : pct >= 75 ? STATUS_CONFIG.warning : STATUS_CONFIG.healthy;
+                    const value = item.value !== null
+                        ? `${item.value}${item.unit ?? ''} / ${item.max}${item.unit ?? ''}`
+                        : '—';
+                    return `
+                    <div class="perf-row">
+                        <div class="perf-row-header">
+                            <span class="perf-label">${PERF_LABELS[key] ?? key}</span>
+                            <span class="perf-value">${value}</span>
+                        </div>
+                        <div class="perf-bar-track">
+                            <div class="perf-bar-fill ${cfg.bar}" style="width:${Math.min(pct, 100)}%"></div>
+                        </div>
+                    </div>`;
+                }).join('');
+                if (!rows) return '';
                 return `
-                <div class="perf-row">
-                    <div class="perf-row-header">
-                        <span class="perf-label">${labels[key] ?? key}</span>
-                        <span class="perf-value">${value}</span>
-                    </div>
-                    <div class="perf-bar-track">
-                        <div class="perf-bar-fill ${cfg.bar}" style="width:${Math.min(pct, 100)}%"></div>
-                    </div>
+                <div class="perf-server-group">
+                    <div class="perf-server-name">${escHtml(server.name)}</div>
+                    ${rows}
                 </div>`;
             }).join('');
-            el.innerHTML = rows || '<p class="text-muted mb-0">No resource data available</p>';
+            el.innerHTML = groups || '<p class="text-muted mb-0">No resource data available</p>';
         }
 
         function updateLastUpdated(isoString) {

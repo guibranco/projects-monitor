@@ -134,13 +134,19 @@ jobs:
 
       - name: 🔑 Generate SSH Configuration
         run: |
+          SECRETS_CONTEXT='${{ toJson(secrets) }}'
           cd Src
           mkdir -p secrets
           cd secrets
           echo "<?php" >> ssh.secrets.php
-          echo "\$sshHost        = \"${{ secrets.SSH_HOST }}\";" >> ssh.secrets.php
-          echo "\$sshUsername    = \"${{ secrets.SSH_USERNAME }}\";" >> ssh.secrets.php
-          echo "\$sshPrivateKey  = \"${{ secrets.SSH_PRIVATE_KEY }}\";" >> ssh.secrets.php
+          echo "\$sshHosts = [];" >> ssh.secrets.php
+          ssh_host_keys=$(echo "$SECRETS_CONTEXT" | jq -S '.' | jq -r 'keys[] | select(startswith("SSH_HOST_"))')
+
+          for key in $ssh_host_keys; do
+              name=$(echo "${key#SSH_HOST_}" | awk '{print toupper(substr($0,1,1)) tolower(substr($0,2))}')
+              host_value=$(echo "$SECRETS_CONTEXT" | jq -r --arg k "$key" '.[$k]')
+              echo "\$sshHosts[] = ['name' => \"$name\", 'host' => \"$host_value\", 'port' => 22, 'username' => \"${{ secrets.SSH_USERNAME }}\", 'privateKey' => \"${{ secrets.SSH_PRIVATE_KEY }}\"];" >> ssh.secrets.php
+          done
 
       - name: 🔑 Generate UpTimeRobot Configuration
         run: |

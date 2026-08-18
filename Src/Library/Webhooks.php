@@ -3,6 +3,7 @@
 namespace GuiBranco\ProjectsMonitor\Library;
 
 use GuiBranco\Pancake\Request;
+use GuiBranco\Pancake\ShieldsIo;
 use GuiBranco\ProjectsMonitor\Library\Configuration;
 use GuiBranco\ProjectsMonitor\Library\LogStream;
 
@@ -184,6 +185,63 @@ class Webhooks
 
         LogStream::info("Triggering worker run", ["worker" => $name], "webhooks");
         return $this->doRequest("workers/{$name}/run", "post", 202);
+    }
+
+    /**
+     * Returns the latest release per repository this service has received
+     * webhooks for, correlated with deploy/release workflow run outcomes,
+     * from the webhooks API's `github_release_status_view`-backed endpoint.
+     */
+    public function getReleases(): mixed
+    {
+        LogStream::debug("Fetching releases list", null, "webhooks");
+        $releases = $this->doRequest("releases/", "get", 200);
+        return $this->formatReleasesTable($releases);
+    }
+
+    private function formatReleasesTable(array $releases): array
+    {
+        $header = ["Repository", "Release", "Tag", "Created At", "Workflow Status", "Workflow Runs", "Failed Runs", "Actions"];
+        $rows = [$header];
+
+        foreach ($releases as $release) {
+            $owner = htmlspecialchars($release["owner"] ?? "", ENT_QUOTES);
+            $repo = htmlspecialchars($release["repo"] ?? "", ENT_QUOTES);
+            $releaseName = htmlspecialchars($release["release_name"] ?? ($release["tag_name"] ?? ""), ENT_QUOTES);
+            $tagName = htmlspecialchars($release["tag_name"] ?? "", ENT_QUOTES);
+            $createdAt = htmlspecialchars($release["release_created_at"] ?? "", ENT_QUOTES);
+            $htmlUrl = htmlspecialchars($release["html_url"] ?? "", ENT_QUOTES);
+            $viewBtn = $htmlUrl !== ""
+                ? "<a class=\"btn btn-sm btn-outline-light\" href=\"{$htmlUrl}\" target=\"_blank\" rel=\"noopener noreferrer\" aria-label=\"View release {$releaseName} on GitHub\"><i class=\"bi bi-box-arrow-up-right\"></i></a>"
+                : "";
+
+            $rows[] = [
+                "{$owner}/{$repo}",
+                $releaseName,
+                $tagName,
+                $createdAt,
+                $this->releaseStatusBadge((string) ($release["workflow_status"] ?? "Pending")),
+                (int) ($release["workflow_runs_count"] ?? 0),
+                (int) ($release["failed_workflow_runs"] ?? 0),
+                $viewBtn,
+            ];
+        }
+
+        return ["releases" => $rows, "total" => count($releases)];
+    }
+
+    private function releaseStatusBadge(string $status): string
+    {
+        $styles = [
+            "Successful" => ["✅", "brightgreen"],
+            "Failed"     => ["❌", "red"],
+            "Pending"    => ["⏳", "orange"],
+        ];
+        [$label, $color] = $styles[$status] ?? ["⚪", "lightgrey"];
+
+        $shields = new ShieldsIo();
+        $url = $shields->generateBadgeUrl($label, $status, $color, "for-the-badge", "white", null);
+        return "<img src='{$url}' alt='{$status}' />";
     }
 
     private function formatWorkersTable(array $workers): array

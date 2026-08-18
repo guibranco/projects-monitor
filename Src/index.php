@@ -351,6 +351,18 @@ $configuration = new Configuration();
 
       <div class="full-width-section">
          <div class="section-header">
+            <i class="bi bi-tag me-2"></i>Recent Releases <span id="counter_releases_recent"
+               class="badge rounded-pill"></span>
+            <a href="releases.php" class="btn btn-sm btn-nav-action ms-2" title="View All Releases"
+               onclick="event.stopPropagation()">
+               <i class="bi bi-list-ul"></i>
+            </a>
+         </div>
+         <div id="releases_recent" class="section-content"></div>
+      </div>
+
+      <div class="full-width-section">
+         <div class="section-header">
             <i class="bi bi-diagram-2 me-2"></i>Branches <span id="counter_branches" class="badge rounded-pill"></span>
          </div>
          <div id="branches" class="section-content"></div>

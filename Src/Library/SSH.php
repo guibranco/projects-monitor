@@ -151,13 +151,13 @@ class SSH
 
     /**
      * Returns WireGuard peer connection data, parsed from the
-     * `wireguard_peers` array of the `monitor-report` script's output.
+     * `wireguard.peers` array of the `monitor-report` script's output.
      */
     public function getWireGuardConnections(): array
     {
         try {
             $report = $this->fetchMonitorReport();
-            return $this->formatWireGuardPeers((array) ($report['wireguard_peers'] ?? []));
+            return $this->formatWireGuardPeers((array) ($report['wireguard']['peers'] ?? []));
         } catch (\Exception $e) {
             LogStream::warning("Failed to fetch WireGuard connections", ["host" => $this->name, "reason" => $e->getMessage()], "ssh");
         }
@@ -198,8 +198,8 @@ class SSH
                 $this->mapPeerToHostname($peer['allowed_ips'] ?? ''),
                 $statusImg,
                 $hasHandshake ? date("Y-m-d H:i:s", $handshakeTimestamp) : 'Never',
-                $this->formatBytes((int) ($peer['rx'] ?? 0)),
-                $this->formatBytes((int) ($peer['tx'] ?? 0))
+                $this->formatBytes((int) ($peer['rx_bytes'] ?? 0)),
+                $this->formatBytes((int) ($peer['tx_bytes'] ?? 0))
             );
         }
 

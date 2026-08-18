@@ -908,6 +908,21 @@ export class DataDisplayManager {
   }
 
   /**
+   * Draws the 5 most recent releases (from the webhooks project's releases
+   * table, already sorted newest-first) on the main dashboard. The counter
+   * shows the true total release count, not just the 5 rows shown here —
+   * "View All" links to the dedicated releases page for the rest.
+   */
+  showReleases(response) {
+    const rows = Array.isArray(response.releases) ? response.releases : [];
+    const recent = rows.length > 1 ? [rows[0], ...rows.slice(1, 6)] : rows;
+    this.chartManager.drawDataTable(recent, "releases_recent", CHART_OPTIONS.table);
+
+    const counterEl = document.getElementById("counter_releases_recent");
+    if (counterEl) counterEl.textContent = response.total ?? Math.max(0, rows.length - 1);
+  }
+
+  /**
    * Draws a wire guard data table using the chart manager.
    */
   showWireGuard(response) {

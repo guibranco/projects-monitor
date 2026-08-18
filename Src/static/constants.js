@@ -30,6 +30,7 @@ export const API_ENDPOINTS = {
   QUEUES_PURGE: "api/v1/queues/purge",
   DOMAINS: "api/v1/domains",
   DNS_RECORDS: "api/v1/dns-records",
+  RELEASES: "api/v1/releases",
   ERRORS: "api/v1/errors",
   ERRORS_TRUNCATE: "api/v1/errors/truncate",
   ERRORS_DELETE_PATH: "api/v1/errors/delete-path",

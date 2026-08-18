@@ -33,6 +33,7 @@
     { "name": "Messages",    "description": "Application log-message management" },
     { "name": "Postman",     "description": "Postman API usage stats" },
     { "name": "Queues",      "description": "RabbitMQ queue monitoring and management" },
+    { "name": "Releases",    "description": "Latest release per repository (from the webhooks project), correlated with deploy/release workflow run outcomes" },
     { "name": "System",      "description": "Remote server health (CPU, memory, disk, services), retrieved via SSH" },
     { "name": "UpTimeRobot", "description": "UpTimeRobot monitor status" },
     { "name": "Vercel",      "description": "Vercel project deployments and status" },
@@ -779,6 +780,37 @@
             }
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/releases": {
+      "get": {
+        "summary": "Releases",
+        "description": "Returns the latest release per repository tracked by the webhooks project, correlated with deploy/release workflow run outcomes, as a table with an embedded 'View on GitHub' link per row. Proxies the webhooks API's GET /releases/ endpoint.",
+        "operationId": "getReleases",
+        "tags": ["Releases"],
+        "responses": {
+          "200": {
+            "description": "Releases table.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "releases": {
+                      "type": "array",
+                      "description": "Header row followed by one row per release: Repository, Release, Tag, Created At, Workflow Status (HTML badge), Workflow Runs, Failed Runs, Actions (HTML link). Sorted newest-first.",
+                      "items": { "type": "array", "items": {} }
+                    },
+                    "total": { "type": "integer", "example": 12 }
+                  }
+                }
+              }
+            }
+          },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "429": { "$ref": "#/components/responses/RateLimited" },
           "500": { "$ref": "#/components/responses/ServerError" }

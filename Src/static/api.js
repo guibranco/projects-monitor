@@ -385,6 +385,7 @@ export class DataLoader {
     this.apiManager.load(API_ENDPOINTS.UPTIMEROBOT, (data) => window.showUpTimeRobot?.(data));
     this.apiManager.load(API_ENDPOINTS.VERCEL, (data) => window.showVercel?.(data));
     this.apiManager.load(API_ENDPOINTS.WIREGUARD, (data) => window.showWireGuard?.(data));
+    this.apiManager.load(API_ENDPOINTS.RELEASES, (data) => window.showReleases?.(data));
     this.apiManager.load(API_ENDPOINTS.SYSTEM_REPORT, (data) => window.showSystemReport?.(data));
   }
 

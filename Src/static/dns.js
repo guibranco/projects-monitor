@@ -147,8 +147,17 @@ class DnsRecordsPage {
     // fires repeatedly in quick succession (e.g. rapid filter checkbox toggles), which
     // crashes deep inside Grid.js with "Cannot read properties of undefined (reading
     // 'length')". gridManager.js uses the same recreate-instead-of-diff approach.
+    //
+    // Render into a freshly created child element rather than `el` itself: Grid.js is
+    // built on Preact, which attaches its internal vnode tree to the container node it
+    // renders into. Reusing the same node across renders (even after clearing its
+    // innerHTML) leaves that stale tracking behind, so a second render silently fails
+    // to update the visible table even though the new data was passed in.
     el.innerHTML = '';
     this.grid = null;
+
+    const gridContainer = document.createElement('div');
+    el.appendChild(gridContainer);
 
     this.grid = new this.gridjs.Grid({
       columns,
@@ -159,7 +168,7 @@ class DnsRecordsPage {
       resizable: false,
       className: { table: 'gridjs-table-dark' },
     });
-    this.grid.render(el);
+    this.grid.render(gridContainer);
   }
 }
 

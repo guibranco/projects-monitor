@@ -142,10 +142,13 @@ class DnsRecordsPage {
       { name: 'TTL', sort: true },
     ];
 
-    if (this.grid) {
-      this.grid.updateConfig({ columns, data }).forceRender();
-      return;
-    }
+    // Fully recreate on every render rather than calling updateConfig().forceRender():
+    // Grid.js's internal sort/search pipeline is async and can race when updateConfig
+    // fires repeatedly in quick succession (e.g. rapid filter checkbox toggles), which
+    // crashes deep inside Grid.js with "Cannot read properties of undefined (reading
+    // 'length')". gridManager.js uses the same recreate-instead-of-diff approach.
+    el.innerHTML = '';
+    this.grid = null;
 
     this.grid = new this.gridjs.Grid({
       columns,

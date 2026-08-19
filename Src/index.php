@@ -240,7 +240,14 @@ $configuration = new Configuration();
             <i class="bi bi-collection me-2"></i>Messages Grouped <span id="counter_messages_grouped"
                class="badge rounded-pill"></span>
          </div>
-         <div id="messages_grouped" class="section-content"></div>
+         <div class="section-content">
+            <div class="text-end mb-1">
+               <button id="btn_truncate_messages_grouped" class="btn btn-warning btn-sm" style="display:none"
+                  onclick="window.confirmTruncateMessages?.(() => window.truncateMessages?.())">
+                  <i class="bi bi-trash me-1"></i>Truncate All Messages</button>
+            </div>
+            <div id="messages_grouped"></div>
+         </div>
       </div>
 
       <div class="full-width-section">

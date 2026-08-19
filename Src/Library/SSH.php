@@ -110,6 +110,7 @@ class SSH
         $peers = [
             '10.141.230.2/32' => 'GH Actions - Projects Monitor',
             '10.141.230.3/32' => 'GH Actions - Webhooks',
+            '10.141.230.4/32' => 'iPhone Beatriz Jesus',
         ];
 
         return $peers[$peerName] ?? $peerName;

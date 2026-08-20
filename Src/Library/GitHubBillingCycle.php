@@ -34,14 +34,19 @@ class GitHubBillingCycle
             ];
         }
 
-        $thisMonthReset = self::resetDateForMonth($now, $cycleResetDay);
+        // Anchor to day 1 before doing P1M arithmetic — adding/subtracting a month
+        // directly on $now (e.g. 2026-01-31) overflows into the wrong target month
+        // (Jan 31 - 1M lands on Feb 31, which PHP normalizes into March), since day
+        // 1 always exists, arithmetic on the anchor never overflows.
+        $thisMonthAnchor = new DateTimeImmutable($now->format("Y-m-01"));
+        $thisMonthReset = self::resetDateForMonth($thisMonthAnchor, $cycleResetDay);
 
         if ($now < $thisMonthReset) {
             $end = $thisMonthReset;
-            $start = self::resetDateForMonth($now->sub(new DateInterval("P1M")), $cycleResetDay);
+            $start = self::resetDateForMonth($thisMonthAnchor->sub(new DateInterval("P1M")), $cycleResetDay);
         } else {
             $start = $thisMonthReset;
-            $end = self::resetDateForMonth($now->add(new DateInterval("P1M")), $cycleResetDay);
+            $end = self::resetDateForMonth($thisMonthAnchor->add(new DateInterval("P1M")), $cycleResetDay);
         }
 
         return [

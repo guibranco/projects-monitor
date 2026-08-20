@@ -43,15 +43,34 @@ class GitHubActionsUsageTest extends TestCase
         );
     }
 
-    private function accountEntry(string $name, string $type = "org"): array
+    private function accountEntry(string $name, string $type = "org", ?string $tokenSecret = null): array
     {
         return [
             "account" => $name,
             "accountType" => $type,
             "planType" => "free",
             "cycleResetDay" => null,
-            "overrides" => [],
+            "tokenSecret" => $tokenSecret,
+            // (object) so json_encode() emits {} rather than [] — an empty PHP
+            // array is otherwise indistinguishable from an empty JSON array.
+            "overrides" => (object) [],
         ];
+    }
+
+    private function setPrivateProperty(object $object, string $property, $value): void
+    {
+        // Test-only reflection against our own class, not attacker-controlled input.
+        $reflection = new ReflectionProperty(GitHubActionsUsage::class, $property);
+        $reflection->setAccessible(true); // NOSONAR
+        $reflection->setValue($object, $value); // NOSONAR
+    }
+
+    private function invokeResolveToken(GitHubActionsUsage $usage, array $account): string
+    {
+        $method = new ReflectionMethod(GitHubActionsUsage::class, "resolveToken");
+        $method->setAccessible(true); // NOSONAR
+
+        return $method->invoke($usage, $account);
     }
 
     private function usageItem(float $grossQuantity): object
@@ -180,6 +199,50 @@ class GitHubActionsUsageTest extends TestCase
         $results = $usage->getAllAccountsUsage();
 
         $this->assertNull($usage->getHighestUtilizationPercentage($results));
+    }
+
+    public function testResolveTokenReturnsDefaultTokenWhenTokenSecretIsNull()
+    {
+        $usage = $this->getMockBuilder(GitHubActionsUsage::class)->disableOriginalConstructor()->getMock();
+        $this->setPrivateProperty($usage, "defaultToken", "default-token-value");
+        $this->setPrivateProperty($usage, "tokens", ["gitHubToken" => "default-token-value"]);
+
+        $token = $this->invokeResolveToken($usage, $this->accountEntry("accountA"));
+
+        $this->assertSame("default-token-value", $token);
+    }
+
+    /**
+     * Regression: resolveToken() used to read $GLOBALS[$secretName], but only
+     * $gitHubToken was ever promoted into $GLOBALS (via `global $gitHubToken;`
+     * before the require) — any other per-account token the secrets file
+     * defined was invisible. loadTokens() now captures every variable the
+     * secrets file defines via get_defined_vars().
+     */
+    public function testResolveTokenReturnsNamedTokenWhenTokenSecretIsConfigured()
+    {
+        $usage = $this->getMockBuilder(GitHubActionsUsage::class)->disableOriginalConstructor()->getMock();
+        $this->setPrivateProperty($usage, "defaultToken", "default-token-value");
+        $this->setPrivateProperty($usage, "tokens", [
+            "gitHubToken" => "default-token-value",
+            "gitHubTokenApiBr" => "apibr-token-value",
+        ]);
+
+        $token = $this->invokeResolveToken($usage, $this->accountEntry("accountB", "org", "gitHubTokenApiBr"));
+
+        $this->assertSame("apibr-token-value", $token);
+    }
+
+    public function testResolveTokenThrowsWhenConfiguredSecretIsNotDefined()
+    {
+        $usage = $this->getMockBuilder(GitHubActionsUsage::class)->disableOriginalConstructor()->getMock();
+        $this->setPrivateProperty($usage, "defaultToken", "default-token-value");
+        $this->setPrivateProperty($usage, "tokens", ["gitHubToken" => "default-token-value"]);
+
+        $this->expectException(GitHubActionsUsageException::class);
+        $this->expectExceptionMessageMatches("/gitHubTokenMissing/");
+
+        $this->invokeResolveToken($usage, $this->accountEntry("accountC", "org", "gitHubTokenMissing"));
     }
 
     /**

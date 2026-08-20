@@ -110,7 +110,8 @@ class GitHubActionsUsageCalculator
         $totals = [];
 
         foreach ($usageRows as $row) {
-            if (($row->product ?? null) !== "Actions" || ($row->unitType ?? null) !== "minutes") {
+            $unitType = strtolower((string) ($row->unitType ?? ""));
+            if (($row->product ?? null) !== "Actions" || $unitType !== "minutes") {
                 continue;
             }
 
@@ -125,7 +126,9 @@ class GitHubActionsUsageCalculator
 
         $result = [];
         foreach (array_slice($totals, 0, $limit, true) as $repository => $minutes) {
-            $result[] = ["repository" => $repository, "minutes" => $minutes];
+            // PHP casts numeric-looking array keys to int (e.g. a repo literally
+            // named "123") — cast back so the serialized field stays a string.
+            $result[] = ["repository" => (string) $repository, "minutes" => $minutes];
         }
 
         return $result;
@@ -137,9 +140,12 @@ class GitHubActionsUsageCalculator
      */
     private static function filter(array $usageItems, string $unitType): array
     {
+        $unitType = strtolower($unitType);
+
         return array_values(array_filter(
             $usageItems,
-            static fn ($item) => ($item->product ?? null) === "Actions" && ($item->unitType ?? null) === $unitType
+            static fn ($item) => ($item->product ?? null) === "Actions"
+                && strtolower((string) ($item->unitType ?? "")) === $unitType
         ));
     }
 

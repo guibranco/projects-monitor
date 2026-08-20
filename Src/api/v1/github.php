@@ -18,7 +18,7 @@ try {
     $data["accounts_usage"] = (new GitHubActionsUsage())->getAccountsUsageTable();
 } catch (\Throwable $e) {
     LogStream::error("GitHub Actions billing config failed to load", ["reason" => $e->getMessage()], "github-billing");
-    $data["accounts_usage"] = array();
+    $data["accounts_usage"] = [GitHubActionsUsage::TABLE_HEADER];
 }
 
 $data["issues"] = $github->getIssues();

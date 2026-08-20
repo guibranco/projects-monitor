@@ -29,15 +29,27 @@ class GitHubBillingConfig
         $configPath ??= self::DEFAULT_CONFIG_PATH;
         $schemaPath ??= self::DEFAULT_SCHEMA_PATH;
 
-        $data = $this->readJsonFile($configPath);
+        $configContents = $this->readFileContents($configPath);
         $schema = $this->readJsonFile($schemaPath);
 
-        $schemaErrors = self::validateAgainstSchema($data, $schema);
+        // Validated in object mode: json_decode() without the associative flag
+        // preserves the JSON object-vs-array distinction ({} decodes to stdClass,
+        // [] to a PHP array), which the associative decode below collapses for the
+        // empty case — an empty "plans": [] typo would otherwise silently pass as
+        // a valid (if empty) "plans" object.
+        $objectModeData = json_decode($configContents);
+        if (!is_object($objectModeData) && !is_array($objectModeData)) {
+            throw new GitHubBillingConfigException("Invalid JSON: {$configPath} - " . json_last_error_msg());
+        }
+
+        $schemaErrors = self::validateAgainstSchema($objectModeData, $schema);
         if ($schemaErrors !== []) {
             throw new GitHubBillingConfigException(
                 "Invalid {$configPath}: " . implode("; ", $schemaErrors)
             );
         }
+
+        $data = json_decode($configContents, true);
 
         $this->plans = $data["plans"];
         $this->accounts = $this->resolveAccounts($data["accounts"]);
@@ -111,17 +123,27 @@ class GitHubBillingConfig
 
     private function readJsonFile(string $path): array
     {
-        if (!file_exists($path)) {
-            throw new GitHubBillingConfigException("File not found: {$path}");
-        }
-
-        $decoded = json_decode(file_get_contents($path), true);
+        $decoded = json_decode($this->readFileContents($path), true);
 
         if (!is_array($decoded)) {
             throw new GitHubBillingConfigException("Invalid JSON: {$path} - " . json_last_error_msg());
         }
 
         return $decoded;
+    }
+
+    private function readFileContents(string $path): string
+    {
+        if (!file_exists($path)) {
+            throw new GitHubBillingConfigException("File not found: {$path}");
+        }
+
+        $contents = file_get_contents($path);
+        if ($contents === false) {
+            throw new GitHubBillingConfigException("Unable to read file: {$path}");
+        }
+
+        return $contents;
     }
 
     /**
@@ -144,7 +166,7 @@ class GitHubBillingConfig
             self::validateRange($data, $schema, $path)
         );
 
-        if (is_array($data) && self::isAssoc($data)) {
+        if ($data instanceof \stdClass) {
             return array_merge($errors, self::validateObject($data, $schema, $path));
         }
 
@@ -195,7 +217,7 @@ class GitHubBillingConfig
         return $errors;
     }
 
-    private static function validateObject(array $data, array $schema, string $path): array
+    private static function validateObject(object $data, array $schema, string $path): array
     {
         $errors = self::validateRequiredProperties($data, $schema, $path);
         $properties = $schema["properties"] ?? [];
@@ -212,12 +234,12 @@ class GitHubBillingConfig
         return $errors;
     }
 
-    private static function validateRequiredProperties(array $data, array $schema, string $path): array
+    private static function validateRequiredProperties(object $data, array $schema, string $path): array
     {
         $errors = [];
 
         foreach ((array) ($schema["required"] ?? []) as $requiredKey) {
-            if (!array_key_exists($requiredKey, $data)) {
+            if (!property_exists($data, $requiredKey)) {
                 $errors[] = "{$path}: missing required property '{$requiredKey}'";
             }
         }
@@ -265,8 +287,8 @@ class GitHubBillingConfig
     private static function matchesType($data, string $type): bool
     {
         return match ($type) {
-            "object" => is_array($data) && (self::isAssoc($data) || $data === []),
-            "array" => is_array($data) && !self::isAssoc($data),
+            "object" => $data instanceof \stdClass,
+            "array" => is_array($data),
             "string" => is_string($data),
             "integer" => is_int($data),
             "number" => is_int($data) || is_float($data),
@@ -276,19 +298,11 @@ class GitHubBillingConfig
         };
     }
 
-    private static function isAssoc(array $array): bool
-    {
-        if ($array === []) {
-            return false;
-        }
-
-        return array_keys($array) !== range(0, count($array) - 1);
-    }
-
     private static function describeType($data): string
     {
         return match (true) {
-            is_array($data) => self::isAssoc($data) ? "object" : "array",
+            $data instanceof \stdClass => "object",
+            is_array($data) => "array",
             is_string($data) => "string",
             is_int($data) => "integer",
             is_float($data) => "number",

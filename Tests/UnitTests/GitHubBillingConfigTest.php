@@ -46,7 +46,9 @@ class GitHubBillingConfigTest extends TestCase
                     "accountType" => "org",
                     "planType" => "free",
                     "cycleResetDay" => null,
-                    "overrides" => [],
+                    // (object) so json_encode() emits {} rather than [] — an empty
+                    // PHP array is otherwise indistinguishable from an empty JSON array.
+                    "overrides" => (object) [],
                 ],
             ],
         ];
@@ -193,10 +195,29 @@ class GitHubBillingConfigTest extends TestCase
 
     public function testRealConfigValidatesAgainstRealSchemaWithNoErrors()
     {
-        $configData = json_decode(file_get_contents(__DIR__ . "/../../Src/Library/github-billing.json"), true);
+        // Object-mode decode (no `true`) — matches what the constructor now
+        // validates against, preserving the {} vs [] distinction.
+        $configData = json_decode(file_get_contents(__DIR__ . "/../../Src/Library/github-billing.json"));
         $errors = GitHubBillingConfig::validateAgainstSchema($configData, $this->schema());
 
         $this->assertSame([], $errors);
+    }
+
+    public function testEmptyPlansArrayFailsSchemaValidationInsteadOfSilentlyPassingAsAnEmptyObject()
+    {
+        // json_decode(..., true) collapses {} and [] into the same PHP [], so a
+        // "plans": [] typo (JSON array instead of object) must be rejected during
+        // validation — otherwise every account would fail later with a confusing
+        // "unknown planType" error instead of a clear schema error naming the typo.
+        $data = $this->baseConfig();
+        $data["plans"] = [];
+        $path = $this->writeFixture($data);
+
+        $this->expectException(GitHubBillingConfigException::class);
+        $this->expectExceptionMessageMatches("/plans: expected type object, got array/");
+
+        $thrown = new GitHubBillingConfig($path, __DIR__ . "/../../Src/Library/github-billing.schema.json");
+        $this->fail("Expected GitHubBillingConfigException but constructed: " . $thrown::class);
     }
 
     public function testMissingFileThrows()

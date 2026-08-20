@@ -27,9 +27,15 @@ class GitHubActionsUsage
     private const CACHE_TTL_SECONDS = 1800;
     private const TOP_REPOS_LIMIT = 5;
 
+    /** Shared with the config-load-failure fallback in api/v1/github.php so both stay in sync. */
+    public const TABLE_HEADER = ["Account", "Plan", "Minutes", "Storage", "Reset", "Top repositories (this cycle)"];
+
     private Request $request;
 
     private string $defaultToken;
+
+    /** @var array<string, mixed> Every variable gitHub.secrets.php defines, keyed by name. */
+    private array $tokens;
 
     private GitHubBillingConfig $config;
 
@@ -38,16 +44,37 @@ class GitHubActionsUsage
         $appConfig = new Configuration();
         $appConfig->init();
 
+        $this->tokens = $this->loadTokens();
+
+        if (empty($this->tokens["gitHubToken"])) {
+            throw new SecretsFileNotFoundException("gitHub.secrets.php did not define \$gitHubToken");
+        }
+
+        $this->defaultToken = $this->tokens["gitHubToken"];
+
+        $this->request = new Request();
+        $this->config = $config ?? new GitHubBillingConfig();
+    }
+
+    /**
+     * Loads gitHub.secrets.php and captures every variable it defines — not
+     * just $gitHubToken. A per-account tokenSecret in github-billing.json can
+     * name any other variable the same file defines (e.g. $gitHubTokenApiBr);
+     * `global $gitHubToken;` only promotes the one variable it names into
+     * $GLOBALS, so resolveToken() couldn't see the others. get_defined_vars()
+     * in a fresh method scope, called right after a plain `require` (not
+     * `require_once`, so this stays correct across repeated construction
+     * within one long-lived process), captures exactly what the file defined.
+     */
+    private function loadTokens(): array
+    {
         if (!file_exists(__DIR__ . "/../secrets/gitHub.secrets.php")) {
             throw new SecretsFileNotFoundException("File not found: gitHub.secrets.php");
         }
 
-        global $gitHubToken;
-        require_once __DIR__ . "/../secrets/gitHub.secrets.php";
-        $this->defaultToken = $gitHubToken;
+        require __DIR__ . "/../secrets/gitHub.secrets.php";
 
-        $this->request = new Request();
-        $this->config = $config ?? new GitHubBillingConfig();
+        return get_defined_vars();
     }
 
     /**
@@ -75,7 +102,7 @@ class GitHubActionsUsage
     public function getAccountsUsageTable(): array
     {
         $shields = new ShieldsIo();
-        $rows = [["Account", "Plan", "Minutes", "Storage", "Reset", "Top repositories (this cycle)"]];
+        $rows = [self::TABLE_HEADER];
 
         foreach ($this->getAllAccountsUsage() as $usage) {
             $rows[] = $this->buildRow($shields, $usage);
@@ -128,7 +155,7 @@ class GitHubActionsUsage
         $topRepos = $usage["topRepositories"] === []
             ? "-"
             : implode(", ", array_map(
-                fn ($r) => "{$r["repository"]} (" . number_format($r["minutes"], 0) . "m)",
+                fn ($r) => htmlspecialchars($r["repository"], ENT_QUOTES) . " (" . number_format($r["minutes"], 0) . "m)",
                 $usage["topRepositories"]
             ));
 
@@ -249,9 +276,18 @@ class GitHubActionsUsage
         }
 
         if (count($months) === 1) {
+            // The window is exactly one calendar month, so the summary endpoint's
+            // full-month totals are already correct (and match the GitHub UI).
             [$year, $month] = $months[0];
             $usageItems = $this->fetchSummaryUsageItems($pathSegment, $accountName, $headers, $year, $month);
         } else {
+            // A cycle spanning two calendar months can't use the summary endpoint
+            // here — it returns whole-month totals with no way to exclude the
+            // days outside the window, which would overcount. $windowedRows is
+            // already date-filtered to the window, and per the API's documented
+            // shape carries the same fields as summary items (product, unitType,
+            // pricePerUnit, discountAmount, ...) aside from quantity/repositoryName,
+            // so discountAmount stays available for inferIncludedMinutes() below.
             $usageItems = array_map([$this, "normalizeRow"], $windowedRows);
         }
 
@@ -286,14 +322,14 @@ class GitHubActionsUsage
             return $this->defaultToken;
         }
 
-        if (empty($GLOBALS[$secretName])) {
+        if (empty($this->tokens[$secretName])) {
             throw new GitHubActionsUsageException(
-                "No token configured for account '{$account["account"]}': global \${$secretName} " .
+                "No token configured for account '{$account["account"]}': \${$secretName} " .
                 "is not defined in gitHub.secrets.php."
             );
         }
 
-        return $GLOBALS[$secretName];
+        return $this->tokens[$secretName];
     }
 
     private function buildHeaders(string $token): array
@@ -353,32 +389,77 @@ class GitHubActionsUsage
 
     private function fetchCachedJson(string $cacheKey, string $url, array $headers)
     {
-        $cachePath = "cache/{$cacheKey}.json";
-        $cacheExists = file_exists($cachePath);
+        $cachePath = __DIR__ . "/../cache/{$cacheKey}.json";
+        $cached = $this->readCachedJson($cachePath);
+        $isFresh = $cached !== null && filemtime($cachePath) > time() - self::CACHE_TTL_SECONDS;
 
-        if ($cacheExists && filemtime($cachePath) > time() - self::CACHE_TTL_SECONDS) {
-            return json_decode(file_get_contents($cachePath));
+        if ($isFresh) {
+            return $cached;
         }
 
         try {
             $response = $this->request->get($url, $headers);
             $response->ensureSuccessStatus();
             $body = $response->getBody();
-            file_put_contents($cachePath, $body);
+            $decoded = json_decode($body);
 
-            return json_decode($body);
+            if ($decoded === null) {
+                throw new GitHubActionsUsageException("GitHub billing response was not valid JSON: {$url}");
+            }
+
+            $this->writeCache($cachePath, $body);
+
+            return $decoded;
         } catch (RequestException $e) {
-            if ($cacheExists) {
+            if ($cached !== null) {
                 LogStream::warning("GitHub billing request failed, serving stale cache", [
                     "url" => $url,
                     "reason" => $e->getMessage(),
                 ], "github-billing");
 
-                return json_decode(file_get_contents($cachePath));
+                return $cached;
             }
 
             throw $e;
         }
+    }
+
+    /**
+     * Returns the decoded cache contents, or null on any failure (missing
+     * file, unreadable, corrupt/truncated JSON) — treated as a cache miss
+     * rather than risking silently-wrong (empty/zero) usage data.
+     */
+    private function readCachedJson(string $cachePath)
+    {
+        if (!file_exists($cachePath)) {
+            return null;
+        }
+
+        $contents = file_get_contents($cachePath);
+        if ($contents === false) {
+            return null;
+        }
+
+        return json_decode($contents);
+    }
+
+    /**
+     * Writes via a temp file + rename so a concurrent reader never observes a
+     * partially-written cache file (rename() is atomic on the same filesystem).
+     */
+    private function writeCache(string $cachePath, string $body): void
+    {
+        $dir = dirname($cachePath);
+        if (!is_dir($dir)) {
+            mkdir($dir, 0775, true);
+        }
+
+        $tempPath = $cachePath . "." . uniqid("", true) . ".tmp";
+        if (file_put_contents($tempPath, $body) === false) {
+            return;
+        }
+
+        rename($tempPath, $cachePath);
     }
 
     private function percentage(float $used, float $included): float

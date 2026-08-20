@@ -12,7 +12,7 @@ export class DataDisplayManager {
     this.eventAssignedMsgDetails = false;
     this.eventAssignedWorkers = false;
     this.eventAssignedGStracciniJobs = false;
-    this.eventAssignedWorkflowRuns = false;
+    this.eventAssignedWorkflowRunsManagement = false;
   }
 
   #escHtml(str) {
@@ -608,6 +608,7 @@ export class DataDisplayManager {
     );
     this.chartManager.drawDataTable(response.branches, "branches", CHART_OPTIONS.table);
     this.chartManager.drawDataTable(response.pull_requests, "pull_requests", CHART_OPTIONS.table);
+    this.chartManager.drawDataTable(response.workflow_runs, "workflow_runs", CHART_OPTIONS.table);
     this.chartManager.drawDataTable(response.feed, "feed", CHART_OPTIONS.table, 6);
     this.chartManager.drawPieChart(response.events, "pie_chart_1", optionsEvents);
     this.chartManager.drawGaugeChart(
@@ -911,22 +912,24 @@ export class DataDisplayManager {
   }
 
   /**
-   * Renders the workflow runs table (latest status of every tracked workflow
-   * run, from the webhooks /workflow-runs endpoint) with per-row Retry and
-   * Delete buttons rendered server-side, same pattern as the workers/
-   * GStraccini jobs action panels. Retry is only enabled when the row's
-   * conclusion is failure/timed_out/cancelled/action_required.
+   * Renders the workflow runs *management* table (latest status of every
+   * tracked workflow run, from the webhooks /workflow-runs endpoint) with
+   * per-row Retry and Delete buttons rendered server-side, same pattern as
+   * the workers/GStraccini jobs action panels. Retry is only enabled when
+   * the row's conclusion is failure/timed_out/cancelled/action_required.
+   * Distinct from the read-only "Workflow Runs" table drawn in showWebhook,
+   * which shows the dashboard's own pre-rendered badge view.
    */
-  showWorkflowRuns(response) {
-    const counterEl = document.getElementById("counter_workflow_runs");
+  showWorkflowRunsManagement(response) {
+    const counterEl = document.getElementById("counter_workflow_runs_management");
     if (counterEl) counterEl.textContent = response.total ?? 0;
 
-    this.chartManager.drawDataTable(response.workflow_runs, "workflow_runs", CHART_OPTIONS.table);
+    this.chartManager.drawDataTable(response.workflow_runs, "workflow_runs_management", CHART_OPTIONS.table);
 
-    if (this.eventAssignedWorkflowRuns === true) return;
-    this.eventAssignedWorkflowRuns = true;
+    if (this.eventAssignedWorkflowRunsManagement === true) return;
+    this.eventAssignedWorkflowRunsManagement = true;
 
-    document.getElementById("workflow_runs")?.addEventListener("click", (e) => {
+    document.getElementById("workflow_runs_management")?.addEventListener("click", (e) => {
       const retryButton = e.target.closest('[data-action="retry-workflow-run"]');
       if (retryButton && !retryButton.disabled) {
         const { workflowRunId } = retryButton.dataset;

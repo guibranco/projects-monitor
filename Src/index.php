@@ -360,6 +360,14 @@ $configuration = new Configuration();
 
       <div class="full-width-section">
          <div class="section-header">
+            <i class="bi bi-gear-wide-connected me-2"></i>Workflow Runs Management <span
+               id="counter_workflow_runs_management" class="badge rounded-pill"></span>
+         </div>
+         <div id="workflow_runs_management" class="section-content"></div>
+      </div>
+
+      <div class="full-width-section">
+         <div class="section-header">
             <i class="bi bi-tag me-2"></i>Recent Releases <span id="counter_releases_recent"
                class="badge rounded-pill"></span>
             <a href="releases.php" class="btn btn-sm btn-nav-action ms-2" title="View All Releases"

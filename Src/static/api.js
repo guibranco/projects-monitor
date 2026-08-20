@@ -417,7 +417,7 @@ export class DataLoader {
     this.apiManager.load(API_ENDPOINTS.CPANEL, (data) => window.showCPanel?.(data));
     this.apiManager.load(API_ENDPOINTS.MESSAGES, (data) => window.showMessages?.(data));
     this.apiManager.load(API_ENDPOINTS.QUEUES, (data) => window.showQueues?.(data));
-    this.apiManager.load(API_ENDPOINTS.WORKFLOW_RUNS, (data) => window.showWorkflowRuns?.(data));
+    this.apiManager.load(API_ENDPOINTS.WORKFLOW_RUNS, (data) => window.showWorkflowRunsManagement?.(data));
     
     const feedState = window.feedState || { filter: 'all' };
 

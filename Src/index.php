@@ -48,6 +48,8 @@ $configuration = new Configuration();
 </head>
 
 <body>
+   <script src="static/versionCheck.js?<?php echo filemtime("static/versionCheck.js"); ?>"></script>
+
    <div id="toast-container"></div>
 
    <nav class="navbar navbar-dark fixed-top" id="main-navbar">

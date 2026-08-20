@@ -31,7 +31,7 @@ jobs:
         uses: "php-actions/composer@8a65f0d3c6a1d17ca4800491a40b5756a4c164f3" # v6
         with:
           php_extensions: sockets
-          dev: yes
+          dev: no
           progress: yes
           working_dir: "./Src/"
 
@@ -41,6 +41,14 @@ jobs:
           php-version: "8.4"
           extensions: mbstring, mysqli, sockets, shmop, zip, pcov
           coverage: pcov
+          tools: composer:v2
+
+      - name: 📦 Install dev dependencies for PHPUnit/coverage
+        working-directory: Src
+        run: composer install --no-interaction --no-progress --ignore-platform-req=php
+        # composer.json pins config.platform.php to 8.2.0 for production dependency
+        # resolution (independent of this concern), but the locked phpunit ^13.3.1
+        # dev-tree requires PHP >=8.4 — scoped to just the PHP check, not extensions.
 
       - name: 📂 Create secrets directory
         run: mkdir -p Src/secrets

@@ -332,7 +332,10 @@ jobs:
 
       - name: 📦 Install PHP dependencies (including dev, for PHPUnit)
         working-directory: Src
-        run: composer install --no-interaction --no-progress
+        run: composer install --no-interaction --no-progress --ignore-platform-req=php
+        # composer.json pins config.platform.php to 8.2.0 for production dependency
+        # resolution (independent of this concern), but the locked phpunit ^13.3.1
+        # dev-tree requires PHP >=8.4 — scoped to just the PHP check, not extensions.
 
       - name: 🧪 Run PHPUnit with coverage
         continue-on-error: true

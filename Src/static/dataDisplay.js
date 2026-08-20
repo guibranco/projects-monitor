@@ -12,6 +12,7 @@ export class DataDisplayManager {
     this.eventAssignedMsgDetails = false;
     this.eventAssignedWorkers = false;
     this.eventAssignedGStracciniJobs = false;
+    this.eventAssignedWorkflowRuns = false;
   }
 
   #escHtml(str) {
@@ -607,7 +608,6 @@ export class DataDisplayManager {
     );
     this.chartManager.drawDataTable(response.branches, "branches", CHART_OPTIONS.table);
     this.chartManager.drawDataTable(response.pull_requests, "pull_requests", CHART_OPTIONS.table);
-    this.chartManager.drawDataTable(response.workflow_runs, "workflow_runs", CHART_OPTIONS.table);
     this.chartManager.drawDataTable(response.feed, "feed", CHART_OPTIONS.table, 6);
     this.chartManager.drawPieChart(response.events, "pie_chart_1", optionsEvents);
     this.chartManager.drawGaugeChart(
@@ -907,6 +907,38 @@ export class DataDisplayManager {
 
       const { name } = runButton.dataset;
       window.confirmRunJob?.(name, () => window.runJob?.(name));
+    });
+  }
+
+  /**
+   * Renders the workflow runs table (latest status of every tracked workflow
+   * run, from the webhooks /workflow-runs endpoint) with per-row Retry and
+   * Delete buttons rendered server-side, same pattern as the workers/
+   * GStraccini jobs action panels. Retry is only enabled when the row's
+   * conclusion is failure/timed_out/cancelled/action_required.
+   */
+  showWorkflowRuns(response) {
+    const counterEl = document.getElementById("counter_workflow_runs");
+    if (counterEl) counterEl.textContent = response.total ?? 0;
+
+    this.chartManager.drawDataTable(response.workflow_runs, "workflow_runs", CHART_OPTIONS.table);
+
+    if (this.eventAssignedWorkflowRuns === true) return;
+    this.eventAssignedWorkflowRuns = true;
+
+    document.getElementById("workflow_runs")?.addEventListener("click", (e) => {
+      const retryButton = e.target.closest('[data-action="retry-workflow-run"]');
+      if (retryButton && !retryButton.disabled) {
+        const { workflowRunId } = retryButton.dataset;
+        window.confirmRetryWorkflowRun?.(workflowRunId, () => window.retryWorkflowRun?.(workflowRunId));
+        return;
+      }
+
+      const deleteButton = e.target.closest('[data-action="delete-workflow-run"]');
+      if (deleteButton) {
+        const { workflowRunId } = deleteButton.dataset;
+        window.confirmDeleteWorkflowRun?.(workflowRunId, () => window.deleteWorkflowRun?.(workflowRunId));
+      }
     });
   }
 

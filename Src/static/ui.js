@@ -191,6 +191,22 @@ export class UIManager {
       onConfirm,
     });
   }
+
+  confirmRetryWorkflowRun(workflowRunId, onConfirm) {
+    showConfirm({
+      title: "Retry Workflow Run",
+      content: `Are you sure you want to retry workflow run #${this.#esc(workflowRunId)}? This asks GitHub to re-run it; the status updates once GitHub reports back.`,
+      onConfirm,
+    });
+  }
+
+  confirmDeleteWorkflowRun(workflowRunId, onConfirm) {
+    showConfirm({
+      title: "Delete Workflow Run",
+      content: `Are you sure you want to delete the stored row for workflow run #${this.#esc(workflowRunId)}? This only removes the row — it doesn't touch GitHub. This action cannot be undone.`,
+      onConfirm,
+    });
+  }
 }
 
 export class GitHubStatsManager {

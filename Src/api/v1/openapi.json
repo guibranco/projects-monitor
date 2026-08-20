@@ -39,6 +39,7 @@
     { "name": "Vercel",      "description": "Vercel project deployments and status" },
     { "name": "Webhooks",    "description": "GitHub webhook dashboard and processing-state statistics" },
     { "name": "WireGuard",   "description": "WireGuard VPN peer data" },
+    { "name": "Workflow Runs", "description": "Latest status of every tracked GitHub Actions workflow run, with retry/delete management" },
     { "name": "Public",      "description": "Endpoints that do not require a session" }
   ],
   "components": {
@@ -1083,6 +1084,125 @@
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "429": { "$ref": "#/components/responses/RateLimited" },
           "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/workflow-runs": {
+      "get": {
+        "summary": "Workflow runs",
+        "description": "Returns the latest status of every workflow run tracked by the webhooks project (not just deploy/release-keyword-matched ones), as a table with embedded Retry/Delete action buttons. Proxies the webhooks API's GET /workflow-runs/ endpoint.",
+        "operationId": "getWorkflowRuns",
+        "tags": ["Workflow Runs"],
+        "responses": {
+          "200": {
+            "description": "Workflow runs table.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "workflow_runs": {
+                      "type": "array",
+                      "description": "Header row followed by one row per workflow run: Repository, Workflow, Run #, Event, Status, Conclusion, Actor, Attempt, Updated At, Actions (HTML Retry/Delete buttons).",
+                      "items": { "type": "array", "items": {} }
+                    },
+                    "total": { "type": "integer", "example": 42 }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/workflow-runs/retry": {
+      "post": {
+        "summary": "Retry a workflow run",
+        "description": "Asks GitHub to re-run a workflow run (rerun for cancelled runs, rerun-failed-jobs otherwise) via the upstream Webhooks API (POST /workflow-runs/{workflowRunId}/retry). Only requests the retry — the row's status/conclusion update asynchronously once the webhooks app processes GitHub's follow-up events.",
+        "operationId": "retryWorkflowRun",
+        "tags": ["Workflow Runs"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["workflowRunId"],
+                "properties": {
+                  "workflowRunId": { "type": "integer", "minimum": 1, "example": 123456789 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Retry requested.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "workflow_run_id": { "type": "integer", "example": 123456789 },
+                    "retry_type": { "type": "string", "enum": ["rerun", "rerun-failed-jobs"] }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Missing or invalid 'workflowRunId' field." },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "description": "Workflow run not found." },
+          "409": { "description": "Row's conclusion isn't failed/timed_out/cancelled/action_required." },
+          "422": { "description": "GitHub itself refused the retry (e.g. Dependabot-triggered runs)." },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "502": { "description": "Other GitHub API failure." }
+        }
+      }
+    },
+    "/api/v1/workflow-runs/delete": {
+      "post": {
+        "summary": "Delete a workflow run row",
+        "description": "Deletes the stored row for a workflow run via the upstream Webhooks API (DELETE /workflow-runs/{workflowRunId}). Only removes the stored row — doesn't touch GitHub. No undo.",
+        "operationId": "deleteWorkflowRun",
+        "tags": ["Workflow Runs"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["workflowRunId"],
+                "properties": {
+                  "workflowRunId": { "type": "integer", "minimum": 1, "example": 123456789 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Row deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Missing or invalid 'workflowRunId' field." },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "description": "Workflow run not found." },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "502": { "description": "Other GitHub API failure." }
         }
       }
     },

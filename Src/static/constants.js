@@ -54,7 +54,10 @@ export const API_ENDPOINTS = {
   WEBHOOKS_WORKERS: "api/v1/webhooks-workers",
   WEBHOOKS_WORKERS_RUN: "api/v1/webhooks-workers/run",
   GSTRACCINI_JOBS: "api/v1/gstraccini-jobs",
-  GSTRACCINI_JOBS_RUN: "api/v1/gstraccini-jobs/run"
+  GSTRACCINI_JOBS_RUN: "api/v1/gstraccini-jobs/run",
+  WORKFLOW_RUNS: "api/v1/workflow-runs",
+  WORKFLOW_RUNS_RETRY: "api/v1/workflow-runs/retry",
+  WORKFLOW_RUNS_DELETE: "api/v1/workflow-runs/delete"
 };
 
 export const CHART_OPTIONS = {

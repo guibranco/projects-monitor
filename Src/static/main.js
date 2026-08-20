@@ -1,6 +1,7 @@
 // main.js
 import { OptionsBoxState, FeedState } from './storage.js';
 import { ApiManager, DataLoader } from './api.js';
+import { API_ENDPOINTS } from './constants.js';
 import { UIManager, GitHubStatsManager, CookieManager } from './ui.js';
 import { DataDisplayManager } from './dataDisplay.js';
 import { CollapsibleSectionsManager } from './collapsibleSections.js'; // Add this import
@@ -101,6 +102,25 @@ class DashboardApp {
       this.dataDisplayManager.showDbErrors(data);
     };
 
+    window.showWorkflowRuns = this.dataDisplayManager.showWorkflowRuns.bind(this.dataDisplayManager);
+
+    const reloadWorkflowRuns = () => {
+      this.apiManager.load(API_ENDPOINTS.WORKFLOW_RUNS, (data) => window.showWorkflowRuns?.(data));
+    };
+
+    window.retryWorkflowRun = async (workflowRunId) => {
+      await this.apiManager.retryWorkflowRun(workflowRunId);
+      // Retry only requests the rerun — GitHub reports the new status back
+      // asynchronously, so refetch shortly after instead of expecting an
+      // instant status flip.
+      setTimeout(reloadWorkflowRuns, 5000);
+    };
+
+    window.deleteWorkflowRun = async (workflowRunId) => {
+      await this.apiManager.deleteWorkflowRun(workflowRunId);
+      reloadWorkflowRuns();
+    };
+
     // Expose confirmation functions
     window.confirmDelete = this.uiManager.confirmDelete.bind(this.uiManager);
     window.confirmTruncateMessages = this.uiManager.confirmTruncateMessages.bind(this.uiManager);
@@ -112,6 +132,8 @@ class DashboardApp {
     window.confirmDeleteMessageGroup = this.uiManager.confirmDeleteMessageGroup.bind(this.uiManager);
     window.confirmRunWorker = this.uiManager.confirmRunWorker.bind(this.uiManager);
     window.confirmRunJob = this.uiManager.confirmRunJob.bind(this.uiManager);
+    window.confirmRetryWorkflowRun = this.uiManager.confirmRetryWorkflowRun.bind(this.uiManager);
+    window.confirmDeleteWorkflowRun = this.uiManager.confirmDeleteWorkflowRun.bind(this.uiManager);
 
     // ── Message detail modal ────────────────────────────────────────────────
     const _apiMgr  = this.apiManager;
@@ -337,10 +359,11 @@ class DashboardApp {
       ),
       queues: JSON.parse('{"queues":[],"total":0}'),
       webhooks: JSON.parse(
-        '{"senders":[],"events":[["Event","Hits"]],"feed":[],"repositories":[],"total":0,"statistics":[["Date","Table #1"],["01/01",0]],"statistics_github":[["Date","Table #1"],["01/01",0]],"branches":[], "pull_requests":[], "workflow_runs":[],"total_workflow_runs":0, "installations":0, "installation_repositories": [], "installation_repositories_count": 0}'
+        '{"senders":[],"events":[["Event","Hits"]],"feed":[],"repositories":[],"total":0,"statistics":[["Date","Table #1"],["01/01",0]],"statistics_github":[["Date","Table #1"],["01/01",0]],"branches":[], "pull_requests":[], "total_workflow_runs":0, "installations":0, "installation_repositories": [], "installation_repositories_count": 0}'
       ),
       errors_db: { errors: [], total: 0 },
-      webhooks_statistics: { NEW: {}, RE_REQUESTED: {}, UPDATED: {}, PROCESSING: {}, PROCESSED: {} }
+      webhooks_statistics: { NEW: {}, RE_REQUESTED: {}, UPDATED: {}, PROCESSING: {}, PROCESSED: {} },
+      workflow_runs: { workflow_runs: [], total: 0 }
     };
 
     this.dataDisplayManager.showCPanel(presetData.cpanel);
@@ -350,6 +373,7 @@ class DashboardApp {
     this.dataDisplayManager.showWebhook(presetData.webhooks);
     this.dataDisplayManager.showDbErrors(presetData.errors_db);
     this.dataDisplayManager.showWebhookProcessingStats(presetData.webhooks_statistics);
+    this.dataDisplayManager.showWorkflowRuns(presetData.workflow_runs);
 
     // Reinitialize collapsible sections after preset data is loaded
     setTimeout(() => {

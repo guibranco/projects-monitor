@@ -37,6 +37,7 @@
     { "name": "System",      "description": "Remote server health (CPU, memory, disk, services), retrieved via SSH" },
     { "name": "UpTimeRobot", "description": "UpTimeRobot monitor status" },
     { "name": "Vercel",      "description": "Vercel project deployments and status" },
+    { "name": "Version",    "description": "Deployed application version, used by the UI to detect when a reload is needed" },
     { "name": "Webhooks",    "description": "GitHub webhook dashboard and processing-state statistics" },
     { "name": "WireGuard",   "description": "WireGuard VPN peer data" },
     { "name": "Workflow Runs", "description": "Latest status of every tracked GitHub Actions workflow run, with retry/delete management" },
@@ -903,6 +904,31 @@
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "429": { "$ref": "#/components/responses/RateLimited" },
           "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/version": {
+      "get": {
+        "summary": "Deployed application version",
+        "description": "Returns the version of the currently deployed application (written to version.txt at deploy time). Polled by the UI to detect when a newer version has been deployed while the page was open, so it can prompt the user to reload.",
+        "operationId": "getVersion",
+        "tags": ["Version"],
+        "responses": {
+          "200": {
+            "description": "Current deployed version.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "version": { "type": "string", "example": "1.4.2" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
         }
       }
     },

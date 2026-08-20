@@ -11,17 +11,15 @@ use GuiBranco\ProjectsMonitor\Library\LogStream;
 $requestBody = file_get_contents("php://input");
 $input = json_decode($requestBody, true);
 
-if (
-    json_last_error() !== JSON_ERROR_NONE
-    || !isset($input['workflowRunId'])
-    || !is_numeric($input['workflowRunId'])
-) {
+$workflowRunId = isset($input['workflowRunId'])
+    ? filter_var($input['workflowRunId'], FILTER_VALIDATE_INT, ["options" => ["min_range" => 1]])
+    : false;
+
+if (json_last_error() !== JSON_ERROR_NONE || $workflowRunId === false) {
     http_response_code(400);
     echo json_encode(["error" => "A valid 'workflowRunId' is required"]);
     exit;
 }
-
-$workflowRunId = (int) $input['workflowRunId'];
 
 LogStream::info(
     "API request received",

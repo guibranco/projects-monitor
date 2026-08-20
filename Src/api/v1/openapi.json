@@ -1132,7 +1132,7 @@
                 "type": "object",
                 "required": ["workflowRunId"],
                 "properties": {
-                  "workflowRunId": { "type": "integer", "example": 123456789 }
+                  "workflowRunId": { "type": "integer", "minimum": 1, "example": 123456789 }
                 }
               }
             }
@@ -1178,7 +1178,7 @@
                 "type": "object",
                 "required": ["workflowRunId"],
                 "properties": {
-                  "workflowRunId": { "type": "integer", "example": 123456789 }
+                  "workflowRunId": { "type": "integer", "minimum": 1, "example": 123456789 }
                 }
               }
             }
@@ -1201,7 +1201,8 @@
           "400": { "description": "Missing or invalid 'workflowRunId' field." },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": { "description": "Workflow run not found." },
-          "429": { "$ref": "#/components/responses/RateLimited" }
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "502": { "description": "Other GitHub API failure." }
         }
       }
     },

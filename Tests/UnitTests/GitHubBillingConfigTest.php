@@ -31,14 +31,6 @@ class GitHubBillingConfigTest extends TestCase
         return $path;
     }
 
-    private function writeSchemaFixture(array $schema): string
-    {
-        $path = sys_get_temp_dir() . "/github-billing-schema-" . uniqid("", true) . ".json";
-        file_put_contents($path, json_encode($schema));
-        $this->writtenFiles[] = $path;
-        return $path;
-    }
-
     private function baseConfig(): array
     {
         return [
@@ -124,7 +116,8 @@ class GitHubBillingConfigTest extends TestCase
         $this->expectException(GitHubBillingConfigException::class);
         $this->expectExceptionMessageMatches("/unknown planType 'bogusPlan'.*free.*pro.*team/s");
 
-        new GitHubBillingConfig($path, __DIR__ . "/../../Src/Library/github-billing.schema.json");
+        $thrown = new GitHubBillingConfig($path, __DIR__ . "/../../Src/Library/github-billing.schema.json");
+        $this->fail("Expected GitHubBillingConfigException but constructed: " . $thrown::class);
     }
 
     public function testAccountTypeNotAllowedByPlanThrowsNamingAccount()
@@ -139,7 +132,8 @@ class GitHubBillingConfigTest extends TestCase
         $this->expectException(GitHubBillingConfigException::class);
         $this->expectExceptionMessageMatches("/wronglyProOrg.*accountType 'org'.*plan 'pro'/s");
 
-        new GitHubBillingConfig($path, __DIR__ . "/../../Src/Library/github-billing.schema.json");
+        $thrown = new GitHubBillingConfig($path, __DIR__ . "/../../Src/Library/github-billing.schema.json");
+        $this->fail("Expected GitHubBillingConfigException but constructed: " . $thrown::class);
     }
 
     public function testUserMarkedTeamThrows()
@@ -154,7 +148,8 @@ class GitHubBillingConfigTest extends TestCase
         $this->expectException(GitHubBillingConfigException::class);
         $this->expectExceptionMessageMatches("/wronglyTeamUser.*accountType 'user'.*plan 'team'/s");
 
-        new GitHubBillingConfig($path, __DIR__ . "/../../Src/Library/github-billing.schema.json");
+        $thrown = new GitHubBillingConfig($path, __DIR__ . "/../../Src/Library/github-billing.schema.json");
+        $this->fail("Expected GitHubBillingConfigException but constructed: " . $thrown::class);
     }
 
     public function testMissingRequiredPropertyFailsSchemaValidation()
@@ -166,7 +161,8 @@ class GitHubBillingConfigTest extends TestCase
         $this->expectException(GitHubBillingConfigException::class);
         $this->expectExceptionMessageMatches("/missing required property 'minutes'/");
 
-        new GitHubBillingConfig($path, __DIR__ . "/../../Src/Library/github-billing.schema.json");
+        $thrown = new GitHubBillingConfig($path, __DIR__ . "/../../Src/Library/github-billing.schema.json");
+        $this->fail("Expected GitHubBillingConfigException but constructed: " . $thrown::class);
     }
 
     public function testWrongTypeFailsSchemaValidation()
@@ -178,7 +174,8 @@ class GitHubBillingConfigTest extends TestCase
         $this->expectException(GitHubBillingConfigException::class);
         $this->expectExceptionMessageMatches("/expected type integer/");
 
-        new GitHubBillingConfig($path, __DIR__ . "/../../Src/Library/github-billing.schema.json");
+        $thrown = new GitHubBillingConfig($path, __DIR__ . "/../../Src/Library/github-billing.schema.json");
+        $this->fail("Expected GitHubBillingConfigException but constructed: " . $thrown::class);
     }
 
     public function testUnexpectedPropertyFailsSchemaValidation()
@@ -190,7 +187,8 @@ class GitHubBillingConfigTest extends TestCase
         $this->expectException(GitHubBillingConfigException::class);
         $this->expectExceptionMessageMatches("/unexpected property 'typo'/");
 
-        new GitHubBillingConfig($path, __DIR__ . "/../../Src/Library/github-billing.schema.json");
+        $thrown = new GitHubBillingConfig($path, __DIR__ . "/../../Src/Library/github-billing.schema.json");
+        $this->fail("Expected GitHubBillingConfigException but constructed: " . $thrown::class);
     }
 
     public function testRealConfigValidatesAgainstRealSchemaWithNoErrors()
@@ -206,6 +204,7 @@ class GitHubBillingConfigTest extends TestCase
         $this->expectException(GitHubBillingConfigException::class);
         $this->expectExceptionMessageMatches("/File not found/");
 
-        new GitHubBillingConfig("/no/such/file.json", __DIR__ . "/../../Src/Library/github-billing.schema.json");
+        $thrown = new GitHubBillingConfig("/no/such/file.json", __DIR__ . "/../../Src/Library/github-billing.schema.json");
+        $this->fail("Expected GitHubBillingConfigException but constructed: " . $thrown::class);
     }
 }

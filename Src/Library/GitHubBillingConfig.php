@@ -134,56 +134,118 @@ class GitHubBillingConfig
      */
     public static function validateAgainstSchema($data, array $schema, string $path = "$"): array
     {
-        $errors = [];
-
-        if (isset($schema["type"])) {
-            $types = is_array($schema["type"]) ? $schema["type"] : [$schema["type"]];
-            if (!self::matchesAnyType($data, $types)) {
-                $errors[] = "{$path}: expected type " . implode("|", $types) . ", got " . self::describeType($data);
-                return $errors;
-            }
+        $typeErrors = self::validateType($data, $schema, $path);
+        if ($typeErrors !== []) {
+            return $typeErrors;
         }
 
-        if (isset($schema["enum"]) && !in_array($data, $schema["enum"], true)) {
-            $errors[] = "{$path}: value must be one of [" . implode(", ", $schema["enum"]) . "]";
-        }
-
-        if (is_int($data) || is_float($data)) {
-            if (isset($schema["minimum"]) && $data < $schema["minimum"]) {
-                $errors[] = "{$path}: must be >= {$schema["minimum"]}";
-            }
-            if (isset($schema["maximum"]) && $data > $schema["maximum"]) {
-                $errors[] = "{$path}: must be <= {$schema["maximum"]}";
-            }
-        }
+        $errors = array_merge(
+            self::validateEnum($data, $schema, $path),
+            self::validateRange($data, $schema, $path)
+        );
 
         if (is_array($data) && self::isAssoc($data)) {
-            foreach ((array) ($schema["required"] ?? []) as $requiredKey) {
-                if (!array_key_exists($requiredKey, $data)) {
-                    $errors[] = "{$path}: missing required property '{$requiredKey}'";
-                }
+            return array_merge($errors, self::validateObject($data, $schema, $path));
+        }
+
+        if (is_array($data) && isset($schema["items"])) {
+            return array_merge($errors, self::validateItems($data, $schema, $path));
+        }
+
+        return $errors;
+    }
+
+    private static function validateType($data, array $schema, string $path): array
+    {
+        if (!isset($schema["type"])) {
+            return [];
+        }
+
+        $types = is_array($schema["type"]) ? $schema["type"] : [$schema["type"]];
+        if (self::matchesAnyType($data, $types)) {
+            return [];
+        }
+
+        return ["{$path}: expected type " . implode("|", $types) . ", got " . self::describeType($data)];
+    }
+
+    private static function validateEnum($data, array $schema, string $path): array
+    {
+        if (!isset($schema["enum"]) || in_array($data, $schema["enum"], true)) {
+            return [];
+        }
+
+        return ["{$path}: value must be one of [" . implode(", ", $schema["enum"]) . "]"];
+    }
+
+    private static function validateRange($data, array $schema, string $path): array
+    {
+        if (!is_int($data) && !is_float($data)) {
+            return [];
+        }
+
+        $errors = [];
+        if (isset($schema["minimum"]) && $data < $schema["minimum"]) {
+            $errors[] = "{$path}: must be >= {$schema["minimum"]}";
+        }
+        if (isset($schema["maximum"]) && $data > $schema["maximum"]) {
+            $errors[] = "{$path}: must be <= {$schema["maximum"]}";
+        }
+
+        return $errors;
+    }
+
+    private static function validateObject(array $data, array $schema, string $path): array
+    {
+        $errors = self::validateRequiredProperties($data, $schema, $path);
+        $properties = $schema["properties"] ?? [];
+
+        foreach ($data as $key => $value) {
+            if (isset($properties[$key])) {
+                $errors = array_merge($errors, self::validateAgainstSchema($value, $properties[$key], "{$path}.{$key}"));
+                continue;
             }
 
-            $properties = $schema["properties"] ?? [];
-            foreach ($data as $key => $value) {
-                if (isset($properties[$key])) {
-                    $errors = array_merge($errors, self::validateAgainstSchema($value, $properties[$key], "{$path}.{$key}"));
-                    continue;
-                }
+            $errors = array_merge($errors, self::validateAdditionalProperty($key, $value, $schema, $path));
+        }
 
-                if (isset($schema["additionalProperties"]) && $schema["additionalProperties"] === false) {
-                    $errors[] = "{$path}: unexpected property '{$key}'";
-                    continue;
-                }
+        return $errors;
+    }
 
-                if (is_array($schema["additionalProperties"] ?? null)) {
-                    $errors = array_merge($errors, self::validateAgainstSchema($value, $schema["additionalProperties"], "{$path}.{$key}"));
-                }
+    private static function validateRequiredProperties(array $data, array $schema, string $path): array
+    {
+        $errors = [];
+
+        foreach ((array) ($schema["required"] ?? []) as $requiredKey) {
+            if (!array_key_exists($requiredKey, $data)) {
+                $errors[] = "{$path}: missing required property '{$requiredKey}'";
             }
-        } elseif (is_array($data) && isset($schema["items"])) {
-            foreach ($data as $index => $item) {
-                $errors = array_merge($errors, self::validateAgainstSchema($item, $schema["items"], "{$path}[{$index}]"));
-            }
+        }
+
+        return $errors;
+    }
+
+    private static function validateAdditionalProperty(int|string $key, $value, array $schema, string $path): array
+    {
+        $additionalProperties = $schema["additionalProperties"] ?? null;
+
+        if ($additionalProperties === false) {
+            return ["{$path}: unexpected property '{$key}'"];
+        }
+
+        if (is_array($additionalProperties)) {
+            return self::validateAgainstSchema($value, $additionalProperties, "{$path}.{$key}");
+        }
+
+        return [];
+    }
+
+    private static function validateItems(array $data, array $schema, string $path): array
+    {
+        $errors = [];
+
+        foreach ($data as $index => $item) {
+            $errors = array_merge($errors, self::validateAgainstSchema($item, $schema["items"], "{$path}[{$index}]"));
         }
 
         return $errors;

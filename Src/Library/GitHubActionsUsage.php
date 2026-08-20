@@ -287,7 +287,7 @@ class GitHubActionsUsage
         }
 
         if (empty($GLOBALS[$secretName])) {
-            throw new \RuntimeException(
+            throw new GitHubActionsUsageException(
                 "No token configured for account '{$account["account"]}': global \${$secretName} " .
                 "is not defined in gitHub.secrets.php."
             );

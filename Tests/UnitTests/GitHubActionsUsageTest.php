@@ -2,6 +2,7 @@
 
 use PHPUnit\Framework\TestCase;
 use GuiBranco\ProjectsMonitor\Library\GitHubActionsUsage;
+use GuiBranco\ProjectsMonitor\Library\GitHubActionsUsageException;
 use GuiBranco\ProjectsMonitor\Library\GitHubBillingConfig;
 
 class GitHubActionsUsageTest extends TestCase
@@ -77,9 +78,11 @@ class GitHubActionsUsageTest extends TestCase
             ->onlyMethods(["fetchUsageData"])
             ->getMock();
 
+        // Reflection is only used to inject a fixture-backed collaborator into our
+        // own class in test code — never against attacker-controlled input. NOSONAR
         $property = new ReflectionProperty(GitHubActionsUsage::class, "config");
-        $property->setAccessible(true);
-        $property->setValue($usage, $config);
+        $property->setAccessible(true); // NOSONAR
+        $property->setValue($usage, $config); // NOSONAR
 
         return $usage;
     }
@@ -95,7 +98,7 @@ class GitHubActionsUsageTest extends TestCase
         $usage = $this->mockUsage($config);
         $usage->method("fetchUsageData")->willReturnCallback(function (array $account) {
             if ($account["account"] === "accountB") {
-                throw new \RuntimeException("403 Forbidden");
+                throw new GitHubActionsUsageException("403 Forbidden");
             }
 
             return ["usageItems" => [$this->usageItem(100)], "usageRows" => []];
@@ -155,7 +158,7 @@ class GitHubActionsUsageTest extends TestCase
         $usage = $this->mockUsage($config);
         $usage->method("fetchUsageData")->willReturnCallback(function (array $account) {
             if ($account["account"] === "accountB") {
-                throw new \RuntimeException("timeout");
+                throw new GitHubActionsUsageException("timeout");
             }
 
             return ["usageItems" => [$this->usageItem(1900)], "usageRows" => []];
@@ -172,7 +175,7 @@ class GitHubActionsUsageTest extends TestCase
         $config = $this->buildConfig([$this->accountEntry("accountA")]);
 
         $usage = $this->mockUsage($config);
-        $usage->method("fetchUsageData")->willThrowException(new \RuntimeException("503"));
+        $usage->method("fetchUsageData")->willThrowException(new GitHubActionsUsageException("503"));
 
         $results = $usage->getAllAccountsUsage();
 
@@ -191,8 +194,9 @@ class GitHubActionsUsageTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
 
+        // Test-only reflection against our own class, not attacker-controlled input.
         $method = new ReflectionMethod(GitHubActionsUsage::class, "extractUsageItems");
-        $method->setAccessible(true);
+        $method->setAccessible(true); // NOSONAR
 
         $orgResponse = json_decode('{"timePeriod":{"year":2026},"organization":"ApiBR","usageItems":[{"product":"Actions"}]}');
         $userResponse = json_decode('{"timePeriod":{"year":2026},"user":"guibranco","usageItems":[{"product":"Actions"}]}');

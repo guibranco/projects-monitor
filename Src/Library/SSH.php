@@ -111,6 +111,8 @@ class SSH
             '10.141.230.2/32' => 'GH Actions - Projects Monitor',
             '10.141.230.3/32' => 'GH Actions - Webhooks',
             '10.141.230.4/32' => 'iPhone Beatriz Jesus',
+            '10.141.230.5/32' => 'GH Actions - API BR - Vagas Aggregator',
+            '10.141.230.6/32' => 'GH Actions - API BR - Sports Agenda',
         ];
 
         return $peers[$peerName] ?? $peerName;

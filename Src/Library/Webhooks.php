@@ -3,6 +3,7 @@
 namespace GuiBranco\ProjectsMonitor\Library;
 
 use GuiBranco\Pancake\Request;
+use GuiBranco\Pancake\Response;
 use GuiBranco\Pancake\ShieldsIo;
 use GuiBranco\ProjectsMonitor\Library\Configuration;
 use GuiBranco\ProjectsMonitor\Library\LogStream;
@@ -10,6 +11,8 @@ use GuiBranco\ProjectsMonitor\Library\LogStream;
 class Webhooks
 {
     private const WORKER_NAMES = ["service", "cleanup", "database-service", "maintenance"];
+
+    private const RETRYABLE_CONCLUSIONS = ["failure", "timed_out", "cancelled", "action_required"];
 
     private $apiUrl;
 
@@ -242,6 +245,106 @@ class Webhooks
         $shields = new ShieldsIo();
         $url = $shields->generateBadgeUrl($label, $status, $color, "for-the-badge", "white", null);
         return "<img src='{$url}' alt='{$status}' />";
+    }
+
+    /**
+     * Returns the latest status of every tracked workflow run (not just the
+     * deploy/release-keyword-matched ones the releases table shows), from the
+     * webhooks API's `github_workflow_runs_view`-backed endpoint, with raw
+     * fields plus embedded Retry/Delete action buttons.
+     */
+    public function getWorkflowRuns(): mixed
+    {
+        LogStream::debug("Fetching workflow runs list", null, "webhooks");
+        $runs = $this->doRequest("workflow-runs/", "get", 200);
+        return $this->formatWorkflowRunsTable($runs);
+    }
+
+    /**
+     * Asks GitHub to re-run a workflow run (rerun for cancelled runs,
+     * rerun-failed-jobs otherwise). Only requests the retry; the row's
+     * status/conclusion update asynchronously once the webhooks app
+     * processes GitHub's follow-up events.
+     */
+    public function retryWorkflowRun($workflowRunId): array
+    {
+        LogStream::info("Requesting workflow run retry", ["workflow_run_id" => $workflowRunId], "webhooks");
+        $response = $this->request->post("{$this->apiUrl}workflow-runs/{$workflowRunId}/retry", $this->headers, "");
+        return $this->toApiResult($response);
+    }
+
+    /**
+     * Deletes the stored row for a workflow run. Only removes the row from
+     * github_workflow_runs — doesn't touch GitHub.
+     */
+    public function deleteWorkflowRun($workflowRunId): array
+    {
+        LogStream::info("Requesting workflow run delete", ["workflow_run_id" => $workflowRunId], "webhooks");
+        $response = $this->request->delete("{$this->apiUrl}workflow-runs/{$workflowRunId}", $this->headers);
+        return $this->toApiResult($response);
+    }
+
+    /**
+     * Passes a webhooks API response's status code and decoded body straight
+     * through, instead of throwing, since retry/delete have several expected
+     * non-2xx outcomes (404/409/422) that the caller needs to relay as-is.
+     */
+    private function toApiResult(Response $response): array
+    {
+        $statusCode = $response->getStatusCode();
+
+        if ($statusCode === -1) {
+            LogStream::error("Webhooks API request failed", ["error" => $response->getMessage()], "webhooks");
+            return ["statusCode" => 502, "body" => ["error" => $response->getMessage()]];
+        }
+
+        return ["statusCode" => $statusCode, "body" => json_decode($response->getBody(), true)];
+    }
+
+    private function formatWorkflowRunsTable(array $runs): array
+    {
+        $header = ["Repository", "Workflow", "Run #", "Event", "Status", "Conclusion", "Actor", "Attempt", "Updated At", "Actions"];
+        $rows = [$header];
+
+        foreach ($runs as $run) {
+            $owner = htmlspecialchars($run["owner"] ?? "", ENT_QUOTES);
+            $repo = htmlspecialchars($run["repo"] ?? "", ENT_QUOTES);
+            $name = htmlspecialchars($run["display_title"] ?? ($run["name"] ?? ""), ENT_QUOTES);
+            $runNumber = (int) ($run["run_number"] ?? 0);
+            $event = htmlspecialchars($run["event"] ?? "", ENT_QUOTES);
+            $status = htmlspecialchars($run["status"] ?? "", ENT_QUOTES);
+            $conclusion = (string) ($run["conclusion"] ?? "");
+            $actor = htmlspecialchars($run["actor_login"] ?? "", ENT_QUOTES);
+            $attempt = (int) ($run["run_attempt"] ?? 1);
+            $updatedAt = htmlspecialchars($run["updated_at"] ?? "", ENT_QUOTES);
+            $workflowRunId = (int) ($run["workflow_run_id"] ?? 0);
+
+            $canRetry = in_array($conclusion, self::RETRYABLE_CONCLUSIONS, true);
+            $retryDisabled = $canRetry ? "" : " disabled";
+            $retryBtn = "<button class=\"btn btn-warning btn-sm\" data-action=\"retry-workflow-run\""
+                . " data-workflow-run-id=\"{$workflowRunId}\" title=\"Retry workflow run\""
+                . " aria-label=\"Retry workflow run {$workflowRunId}\"{$retryDisabled}>"
+                . "<i class=\"bi bi-arrow-clockwise\"></i></button>";
+            $deleteBtn = "<button class=\"btn btn-danger btn-sm\" data-action=\"delete-workflow-run\""
+                . " data-workflow-run-id=\"{$workflowRunId}\" title=\"Delete workflow run row\""
+                . " aria-label=\"Delete workflow run {$workflowRunId}\">"
+                . "<i class=\"bi bi-trash2\"></i></button>";
+
+            $rows[] = [
+                "{$owner}/{$repo}",
+                $name,
+                $runNumber,
+                $event,
+                $status,
+                $conclusion !== "" ? $conclusion : "—",
+                $actor,
+                $attempt,
+                $updatedAt,
+                "{$retryBtn} {$deleteBtn}",
+            ];
+        }
+
+        return ["workflow_runs" => $rows, "total" => count($runs)];
     }
 
     private function formatWorkersTable(array $workers): array

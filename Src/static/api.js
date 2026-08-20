@@ -309,6 +309,67 @@ export class ApiManager {
   }
 
   /**
+   * Requests a retry (rerun / rerun-failed-jobs) of a workflow run via the
+   * Webhooks API. Only asks GitHub to re-run it — the row's status updates
+   * asynchronously once the webhooks app receives GitHub's follow-up events.
+   */
+  async retryWorkflowRun(workflowRunId) {
+    try {
+      const response = await fetch(API_ENDPOINTS.WORKFLOW_RUNS_RETRY, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workflowRunId }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data?.error || `HTTP ${response.status}`);
+      }
+
+      NotificationManager.show("Success", data.message || "Retry requested", "success");
+      return data;
+    } catch (error) {
+      NotificationManager.show(
+        "Error",
+        `Failed to retry workflow run: ${error.message}`,
+        "error"
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Deletes a workflow run's stored row via the Webhooks API. Only removes
+   * the row — doesn't touch GitHub.
+   */
+  async deleteWorkflowRun(workflowRunId) {
+    try {
+      const response = await fetch(API_ENDPOINTS.WORKFLOW_RUNS_DELETE, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workflowRunId }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data?.error || `HTTP ${response.status}`);
+      }
+
+      NotificationManager.show("Success", data.message || "Workflow run deleted", "success");
+      return data;
+    } catch (error) {
+      NotificationManager.show(
+        "Error",
+        `Failed to delete workflow run: ${error.message}`,
+        "error"
+      );
+      throw error;
+    }
+  }
+
+  /**
    * Deletes an error log file from a specified directory using the cPanel API.
    * This function makes an asynchronous POST request to delete the file and handles
    * responses, showing success or error notifications accordingly.
@@ -356,6 +417,7 @@ export class DataLoader {
     this.apiManager.load(API_ENDPOINTS.CPANEL, (data) => window.showCPanel?.(data));
     this.apiManager.load(API_ENDPOINTS.MESSAGES, (data) => window.showMessages?.(data));
     this.apiManager.load(API_ENDPOINTS.QUEUES, (data) => window.showQueues?.(data));
+    this.apiManager.load(API_ENDPOINTS.WORKFLOW_RUNS, (data) => window.showWorkflowRuns?.(data));
     
     const feedState = window.feedState || { filter: 'all' };
 

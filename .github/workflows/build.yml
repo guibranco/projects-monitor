@@ -43,6 +43,9 @@ jobs:
           coverage: pcov
           tools: composer:v2
 
+      - name: 🔧 Fix vendor ownership (php-actions/composer runs as root in its container)
+        run: sudo chown -R "$(id -u):$(id -g)" Src/vendor
+
       - name: 📦 Install dev dependencies for PHPUnit/coverage
         working-directory: Src
         run: composer install --no-interaction --no-progress --ignore-platform-req=php

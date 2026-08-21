@@ -1,0 +1,52 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "GitHub Actions billing accounts",
+    "description": "Accounts polled for GitHub Actions included-usage (minutes/storage) and the plan table used to resolve their quota. See https://docs.github.com/en/billing/reference/product-usage-included",
+    "type": "object",
+    "required": ["version", "plans", "accounts"],
+    "additionalProperties": false,
+    "properties": {
+        "$schema": { "type": "string" },
+        "_source": { "type": "string" },
+        "version": { "type": "integer", "minimum": 1 },
+        "plans": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "object",
+                "required": ["accountTypes", "minutes", "storageMb"],
+                "additionalProperties": false,
+                "properties": {
+                    "accountTypes": {
+                        "type": "array",
+                        "items": { "type": "string", "enum": ["user", "org"] }
+                    },
+                    "minutes": { "type": "integer", "minimum": 0 },
+                    "storageMb": { "type": "integer", "minimum": 0 }
+                }
+            }
+        },
+        "accounts": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": ["account", "accountType", "planType", "cycleResetDay", "overrides"],
+                "additionalProperties": false,
+                "properties": {
+                    "account": { "type": "string" },
+                    "accountType": { "type": "string", "enum": ["user", "org"] },
+                    "planType": { "type": "string" },
+                    "cycleResetDay": { "type": ["integer", "null"], "minimum": 1, "maximum": 31 },
+                    "tokenSecret": { "type": ["string", "null"] },
+                    "overrides": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "minutes": { "type": "integer", "minimum": 0 },
+                            "storageMb": { "type": "integer", "minimum": 0 }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

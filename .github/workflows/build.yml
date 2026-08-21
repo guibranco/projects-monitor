@@ -35,6 +35,24 @@ jobs:
           progress: yes
           working_dir: "./Src/"
 
+      - name: 🧰 Set up PHP with coverage driver
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: "8.4"
+          extensions: mbstring, mysqli, sockets, shmop, zip, pcov
+          coverage: pcov
+          tools: composer:v2
+
+      - name: 🔧 Fix vendor ownership (php-actions/composer runs as root in its container)
+        run: sudo chown -R "$(id -u):$(id -g)" Src/vendor
+
+      - name: 📦 Install dev dependencies for PHPUnit/coverage
+        working-directory: Src
+        run: composer install --no-interaction --no-progress --ignore-platform-req=php
+        # composer.json pins config.platform.php to 8.2.0 for production dependency
+        # resolution (independent of this concern), but the locked phpunit ^13.3.1
+        # dev-tree requires PHP >=8.4 — scoped to just the PHP check, not extensions.
+
       - name: 📂 Create secrets directory
         run: mkdir -p Src/secrets
 
@@ -108,6 +126,14 @@ jobs:
         run: |
           chmod +x Tools/db-check.sh
           Tools/db-check.sh "localhost" "test" "test"
+
+      - name: 🧪 Run PHPUnit with coverage
+        run: php Src/vendor/bin/phpunit -c Tests/phpunit.xml --coverage-clover=coverage.xml
+
+      - name: 📊 SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8.2.1
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: 📥 Install Postman CLI
         if: ${{ vars.POSTMAN_ENABLED == 'true' }}

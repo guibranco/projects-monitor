@@ -1,0 +1,55 @@
+{
+    "$schema": "./github-billing.schema.json",
+    "_source": "https://docs.github.com/en/billing/reference/product-usage-included",
+    "version": 1,
+    "plans": {
+        "free": {
+            "accountTypes": ["user", "org"],
+            "minutes": 2000,
+            "storageMb": 500
+        },
+        "pro": {
+            "accountTypes": ["user"],
+            "minutes": 3000,
+            "storageMb": 1024
+        },
+        "team": {
+            "accountTypes": ["org"],
+            "minutes": 3000,
+            "storageMb": 2048
+        },
+        "enterpriseCloud": {
+            "accountTypes": ["org"],
+            "minutes": 50000,
+            "storageMb": 51200
+        }
+    },
+    "accounts": [
+        {
+            "account": "guibranco",
+            "accountType": "user",
+            "planType": "pro",
+            "cycleResetDay": 1,
+            "tokenSecret": null,
+            "overrides": {
+                "storageMb": 2048
+            }
+        },
+        {
+            "account": "ApiBR",
+            "accountType": "org",
+            "planType": "free",
+            "cycleResetDay": 1,
+            "tokenSecret": null,
+            "overrides": {}
+        },
+        {
+            "account": "InovacaoMediaBrasil",
+            "accountType": "org",
+            "planType": "free",
+            "cycleResetDay": 1,
+            "tokenSecret": null,
+            "overrides": {}
+        }
+    ]
+}

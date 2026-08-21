@@ -4,6 +4,7 @@ require_once 'session_validator.php';
 require_once '../../vendor/autoload.php';
 
 use GuiBranco\ProjectsMonitor\Library\GitHub;
+use GuiBranco\ProjectsMonitor\Library\GitHubActionsUsage;
 use GuiBranco\ProjectsMonitor\Library\LogStream;
 
 LogStream::info("API request received", ["endpoint" => "GET /api/v1/github"], "api");
@@ -12,8 +13,14 @@ $apiUsage = $github->getApiUsage();
 ;
 $data["api_usage"] = $apiUsage["data"];
 $data["api_usage_core"] = $apiUsage["core"];
-//$data["accounts_usage"] = $github->getAccountUsage();
-$data["accounts_usage"] = array();
+
+try {
+    $data["accounts_usage"] = (new GitHubActionsUsage())->getAccountsUsageTable();
+} catch (\Throwable $e) {
+    LogStream::error("GitHub Actions billing config failed to load", ["reason" => $e->getMessage()], "github-billing");
+    $data["accounts_usage"] = [GitHubActionsUsage::TABLE_HEADER];
+}
+
 $data["issues"] = $github->getIssues();
 $data["pull_requests"] = $github->getPullRequests();
 $data["latest_release"] = $github->getLatestReleaseOfBancosBrasileiros();

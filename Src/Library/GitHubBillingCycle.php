@@ -23,7 +23,7 @@ class GitHubBillingCycle
     public static function resolve(?int $cycleResetDay, DateTimeImmutable $now): array
     {
         if ($cycleResetDay === null) {
-            $start = new DateTimeImmutable($now->format("Y-m-01"));
+            $start = new DateTimeImmutable($now->format("Y-m-01"), $now->getTimezone());
             $end = $start->add(new DateInterval("P1M"));
 
             return [
@@ -38,7 +38,7 @@ class GitHubBillingCycle
         // directly on $now (e.g. 2026-01-31) overflows into the wrong target month
         // (Jan 31 - 1M lands on Feb 31, which PHP normalizes into March), since day
         // 1 always exists, arithmetic on the anchor never overflows.
-        $thisMonthAnchor = new DateTimeImmutable($now->format("Y-m-01"));
+        $thisMonthAnchor = new DateTimeImmutable($now->format("Y-m-01"), $now->getTimezone());
         $thisMonthReset = self::resetDateForMonth($thisMonthAnchor, $cycleResetDay);
 
         if ($now < $thisMonthReset) {
@@ -89,7 +89,7 @@ class GitHubBillingCycle
         $daysInMonth = (int) $reference->format("t");
         $clampedDay = min($cycleResetDay, $daysInMonth);
 
-        return new DateTimeImmutable($reference->format("Y-m") . "-" . sprintf("%02d", $clampedDay));
+        return new DateTimeImmutable($reference->format("Y-m") . "-" . sprintf("%02d", $clampedDay), $reference->getTimezone());
     }
 
     private static function daysBetween(DateTimeImmutable $from, DateTimeImmutable $to): int

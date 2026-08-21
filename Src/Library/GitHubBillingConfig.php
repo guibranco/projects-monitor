@@ -167,11 +167,9 @@ class GitHubBillingConfig
         );
 
         if ($data instanceof \stdClass) {
-            return array_merge($errors, self::validateObject($data, $schema, $path));
-        }
-
-        if (is_array($data) && isset($schema["items"])) {
-            return array_merge($errors, self::validateItems($data, $schema, $path));
+            $errors = array_merge($errors, self::validateObject($data, $schema, $path));
+        } elseif (is_array($data) && isset($schema["items"])) {
+            $errors = array_merge($errors, self::validateItems($data, $schema, $path));
         }
 
         return $errors;

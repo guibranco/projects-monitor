@@ -7,7 +7,6 @@ namespace GuiBranco\ProjectsMonitor\Library;
 use DateTimeImmutable;
 use GuiBranco\Pancake\Request;
 use GuiBranco\Pancake\RequestException;
-use GuiBranco\Pancake\ShieldsIo;
 
 /**
  * GitHub Actions included-usage (minutes/storage) for the accounts listed in
@@ -72,7 +71,7 @@ class GitHubActionsUsage
             throw new SecretsFileNotFoundException("File not found: gitHub.secrets.php");
         }
 
-        require __DIR__ . "/../secrets/gitHub.secrets.php";
+        require __DIR__ . "/../secrets/gitHub.secrets.php"; // NOSONAR: require_once would skip re-execution (and thus get_defined_vars()) on repeat construction — see docblock above.
 
         return get_defined_vars();
     }
@@ -97,18 +96,13 @@ class GitHubActionsUsage
     /**
      * One row per account (header row first), rendered with the same
      * shields.io-badge-in-table-cell convention used by the rest of the
-     * dashboard (see accounts_usage / api_usage tables).
+     * dashboard (see accounts_usage / api_usage tables). Rendering itself
+     * lives in GitHubActionsUsagePresenter, kept separate so it's testable
+     * without mocking HTTP/cache.
      */
     public function getAccountsUsageTable(): array
     {
-        $shields = new ShieldsIo();
-        $rows = [self::TABLE_HEADER];
-
-        foreach ($this->getAllAccountsUsage() as $usage) {
-            $rows[] = $this->buildRow($shields, $usage);
-        }
-
-        return $rows;
+        return (new GitHubActionsUsagePresenter())->toTable($this->getAllAccountsUsage());
     }
 
     /**
@@ -128,60 +122,6 @@ class GitHubActionsUsage
         }
 
         return $percentages === [] ? null : max($percentages);
-    }
-
-    private function buildRow(ShieldsIo $shields, array $usage): array
-    {
-        $accountLink = $this->accountLink($shields, $usage["account"], $usage["accountType"]);
-
-        if ($usage["status"] !== "ok") {
-            $url = $shields->generateBadgeUrl("⚠️", "Unavailable", "lightgrey", "for-the-badge", "black", null);
-            $img = "<img alt='Unavailable' src='{$url}' title='" . htmlspecialchars((string) $usage["reason"], ENT_QUOTES) . "' />";
-
-            return [$accountLink, $usage["planType"], $img, $img, "-", "-"];
-        }
-
-        $minutesImg = $this->usageBadge(
-            $shields,
-            $usage["minutes"]["percentage"],
-            number_format($usage["minutes"]["weightedUsed"], 0) . "/" . $usage["minutes"]["included"] . "_min"
-        );
-        $storageImg = $this->usageBadge(
-            $shields,
-            $usage["storage"]["percentage"],
-            number_format($usage["storage"]["usedGb"], 2) . "/" . number_format($usage["storage"]["includedGb"], 2) . "_GB"
-        );
-        $resetText = "{$usage["cycle"]["daysUntilReset"]} days ({$usage["cycle"]["label"]})";
-        $topRepos = $usage["topRepositories"] === []
-            ? "-"
-            : implode(", ", array_map(
-                fn ($r) => htmlspecialchars($r["repository"], ENT_QUOTES) . " (" . number_format($r["minutes"], 0) . "m)",
-                $usage["topRepositories"]
-            ));
-
-        return [$accountLink, $usage["planType"], $minutesImg, $storageImg, $resetText, $topRepos];
-    }
-
-    private function usageBadge(ShieldsIo $shields, float $percentage, string $detail): string
-    {
-        $color = "brightgreen";
-        if ($percentage > 90) {
-            $color = "red";
-        } elseif ($percentage >= 75) {
-            $color = "orange";
-        }
-
-        $url = $shields->generateBadgeUrl(number_format($percentage, 1) . "%", $detail, $color, "for-the-badge", "black", null);
-        return "<img alt='Usage' src='{$url}' />";
-    }
-
-    private function accountLink(ShieldsIo $shields, string $account, string $accountType): string
-    {
-        $prefix = $accountType === "org" ? "organizations/{$account}/" : "";
-        $url = "https://github.com/{$prefix}settings/billing/summary";
-        $badge = $shields->generateBadgeUrl($accountType, $account, "black", "social", "white", "github");
-
-        return "<a href='{$url}' target='_blank' rel='noopener noreferrer'><img alt='{$account}' src='{$badge}' /></a>";
     }
 
     private function getAccountUsageSafely(array $account): array

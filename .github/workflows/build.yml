@@ -128,7 +128,6 @@ jobs:
           Tools/db-check.sh "localhost" "test" "test"
 
       - name: 🧪 Run PHPUnit with coverage
-        continue-on-error: true
         run: php Src/vendor/bin/phpunit -c Tests/phpunit.xml --coverage-clover=coverage.xml
 
       - name: 📊 SonarCloud Scan

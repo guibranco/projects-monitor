@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7f45b9a8987e56c62559e69c705d1c55",
+    "content-hash": "8afd27da961280898b5cd37065387b47",
     "packages": [
         {
             "name": "fastvolt/markdown",
@@ -66,16 +66,16 @@
         },
         {
             "name": "guibranco/pancake",
-            "version": "v1.9.9",
+            "version": "v1.9.12",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guibranco/pancake.git",
-                "reference": "92cf72ef6c3a3a73c3cdb627321114749ef56fae"
+                "reference": "512f855dc4d63c6981b3fbe1b92e02f3fd37d17b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guibranco/pancake/zipball/92cf72ef6c3a3a73c3cdb627321114749ef56fae",
-                "reference": "92cf72ef6c3a3a73c3cdb627321114749ef56fae",
+                "url": "https://api.github.com/repos/guibranco/pancake/zipball/512f855dc4d63c6981b3fbe1b92e02f3fd37d17b",
+                "reference": "512f855dc4d63c6981b3fbe1b92e02f3fd37d17b",
                 "shasum": ""
             },
             "require": {
@@ -83,7 +83,7 @@
                 "psr/container": "^1.1 || ^2.0"
             },
             "require-dev": {
-                "phpunit/phpunit": "13.2.6"
+                "phpunit/phpunit": "13.3.1"
             },
             "type": "library",
             "autoload": {
@@ -104,9 +104,9 @@
             "description": "The Pancake project, a toolkit for PHP projects",
             "support": {
                 "issues": "https://github.com/guibranco/pancake/issues",
-                "source": "https://github.com/guibranco/pancake/tree/v1.9.9"
+                "source": "https://github.com/guibranco/pancake/tree/v1.9.12"
             },
-            "time": "2026-08-10T09:38:01+00:00"
+            "time": "2026-08-24T03:46:32+00:00"
         },
         {
             "name": "paragonie/constant_time_encoding",

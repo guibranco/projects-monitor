@@ -9,6 +9,7 @@ class GitHubActionsUsagePresenterTest extends TestCase
 {
     private ?GitHubActionsUsagePresenter $presenter = null;
 
+    /** Fresh presenter instance for each test. */
     protected function setUp(): void
     {
         $this->presenter = new GitHubActionsUsagePresenter();

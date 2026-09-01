@@ -1,6 +1,9 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
+use GuiBranco\Pancake\Request;
+use GuiBranco\Pancake\RequestException;
+use GuiBranco\Pancake\Response;
 use GuiBranco\ProjectsMonitor\Library\GitHubActionsUsage;
 use GuiBranco\ProjectsMonitor\Library\GitHubActionsUsageException;
 use GuiBranco\ProjectsMonitor\Library\GitHubBillingConfig;
@@ -10,7 +13,9 @@ class GitHubActionsUsageTest extends TestCase
 {
     private array $writtenFiles = [];
 
-    /** Deletes any temp fixture files written by writeFixture() during the test. */
+    private array $cacheFilesToClean = [];
+
+    /** Deletes any temp fixture files and cache files written during the test. */
     protected function tearDown(): void
     {
         foreach ($this->writtenFiles as $path) {
@@ -19,6 +24,13 @@ class GitHubActionsUsageTest extends TestCase
             }
         }
         $this->writtenFiles = [];
+
+        foreach ($this->cacheFilesToClean as $path) {
+            if (file_exists($path)) {
+                unlink($path);
+            }
+        }
+        $this->cacheFilesToClean = [];
     }
 
     /** Writes $data as a temp JSON fixture file, tracked for cleanup in tearDown(). */
@@ -112,6 +124,50 @@ class GitHubActionsUsageTest extends TestCase
         $property->setValue($usage, $config); // NOSONAR
 
         return $usage;
+    }
+
+    /**
+     * Builds a GitHubActionsUsage instance with everything real EXCEPT the
+     * injected Request — used to exercise fetchUsageData/fetchCachedJson/the
+     * cache layer for real, rather than mocking the network boundary away.
+     * GuiBranco\Pancake\Request/Response are safe to use this way: Request is
+     * a plain non-final class, and Response has public success()/error()
+     * factories, so no HTTP call ever actually happens.
+     */
+    private function usageWithRealFetch(GitHubBillingConfig $config, Request $request): GitHubActionsUsage
+    {
+        // buildHeaders() reads the USER_AGENT constant, normally defined by
+        // Configuration::init() inside the real (skipped) constructor.
+        (new \GuiBranco\ProjectsMonitor\Library\Configuration())->init();
+
+        $usage = $this->getMockBuilder(GitHubActionsUsage::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods([]) // mock nothing — fetchUsageData and everything below it runs for real
+            ->getMock();
+
+        $this->setPrivateProperty($usage, "config", $config);
+        $this->setPrivateProperty($usage, "defaultToken", "test-token");
+        $this->setPrivateProperty($usage, "tokens", ["gitHubToken" => "test-token"]);
+        $this->setPrivateProperty($usage, "request", $request);
+
+        return $usage;
+    }
+
+    /** A mock of the real HTTP client whose get() is configured per-test; never makes a live call. */
+    private function mockRequest(): Request
+    {
+        return $this->getMockBuilder(Request::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(["get"])
+            ->getMock();
+    }
+
+    /** Path of the cache file fetchCachedJson() would use for one month's summary/usage fetch, tracked for cleanup. */
+    private function trackCacheFile(string $type, string $account, int $year, int $month): string
+    {
+        $path = __DIR__ . "/../../Src/cache/github_billing_{$type}_{$account}_{$year}_{$month}.json";
+        $this->cacheFilesToClean[] = $path;
+        return $path;
     }
 
     /** A single account's fetch failure degrades only that account — the others stay "ok". */
@@ -284,5 +340,150 @@ class GitHubActionsUsageTest extends TestCase
         $this->assertCount(1, $method->invoke($usage, $userResponse));
         $this->assertSame([], $method->invoke($usage, $malformedResponse));
         $this->assertCount(1, $method->invoke($usage, $bareListResponse));
+    }
+
+    /** A mocked Request whose get() returns $summaryBody for the summary endpoint URL, $rowsBody otherwise. */
+    private function mockRequestRespondingByUrl(string $summaryBody, string $rowsBody): Request
+    {
+        $request = $this->mockRequest();
+        $request->method("get")->willReturnCallback(function ($url) use ($summaryBody, $rowsBody) {
+            return str_contains($url, "/settings/billing/usage/summary")
+                ? Response::success($summaryBody, $url, [])
+                : Response::success($rowsBody, $url, []);
+        });
+
+        return $request;
+    }
+
+    /** End-to-end real fetch (no fetchUsageData mock): live HTTP success writes both the summary and usage cache files. */
+    public function testGetAccountUsageFetchesLiveAndWritesCache()
+    {
+        $account = "liveFetchAcct";
+        $now = new DateTimeImmutable("now");
+        $year = (int) $now->format("Y");
+        $month = (int) $now->format("n");
+        $summaryPath = $this->trackCacheFile("summary", $account, $year, $month);
+        $usagePath = $this->trackCacheFile("usage", $account, $year, $month);
+
+        $summaryBody = json_encode(["usageItems" => [
+            ["product" => "Actions", "unitType" => "minutes", "pricePerUnit" => 0.008, "grossQuantity" => 100, "discountAmount" => 0],
+        ]]);
+        $rowsBody = json_encode([
+            ["product" => "Actions", "unitType" => "minutes", "pricePerUnit" => 0.008, "quantity" => 100, "repositoryName" => "guibranco/demo", "date" => $now->format("Y-m-d")],
+        ]);
+
+        $config = $this->buildConfig([$this->accountEntry($account, "user")]);
+        $usage = $this->usageWithRealFetch($config, $this->mockRequestRespondingByUrl($summaryBody, $rowsBody));
+
+        $results = $usage->getAllAccountsUsage();
+
+        $this->assertSame("ok", $results[0]["status"]);
+        $this->assertSame(100.0, $results[0]["minutes"]["weightedUsed"]);
+        $this->assertNotEmpty($results[0]["topRepositories"]);
+        $this->assertFileExists($summaryPath);
+        $this->assertFileExists($usagePath);
+    }
+
+    /** A fresh cache hit is served without ever calling Request::get(). */
+    public function testGetAccountUsageServesFreshCacheWithoutCallingRequest()
+    {
+        $account = "cacheHitAcct";
+        $now = new DateTimeImmutable("now");
+        $year = (int) $now->format("Y");
+        $month = (int) $now->format("n");
+        $summaryPath = $this->trackCacheFile("summary", $account, $year, $month);
+        $usagePath = $this->trackCacheFile("usage", $account, $year, $month);
+
+        file_put_contents($summaryPath, json_encode(["usageItems" => [
+            ["product" => "Actions", "unitType" => "minutes", "pricePerUnit" => 0.008, "grossQuantity" => 200, "discountAmount" => 0],
+        ]]));
+        file_put_contents($usagePath, json_encode([]));
+
+        $config = $this->buildConfig([$this->accountEntry($account, "user")]);
+        $request = $this->mockRequest();
+        $request->expects($this->never())->method("get");
+
+        $usage = $this->usageWithRealFetch($config, $request);
+        $results = $usage->getAllAccountsUsage();
+
+        $this->assertSame("ok", $results[0]["status"]);
+        $this->assertSame(200.0, $results[0]["minutes"]["weightedUsed"]);
+    }
+
+    /** A corrupt/truncated cache file is treated as a miss — the account still gets a real, live-fetched result. */
+    public function testGetAccountUsageTreatsCorruptCacheAsMissAndFetchesLive()
+    {
+        $account = "corruptCacheAcct";
+        $now = new DateTimeImmutable("now");
+        $year = (int) $now->format("Y");
+        $month = (int) $now->format("n");
+        $summaryPath = $this->trackCacheFile("summary", $account, $year, $month);
+        $usagePath = $this->trackCacheFile("usage", $account, $year, $month);
+
+        file_put_contents($summaryPath, "{not valid json");
+        file_put_contents($usagePath, "{not valid json");
+
+        $summaryBody = json_encode(["usageItems" => [
+            ["product" => "Actions", "unitType" => "minutes", "pricePerUnit" => 0.008, "grossQuantity" => 300, "discountAmount" => 0],
+        ]]);
+        $rowsBody = json_encode([]);
+
+        $config = $this->buildConfig([$this->accountEntry($account, "user")]);
+        $usage = $this->usageWithRealFetch($config, $this->mockRequestRespondingByUrl($summaryBody, $rowsBody));
+
+        $results = $usage->getAllAccountsUsage();
+
+        $this->assertSame("ok", $results[0]["status"]);
+        $this->assertSame(300.0, $results[0]["minutes"]["weightedUsed"]);
+    }
+
+    /** A live-fetch failure with an existing (even stale) cache falls back to serving that cache instead of degrading. */
+    public function testGetAccountUsageFallsBackToStaleCacheOnRequestFailure()
+    {
+        $account = "staleFallbackAcct";
+        $now = new DateTimeImmutable("now");
+        $year = (int) $now->format("Y");
+        $month = (int) $now->format("n");
+        $summaryPath = $this->trackCacheFile("summary", $account, $year, $month);
+        $usagePath = $this->trackCacheFile("usage", $account, $year, $month);
+
+        file_put_contents($summaryPath, json_encode(["usageItems" => [
+            ["product" => "Actions", "unitType" => "minutes", "pricePerUnit" => 0.008, "grossQuantity" => 400, "discountAmount" => 0],
+        ]]));
+        file_put_contents($usagePath, json_encode([]));
+        // Force both cache files outside the TTL window so a live fetch is attempted.
+        touch($summaryPath, time() - 7200);
+        touch($usagePath, time() - 7200);
+
+        $config = $this->buildConfig([$this->accountEntry($account, "user")]);
+        $request = $this->mockRequest();
+        $request->method("get")->willThrowException(new RequestException("503 Service Unavailable"));
+
+        $usage = $this->usageWithRealFetch($config, $request);
+        $results = $usage->getAllAccountsUsage();
+
+        $this->assertSame("ok", $results[0]["status"]);
+        $this->assertSame(400.0, $results[0]["minutes"]["weightedUsed"]);
+    }
+
+    /** A live-fetch failure with no cache at all degrades that account rather than throwing. */
+    public function testGetAccountUsageDegradesWhenRequestFailsWithNoCache()
+    {
+        $account = "noCacheFailureAcct";
+        $now = new DateTimeImmutable("now");
+        $year = (int) $now->format("Y");
+        $month = (int) $now->format("n");
+        $this->trackCacheFile("summary", $account, $year, $month);
+        $this->trackCacheFile("usage", $account, $year, $month);
+
+        $config = $this->buildConfig([$this->accountEntry($account, "user")]);
+        $request = $this->mockRequest();
+        $request->method("get")->willThrowException(new RequestException("timeout"));
+
+        $usage = $this->usageWithRealFetch($config, $request);
+        $results = $usage->getAllAccountsUsage();
+
+        $this->assertSame("unavailable", $results[0]["status"]);
+        $this->assertStringContainsString("timeout", $results[0]["reason"]);
     }
 }

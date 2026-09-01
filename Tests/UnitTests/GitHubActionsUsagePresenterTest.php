@@ -6,7 +6,7 @@ use GuiBranco\ProjectsMonitor\Library\GitHubActionsUsagePresenter;
 
 class GitHubActionsUsagePresenterTest extends TestCase
 {
-    private GitHubActionsUsagePresenter $presenter;
+    private ?GitHubActionsUsagePresenter $presenter = null;
 
     protected function setUp(): void
     {

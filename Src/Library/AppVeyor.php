@@ -30,7 +30,7 @@ class AppVeyor
         $this->headers = ["Authorization: Bearer {$appVeyorApiKey}", "Content-Type: application/json", constant("USER_AGENT")];
     }
 
-    private function getProjects()
+    protected function getProjects()
     {
         $response = $this->request->get(self::APPVEYOR_API_URL . "projects", $this->headers);
 

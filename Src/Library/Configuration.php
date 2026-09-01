@@ -60,7 +60,7 @@ class Configuration
 
     public function getRequestData()
     {
-        $data = json_decode(file_get_contents('php://input'), true);
+        $data = json_decode(file_get_contents('php://input'), true) ?? [];
 
         $headers = $this->getRequestHeaders();
 

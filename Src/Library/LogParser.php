@@ -21,6 +21,14 @@ class LogParser
      * - file (file path where error occurred)
      * - line (line number)
      * - stackTraceDetails (optional stack trace lines)
+     *
+     * multilineError's lookahead deliberately uses \z, not bare $, for the
+     * "no file/line info follows" fallback: the /m modifier makes $ match at
+     * every line end (needed so back-to-back single-line entries each stop at
+     * their own line), which would otherwise cut a genuinely multi-line error
+     * body off at its first embedded newline instead of searching further for
+     * "in file.php:NN". The extra alternative still bounds the capture against
+     * a following [date]-prefixed entry that itself has no file/line info.
      */
     private const REGEX_PATTERN = '/
         \[
@@ -29,7 +37,7 @@ class LogParser
         \s
         (?<multilineError>
             (?:.*?)
-            (?=\s+in\s.+?\.php(?:\son\sline\s|:)\d+|$)
+            (?=\s+in\s.+?\.php(?:\son\sline\s|:)\d+|\n\[\d{2}-[A-Za-z]{3}-\d{4}|\z)
         )
         (?:
             \s+in\s(?<file>.+?\.php)

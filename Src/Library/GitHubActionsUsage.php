@@ -391,7 +391,7 @@ class GitHubActionsUsage
     {
         $dir = dirname($cachePath);
         if (!is_dir($dir)) {
-            mkdir($dir, 0775, true);
+            mkdir($dir, 0755, true);
         }
 
         $tempPath = $cachePath . "." . uniqid("", true) . ".tmp";

@@ -8,7 +8,8 @@ class ColorTest extends TestCase
     public function testLuminance()
     {
         $this->assertEquals(0, Color::luminance('000000'));
-        $this->assertEquals(255, Color::luminance('FFFFFF'));
+        // 0.2126 + 0.7152 + 0.0722 doesn't sum to exactly 1.0 in IEEE-754 floating point.
+        $this->assertEqualsWithDelta(255, Color::luminance('FFFFFF'), 0.0001);
         $this->assertEquals(54.213, round(Color::luminance('FF0000'), 3));
     }
 

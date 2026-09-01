@@ -124,6 +124,7 @@ class GitHubActionsUsage
         return $percentages === [] ? null : max($percentages);
     }
 
+    /** Runs getAccountUsage() and converts any failure into a degraded result instead of propagating. */
     private function getAccountUsageSafely(array $account): array
     {
         try {
@@ -138,6 +139,12 @@ class GitHubActionsUsage
         }
     }
 
+    /**
+     * Fetches, calculates and assembles one account's full "ok" result:
+     * resolved billing cycle, weighted minutes/storage vs. included allowance,
+     * and top repositories. Throws on any fetch failure — callers must go
+     * through getAccountUsageSafely() to degrade rather than propagate.
+     */
     private function getAccountUsage(array $account): array
     {
         $now = new DateTimeImmutable("now");
@@ -234,6 +241,7 @@ class GitHubActionsUsage
         return ["usageItems" => $usageItems, "usageRows" => $windowedRows];
     }
 
+    /** Builds the "unavailable" shape rendered by the dashboard, with an auth-scope hint on likely token failures. */
     private function degradedResult(array $account, string $reason): array
     {
         $isAuthFailure = str_contains($reason, "403") || stripos($reason, "token") !== false;
@@ -254,6 +262,12 @@ class GitHubActionsUsage
         ];
     }
 
+    /**
+     * The shared $gitHubToken when tokenSecret is null, otherwise the named
+     * variable from gitHub.secrets.php (see loadTokens()).
+     *
+     * @throws GitHubActionsUsageException When tokenSecret names an undefined variable.
+     */
     private function resolveToken(array $account): string
     {
         $secretName = $account["tokenSecret"];
@@ -272,6 +286,7 @@ class GitHubActionsUsage
         return $this->tokens[$secretName];
     }
 
+    /** Standard headers for the GitHub billing usage endpoints, pinned to API_VERSION. */
     private function buildHeaders(string $token): array
     {
         return [
@@ -282,6 +297,7 @@ class GitHubActionsUsage
         ];
     }
 
+    /** Fetches (or serves cached) one month's usageItems from the /settings/billing/usage/summary endpoint. */
     private function fetchSummaryUsageItems(string $pathSegment, string $account, array $headers, int $year, int $month): array
     {
         $url = self::API_URL . "{$pathSegment}/{$account}/settings/billing/usage/summary?year={$year}&month={$month}";
@@ -290,6 +306,7 @@ class GitHubActionsUsage
         return $this->extractUsageItems($this->fetchCachedJson($cacheKey, $url, $headers));
     }
 
+    /** Fetches (or serves cached) one month's per-date/SKU/repo rows from the non-summary /settings/billing/usage endpoint. */
     private function fetchUsageRows(string $pathSegment, string $account, array $headers, int $year, int $month): array
     {
         $url = self::API_URL . "{$pathSegment}/{$account}/settings/billing/usage?year={$year}&month={$month}";
@@ -316,6 +333,7 @@ class GitHubActionsUsage
         return [];
     }
 
+    /** Copies a non-summary row's `quantity` into `grossQuantity` so it matches the summary item shape the calculator expects. */
     private function normalizeRow(object $row): object
     {
         $normalized = clone $row;
@@ -327,6 +345,12 @@ class GitHubActionsUsage
         return $normalized;
     }
 
+    /**
+     * Serves a fresh cache hit, otherwise fetches live and refreshes the cache;
+     * on a live-fetch failure, falls back to a stale cache entry if one exists.
+     *
+     * @throws GitHubActionsUsageException|RequestException On failure with no usable cache.
+     */
     private function fetchCachedJson(string $cacheKey, string $url, array $headers)
     {
         $cachePath = __DIR__ . "/../cache/{$cacheKey}.json";
@@ -402,6 +426,7 @@ class GitHubActionsUsage
         rename($tempPath, $cachePath);
     }
 
+    /** $used as a percentage of $included, rounded to 2dp; 0 when $included isn't positive. */
     private function percentage(float $used, float $included): float
     {
         if ($included <= 0) {

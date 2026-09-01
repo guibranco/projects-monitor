@@ -149,6 +149,11 @@ class GitHubActionsUsageCalculator
         ));
     }
 
+    /**
+     * OS-price multiplier relative to Linux (1x), derived from pricePerUnit.
+     *
+     * @return float 1.0 when pricePerUnit is missing/non-positive (raw-sum fallback).
+     */
     private static function multiplier(object $item, float $linuxBasePrice): float
     {
         $pricePerUnit = (float) ($item->pricePerUnit ?? 0);

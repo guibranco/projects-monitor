@@ -4,10 +4,12 @@ use PHPUnit\Framework\TestCase;
 use GuiBranco\ProjectsMonitor\Library\GitHubBillingConfig;
 use GuiBranco\ProjectsMonitor\Library\GitHubBillingConfigException;
 
+/** Tests GitHubBillingConfig's schema validation, plan/override resolution, and business-rule enforcement. */
 class GitHubBillingConfigTest extends TestCase
 {
     private array $writtenFiles = [];
 
+    /** Deletes any temp fixture files written by writeFixture() during the test. */
     protected function tearDown(): void
     {
         foreach ($this->writtenFiles as $path) {
@@ -18,11 +20,13 @@ class GitHubBillingConfigTest extends TestCase
         $this->writtenFiles = [];
     }
 
+    /** The real github-billing.schema.json, associative-decoded. */
     private function schema(): array
     {
         return json_decode(file_get_contents(__DIR__ . "/../../Src/Library/github-billing.schema.json"), true);
     }
 
+    /** Writes $data as a temp JSON fixture file, tracked for cleanup in tearDown(). */
     private function writeFixture(array $data): string
     {
         $path = sys_get_temp_dir() . "/github-billing-" . uniqid("", true) . ".json";
@@ -31,6 +35,7 @@ class GitHubBillingConfigTest extends TestCase
         return $path;
     }
 
+    /** A minimal valid config: free/pro/team plans and one "free" org account. */
     private function baseConfig(): array
     {
         return [
@@ -54,6 +59,7 @@ class GitHubBillingConfigTest extends TestCase
         ];
     }
 
+    /** The real github-billing.json resolves all three tracked accounts, including guibranco's storageMb override. */
     public function testLoadsRealConfigFromRepo()
     {
         $config = new GitHubBillingConfig();
@@ -78,6 +84,7 @@ class GitHubBillingConfigTest extends TestCase
         $this->assertSame(500, $byName["ApiBR"]["storageMb"]);
     }
 
+    /** A per-account override wins over its plan's default for that field only. */
     public function testOverrideMergeWinsOverPlanDefault()
     {
         $data = $this->baseConfig();
@@ -91,6 +98,7 @@ class GitHubBillingConfigTest extends TestCase
         $this->assertSame(500, $account["storageMb"]); // untouched, still the plan default
     }
 
+    /** Changing an account's planType in the JSON alone changes its resolved quota — no code change needed. */
     public function testPlanUpgradeChangesDenominatorWithNoCodeChange()
     {
         $data = $this->baseConfig();
@@ -109,6 +117,7 @@ class GitHubBillingConfigTest extends TestCase
         $this->assertSame(2048, $after["storageMb"]);
     }
 
+    /** An account referencing an undefined planType fails loudly, listing the valid plan names. */
     public function testUnknownPlanTypeThrowsWithValidPlanList()
     {
         $data = $this->baseConfig();
@@ -122,6 +131,7 @@ class GitHubBillingConfigTest extends TestCase
         $this->fail("Expected GitHubBillingConfigException but constructed: " . $thrown::class);
     }
 
+    /** An org marked with a user-only plan ("pro") fails loudly, naming the account. */
     public function testAccountTypeNotAllowedByPlanThrowsNamingAccount()
     {
         $data = $this->baseConfig();
@@ -138,6 +148,7 @@ class GitHubBillingConfigTest extends TestCase
         $this->fail("Expected GitHubBillingConfigException but constructed: " . $thrown::class);
     }
 
+    /** A user marked with an org-only plan ("team") fails loudly, naming the account. */
     public function testUserMarkedTeamThrows()
     {
         $data = $this->baseConfig();
@@ -154,6 +165,7 @@ class GitHubBillingConfigTest extends TestCase
         $this->fail("Expected GitHubBillingConfigException but constructed: " . $thrown::class);
     }
 
+    /** A plan missing a required field ("minutes") fails schema validation with a clear message. */
     public function testMissingRequiredPropertyFailsSchemaValidation()
     {
         $data = $this->baseConfig();
@@ -167,6 +179,7 @@ class GitHubBillingConfigTest extends TestCase
         $this->fail("Expected GitHubBillingConfigException but constructed: " . $thrown::class);
     }
 
+    /** A wrong-typed field ("version" as a string) fails schema validation. */
     public function testWrongTypeFailsSchemaValidation()
     {
         $data = $this->baseConfig();
@@ -180,6 +193,7 @@ class GitHubBillingConfigTest extends TestCase
         $this->fail("Expected GitHubBillingConfigException but constructed: " . $thrown::class);
     }
 
+    /** An account property not defined by the schema ("typo") fails validation. */
     public function testUnexpectedPropertyFailsSchemaValidation()
     {
         $data = $this->baseConfig();
@@ -193,6 +207,7 @@ class GitHubBillingConfigTest extends TestCase
         $this->fail("Expected GitHubBillingConfigException but constructed: " . $thrown::class);
     }
 
+    /** The real github-billing.json validates against the real schema with zero errors. */
     public function testRealConfigValidatesAgainstRealSchemaWithNoErrors()
     {
         // Object-mode decode (no `true`) — matches what the constructor now
@@ -203,6 +218,7 @@ class GitHubBillingConfigTest extends TestCase
         $this->assertSame([], $errors);
     }
 
+    /** A "plans": [] typo (JSON array instead of object) is rejected, not silently treated as an empty object. */
     public function testEmptyPlansArrayFailsSchemaValidationInsteadOfSilentlyPassingAsAnEmptyObject()
     {
         // json_decode(..., true) collapses {} and [] into the same PHP [], so a
@@ -220,6 +236,7 @@ class GitHubBillingConfigTest extends TestCase
         $this->fail("Expected GitHubBillingConfigException but constructed: " . $thrown::class);
     }
 
+    /** A nonexistent config path fails loudly rather than falling back to defaults. */
     public function testMissingFileThrows()
     {
         $this->expectException(GitHubBillingConfigException::class);

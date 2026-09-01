@@ -31,6 +31,7 @@ class GitHubActionsUsagePresenter
         return $rows;
     }
 
+    /** One account's table row: link + plan + minutes/storage badges + reset + top repos, or the unavailable variant. */
     private function buildRow(ShieldsIo $shields, array $usage): array
     {
         $accountLink = $this->accountLink($shields, $usage["account"], $usage["accountType"]);
@@ -63,6 +64,7 @@ class GitHubActionsUsagePresenter
         return [$accountLink, $usage["planType"], $minutesImg, $storageImg, $resetText, $topRepos];
     }
 
+    /** A green/amber/red shields.io badge for a usage percentage, at the 75/90 thresholds. */
     private function usageBadge(ShieldsIo $shields, float $percentage, string $detail): string
     {
         $color = "brightgreen";
@@ -76,6 +78,7 @@ class GitHubActionsUsagePresenter
         return "<img alt='Usage' src='{$url}' />";
     }
 
+    /** Account badge linking to its GitHub billing summary page (org vs. personal URL). */
     private function accountLink(ShieldsIo $shields, string $account, string $accountType): string
     {
         $prefix = $accountType === "org" ? "organizations/{$account}/" : "";

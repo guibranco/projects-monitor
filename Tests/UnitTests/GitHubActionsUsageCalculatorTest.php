@@ -3,8 +3,10 @@
 use PHPUnit\Framework\TestCase;
 use GuiBranco\ProjectsMonitor\Library\GitHubActionsUsageCalculator;
 
+/** Tests GitHubActionsUsageCalculator's pure minutes/storage/allowance/top-repos math. */
 class GitHubActionsUsageCalculatorTest extends TestCase
 {
+    /** Builds a fake Actions "minutes" usageItem, overriding only the given fields. */
     private function item(array $fields): object
     {
         return (object) array_merge([
@@ -16,6 +18,7 @@ class GitHubActionsUsageCalculatorTest extends TestCase
         ], $fields);
     }
 
+    /** All-Linux usage sums to the same raw and weighted minutes (1x multiplier). */
     public function testMinutesLinuxOnly()
     {
         $items = [
@@ -30,6 +33,7 @@ class GitHubActionsUsageCalculatorTest extends TestCase
         $this->assertSame(600.0, $result["weighted"]);
     }
 
+    /** Windows (2x) and macOS (10x) multipliers inflate weighted minutes above the raw sum. */
     public function testMinutesMixedLinuxWindowsMacOs()
     {
         $items = [
@@ -45,6 +49,7 @@ class GitHubActionsUsageCalculatorTest extends TestCase
         $this->assertSame(300.0, $result["weighted"]);
     }
 
+    /** No usageItems yields zero for both raw and weighted minutes. */
     public function testMinutesZeroUsage()
     {
         $result = GitHubActionsUsageCalculator::minutes([]);
@@ -53,6 +58,7 @@ class GitHubActionsUsageCalculatorTest extends TestCase
         $this->assertSame(0.0, $result["weighted"]);
     }
 
+    /** A missing/zero pricePerUnit falls back to a 1x multiplier (raw sum) instead of erroring. */
     public function testMinutesMissingPricePerUnitFallsBackToRawSum()
     {
         $items = [
@@ -66,6 +72,7 @@ class GitHubActionsUsageCalculatorTest extends TestCase
         $this->assertSame(150.0, $result["weighted"]);
     }
 
+    /** Non-Actions products and non-minutes unitTypes are excluded from the minutes sum. */
     public function testMinutesIgnoresNonActionsAndNonMinuteItems()
     {
         $items = [
@@ -79,6 +86,7 @@ class GitHubActionsUsageCalculatorTest extends TestCase
         $this->assertSame(100.0, $result["raw"]);
     }
 
+    /** Only Actions items with a GB-based unitType count toward storage; minutes/other products don't. */
     public function testStorageGbSumsActionsGigabyteItemsOnly()
     {
         $items = [
@@ -91,11 +99,13 @@ class GitHubActionsUsageCalculatorTest extends TestCase
         $this->assertSame(5.0, GitHubActionsUsageCalculator::storageGb($items));
     }
 
+    /** No usageItems yields zero storage. */
     public function testStorageGbZeroUsage()
     {
         $this->assertSame(0.0, GitHubActionsUsageCalculator::storageGb([]));
     }
 
+    /** discountAmount/pricePerUnit infers the included-minutes allowance from a single SKU. */
     public function testInferIncludedMinutesFromDiscount()
     {
         $items = [
@@ -106,6 +116,7 @@ class GitHubActionsUsageCalculatorTest extends TestCase
         $this->assertSame(1000.0, GitHubActionsUsageCalculator::inferIncludedMinutes($items));
     }
 
+    /** With no discountAmount signal anywhere, inference returns null rather than 0. */
     public function testInferIncludedMinutesReturnsNullWithoutSignal()
     {
         $items = [$this->item(["discountAmount" => 0])];
@@ -113,6 +124,7 @@ class GitHubActionsUsageCalculatorTest extends TestCase
         $this->assertNull(GitHubActionsUsageCalculator::inferIncludedMinutes($items));
     }
 
+    /** allowanceDiverges() flags a >5% gap, tolerates a smaller one, and never fires with no inferred value. */
     public function testAllowanceDivergesBeyondTolerance()
     {
         $this->assertTrue(GitHubActionsUsageCalculator::allowanceDiverges(2000.0, 2200.0));
@@ -120,6 +132,7 @@ class GitHubActionsUsageCalculatorTest extends TestCase
         $this->assertFalse(GitHubActionsUsageCalculator::allowanceDiverges(2000.0, null));
     }
 
+    /** Repositories are ranked by weighted minutes descending, non-Actions/non-minutes rows excluded. */
     public function testTopRepositoriesByMinutesSortsAndLimits()
     {
         $rows = [
@@ -138,6 +151,7 @@ class GitHubActionsUsageCalculatorTest extends TestCase
         ], $top);
     }
 
+    /** More than $limit repositories are truncated to $limit results. */
     public function testTopRepositoriesByMinutesRespectsLimit()
     {
         $rows = [];

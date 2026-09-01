@@ -5,10 +5,12 @@ use GuiBranco\ProjectsMonitor\Library\GitHubActionsUsage;
 use GuiBranco\ProjectsMonitor\Library\GitHubActionsUsageException;
 use GuiBranco\ProjectsMonitor\Library\GitHubBillingConfig;
 
+/** Tests GitHubActionsUsage's orchestration: per-account degradation, no cross-account summing, and token resolution. */
 class GitHubActionsUsageTest extends TestCase
 {
     private array $writtenFiles = [];
 
+    /** Deletes any temp fixture files written by writeFixture() during the test. */
     protected function tearDown(): void
     {
         foreach ($this->writtenFiles as $path) {
@@ -19,6 +21,7 @@ class GitHubActionsUsageTest extends TestCase
         $this->writtenFiles = [];
     }
 
+    /** Writes $data as a temp JSON fixture file, tracked for cleanup in tearDown(). */
     private function writeFixture(array $data): string
     {
         $path = sys_get_temp_dir() . "/github-billing-usage-" . uniqid("", true) . ".json";
@@ -27,6 +30,7 @@ class GitHubActionsUsageTest extends TestCase
         return $path;
     }
 
+    /** A real GitHubBillingConfig backed by a temp fixture with a single "free" plan and the given accounts. */
     private function buildConfig(array $accounts): GitHubBillingConfig
     {
         $data = [
@@ -43,6 +47,7 @@ class GitHubActionsUsageTest extends TestCase
         );
     }
 
+    /** A minimal resolved-account-shaped array for fixtures, on the "free" plan by default. */
     private function accountEntry(string $name, string $type = "org", ?string $tokenSecret = null): array
     {
         return [
@@ -57,6 +62,7 @@ class GitHubActionsUsageTest extends TestCase
         ];
     }
 
+    /** Sets a private property on a GitHubActionsUsage instance via reflection, bypassing its constructor. */
     private function setPrivateProperty(object $object, string $property, $value): void
     {
         // Test-only reflection against our own class, not attacker-controlled input.
@@ -65,6 +71,7 @@ class GitHubActionsUsageTest extends TestCase
         $reflection->setValue($object, $value); // NOSONAR
     }
 
+    /** Invokes the private resolveToken() method via reflection. */
     private function invokeResolveToken(GitHubActionsUsage $usage, array $account): string
     {
         $method = new ReflectionMethod(GitHubActionsUsage::class, "resolveToken");
@@ -73,6 +80,7 @@ class GitHubActionsUsageTest extends TestCase
         return $method->invoke($usage, $account);
     }
 
+    /** A fake Actions "minutes" usageItem with the given raw quantity, Linux-priced (1x multiplier). */
     private function usageItem(float $grossQuantity): object
     {
         return (object) [
@@ -106,6 +114,7 @@ class GitHubActionsUsageTest extends TestCase
         return $usage;
     }
 
+    /** A single account's fetch failure degrades only that account — the others stay "ok". */
     public function testOneAccountFailureDegradesOnlyThatAccount()
     {
         $config = $this->buildConfig([
@@ -139,6 +148,7 @@ class GitHubActionsUsageTest extends TestCase
         $this->assertNotNull($byName["accountC"]["minutes"]);
     }
 
+    /** Each account's minutes/allowance/percentage stay independent — never merged or summed. */
     public function testResultsAreNeverSummedAcrossAccounts()
     {
         $config = $this->buildConfig([
@@ -167,6 +177,7 @@ class GitHubActionsUsageTest extends TestCase
         $this->assertSame(75.0, $byName["accountB"]["minutes"]["percentage"]);
     }
 
+    /** The highest-utilisation rollup skips unavailable accounts rather than treating them as 0% or blocking the result. */
     public function testHighestUtilizationIgnoresUnavailableAccounts()
     {
         $config = $this->buildConfig([
@@ -189,6 +200,7 @@ class GitHubActionsUsageTest extends TestCase
         $this->assertSame(95.0, $usage->getHighestUtilizationPercentage($results));
     }
 
+    /** With every account unavailable, the highest-utilisation rollup is null rather than 0 or an error. */
     public function testHighestUtilizationIsNullWhenAllAccountsUnavailable()
     {
         $config = $this->buildConfig([$this->accountEntry("accountA")]);
@@ -201,6 +213,7 @@ class GitHubActionsUsageTest extends TestCase
         $this->assertNull($usage->getHighestUtilizationPercentage($results));
     }
 
+    /** A null tokenSecret resolves to the shared default token. */
     public function testResolveTokenReturnsDefaultTokenWhenTokenSecretIsNull()
     {
         $usage = $this->getMockBuilder(GitHubActionsUsage::class)->disableOriginalConstructor()->getMock();
@@ -233,6 +246,7 @@ class GitHubActionsUsageTest extends TestCase
         $this->assertSame("apibr-token-value", $token);
     }
 
+    /** A tokenSecret naming a variable the secrets file never defined throws, rather than silently using the default. */
     public function testResolveTokenThrowsWhenConfiguredSecretIsNotDefined()
     {
         $usage = $this->getMockBuilder(GitHubActionsUsage::class)->disableOriginalConstructor()->getMock();

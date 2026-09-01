@@ -4,6 +4,7 @@ use PHPUnit\Framework\TestCase;
 use GuiBranco\ProjectsMonitor\Library\GitHubActionsUsage;
 use GuiBranco\ProjectsMonitor\Library\GitHubActionsUsagePresenter;
 
+/** Tests GitHubActionsUsagePresenter's pure table-row rendering (no HTTP/cache involved). */
 class GitHubActionsUsagePresenterTest extends TestCase
 {
     private ?GitHubActionsUsagePresenter $presenter = null;
@@ -13,6 +14,7 @@ class GitHubActionsUsagePresenterTest extends TestCase
         $this->presenter = new GitHubActionsUsagePresenter();
     }
 
+    /** A fully-populated "ok" account result, with $overrides merged in for individual field variations. */
     private function okUsage(array $overrides = []): array
     {
         return array_merge([
@@ -28,6 +30,7 @@ class GitHubActionsUsagePresenterTest extends TestCase
         ], $overrides);
     }
 
+    /** toTable() always emits the shared TABLE_HEADER row first, even with zero accounts. */
     public function testTableStartsWithTheSharedHeaderRow()
     {
         $rows = $this->presenter->toTable([]);
@@ -35,6 +38,7 @@ class GitHubActionsUsagePresenterTest extends TestCase
         $this->assertSame([GitHubActionsUsage::TABLE_HEADER], $rows);
     }
 
+    /** An "ok" account renders account/plan, minutes/storage badges, and the reset text. */
     public function testOkAccountRendersMinutesAndStorageBadgesAndResetText()
     {
         $rows = $this->presenter->toTable([$this->okUsage()]);
@@ -50,6 +54,7 @@ class GitHubActionsUsagePresenterTest extends TestCase
         $this->assertSame("-", $row[5]);
     }
 
+    /** An "unavailable" account renders a shared unavailable badge (minutes cell == storage cell) with the reason HTML-escaped. */
     public function testUnavailableAccountRendersUnavailableBadgeWithEscapedReason()
     {
         $usage = $this->okUsage([
@@ -91,6 +96,7 @@ class GitHubActionsUsagePresenterTest extends TestCase
         $this->assertStringContainsString("(42m)", $row[5]);
     }
 
+    /** Minutes badge color follows the green (<75%) / amber (75-90%) / red (>90%) thresholds. */
     public function testThresholdColoring()
     {
         $green = $this->presenter->toTable([$this->okUsage(["minutes" => ["rawUsed" => 0, "weightedUsed" => 100.0, "included" => 1000, "percentage" => 10.0]])])[1];
@@ -102,6 +108,7 @@ class GitHubActionsUsagePresenterTest extends TestCase
         $this->assertStringContainsString("red", $red[2]);
     }
 
+    /** An org account links to its /organizations/{org}/settings/billing/summary page. */
     public function testOrgAccountLinksToOrganizationBillingPage()
     {
         $usage = $this->okUsage(["account" => "ApiBR", "accountType" => "org"]);
@@ -111,6 +118,7 @@ class GitHubActionsUsagePresenterTest extends TestCase
         $this->assertStringContainsString("https://github.com/organizations/ApiBR/settings/billing/summary", $rows[1][0]);
     }
 
+    /** A personal account links to the generic /settings/billing/summary page (no org segment). */
     public function testUserAccountLinksToPersonalBillingPage()
     {
         $usage = $this->okUsage(["account" => "guibranco", "accountType" => "user"]);

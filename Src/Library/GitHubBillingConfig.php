@@ -63,6 +63,7 @@ class GitHubBillingConfig
         return $this->accounts;
     }
 
+    /** Resolved account by name, or null when not configured. */
     public function getAccount(string $accountName): ?array
     {
         foreach ($this->accounts as $account) {
@@ -80,6 +81,12 @@ class GitHubBillingConfig
         return $this->plans;
     }
 
+    /**
+     * Merges each raw account entry with its plan (overrides win), after
+     * validating planType is known and accountType is allowed by that plan.
+     *
+     * @throws GitHubBillingConfigException On an unknown planType or a disallowed accountType.
+     */
     private function resolveAccounts(array $rawAccounts): array
     {
         $resolved = [];
@@ -121,6 +128,7 @@ class GitHubBillingConfig
         return $resolved;
     }
 
+    /** Reads and associative-decodes a JSON file. @throws GitHubBillingConfigException On a missing/unreadable/invalid file. */
     private function readJsonFile(string $path): array
     {
         $decoded = json_decode($this->readFileContents($path), true);
@@ -132,6 +140,7 @@ class GitHubBillingConfig
         return $decoded;
     }
 
+    /** Raw file contents. @throws GitHubBillingConfigException When the file doesn't exist or can't be read. */
     private function readFileContents(string $path): string
     {
         if (!file_exists($path)) {
@@ -175,6 +184,7 @@ class GitHubBillingConfig
         return $errors;
     }
 
+    /** Checks $data against schema's "type" (or list of types), if present. */
     private static function validateType($data, array $schema, string $path): array
     {
         if (!isset($schema["type"])) {
@@ -189,6 +199,7 @@ class GitHubBillingConfig
         return ["{$path}: expected type " . implode("|", $types) . ", got " . self::describeType($data)];
     }
 
+    /** Checks $data is one of schema's "enum" values, if present. */
     private static function validateEnum($data, array $schema, string $path): array
     {
         if (!isset($schema["enum"]) || in_array($data, $schema["enum"], true)) {
@@ -198,6 +209,7 @@ class GitHubBillingConfig
         return ["{$path}: value must be one of [" . implode(", ", $schema["enum"]) . "]"];
     }
 
+    /** Checks a numeric $data against schema's "minimum"/"maximum", if present. */
     private static function validateRange($data, array $schema, string $path): array
     {
         if (!is_int($data) && !is_float($data)) {
@@ -215,6 +227,7 @@ class GitHubBillingConfig
         return $errors;
     }
 
+    /** Validates required properties and recurses into each of $data's properties against schema. */
     private static function validateObject(object $data, array $schema, string $path): array
     {
         $errors = self::validateRequiredProperties($data, $schema, $path);
@@ -232,6 +245,7 @@ class GitHubBillingConfig
         return $errors;
     }
 
+    /** Checks every name in schema's "required" list exists on $data. */
     private static function validateRequiredProperties(object $data, array $schema, string $path): array
     {
         $errors = [];
@@ -245,6 +259,7 @@ class GitHubBillingConfig
         return $errors;
     }
 
+    /** Validates a property not named in schema's "properties" against "additionalProperties" (false/schema/unrestricted). */
     private static function validateAdditionalProperty(int|string $key, $value, array $schema, string $path): array
     {
         $additionalProperties = $schema["additionalProperties"] ?? null;
@@ -260,6 +275,7 @@ class GitHubBillingConfig
         return [];
     }
 
+    /** Recurses into each element of a "type": "array" list against schema's "items". */
     private static function validateItems(array $data, array $schema, string $path): array
     {
         $errors = [];
@@ -271,6 +287,7 @@ class GitHubBillingConfig
         return $errors;
     }
 
+    /** True when $data matches any one of the given JSON Schema type names. */
     private static function matchesAnyType($data, array $types): bool
     {
         foreach ($types as $type) {
@@ -282,6 +299,7 @@ class GitHubBillingConfig
         return false;
     }
 
+    /** True when $data's runtime type matches a single JSON Schema type name. */
     private static function matchesType($data, string $type): bool
     {
         return match ($type) {
@@ -296,6 +314,7 @@ class GitHubBillingConfig
         };
     }
 
+    /** Human-readable JSON type name for $data, used in schema error messages. */
     private static function describeType($data): string
     {
         return match (true) {

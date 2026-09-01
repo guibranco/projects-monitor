@@ -78,12 +78,14 @@ class GitHubBillingCycle
         return $months;
     }
 
+    /** True when $date (a "Y-m-d..." string) falls within [$start, $end) — start inclusive, end exclusive. */
     public static function isDateInWindow(string $date, DateTimeImmutable $start, DateTimeImmutable $end): bool
     {
         $day = new DateTimeImmutable(substr($date, 0, 10));
         return $day >= $start && $day < $end;
     }
 
+    /** cycleResetDay within $reference's month, clamped to that month's actual day count. */
     private static function resetDateForMonth(DateTimeImmutable $reference, int $cycleResetDay): DateTimeImmutable
     {
         $daysInMonth = (int) $reference->format("t");
@@ -92,6 +94,7 @@ class GitHubBillingCycle
         return new DateTimeImmutable($reference->format("Y-m") . "-" . sprintf("%02d", $clampedDay), $reference->getTimezone());
     }
 
+    /** Whole days between two instants, floored at 0. */
     private static function daysBetween(DateTimeImmutable $from, DateTimeImmutable $to): int
     {
         return max(0, $from->diff($to)->days);

@@ -11,15 +11,21 @@ class ApplicationTest extends TestCase
 
     protected function setUp(): void
     {
+        // onlyMethods([]): mock nothing — getApplicationId() must run for real so
+        // testGetApplicationId can verify it reads the injected $application property.
+        // Without disableOriginalConstructor(), a bare getMock() mocks every public
+        // method by default, which is not what any test here wants.
         $this->application = $this->getMockBuilder(Application::class)
-                                  ->setMethods(['getApplicationId', 'validate', 'authorize'])
+                                  ->disableOriginalConstructor()
+                                  ->onlyMethods([])
                                   ->getMock();
     }
 
     public function testGetApplicationId()
     {
-        $reflection = new ReflectionClass($this->application);
-        $property = $reflection->getProperty('application');
+        // Reflect the real Application class, not the mock subclass — a mock's own
+        // ReflectionClass can't see private properties declared only on its parent.
+        $property = (new ReflectionClass(Application::class))->getProperty('application');
         $property->setAccessible(true);
         $property->setValue($this->application, ['id' => 123]);
 
@@ -37,8 +43,15 @@ class ApplicationTest extends TestCase
         $databaseMock = $this->createMock(Database::class);
         $databaseMock->method('getConnection')->willReturn($this->getMockedConnection(true));
 
-        $application = new Application();
-        $reflection = new ReflectionClass($application);
+        // disableOriginalConstructor(): Application::__construct() unconditionally
+        // opens a live MySQL connection via `new Database()` — running it here would
+        // require a real, reachable DB no matter what's injected afterward below.
+        // onlyMethods([]): mock nothing — a bare getMock() would otherwise mock every
+        // public method by default, but this test needs the real validate()/authorize().
+        $application = $this->getMockBuilder(Application::class)->disableOriginalConstructor()->onlyMethods([])->getMock();
+        // Reflect the real Application class, not the mock subclass — a mock's own
+        // ReflectionClass can't see private properties declared only on its parent.
+        $reflection = new ReflectionClass(Application::class);
         $configProperty = $reflection->getProperty('config');
         $configProperty->setAccessible(true);
         $configProperty->setValue($application, $configMock);
@@ -61,8 +74,15 @@ class ApplicationTest extends TestCase
         $databaseMock = $this->createMock(Database::class);
         $databaseMock->method('getConnection')->willReturn($this->getMockedConnection(false));
 
-        $application = new Application();
-        $reflection = new ReflectionClass($application);
+        // disableOriginalConstructor(): Application::__construct() unconditionally
+        // opens a live MySQL connection via `new Database()` — running it here would
+        // require a real, reachable DB no matter what's injected afterward below.
+        // onlyMethods([]): mock nothing — a bare getMock() would otherwise mock every
+        // public method by default, but this test needs the real validate()/authorize().
+        $application = $this->getMockBuilder(Application::class)->disableOriginalConstructor()->onlyMethods([])->getMock();
+        // Reflect the real Application class, not the mock subclass — a mock's own
+        // ReflectionClass can't see private properties declared only on its parent.
+        $reflection = new ReflectionClass(Application::class);
         $configProperty = $reflection->getProperty('config');
         $configProperty->setAccessible(true);
         $configProperty->setValue($application, $configMock);
@@ -79,8 +99,15 @@ class ApplicationTest extends TestCase
         $configMock = $this->createMock(Configuration::class);
         $configMock->method('getRequestHeaders')->willReturn([]);
 
-        $application = new Application();
-        $reflection = new ReflectionClass($application);
+        // disableOriginalConstructor(): Application::__construct() unconditionally
+        // opens a live MySQL connection via `new Database()` — running it here would
+        // require a real, reachable DB no matter what's injected afterward below.
+        // onlyMethods([]): mock nothing — a bare getMock() would otherwise mock every
+        // public method by default, but this test needs the real validate()/authorize().
+        $application = $this->getMockBuilder(Application::class)->disableOriginalConstructor()->onlyMethods([])->getMock();
+        // Reflect the real Application class, not the mock subclass — a mock's own
+        // ReflectionClass can't see private properties declared only on its parent.
+        $reflection = new ReflectionClass(Application::class);
         $configProperty = $reflection->getProperty('config');
         $configProperty->setAccessible(true);
         $configProperty->setValue($application, $configMock);

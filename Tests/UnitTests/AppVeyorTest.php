@@ -37,8 +37,11 @@ class AppVeyorTest extends TestCase
         $builds = $this->appVeyor->getBuilds();
 
         $this->assertCount(2, $builds);
-        $this->assertEquals("Test Project", strip_tags($builds[1][0]));
-        $this->assertEquals("1.0.0", strip_tags($builds[1][1]));
+        // The project name/version live in the badge image's URL and title attribute,
+        // not as HTML text content, so strip_tags() would always yield an empty string —
+        // ShieldsIo encodes a space as "_" in the badge URL path segment.
+        $this->assertStringContainsString("Test_Project", $builds[1][0]);
+        $this->assertStringContainsString("1.0.0", $builds[1][1]);
         $this->assertEquals("2023-10-01 12:00:00", $builds[1][2]);
     }
 

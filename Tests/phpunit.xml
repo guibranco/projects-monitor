@@ -1,11 +1,24 @@
-<phpunit>
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="../Src/vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="../Src/vendor/autoload.php">
     <php>
         <ini name="error_reporting" value="-1"/>
     </php>
-    <bootstrap>vendor/autoload.php</bootstrap>
     <testsuites>
         <testsuite name="Application Test Suite">
-            <directory>./tests/UnitTests/</directory>
+            <directory>./UnitTests/</directory>
         </testsuite>
     </testsuites>
+    <source>
+        <include>
+            <directory suffix=".php">../Src/Library</directory>
+            <directory suffix=".php">../Src/Worker</directory>
+        </include>
+        <exclude>
+            <directory>../Src/vendor</directory>
+            <directory>../Src/cache</directory>
+            <directory>../Src/secrets</directory>
+        </exclude>
+    </source>
 </phpunit>

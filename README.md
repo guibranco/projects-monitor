@@ -98,6 +98,15 @@ The full set of integrations and their secrets files:
 | GStraccini Bot              | `gstracciniBot.secrets.php`          |
 | LogStream                   | `logStream.secrets.php`              |
 
+### GitHub Actions billing
+
+`Src/Library/github-billing.json` (validated against `github-billing.schema.json`) is the source of truth for which GitHub accounts are polled for Actions included-usage (minutes/storage) and how each account's quota is resolved — see [GitHubBillingConfig.php](Src/Library/GitHubBillingConfig.php). Each account is an independent billing pool: minutes, storage, and reset dates are never summed across accounts, only compared for a "highest utilisation" warning.
+
+- **To change a plan** (e.g. an org upgrades from `free` to `team`), edit that account's `planType` in the JSON — no code change needed. `overrides` (per-account `minutes`/`storageMb`) win over the plan default; use them when GitHub's billing page shows a different allowance than the published plan table (see the `_source` link in the JSON).
+- **Validation is eager and loud**: an unknown `planType`, or an `accountType` the plan doesn't allow (e.g. an org marked `pro`), throws `GitHubBillingConfigException` naming the offending account rather than silently producing a wrong percentage.
+- **Token scopes**: the shared `gitHubToken` from `gitHub.secrets.php` needs to cover Actions billing reads for every configured account — a classic PAT needs `admin:org` (for the org endpoints) plus user/plan read for the personal account; a fine-grained PAT needs "Plan" (user, read) and "Administration" (org, read). If one token can't cover every account, set that account's `tokenSecret` in the JSON to the name of another global variable defined in `gitHub.secrets.php` (the JSON only ever holds a variable *name*, never a token value).
+- **Where the numbers come from**: allowances come from the JSON, not the API — GitHub's usage endpoints don't return the included quota. `GitHubActionsUsage` also infers an allowance from `discountAmount`/`pricePerUnit` per SKU and logs a warning (category `github-billing`) when it diverges from the configured value by more than 5%, as an early signal that a plan changed and the JSON is stale.
+
 ### Tests
 
 ```bash

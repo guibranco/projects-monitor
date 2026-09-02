@@ -107,7 +107,10 @@ class RabbitMq
         $safeName = htmlspecialchars(urlencode($name), ENT_QUOTES, 'UTF-8');
         $purgeBtn = "<button class=\"btn btn-warning btn-sm\" data-action=\"purge\" data-host=\"{$safeHost}\" data-vhost=\"{$safeVhost}\" data-queue=\"{$safeName}\" aria-label=\"Purge {$name}\">Purge</button>";
 
-        $item = array($host, $imgMessages, $imgConsumers, $purgeBtn);
+        // Display only — data-host above keeps the real hostname so purge requests still work.
+        $displayHost = str_replace(".lmq.cloudamqp.com", "", $host);
+
+        $item = array($displayHost, $imgMessages, $imgConsumers, $purgeBtn);
 
         return array("item" => $item, "messages" => $messages);
     }

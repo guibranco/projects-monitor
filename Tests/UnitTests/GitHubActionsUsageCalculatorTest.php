@@ -6,11 +6,17 @@ use GuiBranco\ProjectsMonitor\Library\GitHubActionsUsageCalculator;
 /** Tests GitHubActionsUsageCalculator's pure minutes/storage/allowance/top-repos math. */
 class GitHubActionsUsageCalculatorTest extends TestCase
 {
-    /** Builds a fake Actions "minutes" usageItem, overriding only the given fields. */
+    /**
+     * Builds a fake Actions "minutes" usageItem, overriding only the given
+     * fields. Tagged as the Linux SKU by default so resolveLinuxBasePrice()
+     * picks up pricePerUnit as the 1x baseline, matching how a real batch
+     * self-calibrates — override "sku" explicitly for non-Linux fixtures.
+     */
     private function item(array $fields): object
     {
         return (object) array_merge([
             "product" => "Actions",
+            "sku" => "actions_linux",
             "unitType" => "minutes",
             "pricePerUnit" => 0.008,
             "grossQuantity" => 0,
@@ -86,7 +92,28 @@ class GitHubActionsUsageCalculatorTest extends TestCase
         $this->assertSame(100.0, $result["raw"]);
     }
 
-    /** Only Actions items with a GB-based unitType count toward storage; minutes/other products don't. */
+    /**
+     * Regression: the real non-summary /settings/billing/usage endpoint
+     * returns "product":"actions"/"packages" in lowercase, while the summary
+     * endpoint has been observed returning "Actions" capitalized — a
+     * public-preview API inconsistency, not a meaningful distinction. Every
+     * product check must be case-insensitive or usage from one endpoint
+     * silently zeroes out (this is what caused topRepositories to always be
+     * empty despite real usage existing).
+     */
+    public function testMinutesMatchesLowercaseProductFromTheNonSummaryEndpoint()
+    {
+        $items = [
+            $this->item(["product" => "actions", "grossQuantity" => 100]),
+            $this->item(["product" => "packages", "grossQuantity" => 999]), // must not count
+        ];
+
+        $result = GitHubActionsUsageCalculator::minutes($items);
+
+        $this->assertSame(100.0, $result["raw"]);
+    }
+
+    /** Only Actions items with a GB-based unitType count toward storage; minutes/other products don't. Here 1 hour elapsed = no averaging. */
     public function testStorageGbSumsActionsGigabyteItemsOnly()
     {
         $items = [
@@ -96,13 +123,44 @@ class GitHubActionsUsageCalculatorTest extends TestCase
             $this->item(["product" => "Packages", "unitType" => "GigabyteHours", "grossQuantity" => 999]),
         ];
 
-        $this->assertSame(5.0, GitHubActionsUsageCalculator::storageGb($items));
+        $this->assertSame(5.0, GitHubActionsUsageCalculator::storageGb($items, 1.0));
+    }
+
+    /** Regression: lowercase "actions"/"packages" from the real non-summary endpoint must match too. */
+    public function testStorageGbMatchesLowercaseProductFromTheNonSummaryEndpoint()
+    {
+        $items = [
+            $this->item(["product" => "actions", "unitType" => "GigabyteHours", "grossQuantity" => 3.5]),
+            $this->item(["product" => "packages", "unitType" => "GigabyteHours", "grossQuantity" => 999]), // must not count
+        ];
+
+        $this->assertSame(3.5, GitHubActionsUsageCalculator::storageGb($items, 1.0));
+    }
+
+    /**
+     * GigabyteHours is GB held × hours held, an accumulated metric — dividing
+     * by hoursElapsed converts it to an average-GB-held figure comparable to
+     * the billing UI's point-in-time storage number.
+     */
+    public function testStorageGbDividesByHoursElapsedToApproximateAverageGb()
+    {
+        $items = [$this->item(["unitType" => "GigabyteHours", "grossQuantity" => 240.0])];
+
+        $this->assertSame(10.0, GitHubActionsUsageCalculator::storageGb($items, 24.0));
+    }
+
+    /** hoursElapsed <= 0 (e.g. a clock edge case) falls back to the raw sum rather than dividing by zero. */
+    public function testStorageGbFallsBackToRawSumWhenHoursElapsedIsNotPositive()
+    {
+        $items = [$this->item(["unitType" => "GigabyteHours", "grossQuantity" => 42.0])];
+
+        $this->assertSame(42.0, GitHubActionsUsageCalculator::storageGb($items, 0.0));
     }
 
     /** No usageItems yields zero storage. */
     public function testStorageGbZeroUsage()
     {
-        $this->assertSame(0.0, GitHubActionsUsageCalculator::storageGb([]));
+        $this->assertSame(0.0, GitHubActionsUsageCalculator::storageGb([], 24.0));
     }
 
     /** discountAmount/pricePerUnit infers the included-minutes allowance from a single SKU. */
@@ -149,6 +207,25 @@ class GitHubActionsUsageCalculatorTest extends TestCase
             ["repository" => "repo-b", "minutes" => 200.0],
             ["repository" => "repo-a", "minutes" => 60.0],
         ], $top);
+    }
+
+    /**
+     * Regression: this is the exact bug that shipped — the non-summary
+     * endpoint returns lowercase "product":"actions"/"packages" (confirmed
+     * against a real response), but the case-sensitive "Actions" check
+     * silently filtered out every row, leaving topRepositories always empty
+     * despite real usage existing.
+     */
+    public function testTopRepositoriesByMinutesMatchesLowercaseProductFromTheNonSummaryEndpoint()
+    {
+        $rows = [
+            (object) ["date" => "2026-09-01T05:31:07Z", "product" => "actions", "sku" => "Actions Linux", "quantity" => 98.0, "unitType" => "Minutes", "pricePerUnit" => 0.006, "repositoryName" => "projects-monitor"],
+            (object) ["date" => "2026-09-01T00:00:00Z", "product" => "packages", "sku" => "Packages storage", "quantity" => 0.7, "unitType" => "GigabyteHours", "pricePerUnit" => 0.00033602, "repositoryName" => ""],
+        ];
+
+        $top = GitHubActionsUsageCalculator::topRepositoriesByMinutes($rows, 5);
+
+        $this->assertSame([["repository" => "projects-monitor", "minutes" => 98.0]], $top);
     }
 
     /** More than $limit repositories are truncated to $limit results. */

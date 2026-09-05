@@ -14,7 +14,14 @@ namespace GuiBranco\ProjectsMonitor\Library;
  */
 class GitHubActionsUsageCalculator
 {
-    public const DEFAULT_LINUX_BASE_PRICE = 0.008;
+    /**
+     * Fallback only, used when a batch carries no Linux-SKU line item to
+     * calibrate against (see resolveLinuxBasePrice()). GitHub's real Linux
+     * per-minute price has already been observed at $0.006 (not the $0.008
+     * originally assumed here) — pricing drifts, so minutes()/
+     * inferIncludedMinutes() prefer deriving it live from the data itself.
+     */
+    public const DEFAULT_LINUX_BASE_PRICE = 0.006;
 
     /**
      * @param array<int, object> $usageItems Actions usageItems for one account/window.
@@ -22,6 +29,7 @@ class GitHubActionsUsageCalculator
      */
     public static function minutes(array $usageItems, float $linuxBasePrice = self::DEFAULT_LINUX_BASE_PRICE): array
     {
+        $linuxBasePrice = self::resolveLinuxBasePrice($usageItems, $linuxBasePrice);
         $raw = 0.0;
         $weighted = 0.0;
 
@@ -35,14 +43,49 @@ class GitHubActionsUsageCalculator
     }
 
     /**
-     * @param array<int, object> $usageItems Actions usageItems for one account/window.
+     * Prefers the batch's own Linux-SKU pricePerUnit over the hardcoded
+     * fallback — GitHub's per-minute prices change over time (already caught
+     * one drift: $0.008 assumed vs. $0.006 observed), and every usageItems
+     * batch that includes any Linux usage already tells us today's real rate.
      */
-    public static function storageGb(array $usageItems): float
+    private static function resolveLinuxBasePrice(array $usageItems, float $fallback): float
+    {
+        foreach ($usageItems as $item) {
+            if (!self::isActionsProduct($item) || strtolower((string) ($item->unitType ?? "")) !== "minutes") {
+                continue;
+            }
+
+            if (!str_contains(strtolower((string) ($item->sku ?? "")), "linux")) {
+                continue;
+            }
+
+            $pricePerUnit = (float) ($item->pricePerUnit ?? 0);
+            if ($pricePerUnit > 0) {
+                return $pricePerUnit;
+            }
+        }
+
+        return $fallback;
+    }
+
+    /**
+     * GitHub bills Actions storage in GigabyteHours — GB held × hours held,
+     * an accumulated cloud-storage metric, not a point-in-time GB snapshot
+     * (confirmed against GitHub's own billing-automation docs; there is no
+     * multiplier here the way there is for minutes, but treating the raw sum
+     * as "GB used" overstates it by roughly the hour count in the cycle so
+     * far). Dividing by $hoursElapsed approximates the average GB held over
+     * the window, comparable to the snapshot figure the billing UI shows.
+     *
+     * @param array<int, object> $usageItems Actions usageItems for one account/window.
+     * @param float $hoursElapsed Hours since the account's cycle started; must be > 0.
+     */
+    public static function storageGb(array $usageItems, float $hoursElapsed): float
     {
         $total = 0.0;
 
         foreach ($usageItems as $item) {
-            if (($item->product ?? null) !== "Actions") {
+            if (!self::isActionsProduct($item)) {
                 continue;
             }
 
@@ -53,6 +96,12 @@ class GitHubActionsUsageCalculator
 
             $total += (float) ($item->grossQuantity ?? 0);
         }
+
+        if ($hoursElapsed <= 0) {
+            return $total;
+        }
+
+        $total /= $hoursElapsed;
 
         return $total;
     }
@@ -67,6 +116,7 @@ class GitHubActionsUsageCalculator
      */
     public static function inferIncludedMinutes(array $usageItems, float $linuxBasePrice = self::DEFAULT_LINUX_BASE_PRICE): ?float
     {
+        $linuxBasePrice = self::resolveLinuxBasePrice($usageItems, $linuxBasePrice);
         $inferred = 0.0;
         $hasSignal = false;
 
@@ -107,11 +157,12 @@ class GitHubActionsUsageCalculator
      */
     public static function topRepositoriesByMinutes(array $usageRows, int $limit = 5, float $linuxBasePrice = self::DEFAULT_LINUX_BASE_PRICE): array
     {
+        $linuxBasePrice = self::resolveLinuxBasePrice($usageRows, $linuxBasePrice);
         $totals = [];
 
         foreach ($usageRows as $row) {
             $unitType = strtolower((string) ($row->unitType ?? ""));
-            if (($row->product ?? null) !== "Actions" || $unitType !== "minutes") {
+            if (!self::isActionsProduct($row) || $unitType !== "minutes") {
                 continue;
             }
 
@@ -144,9 +195,20 @@ class GitHubActionsUsageCalculator
 
         return array_values(array_filter(
             $usageItems,
-            static fn ($item) => ($item->product ?? null) === "Actions"
+            static fn ($item) => self::isActionsProduct($item)
                 && strtolower((string) ($item->unitType ?? "")) === $unitType
         ));
+    }
+
+    /**
+     * Case-insensitive product check — the summary and non-summary usage
+     * endpoints have been observed to disagree on casing ("Actions" vs.
+     * "actions") for what is otherwise the same field, a public-preview API
+     * inconsistency rather than a meaningful distinction.
+     */
+    private static function isActionsProduct(object $item): bool
+    {
+        return strtolower((string) ($item->product ?? "")) === "actions";
     }
 
     /**

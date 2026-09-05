@@ -156,8 +156,12 @@ class GitHubActionsUsage
         $usageItems = $fetched["usageItems"];
         $windowedRows = $fetched["usageRows"];
 
+        // Floored at 1 hour so a fetch right at cycle start doesn't divide by
+        // (near) zero and briefly report an absurd average storage figure.
+        $hoursElapsed = max(1.0, ($now->getTimestamp() - $cycle["start"]->getTimestamp()) / 3600);
+
         $minutes = GitHubActionsUsageCalculator::minutes($usageItems);
-        $storageGb = GitHubActionsUsageCalculator::storageGb($usageItems);
+        $storageGb = GitHubActionsUsageCalculator::storageGb($usageItems, $hoursElapsed);
         $inferredMinutes = GitHubActionsUsageCalculator::inferIncludedMinutes($usageItems);
 
         if (GitHubActionsUsageCalculator::allowanceDiverges((float) $account["minutes"], $inferredMinutes)) {

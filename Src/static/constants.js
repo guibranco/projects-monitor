@@ -44,6 +44,7 @@ export const API_ENDPOINTS = {
   WEBHOOKS: "api/v1/webhooks",
   WEBHOOKS_STATISTICS: "api/v1/webhooks-statistics",
   WEBHOOKS_PR_PROCESSING: "api/v1/webhooks-pull-requests-processing",
+  WEBHOOKS_PR_IDLE: "api/v1/webhooks-pull-requests-idle",
   WEBHOOKS_BRANCHES_PROCESSING: "api/v1/webhooks-branches-processing",
   WEBHOOKS_COMMENTS_PROCESSING: "api/v1/webhooks-comments-processing",
   WEBHOOKS_INSTALLATIONS_PROCESSING: "api/v1/webhooks-installations-processing",

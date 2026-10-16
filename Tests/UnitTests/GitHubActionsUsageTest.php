@@ -97,6 +97,7 @@ class GitHubActionsUsageTest extends TestCase
     {
         return (object) [
             "product" => "Actions",
+            "sku" => "actions_linux",
             "unitType" => "minutes",
             "pricePerUnit" => 0.008,
             "grossQuantity" => $grossQuantity,
@@ -366,10 +367,10 @@ class GitHubActionsUsageTest extends TestCase
         $usagePath = $this->trackCacheFile("usage", $account, $year, $month);
 
         $summaryBody = json_encode(["usageItems" => [
-            ["product" => "Actions", "unitType" => "minutes", "pricePerUnit" => 0.008, "grossQuantity" => 100, "discountAmount" => 0],
+            ["product" => "Actions", "sku" => "actions_linux", "unitType" => "minutes", "pricePerUnit" => 0.008, "grossQuantity" => 100, "discountAmount" => 0],
         ]]);
         $rowsBody = json_encode([
-            ["product" => "Actions", "unitType" => "minutes", "pricePerUnit" => 0.008, "quantity" => 100, "repositoryName" => "guibranco/demo", "date" => $now->format("Y-m-d")],
+            ["product" => "Actions", "sku" => "actions_linux", "unitType" => "minutes", "pricePerUnit" => 0.008, "quantity" => 100, "repositoryName" => "guibranco/demo", "date" => $now->format("Y-m-d")],
         ]);
 
         $config = $this->buildConfig([$this->accountEntry($account, "user")]);
@@ -395,7 +396,7 @@ class GitHubActionsUsageTest extends TestCase
         $usagePath = $this->trackCacheFile("usage", $account, $year, $month);
 
         file_put_contents($summaryPath, json_encode(["usageItems" => [
-            ["product" => "Actions", "unitType" => "minutes", "pricePerUnit" => 0.008, "grossQuantity" => 200, "discountAmount" => 0],
+            ["product" => "Actions", "sku" => "actions_linux", "unitType" => "minutes", "pricePerUnit" => 0.008, "grossQuantity" => 200, "discountAmount" => 0],
         ]]));
         file_put_contents($usagePath, json_encode([]));
 
@@ -424,7 +425,7 @@ class GitHubActionsUsageTest extends TestCase
         file_put_contents($usagePath, "{not valid json");
 
         $summaryBody = json_encode(["usageItems" => [
-            ["product" => "Actions", "unitType" => "minutes", "pricePerUnit" => 0.008, "grossQuantity" => 300, "discountAmount" => 0],
+            ["product" => "Actions", "sku" => "actions_linux", "unitType" => "minutes", "pricePerUnit" => 0.008, "grossQuantity" => 300, "discountAmount" => 0],
         ]]);
         $rowsBody = json_encode([]);
 
@@ -448,7 +449,7 @@ class GitHubActionsUsageTest extends TestCase
         $usagePath = $this->trackCacheFile("usage", $account, $year, $month);
 
         file_put_contents($summaryPath, json_encode(["usageItems" => [
-            ["product" => "Actions", "unitType" => "minutes", "pricePerUnit" => 0.008, "grossQuantity" => 400, "discountAmount" => 0],
+            ["product" => "Actions", "sku" => "actions_linux", "unitType" => "minutes", "pricePerUnit" => 0.008, "grossQuantity" => 400, "discountAmount" => 0],
         ]]));
         file_put_contents($usagePath, json_encode([]));
         // Force both cache files outside the TTL window so a live fetch is attempted.

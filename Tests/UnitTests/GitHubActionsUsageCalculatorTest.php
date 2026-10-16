@@ -194,9 +194,9 @@ class GitHubActionsUsageCalculatorTest extends TestCase
     public function testTopRepositoriesByMinutesSortsAndLimits()
     {
         $rows = [
-            (object) ["product" => "Actions", "unitType" => "minutes", "pricePerUnit" => 0.008, "quantity" => 50, "repositoryName" => "repo-a"],
-            (object) ["product" => "Actions", "unitType" => "minutes", "pricePerUnit" => 0.008, "quantity" => 200, "repositoryName" => "repo-b"],
-            (object) ["product" => "Actions", "unitType" => "minutes", "pricePerUnit" => 0.008, "quantity" => 10, "repositoryName" => "repo-a"],
+            (object) ["product" => "Actions", "sku" => "actions_linux", "unitType" => "minutes", "pricePerUnit" => 0.008, "quantity" => 50, "repositoryName" => "repo-a"],
+            (object) ["product" => "Actions", "sku" => "actions_linux", "unitType" => "minutes", "pricePerUnit" => 0.008, "quantity" => 200, "repositoryName" => "repo-b"],
+            (object) ["product" => "Actions", "sku" => "actions_linux", "unitType" => "minutes", "pricePerUnit" => 0.008, "quantity" => 10, "repositoryName" => "repo-a"],
             (object) ["product" => "Actions", "unitType" => "GigabyteHours", "pricePerUnit" => 0.25, "quantity" => 5, "repositoryName" => "repo-b"],
             (object) ["product" => "Packages", "unitType" => "minutes", "pricePerUnit" => 0.008, "quantity" => 999, "repositoryName" => "repo-c"],
         ];

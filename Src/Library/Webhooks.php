@@ -131,6 +131,12 @@ class Webhooks
         return $this->doRequest("pull-requests/processing", "get", 200);
     }
 
+    public function getPullRequestsIdle(): mixed
+    {
+        LogStream::debug("Fetching idle pull requests", null, "webhooks");
+        return $this->doRequest("pull-requests/idle", "get", 200);
+    }
+
     public function getBranchesProcessing(): mixed
     {
         LogStream::debug("Fetching branches pending processing", null, "webhooks");

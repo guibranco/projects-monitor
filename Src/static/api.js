@@ -427,6 +427,7 @@ export class DataLoader {
     );
     this.apiManager.load(API_ENDPOINTS.WEBHOOKS_STATISTICS, (data) => window.showWebhookProcessingStats?.(data));
     this.apiManager.load(API_ENDPOINTS.WEBHOOKS_PR_PROCESSING, (data) => window.showWebhookPullRequestsProcessing?.(data));
+    this.apiManager.load(API_ENDPOINTS.WEBHOOKS_PR_IDLE, (data) => window.showWebhookPullRequestsIdle?.(data));
     this.apiManager.load(API_ENDPOINTS.WEBHOOKS_BRANCHES_PROCESSING, (data) => window.showBranchesProcessing?.(data));
     this.apiManager.load(API_ENDPOINTS.WEBHOOKS_COMMENTS_PROCESSING, (data) => window.showCommentsProcessing?.(data));
     this.apiManager.load(API_ENDPOINTS.WEBHOOKS_INSTALLATIONS_PROCESSING, (data) => window.showInstallationsProcessing?.(data));

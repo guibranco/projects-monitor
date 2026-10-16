@@ -802,6 +802,26 @@ export class DataDisplayManager {
   }
 
   /**
+   * Renders open pull requests updated after the bot last processed them and
+   * idle for over a day (webhooks GET /pull-requests/idle, one per
+   * repository, oldest first). The first row is the next one the webhooks
+   * hourly idle-pull-requests worker will re-request.
+   */
+  showWebhookPullRequestsIdle(response) {
+    this.#renderProcessingList(response, "pr_idle", "No idle pull requests.", [
+      { label: "#Seq", render: (i) => i.sequence },
+      { label: "Repository", render: (i) => this.#repoLink(i.repositoryOwner, i.repositoryName) },
+      { label: "PR", render: (i) => `<a href="https://github.com/${this.#escHtml(i.repositoryOwner)}/${this.#escHtml(i.repositoryName)}/pull/${i.number}" target="_blank" rel="noopener noreferrer">#${i.number}</a>` },
+      { label: "Title", render: (i) => this.#fmt(i.title) },
+      { label: "Branch", render: (i) => this.#refCell(i.ref) },
+      { label: "Sender", render: (i) => this.#fmt(i.senderLogin) },
+      { label: "Updated At", render: (i) => this.#fmt(i.updatedAt) },
+      { label: "Processing Date", render: (i) => this.#fmt(i.processingDate) },
+      { label: "State", render: (i) => this.#stateBadge(i.processingState) },
+    ]);
+  }
+
+  /**
    * Renders repository events pending processing.
    */
   showRepositoriesProcessing(response) {

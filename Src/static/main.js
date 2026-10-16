@@ -48,6 +48,7 @@ class DashboardApp {
     window.showWebhook = this.dataDisplayManager.showWebhook.bind(this.dataDisplayManager);
     window.showWebhookProcessingStats = this.dataDisplayManager.showWebhookProcessingStats.bind(this.dataDisplayManager);
     window.showWebhookPullRequestsProcessing = this.dataDisplayManager.showWebhookPullRequestsProcessing.bind(this.dataDisplayManager);
+    window.showWebhookPullRequestsIdle = this.dataDisplayManager.showWebhookPullRequestsIdle.bind(this.dataDisplayManager);
     window.showBranchesProcessing = this.dataDisplayManager.showBranchesProcessing.bind(this.dataDisplayManager);
     window.showCommentsProcessing = this.dataDisplayManager.showCommentsProcessing.bind(this.dataDisplayManager);
     window.showInstallationsProcessing = this.dataDisplayManager.showInstallationsProcessing.bind(this.dataDisplayManager);

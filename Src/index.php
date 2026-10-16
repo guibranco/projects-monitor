@@ -327,6 +327,14 @@ $configuration = new Configuration();
 
          <div class="full-width-section">
             <div class="section-header">
+               <i class="bi bi-clock-history me-2"></i>Idle Pull Requests <span id="counter_pr_idle"
+                  class="badge rounded-pill"></span>
+            </div>
+            <div id="pr_idle" class="section-content"></div>
+         </div>
+
+         <div class="full-width-section">
+            <div class="section-header">
                <i class="bi bi-upload me-2"></i>Pushes Pending Processing <span id="counter_pushes_processing"
                   class="badge rounded-pill"></span>
             </div>

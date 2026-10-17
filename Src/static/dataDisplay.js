@@ -646,6 +646,7 @@ export class DataDisplayManager {
       case "RE_REQUESTED": return "bg-warning text-dark";
       case "UPDATED":      return "bg-info text-dark";
       case "PROCESSING":   return "bg-danger";
+      case "IDLE":         return "bg-dark";
       default:             return "bg-secondary";
     }
   }
@@ -802,10 +803,20 @@ export class DataDisplayManager {
   }
 
   /**
-   * Renders open pull requests updated after the bot last processed them and
-   * idle for over a day (webhooks GET /pull-requests/idle, one per
-   * repository, oldest first). The first row is the next one the webhooks
-   * hourly idle-pull-requests worker will re-request.
+   * Badge for an Idle Pull Request's backoff status (webhooks ADR-0010):
+   * DUE is next in line for an Idle Retry, WAITING is inside its backoff
+   * window, GAVE_UP hit the 10-retry cap.
+   */
+  #idleStatusBadge(status) {
+    const cls = { DUE: "bg-warning text-dark", WAITING: "bg-info text-dark", GAVE_UP: "bg-danger" }[status] ?? "bg-secondary";
+    return `<span class="badge ${cls}">${this.#escHtml(status)}</span>`;
+  }
+
+  /**
+   * Renders Idle Pull Requests from webhooks GET /pull-requests/idle: open,
+   * already processed by the bot and untouched for at least a day, oldest
+   * first. The oldest DUE row is the next one the webhooks hourly
+   * idle-pull-requests worker gives an Idle Retry (marks IDLE).
    */
   showWebhookPullRequestsIdle(response) {
     this.#renderProcessingList(response, "pr_idle", "No idle pull requests.", [
@@ -817,7 +828,8 @@ export class DataDisplayManager {
       { label: "Sender", render: (i) => this.#fmt(i.senderLogin) },
       { label: "Updated At", render: (i) => this.#fmt(i.updatedAt) },
       { label: "Processing Date", render: (i) => this.#fmt(i.processingDate) },
-      { label: "State", render: (i) => this.#stateBadge(i.processingState) },
+      { label: "Retries", render: (i) => `${Number(i.idleRetryCount ?? 0)}/10` },
+      { label: "Status", render: (i) => this.#idleStatusBadge(i.idleStatus) },
     ]);
   }
 
@@ -1052,8 +1064,8 @@ export class DataDisplayManager {
    * Rows = database tables, columns = processing states (NEW, RE_REQUESTED, UPDATED, PROCESSING, PROCESSED).
    */
   showWebhookProcessingStats(response) {
-    const states = ["NEW", "RE_REQUESTED", "UPDATED", "PROCESSING", "PROCESSED"];
-    const pendingStates = ["NEW", "RE_REQUESTED", "UPDATED", "PROCESSING"];
+    const states = ["NEW", "RE_REQUESTED", "UPDATED", "PROCESSING", "IDLE", "PROCESSED"];
+    const pendingStates = ["NEW", "RE_REQUESTED", "UPDATED", "PROCESSING", "IDLE"];
     const tables = [
       "github_branches",
       "github_comments",

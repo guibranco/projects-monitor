@@ -664,8 +664,8 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 document.getElementById('stat-bot-queue').textContent = '—';
                 return;
             }
-            const states = ['NEW', 'RE_REQUESTED', 'UPDATED', 'PROCESSING'];
-            const labels = ['New', 'Re-Requested', 'Updated', 'Processing'];
+            const states = ['NEW', 'RE_REQUESTED', 'UPDATED', 'PROCESSING', 'IDLE'];
+            const labels = ['New', 'Re-Requested', 'Updated', 'Processing', 'Idle'];
             const tables = [
                 'github_branches', 'github_comments', 'github_installations',
                 'github_issues', 'github_pull_requests', 'github_pushes',

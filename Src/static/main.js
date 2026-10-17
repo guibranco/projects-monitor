@@ -363,7 +363,7 @@ class DashboardApp {
         '{"senders":[],"events":[["Event","Hits"]],"feed":[],"repositories":[],"total":0,"statistics":[["Date","Table #1"],["01/01",0]],"statistics_github":[["Date","Table #1"],["01/01",0]],"branches":[], "pull_requests":[], "workflow_runs":[], "total_workflow_runs":0, "installations":0, "installation_repositories": [], "installation_repositories_count": 0}'
       ),
       errors_db: { errors: [], total: 0 },
-      webhooks_statistics: { NEW: {}, RE_REQUESTED: {}, UPDATED: {}, PROCESSING: {}, PROCESSED: {} },
+      webhooks_statistics: { NEW: {}, RE_REQUESTED: {}, UPDATED: {}, PROCESSING: {}, IDLE: {}, PROCESSED: {} },
       workflow_runs_management: { workflow_runs: [], total: 0 }
     };
 

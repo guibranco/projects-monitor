@@ -24,10 +24,9 @@ if (!isset($input['name'])) {
     exit;
 }
 
-$allowedWorkers = ['service', 'cleanup', 'database-service', 'maintenance'];
 $name = filter_var($input['name'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-if (!in_array($name, $allowedWorkers, true)) {
+if (!in_array($name, Webhooks::RUNNABLE_WORKER_NAMES, true)) {
     http_response_code(422);
     echo json_encode(["error" => "Unknown worker name: {$name}"]);
     exit;

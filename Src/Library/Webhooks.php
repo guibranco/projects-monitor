@@ -10,7 +10,11 @@ use GuiBranco\ProjectsMonitor\Library\LogStream;
 
 class Webhooks
 {
-    private const WORKER_NAMES = ["service", "cleanup", "database-service", "maintenance"];
+    /**
+     * Workers that can be triggered via POST /workers/{name}/run (run mode
+     * "http"). queue-relay is daemon-only and deliberately absent.
+     */
+    public const RUNNABLE_WORKER_NAMES = ["service", "cleanup", "database-service", "maintenance", "hooks", "idle-pull-requests"];
 
     private const RETRYABLE_CONCLUSIONS = ["failure", "timed_out", "cancelled", "action_required"];
 
@@ -188,7 +192,7 @@ class Webhooks
 
     public function runWorker($name): mixed
     {
-        if (!in_array($name, self::WORKER_NAMES, true)) {
+        if (!in_array($name, self::RUNNABLE_WORKER_NAMES, true)) {
             throw new \InvalidArgumentException("Invalid worker name provided");
         }
 
@@ -365,8 +369,11 @@ class Webhooks
             $sleep = htmlspecialchars((string) ($worker["daemon_sleep_seconds"] ?? "—"), ENT_QUOTES);
             $memoryLimit = htmlspecialchars($worker["memory_limit"] ?? "—", ENT_QUOTES);
             $systemdService = htmlspecialchars($worker["systemd_service"] ?? "", ENT_QUOTES);
-            $runBtn = "<button class=\"btn btn-primary btn-sm\" data-action=\"run-worker\" data-name=\"{$name}\" aria-label=\"Run {$name} now\">"
-                . "<i class=\"bi bi-play-fill\"></i> Run</button>";
+            // Only workers with the "http" run mode can be triggered (not queue-relay).
+            $runBtn = in_array("http", $worker["run_modes"] ?? [], true)
+                ? "<button class=\"btn btn-primary btn-sm\" data-action=\"run-worker\" data-name=\"{$name}\" aria-label=\"Run {$name} now\">"
+                    . "<i class=\"bi bi-play-fill\"></i> Run</button>"
+                : "<span class=\"text-muted small\" title=\"Daemon-only worker\">—</span>";
 
             $rows[] = [$name, $description, $runModes, $sleep, $memoryLimit, $systemdService, $runBtn];
         }

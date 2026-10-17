@@ -253,7 +253,7 @@ export class ApiManager {
   /**
    * Triggers a one-shot run of the named background worker via the Webhooks API.
    *
-   * @param {string} name - Worker identifier (service, cleanup, database-service, maintenance).
+   * @param {string} name - Worker identifier (service, cleanup, database-service, maintenance, hooks, idle-pull-requests).
    */
   async runWorker(name) {
     try {

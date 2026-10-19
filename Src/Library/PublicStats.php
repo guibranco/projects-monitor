@@ -208,15 +208,17 @@ class PublicStats
      * processing metadata (sequence, processing date, component versions,
      * refs) never reaches the public cache file. Field names are kept
      * identical to the webhooks API so the public and authenticated
-     * renderers read the same shape. Anything that isn't a list of rows
-     * yields an empty list.
+     * renderers read the same shape. Entries that are not rows are skipped.
+     * A payload that is not a list at all (a malformed 200 response) raises
+     * a TypeError, which generate() treats like any other fetch failure, so
+     * the feed is reported as unavailable rather than empty.
+     *
+     * @param array $items Rows as returned by the webhooks API.
+     *
+     * @return array
      */
-    public static function summarizeIdlePullRequests(mixed $items): array
+    public static function summarizeIdlePullRequests(array $items): array
     {
-        if (!is_array($items)) {
-            return [];
-        }
-
         $summary = [];
         foreach ($items as $item) {
             if (!is_array($item)) {

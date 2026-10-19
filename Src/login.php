@@ -487,7 +487,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         </div>
 
         <!-- Bot Processing State -->
-        <div class="row g-3">
+        <div class="row g-3 mb-4">
             <div class="col-12">
                 <div class="card data-card">
                     <div class="card-header bg-white">
@@ -496,6 +496,26 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                         </h6>
                     </div>
                     <div class="card-body p-0" id="bot-processing-state">
+                        <div class="text-center text-muted py-3">
+                            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                            Loading…
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Idle Pull Requests -->
+        <div class="row g-3">
+            <div class="col-12">
+                <div class="card data-card">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">
+                            <i class="fas fa-hourglass-half me-2 text-primary"></i>Idle Pull Requests
+                        </h6>
+                        <small class="text-muted" id="idle-pull-requests-count"></small>
+                    </div>
+                    <div class="card-body p-0" id="idle-pull-requests">
                         <div class="text-center text-muted py-3">
                             <div class="spinner-border spinner-border-sm me-2" role="status"></div>
                             Loading…
@@ -695,6 +715,69 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 </table>`;
         }
 
+        // Backoff status of an Idle Pull Request (webhooks ADR-0010): DUE is next
+        // in line for an Idle Retry, WAITING is inside its backoff window and
+        // GAVE_UP hit the retry cap.
+        const IDLE_STATUS_CONFIG = {
+            DUE:     { badge: 'bg-warning text-dark', text: 'Due' },
+            WAITING: { badge: 'bg-info text-dark',    text: 'Waiting' },
+            GAVE_UP: { badge: 'bg-danger',            text: 'Gave up' },
+        };
+
+        function idleStatusBadge(status) {
+            const cfg = IDLE_STATUS_CONFIG[status] ?? { badge: 'bg-secondary', text: status || 'Unknown' };
+            return `<span class="badge ${cfg.badge} status-badge">${escHtml(cfg.text)}</span>`;
+        }
+
+        function updateIdlePullRequests(items) {
+            const el = document.getElementById('idle-pull-requests');
+            const countEl = document.getElementById('idle-pull-requests-count');
+            if (!Array.isArray(items)) {
+                el.innerHTML = '<p class="text-muted mb-0 p-3">Data unavailable</p>';
+                countEl.textContent = '';
+                return;
+            }
+            countEl.textContent = items.length === 1 ? '1 pull request' : `${items.length} pull requests`;
+            if (items.length === 0) {
+                el.innerHTML = '<p class="text-muted mb-0 p-3">No idle pull requests</p>';
+                return;
+            }
+            const rows = items.map(pr => {
+                const owner   = pr.repositoryOwner ?? '';
+                const repo    = pr.repositoryName ?? '';
+                const number  = Number(pr.number ?? 0);
+                const title   = pr.title ?? '';
+                const retries = Number(pr.idleRetryCount ?? 0);
+                const repoUrl = `https://github.com/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
+                return `<tr>
+                    <td><a href="${repoUrl}" target="_blank" rel="noopener noreferrer">${escHtml(owner)}/${escHtml(repo)}</a></td>
+                    <td><a href="${repoUrl}/pull/${number}" target="_blank" rel="noopener noreferrer">#${number}</a></td>
+                    <td class="pr-title" title="${escHtml(title)}">${title ? escHtml(title) : '—'}</td>
+                    <td>${escHtml(pr.senderLogin ?? '—')}</td>
+                    <td>${escHtml(pr.updatedAt ?? '—')}</td>
+                    <td class="text-end"><span class="${retries > 0 ? 'state-count non-zero' : 'state-count'}">${retries}/10</span></td>
+                    <td class="text-end">${idleStatusBadge(pr.idleStatus)}</td>
+                </tr>`;
+            }).join('');
+            el.innerHTML = `
+                <div class="table-responsive">
+                    <table class="table public-table">
+                        <thead>
+                            <tr>
+                                <th>Repository</th>
+                                <th>PR</th>
+                                <th>Title</th>
+                                <th>Sender</th>
+                                <th>Updated At</th>
+                                <th class="text-end">Retries</th>
+                                <th class="text-end">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>`;
+        }
+
         function showError() {
             ['stat-total','stat-healthy','stat-warning','stat-critical','stat-branches','stat-pull-requests','stat-bot-queue'].forEach(id => {
                 document.getElementById(id).textContent = '—';
@@ -705,6 +788,8 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
             document.getElementById('performance-metrics').innerHTML = '<p class="text-muted mb-0">Data unavailable</p>';
             document.getElementById('queue-lengths').innerHTML = '<p class="text-muted mb-0 p-3">Data unavailable</p>';
             document.getElementById('bot-processing-state').innerHTML = '<p class="text-muted mb-0 p-3">Data unavailable</p>';
+            document.getElementById('idle-pull-requests').innerHTML = '<p class="text-muted mb-0 p-3">Data unavailable</p>';
+            document.getElementById('idle-pull-requests-count').textContent = '';
         }
 
         function loadDashboard() {
@@ -722,6 +807,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                     updateLastUpdated(data.generatedAt);
                     updateQueues(data.queues);
                     updateBotProcessingState(data.webhookStats);
+                    updateIdlePullRequests(data.idlePullRequests);
                 })
                 .catch(err => {
                     console.error('Failed to load dashboard data:', err);

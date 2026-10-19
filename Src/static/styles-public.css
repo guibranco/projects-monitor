@@ -196,6 +196,14 @@ footer {
   font-weight: 600;
 }
 
+/* Idle Pull Requests title cell — keep long titles on one line */
+.public-table .pr-title {
+  max-width: 28rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Recent Activity list */
 .activity-item {
   padding: 0.65rem 1rem;

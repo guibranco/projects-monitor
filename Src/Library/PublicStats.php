@@ -81,6 +81,13 @@ class PublicStats
         $totalBranches    = $webhookDashboard !== null ? max(0, count($webhookDashboard['branches'] ?? []) - 1) : null;
         $totalPullRequests = $webhookDashboard !== null ? max(0, count($webhookDashboard['pull_requests'] ?? []) - 1) : null;
 
+        $idlePullRequests = null;
+
+        try {
+            $idlePullRequests = self::summarizeIdlePullRequests((new Webhooks())->getPullRequestsIdle());
+        } catch (\Throwable) {
+        }
+
         $totalMonitors = 0;
         $totalUp       = 0;
         $totalWarning  = 0;
@@ -191,7 +198,44 @@ class PublicStats
                 'branches'     => $totalBranches,
                 'pullRequests' => $totalPullRequests,
             ],
+            'idlePullRequests' => $idlePullRequests,
         ];
+    }
+
+    /**
+     * Trims the webhooks API's GET /pull-requests/idle rows down to the
+     * fields the public (unauthenticated) login page renders, so internal
+     * processing metadata (sequence, processing date, component versions,
+     * refs) never reaches the public cache file. Field names are kept
+     * identical to the webhooks API so the public and authenticated
+     * renderers read the same shape. Anything that isn't a list of rows
+     * yields an empty list.
+     */
+    public static function summarizeIdlePullRequests(mixed $items): array
+    {
+        if (!is_array($items)) {
+            return [];
+        }
+
+        $summary = [];
+        foreach ($items as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $summary[] = [
+                'repositoryOwner' => $item['repositoryOwner'] ?? null,
+                'repositoryName'  => $item['repositoryName'] ?? null,
+                'number'          => isset($item['number']) ? (int) $item['number'] : null,
+                'title'           => $item['title'] ?? null,
+                'senderLogin'     => $item['senderLogin'] ?? null,
+                'updatedAt'       => $item['updatedAt'] ?? null,
+                'idleRetryCount'  => (int) ($item['idleRetryCount'] ?? 0),
+                'idleStatus'      => $item['idleStatus'] ?? null,
+            ];
+        }
+
+        return $summary;
     }
 
     private static function cpanelStatus(?array $cpuData, ?array $memoryData, ?array $processesData): string

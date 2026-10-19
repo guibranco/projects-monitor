@@ -9,6 +9,17 @@ class PublicStats
     public const CACHE_FILE = __DIR__ . '/../cache/public-stats.json';
     public const CACHE_TTL  = 600; // seconds — 10 minutes
 
+    /**
+     * Identifying fields of an idle pull request that are nulled in the
+     * public payload when its repository is private.
+     */
+    private const REDACTED_IDLE_FIELDS = [
+        'repositoryOwner' => null,
+        'repositoryName'  => null,
+        'number'          => null,
+        'title'           => null,
+    ];
+
     public static function generate(): array
     {
         $upStats      = null;
@@ -206,12 +217,16 @@ class PublicStats
      * Trims the webhooks API's GET /pull-requests/idle rows down to the
      * fields the public (unauthenticated) login page renders, so internal
      * processing metadata (sequence, processing date, component versions,
-     * refs) never reaches the public cache file. Field names are kept
-     * identical to the webhooks API so the public and authenticated
-     * renderers read the same shape. Entries that are not rows are skipped.
-     * A payload that is not a list at all (a malformed 200 response) raises
-     * a TypeError, which generate() treats like any other fetch failure, so
-     * the feed is reported as unavailable rather than empty.
+     * refs) never reaches the public cache file. Rows of private
+     * repositories are redacted: owner, name, number and title are nulled
+     * (the login page shows a "Private repository" placeholder with no
+     * links), while the sender, timestamps, retry count and backoff status
+     * stay visible. A row whose visibility is unknown is treated as private.
+     * Field names are kept identical to the webhooks API so the public and
+     * authenticated renderers read the same shape. Entries that are not rows
+     * are skipped. A payload that is not a list at all (a malformed 200
+     * response) raises a TypeError, which generate() treats like any other
+     * fetch failure, so the feed is reported as unavailable rather than empty.
      *
      * @param array $items Rows as returned by the webhooks API.
      *
@@ -225,19 +240,41 @@ class PublicStats
                 continue;
             }
 
-            $summary[] = [
-                'repositoryOwner' => $item['repositoryOwner'] ?? null,
-                'repositoryName'  => $item['repositoryName'] ?? null,
-                'number'          => isset($item['number']) ? (int) $item['number'] : null,
-                'title'           => $item['title'] ?? null,
-                'senderLogin'     => $item['senderLogin'] ?? null,
-                'updatedAt'       => $item['updatedAt'] ?? null,
-                'idleRetryCount'  => (int) ($item['idleRetryCount'] ?? 0),
-                'idleStatus'      => $item['idleStatus'] ?? null,
+            $private = self::isPrivateRepository($item);
+
+            $row = [
+                'repositoryPrivate' => $private,
+                'repositoryOwner'   => $item['repositoryOwner'] ?? null,
+                'repositoryName'    => $item['repositoryName'] ?? null,
+                'number'            => isset($item['number']) ? (int) $item['number'] : null,
+                'title'             => $item['title'] ?? null,
+                'senderLogin'       => $item['senderLogin'] ?? null,
+                'updatedAt'         => $item['updatedAt'] ?? null,
+                'waitingUntil'      => $item['waitingUntil'] ?? null,
+                'idleRetryCount'    => (int) ($item['idleRetryCount'] ?? 0),
+                'idleStatus'        => $item['idleStatus'] ?? null,
             ];
+
+            $summary[] = $private ? array_merge($row, self::REDACTED_IDLE_FIELDS) : $row;
         }
 
         return $summary;
+    }
+
+    /**
+     * Reads the webhooks API's repositoryPrivate flag, accepting the boolean
+     * and the "0"/"1"/"true"/"false" spellings a database-backed JSON payload
+     * can carry. Fails closed: a missing, empty or unparseable flag counts as
+     * private, so nothing identifying leaks to the public page by accident.
+     */
+    private static function isPrivateRepository(array $item): bool
+    {
+        $flag = $item['repositoryPrivate'] ?? null;
+        if ($flag === null || $flag === '') {
+            return true;
+        }
+
+        return filter_var($flag, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
     }
 
     private static function cpanelStatus(?array $cpuData, ?array $memoryData, ?array $processesData): string

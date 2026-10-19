@@ -813,21 +813,44 @@ export class DataDisplayManager {
   }
 
   /**
+   * True for the webhooks API's repositoryPrivate flag in any of the
+   * spellings a database-backed JSON payload can carry (true, 1, "1", "true").
+   */
+  #isPrivateRepository(item) {
+    const flag = item.repositoryPrivate;
+    return flag === true || ["1", "true"].includes(String(flag ?? "").toLowerCase());
+  }
+
+  /**
+   * Repository link for an Idle Pull Request, with a lock marker when the
+   * repository is private (this page is authenticated, so nothing is
+   * redacted here; the public login page is where private rows are hidden).
+   */
+  #idleRepositoryCell(item) {
+    const lock = this.#isPrivateRepository(item)
+      ? ' <i class="bi bi-lock-fill text-warning" title="Private repository"></i>'
+      : "";
+    return `${this.#repoLink(item.repositoryOwner, item.repositoryName)}${lock}`;
+  }
+
+  /**
    * Renders Idle Pull Requests from webhooks GET /pull-requests/idle: open,
    * already processed by the bot and untouched for at least a day, oldest
    * first. The oldest DUE row is the next one the webhooks hourly
-   * idle-pull-requests worker gives an Idle Retry (marks IDLE).
+   * idle-pull-requests worker gives an Idle Retry (marks IDLE); a WAITING
+   * row's "Waiting Until" is when its backoff window ends.
    */
   showWebhookPullRequestsIdle(response) {
     this.#renderProcessingList(response, "pr_idle", "No idle pull requests.", [
       { label: "#Seq", render: (i) => i.sequence },
-      { label: "Repository", render: (i) => this.#repoLink(i.repositoryOwner, i.repositoryName) },
+      { label: "Repository", render: (i) => this.#idleRepositoryCell(i) },
       { label: "PR", render: (i) => `<a href="https://github.com/${this.#escHtml(i.repositoryOwner)}/${this.#escHtml(i.repositoryName)}/pull/${i.number}" target="_blank" rel="noopener noreferrer">#${i.number}</a>` },
       { label: "Title", render: (i) => this.#fmt(i.title) },
       { label: "Branch", render: (i) => this.#refCell(i.ref) },
       { label: "Sender", render: (i) => this.#fmt(i.senderLogin) },
       { label: "Updated At", render: (i) => this.#fmt(i.updatedAt) },
       { label: "Processing Date", render: (i) => this.#fmt(i.processingDate) },
+      { label: "Waiting Until", render: (i) => this.#fmt(i.waitingUntil) },
       { label: "Retries", render: (i) => `${Number(i.idleRetryCount ?? 0)}/10` },
       { label: "Status", render: (i) => this.#idleStatusBadge(i.idleStatus) },
     ]);

@@ -743,18 +743,32 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 return;
             }
             const rows = items.map(pr => {
-                const owner   = pr.repositoryOwner ?? '';
-                const repo    = pr.repositoryName ?? '';
-                const number  = Number(pr.number ?? 0);
-                const title   = pr.title ?? '';
-                const retries = Number(pr.idleRetryCount ?? 0);
-                const repoUrl = `https://github.com/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
+                // Private repositories are already redacted in the cached payload
+                // (owner, name, number and title come back null); only an explicit
+                // false opens a row up here, so an unknown flag stays redacted too.
+                const isPrivate = pr.repositoryPrivate !== false;
+                const owner     = pr.repositoryOwner ?? '';
+                const repo      = pr.repositoryName ?? '';
+                const number    = Number(pr.number ?? 0);
+                const title     = pr.title ?? '';
+                const retries   = Number(pr.idleRetryCount ?? 0);
+                const repoUrl   = `https://github.com/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
+                const repoCell  = isPrivate
+                    ? '<span class="text-muted"><i class="fas fa-lock me-1"></i>Private repository</span>'
+                    : `<a href="${repoUrl}" target="_blank" rel="noopener noreferrer">${escHtml(owner)}/${escHtml(repo)}</a>`;
+                const prCell    = isPrivate
+                    ? '—'
+                    : `<a href="${repoUrl}/pull/${number}" target="_blank" rel="noopener noreferrer">#${number}</a>`;
+                const titleCell = isPrivate || !title
+                    ? '<td class="pr-title">—</td>'
+                    : `<td class="pr-title" title="${escHtml(title)}">${escHtml(title)}</td>`;
                 return `<tr>
-                    <td><a href="${repoUrl}" target="_blank" rel="noopener noreferrer">${escHtml(owner)}/${escHtml(repo)}</a></td>
-                    <td><a href="${repoUrl}/pull/${number}" target="_blank" rel="noopener noreferrer">#${number}</a></td>
-                    <td class="pr-title" title="${escHtml(title)}">${title ? escHtml(title) : '—'}</td>
+                    <td>${repoCell}</td>
+                    <td>${prCell}</td>
+                    ${titleCell}
                     <td>${escHtml(pr.senderLogin ?? '—')}</td>
                     <td>${escHtml(pr.updatedAt ?? '—')}</td>
+                    <td>${escHtml(pr.waitingUntil ?? '—')}</td>
                     <td class="text-end"><span class="${retries > 0 ? 'state-count non-zero' : 'state-count'}">${retries}/10</span></td>
                     <td class="text-end">${idleStatusBadge(pr.idleStatus)}</td>
                 </tr>`;
@@ -769,6 +783,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                                 <th>Title</th>
                                 <th>Sender</th>
                                 <th>Updated At</th>
+                                <th>Waiting Until</th>
                                 <th class="text-end">Retries</th>
                                 <th class="text-end">Status</th>
                             </tr>

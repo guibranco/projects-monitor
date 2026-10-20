@@ -846,7 +846,6 @@ export class DataDisplayManager {
       { label: "Repository", render: (i) => this.#idleRepositoryCell(i) },
       { label: "PR", render: (i) => `<a href="https://github.com/${this.#escHtml(i.repositoryOwner)}/${this.#escHtml(i.repositoryName)}/pull/${i.number}" target="_blank" rel="noopener noreferrer">#${i.number}</a>` },
       { label: "Title", render: (i) => this.#fmt(i.title) },
-      { label: "Branch", render: (i) => this.#refCell(i.ref) },
       { label: "Sender", render: (i) => this.#fmt(i.senderLogin) },
       { label: "Updated At", render: (i) => this.#fmt(i.updatedAt) },
       { label: "Processing Date", render: (i) => this.#fmt(i.processingDate) },

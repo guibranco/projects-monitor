@@ -677,6 +677,21 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 </table>`;
         }
 
+        // Re-renders a card body that holds a horizontally pannable table while
+        // keeping the pan position: the 60-second dashboard refresh rebuilds the
+        // markup, which would otherwise snap a panned table back to its first
+        // columns. The wrapper is keyboard-focusable (tabindex) so the hidden
+        // columns stay reachable without a pointer in browsers that don't focus
+        // scroll containers on their own.
+        function replaceTableHtml(el, markup) {
+            const previousScroll = el.querySelector('.table-responsive')?.scrollLeft ?? 0;
+            el.innerHTML = markup;
+            const wrapper = el.querySelector('.table-responsive');
+            if (wrapper && previousScroll > 0) {
+                wrapper.scrollLeft = previousScroll;
+            }
+        }
+
         function updateBotProcessingState(stats) {
             const el = document.getElementById('bot-processing-state');
             if (!stats) {
@@ -704,15 +719,17 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                     const cls = n > 0 ? 'state-count non-zero' : 'state-count';
                     return `<td class="text-end"><span class="${cls}">${n}</span></td>`;
                 }).join('');
-                return `<tr><td>${displayName}</td>${cells}</tr>`;
+                return `<tr><td class="public-table-sticky-col">${displayName}</td>${cells}</tr>`;
             }).join('');
-            el.innerHTML = `
-                <table class="table public-table">
-                    <thead>
-                        <tr><th>Table</th>${headerCols}</tr>
-                    </thead>
-                    <tbody>${rows}</tbody>
-                </table>`;
+            replaceTableHtml(el, `
+                <div class="table-responsive" tabindex="0" role="region" aria-label="Bot processing state by table">
+                    <table class="table public-table">
+                        <thead>
+                            <tr><th class="public-table-sticky-col">Table</th>${headerCols}</tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>`);
         }
 
         // Backoff status of an Idle Pull Request (webhooks ADR-0010): DUE is next
@@ -773,8 +790,8 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                     <td class="text-end">${idleStatusBadge(pr.idleStatus)}</td>
                 </tr>`;
             }).join('');
-            el.innerHTML = `
-                <div class="table-responsive">
+            replaceTableHtml(el, `
+                <div class="table-responsive" tabindex="0" role="region" aria-label="Idle pull requests">
                     <table class="table public-table">
                         <thead>
                             <tr>
@@ -790,7 +807,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                         </thead>
                         <tbody>${rows}</tbody>
                     </table>
-                </div>`;
+                </div>`);
         }
 
         function showError() {

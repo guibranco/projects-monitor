@@ -469,11 +469,16 @@ class WorkflowRunsPresenter
      */
     protected function badgeWidth(string $style, ?string $label, ?string $content): int
     {
+        $isIcon      = $this->isIcon($label);
         $labelLength = mb_strlen((string) $label);
-        $characters  = ($labelLength + mb_strlen((string) $content));
+        if ($isIcon === true) {
+            $labelLength = 1;
+        }
+
+        $characters = ($labelLength + mb_strlen((string) $content));
         if ($style === 'for-the-badge') {
             $icon = 0;
-            if ($labelLength === 1) {
+            if ($isIcon === true) {
                 $icon = 20;
             }
 
@@ -487,6 +492,30 @@ class WorkflowRunsPresenter
         return (int) ceil(((6.4 * $characters) + 32));
 
     }//end badgeWidth()
+
+
+    /**
+     * Whether a badge label is one of the emoji icons. Some of them (⏱️, ⚠️,
+     * ⏭️) are two code points because of a variation selector, so the icons
+     * are recognised by value rather than by length.
+     *
+     * @param string|null $label Badge label (left side).
+     *
+     * @return boolean
+     */
+    protected function isIcon(?string $label): bool
+    {
+        if ($label === null || $label === '') {
+            return false;
+        }
+
+        if ($label === self::DEFAULT_ICON) {
+            return true;
+        }
+
+        return in_array($label, self::ICONS, true);
+
+    }//end isIcon()
 
 
 }//end class

@@ -64,6 +64,24 @@ class WorkflowRunsPresenterTest extends TestCase
 
 
     /**
+     * The width a badge cell reserves for its image, from its min-width.
+     *
+     * @param string $cell The rendered table cell.
+     *
+     * @return integer
+     */
+    protected function getReservedWidth(string $cell): int
+    {
+        $matches = [];
+
+        $this->assertSame(1, preg_match('/min-width: (\d+)px/', $cell, $matches));
+
+        return (int) $matches[1];
+
+    }//end getReservedWidth()
+
+
+    /**
      * The header row comes first and the row carries one cell per column.
      *
      * @return void
@@ -179,6 +197,17 @@ class WorkflowRunsPresenterTest extends TestCase
         $this->assertStringContainsString('badge/🔀-pull__request-blue', $cells[3]);
         $this->assertStringContainsString('badge/✅-completed-green', $cells[4]);
         $this->assertStringContainsString('badge/❌-failure-red', $cells[5]);
+
+        // An icon with a variation selector (two code points) reserves the
+        // same width as a single-code-point one for equally long text.
+        $skipped = $this->getWebhooksRun();
+
+        $skipped['conclusion'] = 'skipped';
+
+        $skippedCell = $this->getRow($skipped)[5];
+
+        $this->assertStringContainsString('badge/⏭️-skipped-gray', $skippedCell);
+        $this->assertSame($this->getReservedWidth($cells[5]), $this->getReservedWidth($skippedCell));
 
     }//end testStateBadges()
 

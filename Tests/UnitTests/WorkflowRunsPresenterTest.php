@@ -18,7 +18,7 @@ class WorkflowRunsPresenterTest extends TestCase
      *
      * @return array
      */
-    protected function webhooksRun(): array
+    protected function getWebhooksRun(): array
     {
         $run = [];
 
@@ -43,7 +43,7 @@ class WorkflowRunsPresenterTest extends TestCase
 
         return $run;
 
-    }//end webhooksRun()
+    }//end getWebhooksRun()
 
 
     /**
@@ -53,14 +53,14 @@ class WorkflowRunsPresenterTest extends TestCase
      *
      * @return array
      */
-    protected function row(array $run): array
+    protected function getRow(array $run): array
     {
         $presenter = new WorkflowRunsPresenter();
         $table     = $presenter->toTable([$run]);
 
         return $table[1];
 
-    }//end row()
+    }//end getRow()
 
 
     /**
@@ -71,7 +71,7 @@ class WorkflowRunsPresenterTest extends TestCase
     public function testTableShape(): void
     {
         $presenter = new WorkflowRunsPresenter();
-        $table     = $presenter->toTable([$this->webhooksRun()]);
+        $table     = $presenter->toTable([$this->getWebhooksRun()]);
 
         $this->assertCount(2, $table);
         $this->assertSame(WorkflowRunsPresenter::TABLE_HEADER, $table[0]);
@@ -89,18 +89,18 @@ class WorkflowRunsPresenterTest extends TestCase
      */
     public function testRepositoryBadge(): void
     {
-        $cell = $this->row($this->webhooksRun())[0];
+        $cell = $this->getRow($this->getWebhooksRun())[0];
 
         $this->assertStringContainsString('href="https://github.com/guibranco/projects-monitor"', $cell);
         $this->assertStringContainsString('logo=github', $cell);
         $this->assertStringContainsString('style=flat', $cell);
         $this->assertStringNotContainsString('bi-lock-fill', $cell);
 
-        $private = $this->webhooksRun();
+        $private = $this->getWebhooksRun();
 
         $private['private'] = true;
 
-        $this->assertStringContainsString('bi-lock-fill', $this->row($private)[0]);
+        $this->assertStringContainsString('bi-lock-fill', $this->getRow($private)[0]);
 
     }//end testRepositoryBadge()
 
@@ -114,7 +114,7 @@ class WorkflowRunsPresenterTest extends TestCase
      */
     public function testWorkflowBadge(): void
     {
-        $cell = $this->row($this->webhooksRun())[1];
+        $cell = $this->getRow($this->getWebhooksRun())[1];
 
         $this->assertStringContainsString('href="https://github.com/guibranco/projects-monitor/actions/runs/123456789"', $cell);
         $this->assertStringContainsString('title="feat: add badges"', $cell);
@@ -132,11 +132,11 @@ class WorkflowRunsPresenterTest extends TestCase
      */
     public function testWorkflowNameIsTruncated(): void
     {
-        $run = $this->webhooksRun();
+        $run = $this->getWebhooksRun();
 
         $run['name'] = str_repeat('x', 60);
 
-        $cell = $this->row($run)[1];
+        $cell = $this->getRow($run)[1];
 
         $this->assertStringContainsString(str_repeat('x', 50).'...', $cell);
         $this->assertStringNotContainsString(str_repeat('x', 51), $cell);
@@ -152,16 +152,16 @@ class WorkflowRunsPresenterTest extends TestCase
      */
     public function testPathLinksToTheWorkflowPage(): void
     {
-        $cell = $this->row($this->webhooksRun())[2];
+        $cell = $this->getRow($this->getWebhooksRun())[2];
 
         $this->assertStringContainsString('>.github/workflows/build.yml</a>', $cell);
         $this->assertStringContainsString('href="https://github.com/guibranco/projects-monitor/actions/workflows/build.yml"', $cell);
 
-        $run = $this->webhooksRun();
+        $run = $this->getWebhooksRun();
 
         $run['path'] = '';
 
-        $this->assertSame('—', $this->row($run)[2]);
+        $this->assertSame('—', $this->getRow($run)[2]);
 
     }//end testPathLinksToTheWorkflowPage()
 
@@ -174,7 +174,7 @@ class WorkflowRunsPresenterTest extends TestCase
      */
     public function testStateBadges(): void
     {
-        $cells = $this->row($this->webhooksRun());
+        $cells = $this->getRow($this->getWebhooksRun());
 
         $this->assertStringContainsString('badge/🔀-pull__request-blue', $cells[3]);
         $this->assertStringContainsString('badge/✅-completed-green', $cells[4]);
@@ -191,13 +191,13 @@ class WorkflowRunsPresenterTest extends TestCase
      */
     public function testStateBadgeFallbacks(): void
     {
-        $run = $this->webhooksRun();
+        $run = $this->getWebhooksRun();
 
         $run['status']     = 'queued';
         $run['conclusion'] = '';
         $run['event']      = 'something_new';
 
-        $cells = $this->row($run);
+        $cells = $this->getRow($run);
 
         $this->assertStringContainsString('badge/⏰-queued-red', $cells[4]);
         $this->assertStringContainsString('badge/⭕-none-yellow', $cells[5]);
@@ -213,7 +213,7 @@ class WorkflowRunsPresenterTest extends TestCase
      */
     public function testActorBadge(): void
     {
-        $cell = $this->row($this->webhooksRun())[6];
+        $cell = $this->getRow($this->getWebhooksRun())[6];
 
         $this->assertStringContainsString('href="https://github.com/dependabot%5Bbot%5D"', $cell);
         $this->assertStringContainsString('style=social', $cell);
@@ -229,17 +229,17 @@ class WorkflowRunsPresenterTest extends TestCase
      */
     public function testActionButtons(): void
     {
-        $cell = $this->row($this->webhooksRun())[8];
+        $cell = $this->getRow($this->getWebhooksRun())[8];
 
         $this->assertStringContainsString('data-action="retry-workflow-run" data-workflow-run-id="123456789"', $cell);
         $this->assertStringNotContainsString('disabled', $cell);
         $this->assertStringContainsString('data-action="delete-workflow-run" data-workflow-run-id="123456789"', $cell);
 
-        $run = $this->webhooksRun();
+        $run = $this->getWebhooksRun();
 
         $run['conclusion'] = 'success';
 
-        $this->assertStringContainsString('disabled', $this->row($run)[8]);
+        $this->assertStringContainsString('disabled', $this->getRow($run)[8]);
 
     }//end testActionButtons()
 
@@ -251,12 +251,12 @@ class WorkflowRunsPresenterTest extends TestCase
      */
     public function testEscapesValues(): void
     {
-        $run = $this->webhooksRun();
+        $run = $this->getWebhooksRun();
 
         $run['display_title'] = '<script>alert("x")</script>';
         $run['path']          = '.github/workflows/<b>.yml';
 
-        $cells = $this->row($run);
+        $cells = $this->getRow($run);
 
         $this->assertStringNotContainsString('<script>', $cells[1]);
         $this->assertStringContainsString('&lt;script&gt;', $cells[1]);

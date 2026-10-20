@@ -19,26 +19,26 @@ class WorkflowRunsPresenter
 {
 
     public const TABLE_HEADER = [
-        'Repository',
-        'Workflow',
-        'Path',
-        'Event',
-        'Status',
-        'Conclusion',
-        'Actor',
-        'Updated At',
-        'Actions',
-    ];
+                                 'Repository',
+                                 'Workflow',
+                                 'Path',
+                                 'Event',
+                                 'Status',
+                                 'Conclusion',
+                                 'Actor',
+                                 'Updated At',
+                                 'Actions',
+                                ];
 
     /**
      * Conclusions GitHub lets a run be re-run from (rerun / rerun-failed-jobs).
      */
     public const RETRYABLE_CONCLUSIONS = [
-        'failure',
-        'timed_out',
-        'cancelled',
-        'action_required',
-    ];
+                                          'failure',
+                                          'timed_out',
+                                          'cancelled',
+                                          'action_required',
+                                         ];
 
     private const NAME_MAX_LENGTH = 50;
 
@@ -49,58 +49,58 @@ class WorkflowRunsPresenter
      * dashboard's icon map so both tables read the same.
      */
     private const ICONS = [
-        'requested'           => '⏳',
-        'pending'             => '⏳',
-        'waiting'             => '⏳',
-        'queued'              => '⏰',
-        'in_progress'         => '🔄',
-        'completed'           => '✅',
-        'success'             => '✅',
-        'failure'             => '❌',
-        'cancelled'           => '🚫',
-        'timed_out'           => '⏱️',
-        'action_required'     => '⚠️',
-        'startup_failure'     => '💥',
-        'neutral'             => '⚪',
-        'stale'               => '🥀',
-        'skipped'             => '⏭️',
-        'none'                => '⭕',
-        'push'                => '📤',
-        'pull_request'        => '🔀',
-        'pull_request_target' => '🔀',
-        'merge_group'         => '🔀',
-        'issues'              => '🐛',
-        'issue_comment'       => '💬',
-        'release'             => '🚀',
-        'schedule'            => '📅',
-        'workflow_dispatch'   => '🚥',
-        'repository_dispatch' => '📢',
-        'dynamic'             => '🔂',
-        'create'              => '➕',
-        'delete'              => '❌',
-    ];
+                           'requested'           => '⏳',
+                           'pending'             => '⏳',
+                           'waiting'             => '⏳',
+                           'queued'              => '⏰',
+                           'in_progress'         => '🔄',
+                           'completed'           => '✅',
+                           'success'             => '✅',
+                           'failure'             => '❌',
+                           'cancelled'           => '🚫',
+                           'timed_out'           => '⏱️',
+                           'action_required'     => '⚠️',
+                           'startup_failure'     => '💥',
+                           'neutral'             => '⚪',
+                           'stale'               => '🥀',
+                           'skipped'             => '⏭️',
+                           'none'                => '⭕',
+                           'push'                => '📤',
+                           'pull_request'        => '🔀',
+                           'pull_request_target' => '🔀',
+                           'merge_group'         => '🔀',
+                           'issues'              => '🐛',
+                           'issue_comment'       => '💬',
+                           'release'             => '🚀',
+                           'schedule'            => '📅',
+                           'workflow_dispatch'   => '🚥',
+                           'repository_dispatch' => '📢',
+                           'dynamic'             => '🔂',
+                           'create'              => '➕',
+                           'delete'              => '❌',
+                          ];
 
     private const STATUS_COLORS = [
-        'queued'      => 'red',
-        'requested'   => 'yellow',
-        'pending'     => 'yellow',
-        'waiting'     => 'yellow',
-        'in_progress' => 'green',
-        'completed'   => 'green',
-    ];
+                                   'queued'      => 'red',
+                                   'requested'   => 'yellow',
+                                   'pending'     => 'yellow',
+                                   'waiting'     => 'yellow',
+                                   'in_progress' => 'green',
+                                   'completed'   => 'green',
+                                  ];
 
     private const CONCLUSION_COLORS = [
-        'success'         => 'green',
-        'failure'         => 'red',
-        'cancelled'       => 'red',
-        'timed_out'       => 'red',
-        'action_required' => 'red',
-        'startup_failure' => 'red',
-        'none'            => 'yellow',
-        'skipped'         => 'gray',
-        'neutral'         => 'gray',
-        'stale'           => 'gray',
-    ];
+                                       'success'         => 'green',
+                                       'failure'         => 'red',
+                                       'cancelled'       => 'red',
+                                       'timed_out'       => 'red',
+                                       'action_required' => 'red',
+                                       'startup_failure' => 'red',
+                                       'none'            => 'yellow',
+                                       'skipped'         => 'gray',
+                                       'neutral'         => 'gray',
+                                       'stale'           => 'gray',
+                                      ];
 
 
     /**
@@ -138,23 +138,27 @@ class WorkflowRunsPresenter
      */
     protected function buildRow(ShieldsIo $shields, array $run): array
     {
-        $runUrl     = $this->runUrl($run);
+        $runUrl     = $this->getRunUrl($run);
         $status     = (string) ($run['status'] ?? '');
         $event      = (string) ($run['event'] ?? '');
         $updatedAt  = (string) ($run['updated_at'] ?? '');
-        $conclusion = $this->conclusion($run);
+        $conclusion = $this->getConclusion($run);
 
-        return [
-            $this->repositoryCell($shields, $run),
-            $this->workflowCell($shields, $run, $runUrl),
-            $this->pathCell($run),
-            $this->linkBadge($shields, $runUrl, $event, $this->icon($event), $event, 'blue', 'white'),
-            $this->linkBadge($shields, $runUrl, $status, $this->icon($status), $status, $this->statusColor($status), 'white'),
-            $this->linkBadge($shields, $runUrl, $conclusion, $this->icon($conclusion), $conclusion, $this->conclusionColor($conclusion), 'white'),
-            $this->actorCell($shields, $run),
-            htmlspecialchars($updatedAt, ENT_QUOTES),
-            $this->actionsCell($run),
-        ];
+        $statusColor     = $this->getStatusColor($status);
+        $conclusionColor = $this->getConclusionColor($conclusion);
+
+        $row   = [];
+        $row[] = $this->repositoryCell($shields, $run);
+        $row[] = $this->workflowCell($shields, $run, $runUrl);
+        $row[] = $this->pathCell($run);
+        $row[] = $this->linkBadge($shields, $runUrl, $event, $this->getIcon($event), $event, 'blue', 'white');
+        $row[] = $this->linkBadge($shields, $runUrl, $status, $this->getIcon($status), $status, $statusColor, 'white');
+        $row[] = $this->linkBadge($shields, $runUrl, $conclusion, $this->getIcon($conclusion), $conclusion, $conclusionColor, 'white');
+        $row[] = $this->actorCell($shields, $run);
+        $row[] = htmlspecialchars($updatedAt, ENT_QUOTES);
+        $row[] = $this->actionsCell($run);
+
+        return $row;
 
     }//end buildRow()
 
@@ -166,14 +170,14 @@ class WorkflowRunsPresenter
      *
      * @return string
      */
-    protected function repositoryUrl(array $run): string
+    protected function getRepositoryUrl(array $run): string
     {
         $owner = rawurlencode((string) ($run['owner'] ?? ''));
         $repo  = rawurlencode((string) ($run['repo'] ?? ''));
 
         return 'https://github.com/'.$owner.'/'.$repo;
 
-    }//end repositoryUrl()
+    }//end getRepositoryUrl()
 
 
     /**
@@ -183,13 +187,13 @@ class WorkflowRunsPresenter
      *
      * @return string
      */
-    protected function runUrl(array $run): string
+    protected function getRunUrl(array $run): string
     {
         $workflowRunId = (int) ($run['workflow_run_id'] ?? 0);
 
-        return $this->repositoryUrl($run).'/actions/runs/'.$workflowRunId;
+        return $this->getRepositoryUrl($run).'/actions/runs/'.$workflowRunId;
 
-    }//end runUrl()
+    }//end getRunUrl()
 
 
     /**
@@ -199,7 +203,7 @@ class WorkflowRunsPresenter
      *
      * @return string
      */
-    protected function conclusion(array $run): string
+    protected function getConclusion(array $run): string
     {
         $conclusion = (string) ($run['conclusion'] ?? '');
         if ($conclusion === '') {
@@ -208,7 +212,7 @@ class WorkflowRunsPresenter
 
         return $conclusion;
 
-    }//end conclusion()
+    }//end getConclusion()
 
 
     /**
@@ -225,7 +229,7 @@ class WorkflowRunsPresenter
         $repository = ($run['owner'] ?? '').'/'.($run['repo'] ?? '');
         $badge      = $this->linkBadge(
             $shields,
-            $this->repositoryUrl($run),
+            $this->getRepositoryUrl($run),
             $repository,
             $repository,
             null,
@@ -297,7 +301,7 @@ class WorkflowRunsPresenter
             return '—';
         }
 
-        $url      = $this->repositoryUrl($run).'/actions/workflows/'.rawurlencode(basename($path));
+        $url      = $this->getRepositoryUrl($run).'/actions/workflows/'.rawurlencode(basename($path));
         $safePath = htmlspecialchars($path, ENT_QUOTES);
 
         return '<a href="'.$url.'" title="'.$safePath.'" target="_blank" rel="noopener noreferrer">'.$safePath.'</a>';
@@ -338,7 +342,7 @@ class WorkflowRunsPresenter
     protected function actionsCell(array $run): string
     {
         $workflowRunId = (int) ($run['workflow_run_id'] ?? 0);
-        $conclusion    = $this->conclusion($run);
+        $conclusion    = $this->getConclusion($run);
         $retryDisabled = ' disabled';
         if (in_array($conclusion, self::RETRYABLE_CONCLUSIONS, true) === true) {
             $retryDisabled = '';
@@ -366,11 +370,11 @@ class WorkflowRunsPresenter
      *
      * @return string
      */
-    protected function icon(string $key): string
+    protected function getIcon(string $key): string
     {
         return (self::ICONS[$key] ?? self::DEFAULT_ICON);
 
-    }//end icon()
+    }//end getIcon()
 
 
     /**
@@ -380,11 +384,11 @@ class WorkflowRunsPresenter
      *
      * @return string
      */
-    protected function statusColor(string $status): string
+    protected function getStatusColor(string $status): string
     {
         return (self::STATUS_COLORS[$status] ?? 'yellow');
 
-    }//end statusColor()
+    }//end getStatusColor()
 
 
     /**
@@ -394,11 +398,11 @@ class WorkflowRunsPresenter
      *
      * @return string
      */
-    protected function conclusionColor(string $conclusion): string
+    protected function getConclusionColor(string $conclusion): string
     {
         return (self::CONCLUSION_COLORS[$conclusion] ?? 'red');
 
-    }//end conclusionColor()
+    }//end getConclusionColor()
 
 
     /**

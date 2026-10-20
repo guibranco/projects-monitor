@@ -572,6 +572,7 @@ footer a:hover {
 /* ===========================================
    WIDE PUBLIC TABLES ON NARROW SCREENS
    =========================================== */
+
 /* Tables wider than their card (Bot Processing State, Idle Pull Requests)
    pan horizontally inside a .table-responsive wrapper — the card itself
    clips overflow, so without the wrapper the columns past the card edge are

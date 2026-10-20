@@ -16,8 +16,6 @@ class Webhooks
      */
     public const RUNNABLE_WORKER_NAMES = ["service", "cleanup", "database-service", "maintenance", "hooks", "idle-pull-requests"];
 
-    private const RETRYABLE_CONCLUSIONS = ["failure", "timed_out", "cancelled", "action_required"];
-
     private $apiUrl;
 
     private $headers;
@@ -267,7 +265,16 @@ class Webhooks
     {
         LogStream::debug("Fetching workflow runs list", null, "webhooks");
         $runs = $this->doRequest("workflow-runs/", "get", 200);
-        return $this->formatWorkflowRunsTable($runs);
+        if (is_array($runs) === false) {
+            $runs = [];
+        }
+
+        $presenter = new WorkflowRunsPresenter();
+
+        return [
+            "workflow_runs" => $presenter->toTable($runs),
+            "total"         => count($runs),
+        ];
     }
 
     /**
@@ -309,52 +316,6 @@ class Webhooks
         }
 
         return ["statusCode" => $statusCode, "body" => json_decode($response->getBody(), true)];
-    }
-
-    private function formatWorkflowRunsTable(array $runs): array
-    {
-        $header = ["Repository", "Workflow", "Run #", "Event", "Status", "Conclusion", "Actor", "Attempt", "Updated At", "Actions"];
-        $rows = [$header];
-
-        foreach ($runs as $run) {
-            $owner = htmlspecialchars($run["owner"] ?? "", ENT_QUOTES);
-            $repo = htmlspecialchars($run["repo"] ?? "", ENT_QUOTES);
-            $name = htmlspecialchars($run["display_title"] ?? ($run["name"] ?? ""), ENT_QUOTES);
-            $runNumber = (int) ($run["run_number"] ?? 0);
-            $event = htmlspecialchars($run["event"] ?? "", ENT_QUOTES);
-            $status = htmlspecialchars($run["status"] ?? "", ENT_QUOTES);
-            $conclusion = (string) ($run["conclusion"] ?? "");
-            $actor = htmlspecialchars($run["actor_login"] ?? "", ENT_QUOTES);
-            $attempt = (int) ($run["run_attempt"] ?? 1);
-            $updatedAt = htmlspecialchars($run["updated_at"] ?? "", ENT_QUOTES);
-            $workflowRunId = (int) ($run["workflow_run_id"] ?? 0);
-
-            $canRetry = in_array($conclusion, self::RETRYABLE_CONCLUSIONS, true);
-            $retryDisabled = $canRetry ? "" : " disabled";
-            $retryBtn = "<button class=\"btn btn-warning btn-sm\" data-action=\"retry-workflow-run\""
-                . " data-workflow-run-id=\"{$workflowRunId}\" title=\"Retry workflow run\""
-                . " aria-label=\"Retry workflow run {$workflowRunId}\"{$retryDisabled}>"
-                . "<i class=\"bi bi-arrow-clockwise\"></i></button>";
-            $deleteBtn = "<button class=\"btn btn-danger btn-sm\" data-action=\"delete-workflow-run\""
-                . " data-workflow-run-id=\"{$workflowRunId}\" title=\"Delete workflow run row\""
-                . " aria-label=\"Delete workflow run {$workflowRunId}\">"
-                . "<i class=\"bi bi-trash2\"></i></button>";
-
-            $rows[] = [
-                "{$owner}/{$repo}",
-                $name,
-                $runNumber,
-                $event,
-                $status,
-                $conclusion !== "" ? $conclusion : "—",
-                $actor,
-                $attempt,
-                $updatedAt,
-                "{$retryBtn} {$deleteBtn}",
-            ];
-        }
-
-        return ["workflow_runs" => $rows, "total" => count($runs)];
     }
 
     private function formatWorkersTable(array $workers): array

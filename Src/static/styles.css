@@ -614,6 +614,29 @@ th.gridjs-th {
   background-color: rgba(255, 255, 255, .06);
 }
 
+/* A shields.io badge in a data-table cell (Workflow Runs Management). The
+   span carries an inline min-width matching the badge, so the table's
+   column-sizing pass — which runs before the badge image has loaded —
+   reserves room for it instead of letting it spill into the next column. */
+td.gridjs-td .badge-cell {
+  display: inline-block;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+td.gridjs-td .badge-cell img {
+  vertical-align: middle;
+}
+
+/* Ten badge-heavy columns: halve the theme's 24px horizontal cell padding
+   in this table so it fits a 1920px screen without panning. Narrower
+   screens pan the section (.gridjs-wrapper scrolls) rather than overlap. */
+#workflow_runs_management td.gridjs-td,
+#workflow_runs_management th.gridjs-th {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
 .gridjs-footer {
   background: transparent;
   border: none;

@@ -141,7 +141,8 @@ footer {
 }
 
 .public-table thead th {
-  background-color: rgba(13, 110, 253, 0.05);
+  background-color: var(--bs-table-bg, var(--bs-body-bg));
+  background-image: linear-gradient(rgba(13, 110, 253, 0.05), rgba(13, 110, 253, 0.05));
   color: #495057;
   font-weight: 600;
   font-size: 0.75rem;
@@ -164,7 +165,7 @@ footer {
 }
 
 .public-table tbody tr:hover td {
-  background-color: rgba(13, 110, 253, 0.03);
+  background-image: linear-gradient(rgba(13, 110, 253, 0.03), rgba(13, 110, 253, 0.03));
 }
 
 /* Queue message count pill */
@@ -358,7 +359,7 @@ footer {
 
 /* Tables */
 [data-bs-theme="dark"] .public-table thead th {
-  background-color: rgba(110, 168, 254, 0.07);
+  background-image: linear-gradient(rgba(110, 168, 254, 0.07), rgba(110, 168, 254, 0.07));
   color: var(--bs-secondary-color);
   border-bottom-color: rgba(110, 168, 254, 0.15);
 }
@@ -369,7 +370,7 @@ footer {
 }
 
 [data-bs-theme="dark"] .public-table tbody tr:hover td {
-  background-color: rgba(110, 168, 254, 0.05);
+  background-image: linear-gradient(rgba(110, 168, 254, 0.05), rgba(110, 168, 254, 0.05));
 }
 
 /* Activity list */
@@ -566,4 +567,29 @@ footer a {
 
 footer a:hover {
   color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* ===========================================
+   WIDE PUBLIC TABLES ON NARROW SCREENS
+   =========================================== */
+/* Tables wider than their card (Bot Processing State, Idle Pull Requests)
+   pan horizontally inside a .table-responsive wrapper — the card itself
+   clips overflow, so without the wrapper the columns past the card edge are
+   simply unreachable on a phone. The row-label column is pinned so the
+   numbers keep their context while panning. Cells carry Bootstrap's opaque
+   table background (the header and hover tints above are overlays on it,
+   not translucent fills), so nothing shows through the pinned cells as the
+   rest of the row slides under them. */
+.public-table .public-table-sticky-col {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+}
+
+/* Only phones get the separator after the pinned column: wider screens fit
+   the whole table, so there is nothing to pan and no edge to mark. */
+@media (max-width: 575.98px) {
+  .public-table .public-table-sticky-col {
+    box-shadow: 1px 0 0 var(--bs-border-color);
+  }
 }

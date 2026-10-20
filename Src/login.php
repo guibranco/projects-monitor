@@ -704,15 +704,17 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                     const cls = n > 0 ? 'state-count non-zero' : 'state-count';
                     return `<td class="text-end"><span class="${cls}">${n}</span></td>`;
                 }).join('');
-                return `<tr><td>${displayName}</td>${cells}</tr>`;
+                return `<tr><td class="public-table-sticky-col">${displayName}</td>${cells}</tr>`;
             }).join('');
             el.innerHTML = `
-                <table class="table public-table">
-                    <thead>
-                        <tr><th>Table</th>${headerCols}</tr>
-                    </thead>
-                    <tbody>${rows}</tbody>
-                </table>`;
+                <div class="table-responsive">
+                    <table class="table public-table">
+                        <thead>
+                            <tr><th class="public-table-sticky-col">Table</th>${headerCols}</tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>`;
         }
 
         // Backoff status of an Idle Pull Request (webhooks ADR-0010): DUE is next

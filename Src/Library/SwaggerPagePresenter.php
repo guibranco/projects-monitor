@@ -107,7 +107,9 @@ class SwaggerPagePresenter
             return false;
         }
 
-        return (($now - (int) $session['last_activity']) <= self::SESSION_TIMEOUT);
+        $idleSeconds = ($now - (int) $session['last_activity']);
+
+        return $idleSeconds <= self::SESSION_TIMEOUT;
 
     }//end isSessionActive()
 

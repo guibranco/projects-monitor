@@ -24,7 +24,9 @@ Projects Monitor is a PHP dashboard backed by a REST-like API (`Src/api/v1`). It
 - **Domains** — registrar and lifecycle information (expiration, transfer status) via IP2WHOIS, plus a dedicated [DNS Records page](Src/dns.php) listing every zone record (A, CNAME, MX, TXT, ...) pulled live from cPanel, filterable by source domain/record type and sortable by any column.
 - **Logs & errors** — cPanel error logs and SQL-backed application errors, aggregated with grouping and statistics by application or error content.
 - **Public stats** — a pre-computed, unauthenticated stats page fed by a cron worker (see [Background workers](#background-workers)).
-- **Interactive API docs** — a Swagger UI served at `/api/v1/swagger`, backed by the OpenAPI spec at `/api/v1/openapi` (both behind login).
+- **Interactive API docs** — a Swagger UI served at `/api/v1/swagger`, backed
+  by the OpenAPI spec at `/api/v1/openapi` (both public; *Try it out* needs a
+  dashboard login).
 
 ---
 
@@ -138,7 +140,19 @@ The dashboard is backed by a REST-like API under `/api/v1`, documented with a li
 - **Swagger UI:** `/api/v1/swagger`
 - **OpenAPI spec:** `/api/v1/openapi`
 
-Both require an authenticated session. Key endpoint groups: `github`, `webhooks*` (statistics, per-entity processing, worker control), `gstraccini-jobs` / `gstraccini-job-run`, `appveyor`, `cpanel`, `dns-records`, `domains`, `healthchecksio`, `uptimerobot`, `vercel`, `queues` / `queues-purge`, `wireguard`, `system-report`, `messages*` / `errors*` (log retrieval, details, deletion), and `public-stats`.
+Both are public, so the API can be browsed without logging in. *Try it out* only
+works while you are logged in to the dashboard in the same browser: Swagger UI
+is served from the same origin as the API, so the browser attaches the
+`PHPSESSID` session cookie by itself (nothing needs to be entered in the
+*Authorize* dialog — browsers do not let scripts set the `Cookie` header). For
+anonymous visitors *Try it out* is hidden and the protected endpoints answer
+`401`.
+
+Key endpoint groups: `github`, `webhooks*` (statistics, per-entity processing,
+worker control), `gstraccini-jobs` / `gstraccini-job-run`, `appveyor`, `cpanel`,
+`dns-records`, `domains`, `healthchecksio`, `uptimerobot`, `vercel`, `queues` /
+`queues-purge`, `wireguard`, `system-report`, `messages*` / `errors*` (log
+retrieval, details, deletion), and `public-stats`.
 
 ---
 

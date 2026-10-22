@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Projects Monitor API",
-    "description": "Internal REST API for the Projects Monitor dashboard.\n\n## Authentication\n\nAll protected endpoints require an active PHP session obtained by logging in via the dashboard (`/login.php`). The session is carried by the `PHPSESSID` cookie.\n\nSessions expire after **30 minutes** of inactivity. A maximum of **60 requests per minute** is enforced per session.\n\n## Public endpoints\n\nTwo endpoints bypass session auth:\n- `GET /api/v1/public-stats` — cached public stats (CORS enabled)\n- `POST /api/v1/log-message` — validated by an application-level token",
+    "description": "Internal REST API for the Projects Monitor dashboard.\n\nThis reference (Swagger UI at `/api/v1/swagger`, spec at `/api/v1/openapi`) is public and can be read without logging in.\n\n## Authentication\n\nAll protected endpoints require an active PHP session obtained by logging in via the dashboard (`/login.php`). The session is carried by the `PHPSESSID` cookie.\n\n**Try it out** in Swagger UI only works while you are logged in to the dashboard in the same browser: the UI is served from the same origin as the API, so the browser sends the session cookie automatically. There is nothing to enter in the *Authorize* dialog — browsers do not allow scripts to set the `Cookie` header, so a value pasted there would never be sent. Anonymous visitors can browse the documentation, but *Try it out* is disabled and any direct call to a protected endpoint answers `401`.\n\nSessions expire after **30 minutes** of inactivity. A maximum of **60 requests per minute** is enforced per session.\n\n## Public endpoints\n\nTwo endpoints bypass session auth:\n- `GET /api/v1/public-stats` — cached public stats (CORS enabled)\n- `POST /api/v1/log-message` — validated by an application-level token",
     "version": "0.0.0-dev",
     "contact": {
       "name": "Guilherme Branco Stracini"
@@ -49,7 +49,7 @@
         "type": "apiKey",
         "in": "cookie",
         "name": "PHPSESSID",
-        "description": "PHP session cookie. Obtained by logging in via `/login.php`."
+        "description": "PHP session cookie, set by logging in via `/login.php`. The browser sends it automatically to the same origin; it cannot be entered through the Swagger UI *Authorize* dialog."
       }
     },
     "responses": {

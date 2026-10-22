@@ -1,30 +1,21 @@
 <?php
 require_once '../../session.php';
+require_once '../../vendor/autoload.php';
 
-if (!isset($_SESSION['last_activity']) || time() - $_SESSION['last_activity'] > 1800) {
-    session_unset();
-    session_destroy();
-    header('Location: ../../login.php');
-    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-    header('Pragma: no-cache');
-    exit;
-}
-$_SESSION['last_activity'] = time();
+use GuiBranco\ProjectsMonitor\Library\SwaggerPagePresenter;
 
-if (!isset($_SESSION['user_id'])) {
-    header('Location: ../../login.php');
-    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-    header('Pragma: no-cache');
-    exit;
-}
-?>
-<?php
+/*
+ * The API reference is public: anyone can read the spec and browse the
+ * endpoints. Only "Try it out" needs an active dashboard session (or
+ * localhost:8000), which SwaggerPagePresenter works out from the request.
+ */
+
+$presenter = new SwaggerPagePresenter($_SESSION, ($_SERVER['HTTP_HOST'] ?? ''), time(), __DIR__.'/../../version.txt');
 
 header('Content-Type: text/html; charset=UTF-8');
+header('Cache-Control: private, no-store, no-cache, must-revalidate, max-age=0');
 
-$versionFile = __DIR__ . '/version.txt';
-$version = file_exists($versionFile) ? trim(file_get_contents($versionFile)) : '1.0.0';
-$pageTitle = 'Projects Monitor API v' . htmlspecialchars($version) . ' - Swagger UI';
+$pageTitle = $presenter->getPageTitle();
 
 ?>
 <!DOCTYPE html>
@@ -76,15 +67,36 @@ $pageTitle = 'Projects Monitor API v' . htmlspecialchars($version) . ' - Swagger
         .api-header a:hover {
             text-decoration: underline;
         }
+
+        .api-header .session-status {
+            margin-left: auto;
+            font-size: 0.85rem;
+            color: #a0a0b0;
+        }
+
+        .api-notice {
+            background: #2d2a1e;
+            border-bottom: 1px solid #5c4d1a;
+            color: #f0d78c;
+            padding: 0.6rem 1rem;
+            font-family: Inter, sans-serif;
+            font-size: 0.9rem;
+        }
+
+        .api-notice a {
+            color: #ffe28a;
+        }
     </style>
 </head>
 
 <body>
     <div class="api-header">
-        <a href="../../index.php">&larr; Dashboard</a>
+        <?= $presenter->getHeaderLink() ?>
         <span style="color:#555">|</span>
         <span>Projects Monitor &mdash; API Documentation</span>
+        <span class="session-status"><?= $presenter->getSessionStatus() ?></span>
     </div>
+    <?= $presenter->getNotice() ?>
     <div id="swagger-ui"></div>
     <script src="https://unpkg.com/swagger-ui-dist@5.32.6/swagger-ui-bundle.js"
         integrity="sha384-EYdOaiRwn44zNjrw+Tfs06qYz9BGQVo2f4/pLY5i7VorbjnZNhdplAbTBk8FXHUJ"
@@ -94,8 +106,11 @@ $pageTitle = 'Projects Monitor API v' . htmlspecialchars($version) . ' - Swagger
         crossorigin="anonymous"></script>
     <script>
         window.onload = function () {
-            SwaggerUIBundle({
-                url: '/projects-monitor/api/v1/openapi',
+            const tryItOutEnabled = <?= $presenter->getTryItOutFlag() ?>;
+            const config = {
+                // Relative to /api/v1/swagger, so it resolves correctly both in
+                // production (/projects-monitor/api/v1/openapi) and locally.
+                url: 'openapi',
                 dom_id: '#swagger-ui',
                 presets: [
                     SwaggerUIBundle.presets.apis,
@@ -104,8 +119,16 @@ $pageTitle = 'Projects Monitor API v' . htmlspecialchars($version) . ' - Swagger
                 layout: 'StandaloneLayout',
                 deepLinking: true,
                 displayRequestDuration: true,
-                filter: true
-            });
+                filter: true,
+                // Send the dashboard session cookie with "Try it out" requests.
+                withCredentials: true
+            };
+            if (!tryItOutEnabled) {
+                // Without a session every protected call would answer 401, so
+                // hide "Try it out" for anonymous visitors.
+                config.supportedSubmitMethods = [];
+            }
+            SwaggerUIBundle(config);
         };
     </script>
 </body>

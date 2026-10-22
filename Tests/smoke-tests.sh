@@ -8,6 +8,24 @@ if [ "$RESULT" -ne 200 ]; then
     exit 1
 fi
 
+# The API reference is public: both the Swagger UI and the spec must render
+# without a session (no redirect to the login page).
+RESULT=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8000/api/v1/swagger")
+if [ "$RESULT" -ne 200 ]; then
+    CONTENT=$(curl "http://localhost:8000/api/v1/swagger")
+    echo "content=$CONTENT" >>"$GITHUB_OUTPUT"
+    echo "error=true" >>"$GITHUB_OUTPUT"
+    exit 1
+fi
+
+RESULT=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8000/api/v1/openapi")
+if [ "$RESULT" -ne 200 ]; then
+    CONTENT=$(curl "http://localhost:8000/api/v1/openapi")
+    echo "content=$CONTENT" >>"$GITHUB_OUTPUT"
+    echo "error=true" >>"$GITHUB_OUTPUT"
+    exit 1
+fi
+
 RESULT=$(curl -s -o /dev/null -w "%{http_code}" --location "http://localhost:8000/api/v1/messages")
 if [ "$RESULT" -ne 200 ]; then
     CONTENT=$(curl --location "http://localhost:8000/api/v1/messages")

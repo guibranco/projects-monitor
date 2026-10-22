@@ -1,29 +1,48 @@
 <?php
 require_once '../../session.php';
 
-if (!isset($_SESSION['last_activity']) || time() - $_SESSION['last_activity'] > 1800) {
-    session_unset();
-    session_destroy();
-    header('Location: ../../login.php');
-    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-    header('Pragma: no-cache');
-    exit;
-}
-$_SESSION['last_activity'] = time();
+/*
+ * The API reference is public: anyone can read the spec and browse the
+ * endpoints. Only "Try it out" needs an authenticated dashboard session,
+ * because the protected endpoints are guarded by session_validator.php.
+ *
+ * Swagger UI runs on the same origin as the API, so the browser attaches the
+ * PHPSESSID cookie to "Try it out" requests by itself whenever the visitor is
+ * logged in to the dashboard. Nothing has to be pasted into the Authorize
+ * dialog (browsers do not let JavaScript set the Cookie header, so a cookie
+ * entered there would never be sent anyway). For anonymous visitors we hide
+ * "Try it out" instead of letting every call fail with 401.
+ */
+define('SWAGGER_SESSION_TIMEOUT', 1800);
 
-if (!isset($_SESSION['user_id'])) {
-    header('Location: ../../login.php');
-    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-    header('Pragma: no-cache');
-    exit;
+$isLocalDevelopment = isset($_SERVER['HTTP_HOST']) && $_SERVER['HTTP_HOST'] === 'localhost:8000';
+$hasActiveSession = isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])
+    && isset($_SESSION['last_activity'])
+    && (time() - $_SESSION['last_activity']) <= SWAGGER_SESSION_TIMEOUT;
+
+if ($hasActiveSession) {
+    $_SESSION['last_activity'] = time();
 }
-?>
-<?php
+
+// session_validator.php auto-authenticates API calls on localhost:8000, so
+// "Try it out" works there without logging in.
+$canTryItOut = $hasActiveSession || $isLocalDevelopment;
+$username = $hasActiveSession ? ($_SESSION['username'] ?? '') : '';
+
+session_write_close();
 
 header('Content-Type: text/html; charset=UTF-8');
+header('Cache-Control: private, no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
 
-$versionFile = __DIR__ . '/version.txt';
-$version = file_exists($versionFile) ? trim(file_get_contents($versionFile)) : '1.0.0';
+$version = '0.0.0-dev';
+$versionFile = __DIR__ . '/../../version.txt';
+if (file_exists($versionFile)) {
+    $v = trim(file_get_contents($versionFile));
+    if ($v !== '') {
+        $version = $v;
+    }
+}
 $pageTitle = 'Projects Monitor API v' . htmlspecialchars($version) . ' - Swagger UI';
 
 ?>
@@ -76,15 +95,54 @@ $pageTitle = 'Projects Monitor API v' . htmlspecialchars($version) . ' - Swagger
         .api-header a:hover {
             text-decoration: underline;
         }
+
+        .api-header .session-status {
+            margin-left: auto;
+            font-size: 0.85rem;
+            color: #a0a0b0;
+        }
+
+        .api-notice {
+            background: #2d2a1e;
+            border-bottom: 1px solid #5c4d1a;
+            color: #f0d78c;
+            padding: 0.6rem 1rem;
+            font-family: Inter, sans-serif;
+            font-size: 0.9rem;
+        }
+
+        .api-notice a {
+            color: #ffe28a;
+        }
     </style>
 </head>
 
 <body>
     <div class="api-header">
-        <a href="../../index.php">&larr; Dashboard</a>
+        <?php if ($canTryItOut): ?>
+            <a href="../../index.php">&larr; Dashboard</a>
+        <?php else: ?>
+            <a href="../../login.php">&larr; Log in</a>
+        <?php endif; ?>
         <span style="color:#555">|</span>
         <span>Projects Monitor &mdash; API Documentation</span>
+        <span class="session-status">
+            <?php if ($username !== ''): ?>
+                Signed in as <strong><?= htmlspecialchars($username, ENT_QUOTES, 'UTF-8') ?></strong>
+            <?php elseif ($canTryItOut): ?>
+                Local development &mdash; Try it out enabled
+            <?php else: ?>
+                Read-only
+            <?php endif; ?>
+        </span>
     </div>
+    <?php if (!$canTryItOut): ?>
+        <div class="api-notice">
+            You are browsing the public API reference. <a href="../../login.php">Log in</a> to the dashboard to
+            enable <em>Try it out</em> &mdash; requests are sent with your dashboard session cookie, so no token
+            needs to be entered here.
+        </div>
+    <?php endif; ?>
     <div id="swagger-ui"></div>
     <script src="https://unpkg.com/swagger-ui-dist@5.32.6/swagger-ui-bundle.js"
         integrity="sha384-EYdOaiRwn44zNjrw+Tfs06qYz9BGQVo2f4/pLY5i7VorbjnZNhdplAbTBk8FXHUJ"
@@ -94,8 +152,10 @@ $pageTitle = 'Projects Monitor API v' . htmlspecialchars($version) . ' - Swagger
         crossorigin="anonymous"></script>
     <script>
         window.onload = function () {
-            SwaggerUIBundle({
-                url: '/projects-monitor/api/v1/openapi',
+            const config = {
+                // Relative to /api/v1/swagger, so it resolves correctly both in
+                // production (/projects-monitor/api/v1/openapi) and locally.
+                url: 'openapi',
                 dom_id: '#swagger-ui',
                 presets: [
                     SwaggerUIBundle.presets.apis,
@@ -104,8 +164,16 @@ $pageTitle = 'Projects Monitor API v' . htmlspecialchars($version) . ' - Swagger
                 layout: 'StandaloneLayout',
                 deepLinking: true,
                 displayRequestDuration: true,
-                filter: true
-            });
+                filter: true,
+                // Send the dashboard session cookie with "Try it out" requests.
+                withCredentials: true
+            };
+            <?php if (!$canTryItOut): ?>
+            // Without a session every protected call would answer 401, so hide
+            // "Try it out" for anonymous visitors.
+            config.supportedSubmitMethods = [];
+            <?php endif; ?>
+            SwaggerUIBundle(config);
         };
     </script>
 </body>

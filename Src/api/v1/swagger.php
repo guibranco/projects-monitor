@@ -10,7 +10,7 @@ use GuiBranco\ProjectsMonitor\Library\SwaggerPagePresenter;
  * localhost:8000), which SwaggerPagePresenter works out from the request.
  */
 
-$presenter = SwaggerPagePresenter::fromRequest($_SESSION, ($_SERVER['HTTP_HOST'] ?? ''), time(), __DIR__.'/../../version.txt');
+$presenter = new SwaggerPagePresenter($_SESSION, ($_SERVER['HTTP_HOST'] ?? ''), time(), __DIR__.'/../../version.txt');
 
 header('Content-Type: text/html; charset=UTF-8');
 header('Cache-Control: private, no-store, no-cache, must-revalidate, max-age=0');

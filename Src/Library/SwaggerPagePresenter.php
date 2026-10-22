@@ -60,51 +60,32 @@ class SwaggerPagePresenter
 
 
     /**
-     * Constructor.
-     *
-     * @param boolean $hasActiveSession   Whether the visitor has an active dashboard session.
-     * @param boolean $isLocalDevelopment Whether the page is served on localhost:8000.
-     * @param string  $username           The logged-in user's name, empty when anonymous.
-     * @param string  $version            The application version shown in the page title.
-     */
-    public function __construct(bool $hasActiveSession, bool $isLocalDevelopment, string $username, string $version)
-    {
-        $this->canTryItOut = $isLocalDevelopment;
-        if ($hasActiveSession === true) {
-            $this->canTryItOut = true;
-        }
-
-        $this->username = $username;
-        $this->version  = $version;
-
-    }//end __construct()
-
-
-    /**
-     * Builds the presenter from the request, refreshing the session's last
-     * activity while it is still active, as the dashboard pages do.
+     * Builds the presenter from the request. While the session is still
+     * active its last activity is refreshed, as the dashboard pages do.
      *
      * @param array   $session     The PHP session data, updated in place.
      * @param string  $host        The request host (HTTP_HOST).
      * @param integer $now         The current Unix timestamp.
      * @param string  $versionFile Path to the version.txt file.
-     *
-     * @return SwaggerPagePresenter
      */
-    public static function fromRequest(array &$session, string $host, int $now, string $versionFile): self
+    public function __construct(array &$session, string $host, int $now, string $versionFile)
     {
-        $hasActiveSession = self::hasActiveSession($session, $now);
-        $username         = '';
+        $hasActiveSession = $this->isSessionActive($session, $now);
+
+        $this->username = '';
         if ($hasActiveSession === true) {
             $session['last_activity'] = $now;
-            $username                 = (string) ($session['username'] ?? '');
+            $this->username           = (string) ($session['username'] ?? '');
         }
 
-        $version = self::readVersion($versionFile);
+        $this->canTryItOut = $hasActiveSession;
+        if ($host === self::LOCAL_DEVELOPMENT_HOST) {
+            $this->canTryItOut = true;
+        }
 
-        return new self($hasActiveSession, ($host === self::LOCAL_DEVELOPMENT_HOST), $username, $version);
+        $this->version = $this->readVersion($versionFile);
 
-    }//end fromRequest()
+    }//end __construct()
 
 
     /**
@@ -116,7 +97,7 @@ class SwaggerPagePresenter
      *
      * @return boolean
      */
-    public static function hasActiveSession(array $session, int $now): bool
+    private function isSessionActive(array $session, int $now): bool
     {
         if (empty($session['user_id']) === true) {
             return false;
@@ -128,7 +109,7 @@ class SwaggerPagePresenter
 
         return (($now - (int) $session['last_activity']) <= self::SESSION_TIMEOUT);
 
-    }//end hasActiveSession()
+    }//end isSessionActive()
 
 
     /**
@@ -139,7 +120,7 @@ class SwaggerPagePresenter
      *
      * @return string
      */
-    public static function readVersion(string $versionFile): string
+    private function readVersion(string $versionFile): string
     {
         if (is_file($versionFile) === false) {
             return self::DEFAULT_VERSION;

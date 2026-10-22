@@ -90,11 +90,11 @@ class SwaggerPagePresenterTest extends TestCase
      *
      * @return SwaggerPagePresenter
      */
-    protected function present(array &$session): SwaggerPagePresenter
+    protected function getPresenter(array &$session): SwaggerPagePresenter
     {
-        return SwaggerPagePresenter::fromRequest($session, self::HOST, self::NOW, self::NO_VERSION_FILE);
+        return new SwaggerPagePresenter($session, self::HOST, self::NOW, self::NO_VERSION_FILE);
 
-    }//end present()
+    }//end getPresenter()
 
 
     /**
@@ -106,7 +106,7 @@ class SwaggerPagePresenterTest extends TestCase
     public function testAnonymousVisitorIsReadOnly(): void
     {
         $session   = [];
-        $presenter = $this->present($session);
+        $presenter = $this->getPresenter($session);
 
         $this->assertFalse($presenter->canTryItOut());
         $this->assertSame('', $presenter->getUsername());
@@ -131,7 +131,7 @@ class SwaggerPagePresenterTest extends TestCase
     public function testLoggedInVisitorCanTryItOut(): void
     {
         $session   = $this->getLoggedInSession(600);
-        $presenter = $this->present($session);
+        $presenter = $this->getPresenter($session);
 
         $this->assertTrue($presenter->canTryItOut());
         $this->assertSame('guibranco', $presenter->getUsername());
@@ -156,7 +156,7 @@ class SwaggerPagePresenterTest extends TestCase
 
         $session['username'] = '<script>alert(1)</script>';
 
-        $presenter = $this->present($session);
+        $presenter = $this->getPresenter($session);
 
         $this->assertStringNotContainsString('<script>', $presenter->getSessionStatus());
         $this->assertStringContainsString('&lt;script&gt;', $presenter->getSessionStatus());
@@ -175,7 +175,7 @@ class SwaggerPagePresenterTest extends TestCase
     {
         $session   = $this->getLoggedInSession((SwaggerPagePresenter::SESSION_TIMEOUT + 1));
         $expected  = $session;
-        $presenter = $this->present($session);
+        $presenter = $this->getPresenter($session);
 
         $this->assertFalse($presenter->canTryItOut());
         $this->assertSame('', $presenter->getUsername());
@@ -193,38 +193,37 @@ class SwaggerPagePresenterTest extends TestCase
      *
      * @return void
      */
-    public function testHasActiveSessionRule(): void
+    public function testActiveSessionRule(): void
     {
         $timeout = SwaggerPagePresenter::SESSION_TIMEOUT;
+        $onEdge  = $this->getLoggedInSession($timeout);
+        $expired = $this->getLoggedInSession(($timeout + 1));
         $noUser  = $this->getLoggedInSession(0);
         $noTime  = $this->getLoggedInSession(0);
 
         $noUser['user_id'] = 0;
         unset($noTime['last_activity']);
 
-        $this->assertTrue(SwaggerPagePresenter::hasActiveSession($this->getLoggedInSession(0), self::NOW));
-        $this->assertTrue(SwaggerPagePresenter::hasActiveSession($this->getLoggedInSession($timeout), self::NOW));
-        $expired = $this->getLoggedInSession(($timeout + 1));
+        $this->assertTrue($this->getPresenter($onEdge)->canTryItOut());
+        $this->assertFalse($this->getPresenter($expired)->canTryItOut());
+        $this->assertFalse($this->getPresenter($noUser)->canTryItOut());
+        $this->assertFalse($this->getPresenter($noTime)->canTryItOut());
 
-        $this->assertFalse(SwaggerPagePresenter::hasActiveSession($expired, self::NOW));
-        $this->assertFalse(SwaggerPagePresenter::hasActiveSession([], self::NOW));
-        $this->assertFalse(SwaggerPagePresenter::hasActiveSession($noUser, self::NOW));
-        $this->assertFalse(SwaggerPagePresenter::hasActiveSession($noTime, self::NOW));
-
-    }//end testHasActiveSessionRule()
+    }//end testActiveSessionRule()
 
 
     /**
      * On localhost:8000 "Try it out" is offered without a session, because
-     * session_validator.php auto-authenticates API calls there.
+     * session_validator.php auto-authenticates API calls there; a logged-in
+     * visitor there still sees their own name.
      *
      * @return void
      */
     public function testLocalDevelopmentCanTryItOut(): void
     {
-        $session   = [];
         $localhost = SwaggerPagePresenter::LOCAL_DEVELOPMENT_HOST;
-        $presenter = SwaggerPagePresenter::fromRequest($session, $localhost, self::NOW, self::NO_VERSION_FILE);
+        $session   = [];
+        $presenter = new SwaggerPagePresenter($session, $localhost, self::NOW, self::NO_VERSION_FILE);
 
         $this->assertTrue($presenter->canTryItOut());
         $this->assertSame('', $presenter->getUsername());
@@ -233,48 +232,45 @@ class SwaggerPagePresenterTest extends TestCase
         $this->assertSame('', $presenter->getNotice());
         $this->assertSame('true', $presenter->getTryItOutFlag());
 
-    }//end testLocalDevelopmentCanTryItOut()
-
-
-    /**
-     * A logged-in visitor on localhost still sees their own name.
-     *
-     * @return void
-     */
-    public function testLoggedInOnLocalhostShowsUsername(): void
-    {
         $session   = $this->getLoggedInSession(0);
-        $localhost = SwaggerPagePresenter::LOCAL_DEVELOPMENT_HOST;
-        $presenter = SwaggerPagePresenter::fromRequest($session, $localhost, self::NOW, self::NO_VERSION_FILE);
+        $presenter = new SwaggerPagePresenter($session, $localhost, self::NOW, self::NO_VERSION_FILE);
 
         $this->assertTrue($presenter->canTryItOut());
         $this->assertSame('Signed in as <strong>guibranco</strong>', $presenter->getSessionStatus());
 
-    }//end testLoggedInOnLocalhostShowsUsername()
+    }//end testLocalDevelopmentCanTryItOut()
 
 
     /**
      * The version comes from version.txt (trimmed), with the development
-     * fallback when the file is missing or empty, and ends up in the title.
+     * fallback when the file is missing or empty, and ends up HTML-escaped
+     * in the title.
      *
      * @return void
      */
     public function testVersionAndPageTitle(): void
     {
+        $session  = [];
         $fallback = SwaggerPagePresenter::DEFAULT_VERSION;
 
-        $this->assertSame('2.3.4', SwaggerPagePresenter::readVersion($this->createVersionFile("2.3.4\n")));
-        $this->assertSame($fallback, SwaggerPagePresenter::readVersion($this->createVersionFile("  \n")));
-        $this->assertSame($fallback, SwaggerPagePresenter::readVersion(self::NO_VERSION_FILE));
-
-        $session     = [];
-        $versionFile = $this->createVersionFile('2.3.4');
-        $presenter   = SwaggerPagePresenter::fromRequest($session, self::HOST, self::NOW, $versionFile);
+        $versionFile = $this->createVersionFile("2.3.4\n");
+        $presenter   = new SwaggerPagePresenter($session, self::HOST, self::NOW, $versionFile);
 
         $this->assertSame('2.3.4', $presenter->getVersion());
         $this->assertSame('Projects Monitor API v2.3.4 - Swagger UI', $presenter->getPageTitle());
 
-        $presenter = new SwaggerPagePresenter(false, false, '', '1.0.0 <beta>');
+        $versionFile = $this->createVersionFile("  \n");
+        $presenter   = new SwaggerPagePresenter($session, self::HOST, self::NOW, $versionFile);
+
+        $this->assertSame($fallback, $presenter->getVersion());
+
+        $presenter = $this->getPresenter($session);
+
+        $this->assertSame($fallback, $presenter->getVersion());
+        $this->assertSame('Projects Monitor API v0.0.0-dev - Swagger UI', $presenter->getPageTitle());
+
+        $versionFile = $this->createVersionFile('1.0.0 <beta>');
+        $presenter   = new SwaggerPagePresenter($session, self::HOST, self::NOW, $versionFile);
 
         $this->assertSame('Projects Monitor API v1.0.0 &lt;beta&gt; - Swagger UI', $presenter->getPageTitle());
 

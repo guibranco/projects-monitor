@@ -1,70 +1,21 @@
 <?php
 require_once '../../session.php';
+require_once '../../vendor/autoload.php';
+
+use GuiBranco\ProjectsMonitor\Library\SwaggerPagePresenter;
 
 /*
  * The API reference is public: anyone can read the spec and browse the
- * endpoints. Only "Try it out" needs an authenticated dashboard session,
- * because the protected endpoints are guarded by session_validator.php.
- *
- * Swagger UI runs on the same origin as the API, so the browser attaches the
- * PHPSESSID cookie to "Try it out" requests by itself whenever the visitor is
- * logged in to the dashboard. Nothing has to be pasted into the Authorize
- * dialog (browsers do not let JavaScript set the Cookie header, so a cookie
- * entered there would never be sent anyway). For anonymous visitors we hide
- * "Try it out" instead of letting every call fail with 401.
+ * endpoints. Only "Try it out" needs an active dashboard session (or
+ * localhost:8000), which SwaggerPagePresenter works out from the request.
  */
 
-define('SWAGGER_SESSION_TIMEOUT', 1800);
-
-$isLocalDevelopment = isset($_SERVER['HTTP_HOST']) && $_SERVER['HTTP_HOST'] === 'localhost:8000';
-$hasActiveSession = isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])
-    && isset($_SESSION['last_activity'])
-    && (time() - $_SESSION['last_activity']) <= SWAGGER_SESSION_TIMEOUT;
-
-$username = '';
-if ($hasActiveSession === true) {
-    $_SESSION['last_activity'] = time();
-    $username = $_SESSION['username'] ?? '';
-}
-
-// API calls on localhost:8000 are auto-authenticated by session_validator.php,
-// so "Try it out" works there without logging in.
-$canTryItOut = $hasActiveSession || $isLocalDevelopment;
-
-session_write_close();
+$presenter = SwaggerPagePresenter::fromRequest($_SESSION, ($_SERVER['HTTP_HOST'] ?? ''), time(), __DIR__.'/../../version.txt');
 
 header('Content-Type: text/html; charset=UTF-8');
 header('Cache-Control: private, no-store, no-cache, must-revalidate, max-age=0');
-header('Pragma: no-cache');
 
-$version = '0.0.0-dev';
-$versionFile = __DIR__.'/../../version.txt';
-if (file_exists($versionFile) === true) {
-    $v = trim(file_get_contents($versionFile));
-    if ($v !== '') {
-        $version = $v;
-    }
-}
-$pageTitle = 'Projects Monitor API v'.htmlspecialchars($version).' - Swagger UI';
-
-// Session-dependent fragments of the page, resolved here so the template below
-// stays plain HTML with simple echoes.
-$headerLink = '<a href="../../login.php">&larr; Log in</a>';
-$sessionStatus = 'Read-only';
-$notice = '<div class="api-notice">
-        You are browsing the public API reference. <a href="../../login.php">Log in</a> to the dashboard to
-        enable <em>Try it out</em> &mdash; requests are sent with your dashboard session cookie, so no token
-        needs to be entered here.
-    </div>';
-if ($canTryItOut === true) {
-    $headerLink = '<a href="../../index.php">&larr; Dashboard</a>';
-    $sessionStatus = 'Local development &mdash; Try it out enabled';
-    $notice = '';
-}
-
-if ($username !== '') {
-    $sessionStatus = sprintf('Signed in as <strong>%s</strong>', htmlspecialchars($username, ENT_QUOTES, 'UTF-8'));
-}
+$pageTitle = $presenter->getPageTitle();
 
 ?>
 <!DOCTYPE html>
@@ -140,12 +91,12 @@ if ($username !== '') {
 
 <body>
     <div class="api-header">
-        <?= $headerLink ?>
+        <?= $presenter->getHeaderLink() ?>
         <span style="color:#555">|</span>
         <span>Projects Monitor &mdash; API Documentation</span>
-        <span class="session-status"><?= $sessionStatus ?></span>
+        <span class="session-status"><?= $presenter->getSessionStatus() ?></span>
     </div>
-    <?= $notice ?>
+    <?= $presenter->getNotice() ?>
     <div id="swagger-ui"></div>
     <script src="https://unpkg.com/swagger-ui-dist@5.32.6/swagger-ui-bundle.js"
         integrity="sha384-EYdOaiRwn44zNjrw+Tfs06qYz9BGQVo2f4/pLY5i7VorbjnZNhdplAbTBk8FXHUJ"
@@ -155,7 +106,7 @@ if ($username !== '') {
         crossorigin="anonymous"></script>
     <script>
         window.onload = function () {
-            const tryItOutEnabled = <?= json_encode($canTryItOut) ?>;
+            const tryItOutEnabled = <?= $presenter->getTryItOutFlag() ?>;
             const config = {
                 // Relative to /api/v1/swagger, so it resolves correctly both in
                 // production (/projects-monitor/api/v1/openapi) and locally.

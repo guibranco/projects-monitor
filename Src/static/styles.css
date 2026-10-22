@@ -628,11 +628,24 @@ td.gridjs-td .badge-cell img {
   vertical-align: middle;
 }
 
-/* Ten badge-heavy columns: halve the theme's 24px horizontal cell padding
-   in this table so it fits a 1920px screen without panning. Narrower
-   screens pan the section (.gridjs-wrapper scrolls) rather than overlap. */
+/* Grid.js measures the auto layout, then pins every column to a width
+   rounded down to whole pixels. A header that is its column's widest
+   content then overflows by a pixel and the theme's ellipsis turns "Rank"
+   into "Ra…". Let that pixel run into the cell padding instead; a column
+   is never narrower than its own header, so nothing else can overflow. */
+th.gridjs-th .gridjs-th-content {
+  overflow: visible;
+  text-overflow: clip;
+}
+
+/* Wide tables (ten badge-heavy columns; thirteen in Idle Pull Requests):
+   halve the theme's 24px horizontal cell padding so they fit a 1920px
+   screen without panning. Narrower screens pan the section
+   (.gridjs-wrapper scrolls) rather than overlap. */
 #workflow_runs_management td.gridjs-td,
-#workflow_runs_management th.gridjs-th {
+#workflow_runs_management th.gridjs-th,
+#pr_idle td.gridjs-td,
+#pr_idle th.gridjs-th {
   padding-left: 12px;
   padding-right: 12px;
 }

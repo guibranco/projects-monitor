@@ -220,11 +220,14 @@ class PublicStats
      * refs) never reaches the public cache file. Rows of private
      * repositories are redacted: owner, name, number and title are nulled
      * (the login page shows a "Private repository" placeholder with no
-     * links), while the sender, timestamps, retry count and backoff status
-     * stay visible. A row whose visibility is unknown is treated as private.
-     * Field names are kept identical to the webhooks API so the public and
-     * authenticated renderers read the same shape. Entries that are not rows
-     * are skipped. A payload that is not a list at all (a malformed 200
+     * links), while the sender, timestamps, retry count, backoff status and
+     * the ordering keys (the repository's idle rank and its last pull
+     * request update, neither of which names the repository) stay visible.
+     * A row whose visibility is unknown is treated as private. Rows keep the
+     * API's round-robin order, so the first DUE row is still the worker's
+     * next Idle Retry. Field names are kept identical to the webhooks API so
+     * the public and authenticated renderers read the same shape. Entries
+     * that are not rows are skipped. A payload that is not a list at all (a malformed 200
      * response) raises a TypeError, which generate() treats like any other
      * fetch failure, so the feed is reported as unavailable rather than empty.
      *
@@ -254,6 +257,10 @@ class PublicStats
                 'idleRetryCount'    => (int) ($item['idleRetryCount'] ?? 0),
                 'idleStatus'        => $item['idleStatus'] ?? null,
             ];
+
+            // The API's ordering keys: they name no repository, so private rows keep them.
+            $row['repositoryIdleRank']              = (int) ($item['repositoryIdleRank'] ?? 0);
+            $row['repositoryLastPullRequestUpdate'] = ($item['repositoryLastPullRequestUpdate'] ?? null);
 
             $summary[] = $private ? array_merge($row, self::REDACTED_IDLE_FIELDS) : $row;
         }

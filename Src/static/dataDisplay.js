@@ -804,12 +804,40 @@ export class DataDisplayManager {
 
   /**
    * Badge for an Idle Pull Request's backoff status (webhooks ADR-0010):
-   * DUE is next in line for an Idle Retry, WAITING is inside its backoff
-   * window, GAVE_UP hit the 10-retry cap.
+   * DUE is in line for an Idle Retry, WAITING is inside its backoff window,
+   * GAVE_UP hit the 10-retry cap. The first DUE row of the list is the one
+   * the hourly idle-pull-requests worker retries next and is marked as such.
    */
-  #idleStatusBadge(status) {
+  #idleStatusBadge(status, isNext = false) {
     const cls = { DUE: "bg-warning text-dark", WAITING: "bg-info text-dark", GAVE_UP: "bg-danger" }[status] ?? "bg-secondary";
-    return `<span class="badge ${cls}">${this.#escHtml(status)}</span>`;
+    const next = isNext
+      ? ' <span class="badge bg-primary" title="Next Idle Retry: the hourly idle-pull-requests worker takes the first DUE row">next</span>'
+      : "";
+    return `<span class="badge ${cls}">${this.#escHtml(status)}</span>${next}`;
+  }
+
+  /**
+   * The pull request's position among its repository's idle ones, the
+   * webhooks API's first ordering key: 1 is the repository's oldest DUE pull
+   * request, then its other DUE ones by age, then WAITING, then GAVE_UP.
+   * Every repository's rank 1 is listed before any repository's rank 2, so
+   * consecutive Idle Retries go to different repositories.
+   */
+  #idleRankCell(item) {
+    const rank = Number(item.repositoryIdleRank ?? 0);
+    if (!Number.isInteger(rank) || rank < 1) return "—";
+    return `<span title="Position among the repository's idle pull requests (DUE by age, then WAITING, then GAVE_UP)">${rank}</span>`;
+  }
+
+  /**
+   * When anything last happened to any of the repository's pull requests,
+   * idle or not: the webhooks API's second ordering key, so among equal
+   * ranks the repository that has been quiet the longest comes first.
+   */
+  #idleRepositoryActivityCell(item) {
+    const value = item.repositoryLastPullRequestUpdate;
+    if (!value) return "—";
+    return `<span title="Most recent update to any of the repository's pull requests">${this.#escHtml(value)}</span>`;
   }
 
   /**
@@ -835,23 +863,29 @@ export class DataDisplayManager {
 
   /**
    * Renders Idle Pull Requests from webhooks GET /pull-requests/idle: open,
-   * already processed by the bot and untouched for at least a day, oldest
-   * first. The oldest DUE row is the next one the webhooks hourly
+   * already processed by the bot and untouched for at least a day, in the
+   * API's round-robin order across repositories (by Rank, then by the
+   * repository's last pull request update, then by Updated At), which the
+   * table keeps. The first DUE row is the next one the webhooks hourly
    * idle-pull-requests worker gives an Idle Retry (marks IDLE); a WAITING
    * row's "Waiting Until" is when its backoff window ends.
    */
   showWebhookPullRequestsIdle(response) {
+    const items = Array.isArray(response) ? response : [];
+    const nextRetry = items.find((i) => i?.idleStatus === "DUE");
     this.#renderProcessingList(response, "pr_idle", "No idle pull requests.", [
       { label: "#Seq", render: (i) => i.sequence },
       { label: "Repository", render: (i) => this.#idleRepositoryCell(i) },
+      { label: "Rank", render: (i) => this.#idleRankCell(i) },
       { label: "PR", render: (i) => `<a href="https://github.com/${this.#escHtml(i.repositoryOwner)}/${this.#escHtml(i.repositoryName)}/pull/${i.number}" target="_blank" rel="noopener noreferrer">#${i.number}</a>` },
       { label: "Title", render: (i) => this.#fmt(i.title) },
       { label: "Sender", render: (i) => this.#fmt(i.senderLogin) },
       { label: "Updated At", render: (i) => this.#fmt(i.updatedAt) },
+      { label: "Repo Last PR Update", render: (i) => this.#idleRepositoryActivityCell(i) },
       { label: "Processing Date", render: (i) => this.#fmt(i.processingDate) },
       { label: "Waiting Until", render: (i) => this.#fmt(i.waitingUntil) },
       { label: "Retries", render: (i) => `${Number(i.idleRetryCount ?? 0)}/10` },
-      { label: "Status", render: (i) => this.#idleStatusBadge(i.idleStatus) },
+      { label: "Status", render: (i) => this.#idleStatusBadge(i.idleStatus, i === nextRetry) },
     ]);
   }
 

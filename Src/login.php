@@ -741,9 +741,14 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
             GAVE_UP: { badge: 'bg-danger',            text: 'Gave up' },
         };
 
-        function idleStatusBadge(status) {
+        // The rows come in the webhooks API's round-robin order across
+        // repositories, and the first DUE one is the next Idle Retry.
+        function idleStatusBadge(status, isNext = false) {
             const cfg = IDLE_STATUS_CONFIG[status] ?? { badge: 'bg-secondary', text: status || 'Unknown' };
-            return `<span class="badge ${cfg.badge} status-badge">${escHtml(cfg.text)}</span>`;
+            const next = isNext
+                ? ' <span class="badge bg-primary status-badge" title="Next Idle Retry: the hourly worker takes the first due pull request">next</span>'
+                : '';
+            return `<span class="badge ${cfg.badge} status-badge">${escHtml(cfg.text)}</span>${next}`;
         }
 
         function updateIdlePullRequests(items) {
@@ -759,6 +764,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 el.innerHTML = '<p class="text-muted mb-0 p-3">No idle pull requests</p>';
                 return;
             }
+            const nextRetry = items.find(pr => pr?.idleStatus === 'DUE');
             const rows = items.map(pr => {
                 // Private repositories are already redacted in the cached payload
                 // (owner, name, number and title come back null); only an explicit
@@ -769,6 +775,10 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 const number    = Number(pr.number ?? 0);
                 const title     = pr.title ?? '';
                 const retries   = Number(pr.idleRetryCount ?? 0);
+                const rank      = Number(pr.repositoryIdleRank ?? 0);
+                const rankCell  = Number.isInteger(rank) && rank > 0
+                    ? `<span title="Position among the repository's idle pull requests">${rank}</span>`
+                    : '—';
                 const repoUrl   = `https://github.com/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
                 const repoCell  = isPrivate
                     ? '<span class="text-muted"><i class="fas fa-lock me-1"></i>Private repository</span>'
@@ -781,13 +791,15 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                     : `<td class="pr-title" title="${escHtml(title)}">${escHtml(title)}</td>`;
                 return `<tr>
                     <td>${repoCell}</td>
+                    <td class="text-end">${rankCell}</td>
                     <td>${prCell}</td>
                     ${titleCell}
                     <td>${escHtml(pr.senderLogin ?? '—')}</td>
                     <td>${escHtml(pr.updatedAt ?? '—')}</td>
+                    <td title="Most recent update to any of the repository's pull requests">${escHtml(pr.repositoryLastPullRequestUpdate ?? '—')}</td>
                     <td>${escHtml(pr.waitingUntil ?? '—')}</td>
                     <td class="text-end"><span class="${retries > 0 ? 'state-count non-zero' : 'state-count'}">${retries}/10</span></td>
-                    <td class="text-end">${idleStatusBadge(pr.idleStatus)}</td>
+                    <td class="text-end">${idleStatusBadge(pr.idleStatus, pr === nextRetry)}</td>
                 </tr>`;
             }).join('');
             replaceTableHtml(el, `
@@ -796,10 +808,12 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                         <thead>
                             <tr>
                                 <th>Repository</th>
+                                <th class="text-end" title="Position among the repository's idle pull requests">Rank</th>
                                 <th>PR</th>
                                 <th>Title</th>
                                 <th>Sender</th>
                                 <th>Updated At</th>
+                                <th title="Most recent update to any of the repository's pull requests">Repo Last PR Update</th>
                                 <th>Waiting Until</th>
                                 <th class="text-end">Retries</th>
                                 <th class="text-end">Status</th>

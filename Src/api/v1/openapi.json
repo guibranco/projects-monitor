@@ -478,6 +478,41 @@
         }
       }
     },
+    "/api/v1/broker-usage": {
+      "get": {
+        "summary": "WebhooksHandler broker usage for the current month",
+        "description": "Current-month message usage of every LavinMQ broker connection configured in the WebhooksHandler (its GET /broker/usage/current), rendered as a table. Usage is the CloudAMQP-counted figure: published payloads × message cost (one publish plus one delivery per bound queue), so the percentages match what CloudAMQP blocks on.",
+        "operationId": "getBrokerUsage",
+        "tags": ["Webhooks"],
+        "responses": {
+          "200": {
+            "description": "Broker usage table and totals.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "period": { "type": "string", "example": "2026-10" },
+                    "messageCost": { "type": "integer", "description": "Broker-counted messages one published payload costs.", "example": 3 },
+                    "brokers": {
+                      "type": "array",
+                      "description": "Header row followed by one row per broker: Broker, Published, Usage (usage / limit badge), Remaining, Used (%).",
+                      "items": { "type": "array", "items": {} }
+                    },
+                    "total": { "type": "integer", "description": "Number of broker rows.", "example": 3 },
+                    "usage": { "type": "integer", "description": "Sum of usage across brokers.", "example": 1678032 },
+                    "limit": { "type": "integer", "description": "Sum of monthly limits across brokers.", "example": 6000000 },
+                    "percent": { "type": "number", "description": "usage / limit across all brokers, percent.", "example": 27.97 },
+                    "maxPercent": { "type": "number", "description": "Highest single-broker usage percentage — the broker nearest its cap.", "example": 83.9 }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
     "/api/v1/gstraccini-jobs": {
       "get": {
         "summary": "List GStraccini bot jobs",

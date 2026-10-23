@@ -165,6 +165,18 @@ jobs:
           echo "\$webhooksApiUrl   = \"${{ secrets.WEBHOOKS_API_URL }}\";" >> webhooks.secrets.php
           echo "\$webhooksApiToken = \"${{ secrets.WEBHOOKS_API_TOKEN }}\";" >> webhooks.secrets.php
 
+      - name: 🔑 Generate WebhooksHandler Configuration
+        env:
+          WEBHOOKS_HANDLER_API_URL: ${{ secrets.WEBHOOKS_HANDLER_API_URL }}
+          WEBHOOKS_HANDLER_API_TOKEN: ${{ secrets.WEBHOOKS_HANDLER_API_TOKEN }}
+        run: |
+          cd Src
+          mkdir -p secrets
+          cd secrets
+          echo "<?php" >> webhooksHandler.secrets.php
+          echo "\$webhooksHandlerApiUrl   = \"$WEBHOOKS_HANDLER_API_URL\";" >> webhooksHandler.secrets.php
+          echo "\$webhooksHandlerApiToken = \"$WEBHOOKS_HANDLER_API_TOKEN\";" >> webhooksHandler.secrets.php
+
       - name: 🔑 Generate LogStream Configuration
         run: |
           cd Src

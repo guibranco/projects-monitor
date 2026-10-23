@@ -173,6 +173,7 @@ $configuration = new Configuration();
             <div id="gauge_chart_pull_requests" class="gauge"></div>
             <div id="gauge_chart_workflows_runs" class="gauge"></div>
             <div id="gauge_chart_queues" class="gauge"></div>
+            <div id="gauge_chart_broker_usage" class="gauge"></div>
             <div id="gauge_chart_pm_messages" class="gauge"></div>
             <div id="gauge_chart_bot_installations" class="gauge"></div>
             <div id="gauge_chart_bot_repositories" class="gauge"></div>
@@ -183,6 +184,8 @@ $configuration = new Configuration();
       <div class="stats-section">
          <div class="stats-left">
             <div id="queues"></div>
+            <div id="broker_usage_caption" class="small text-white-50 mt-3"></div>
+            <div id="broker_usage"></div>
             <div id="accounts_usage"></div>
          </div>
          <div class="stats-right">

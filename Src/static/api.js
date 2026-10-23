@@ -442,6 +442,7 @@ export class DataLoader {
    */
   load60Interval() {
     this.apiManager.load(API_ENDPOINTS.DOMAINS, (data) => window.showDomains?.(data));
+    this.apiManager.load(API_ENDPOINTS.BROKER_USAGE, (data) => window.showBrokerUsage?.(data));
     this.apiManager.load(API_ENDPOINTS.ERRORS, (data) => window.showDbErrors?.(data));
     this.apiManager.load(API_ENDPOINTS.GITHUB, (data) => window.showGitHub?.(data));
     this.apiManager.load(API_ENDPOINTS.HEALTHCHECKS, (data) => window.showHealthChecksIo?.(data));

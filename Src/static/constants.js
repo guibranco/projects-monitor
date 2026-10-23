@@ -26,6 +26,7 @@ export const API_ENDPOINTS = {
   MESSAGES_DETAILS: "api/v1/messages/details",
   MESSAGES_DELETE_SEQUENCE: "api/v1/messages/delete-sequence",
   MESSAGES_DELETE_GROUP: "api/v1/messages/delete-group",
+  BROKER_USAGE: "api/v1/broker-usage",
   QUEUES: "api/v1/queues",
   QUEUES_PURGE: "api/v1/queues/purge",
   DOMAINS: "api/v1/domains",

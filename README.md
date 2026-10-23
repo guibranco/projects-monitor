@@ -97,6 +97,7 @@ The full set of integrations and their secrets files:
 | IP2WHOIS (domain lookups)   | `Ip2WhoIsSecrets.php`                |
 | Postman                     | `postman.secrets.php`                |
 | Webhooks project            | `webhooks.secrets.php`               |
+| WebhooksHandler (broker usage) | `webhooksHandler.secrets.php`     |
 | GStraccini Bot              | `gstracciniBot.secrets.php`          |
 | LogStream                   | `logStream.secrets.php`              |
 

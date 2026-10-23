@@ -511,6 +511,45 @@ export class DataDisplayManager {
   }
 
   /**
+   * Draws the WebhooksHandler broker usage table (one row per broker
+   * connection) and a gauge with the highest "% of monthly limit" across
+   * them — the broker nearest to being blocked by CloudAMQP. Usage is the
+   * CloudAMQP-counted figure (published payloads × message cost), so it is
+   * directly comparable with the CloudAMQP console.
+   */
+  showBrokerUsage(response) {
+    const gaugeOptions = {
+      width: "100%",
+      height: "100%",
+      min: 0,
+      max: 100,
+      greenFrom: 0,
+      greenTo: 70,
+      yellowFrom: 70,
+      yellowTo: 90,
+      redFrom: 90,
+      redTo: 100,
+    };
+
+    const caption = document.getElementById("broker_usage_caption");
+    if (caption) {
+      const period = response.period ? `Period ${response.period}` : "Broker usage";
+      const totals = response.limit
+        ? ` · ${Number(response.usage).toLocaleString()} / ${Number(response.limit).toLocaleString()} across all brokers (${response.percent}%)`
+        : "";
+      caption.textContent = `${period} · ×${response.messageCost} per payload (publish + deliveries)${totals}`;
+    }
+
+    this.chartManager.drawDataTable(response.brokers, "broker_usage", CHART_OPTIONS.table);
+    this.chartManager.drawGaugeChart(
+      "Broker Quota %",
+      Number(response.maxPercent ?? 0),
+      "gauge_chart_broker_usage",
+      gaugeOptions
+    );
+  }
+
+  /**
    * Draws a data table using the provided response.
    */
   showUpTimeRobot(response) {

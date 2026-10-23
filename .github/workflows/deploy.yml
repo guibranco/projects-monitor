@@ -174,8 +174,8 @@ jobs:
           mkdir -p secrets
           cd secrets
           echo "<?php" >> webhooksHandler.secrets.php
-          echo "\$webhooksHandlerApiUrl   = \"$WEBHOOKS_HANDLER_API_URL\";" >> webhooksHandler.secrets.php
-          echo "\$webhooksHandlerApiToken = \"$WEBHOOKS_HANDLER_API_TOKEN\";" >> webhooksHandler.secrets.php
+          echo "\$handlerApiUrl   = \"$WEBHOOKS_HANDLER_API_URL\";" >> webhooksHandler.secrets.php
+          echo "\$handlerApiToken = \"$WEBHOOKS_HANDLER_API_TOKEN\";" >> webhooksHandler.secrets.php
 
       - name: 🔑 Generate LogStream Configuration
         run: |

@@ -55,9 +55,12 @@ class WebhooksHandler
 
         include_once $secretsFile;
 
-        $this->apiUrl  = rtrim($handlerApiUrl, '/').'/';
+        // Secrets pasted with a stray newline or space would put a control
+        // character into the URL or the Authorization header; older libcurl
+        // sends it as-is and nginx answers a bare 400 Bad Request.
+        $this->apiUrl  = rtrim(trim((string) $handlerApiUrl), '/').'/';
         $this->headers = [
-                          'Authorization: Bearer '.$handlerApiToken,
+                          'Authorization: Bearer '.trim((string) $handlerApiToken),
                           'Accept: application/json',
                           'Cache-Control: no-cache',
                           constant('USER_AGENT'),

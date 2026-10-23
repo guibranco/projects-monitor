@@ -901,18 +901,45 @@ export class DataDisplayManager {
   }
 
   /**
+   * The Idle Retry worker's last and next run, above the table: the API
+   * projects them from the worker's HealthChecks.io check (its last ping is
+   * the end of its last run; it sleeps an hour between runs). A daemon
+   * restart or an API-triggered run adds a run, which shifts everything.
+   */
+  #renderIdleWorker(worker) {
+    const el = document.getElementById("pr_idle_worker");
+    if (!el) return;
+
+    if (!worker?.lastRunAt) {
+      const why = worker?.check ? "its check has not pinged yet" : "no HealthChecks.io check matched";
+      el.innerHTML = `<i class="bi bi-hourglass-split me-1"></i>Idle Retry worker: last run unknown (${why}), so no retry is projected.`;
+      return;
+    }
+
+    let status = "";
+    if (worker.checkStatus && worker.checkStatus !== "up") {
+      status = ` · HealthChecks.io reports it <strong>${this.#escHtml(worker.checkStatus)}</strong>`;
+    }
+
+    el.innerHTML = `<i class="bi bi-hourglass-split me-1"></i>Idle Retry worker: last run <strong>${this.#escHtml(worker.lastRunAt)}</strong>, next run <strong>${this.#escHtml(worker.nextRunAt)}</strong>`
+      + ` — one retry per run, every ${Math.round(Number(worker.intervalSeconds ?? 3600) / 60)} min; a daemon restart or an API-triggered run adds a run and shifts the projection${status}.`;
+  }
+
+  /**
    * Renders Idle Pull Requests from webhooks GET /pull-requests/idle: open,
    * already processed by the bot and untouched for at least a day, in the
    * API's round-robin order across repositories (by Rank, then by the
    * repository's last pull request update, then by Updated At), which the
    * table keeps. The first DUE row is the next one the webhooks hourly
    * idle-pull-requests worker gives an Idle Retry (marks IDLE); a WAITING
-   * row's "Waiting Until" is when its backoff window ends.
+   * row's "Waiting Until" is when its backoff window ends, and "Expected
+   * Retry" is the run the API projects for each row (see #renderIdleWorker).
    */
   showWebhookPullRequestsIdle(response) {
-    const items = Array.isArray(response) ? response : [];
+    const items = Array.isArray(response?.items) ? response.items : [];
+    this.#renderIdleWorker(response?.worker);
     const nextRetry = items.find((i) => i?.idleStatus === "DUE");
-    this.#renderProcessingList(response, "pr_idle", "No idle pull requests.", [
+    this.#renderProcessingList(items, "pr_idle", "No idle pull requests.", [
       { label: "#Seq", render: (i) => i.sequence },
       { label: "Repository", render: (i) => this.#idleRepositoryCell(i) },
       { label: "Rank", render: (i) => this.#idleRankCell(i) },
@@ -923,6 +950,7 @@ export class DataDisplayManager {
       { label: "Repo Last PR Update", render: (i) => this.#idleRepositoryActivityCell(i) },
       { label: "Processing Date", render: (i) => this.#fmt(i.processingDate) },
       { label: "Waiting Until", render: (i) => this.#fmt(i.waitingUntil) },
+      { label: "Expected Retry", render: (i) => this.#fmt(i.expectedRetryAt) },
       { label: "Retries", render: (i) => `${Number(i.idleRetryCount ?? 0)}/10` },
       { label: "Status", render: (i) => this.#idleStatusBadge(i.idleStatus, i === nextRetry) },
     ]);

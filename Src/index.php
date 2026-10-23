@@ -358,7 +358,10 @@ $configuration = new Configuration();
             <i class="bi bi-clock-history me-2"></i>Idle Pull Requests <span id="counter_pr_idle"
                class="badge rounded-pill"></span>
          </div>
-         <div id="pr_idle" class="section-content"></div>
+         <div class="section-content">
+            <div id="pr_idle_worker" class="section-note"></div>
+            <div id="pr_idle"></div>
+         </div>
       </div>
 
       <div class="full-width-section">

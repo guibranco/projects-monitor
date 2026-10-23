@@ -32,7 +32,7 @@ Projects Monitor is a PHP dashboard backed by a REST-like API (`Src/api/v1`). It
 
 ## Tech stack
 
-- **PHP 8.2+** (the Docker image tracks `php:8.6-rc-apache`), Apache, Composer.
+- **PHP 8.2+** (the Docker image is pinned to `php:8.6.0RC4-apache`), Apache, Composer.
 - **MariaDB/MySQL** for errors, messages, and user accounts.
 - **[guibranco/pancake](https://github.com/guibranco/pancake)** for HTTP requests and shared helpers, `phpseclib/phpseclib` for SSH/WireGuard checks, `fastvolt/markdown` for rendering release notes.
 - **Docker Compose** for local development: an Apache/PHP app container, a MariaDB container, and [Mailpit](https://github.com/axllent/mailpit) standing in for a real mailserver.
@@ -63,7 +63,7 @@ This starts three containers:
 
 | Service    | Purpose                              | Local address           |
 | ---------- | ------------------------------------- | ------------------------ |
-| `www`      | Apache + PHP 8.6-rc app               | http://localhost:8000    |
+| `www`      | Apache + PHP 8.6.0RC4 app             | http://localhost:8000    |
 | `database` | MariaDB (`test`/`test`)               | localhost:3306            |
 | `mailpit`  | Catches outbound mail from `mail()`   | http://localhost:8025 (UI), `1025` (SMTP) |
 

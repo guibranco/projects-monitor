@@ -90,6 +90,30 @@ class WebhooksHandlerTest extends TestCase
 
 
     /**
+     * A stand-in Response (no HTTP) with the given status, body and message.
+     *
+     * @param integer $status  HTTP status, or -1 for a transport failure.
+     * @param string  $body    Response body.
+     * @param string  $message Transport error message.
+     *
+     * @return Response
+     */
+    private function responseWith(int $status, string $body='', string $message=''): Response
+    {
+        $builder = $this->getMockBuilder(Response::class);
+        $builder->disableOriginalConstructor();
+        $builder->onlyMethods(['getStatusCode', 'getBody', 'getMessage']);
+        $response = $builder->getMock();
+        $response->method('getStatusCode')->willReturn($status);
+        $response->method('getBody')->willReturn($body);
+        $response->method('getMessage')->willReturn($message);
+
+        return $response;
+
+    }//end responseWith()
+
+
+    /**
      * A 200 with a brokers list is rendered through the presenter.
      *
      * @return void
@@ -111,7 +135,7 @@ class WebhooksHandlerTest extends TestCase
                     'brokers'     => [$broker],
                    ];
         $body    = json_encode($payload);
-        $handler = $this->handlerWith($this->requestReturning(Response::success($body, self::API_URL, [])));
+        $handler = $this->handlerWith($this->requestReturning($this->responseWith(200, $body)));
 
         $result = $handler->getBrokerUsage();
 
@@ -133,7 +157,7 @@ class WebhooksHandlerTest extends TestCase
      */
     public function testGetBrokerUsageThrowsOnNon200(): void
     {
-        $response = Response::success('nope', self::API_URL, [], 401);
+        $response = $this->responseWith(401, 'nope');
         $handler  = $this->handlerWith($this->requestReturning($response));
 
         $this->expectException(RequestException::class);
@@ -151,7 +175,7 @@ class WebhooksHandlerTest extends TestCase
      */
     public function testGetBrokerUsageThrowsOnTransportError(): void
     {
-        $response = Response::error('connection refused', self::API_URL, -1);
+        $response = $this->responseWith(-1, '', 'connection refused');
         $handler  = $this->handlerWith($this->requestReturning($response));
 
         $this->expectException(RequestException::class);
@@ -169,7 +193,7 @@ class WebhooksHandlerTest extends TestCase
      */
     public function testGetBrokerUsageThrowsOnNonJsonBody(): void
     {
-        $response = Response::success('<html>', self::API_URL, []);
+        $response = $this->responseWith(200, '<html>');
         $handler  = $this->handlerWith($this->requestReturning($response));
 
         $this->expectException(RequestException::class);
@@ -187,7 +211,7 @@ class WebhooksHandlerTest extends TestCase
      */
     public function testGetBrokerUsageThrowsWhenBrokersListIsMissing(): void
     {
-        $response = Response::success('{"period":"2026-10"}', self::API_URL, []);
+        $response = $this->responseWith(200, '{"period":"2026-10"}');
         $handler  = $this->handlerWith($this->requestReturning($response));
 
         $this->expectException(RequestException::class);

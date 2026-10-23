@@ -1,5 +1,5 @@
 # Base image
-FROM php:8.6-rc-apache
+FROM php:8.6.0RC4-apache
 
 # Update apt and install dependencies in one layer
 RUN apt-get update \

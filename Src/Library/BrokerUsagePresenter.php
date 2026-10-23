@@ -18,12 +18,12 @@ class BrokerUsagePresenter
 {
 
     public const TABLE_HEADER = [
-        'Broker',
-        'Published',
-        'Usage',
-        'Remaining',
-        'Used',
-    ];
+                                 'Broker',
+                                 'Published',
+                                 'Usage',
+                                 'Remaining',
+                                 'Used',
+                                ];
 
     /**
      * Percentage thresholds (inclusive lower bound) for the "Used" badge colour.
@@ -61,15 +61,15 @@ class BrokerUsagePresenter
         $totalPercent = $this->percentOf($totalUsage, $totalLimit, 0.0);
 
         return [
-            'period'      => (string) ($usage['period'] ?? ''),
-            'messageCost' => $messageCost,
-            'brokers'     => $rows,
-            'total'       => (count($rows) - 1),
-            'usage'       => $totalUsage,
-            'limit'       => $totalLimit,
-            'percent'     => $totalPercent,
-            'maxPercent'  => $maxPercent,
-        ];
+                'period'      => (string) ($usage['period'] ?? ''),
+                'messageCost' => $messageCost,
+                'brokers'     => $rows,
+                'total'       => (count($rows) - 1),
+                'usage'       => $totalUsage,
+                'limit'       => $totalLimit,
+                'percent'     => $totalPercent,
+                'maxPercent'  => $maxPercent,
+               ];
 
     }//end present()
 
@@ -137,19 +137,19 @@ class BrokerUsagePresenter
         );
 
         $item = [
-            $safeName,
-            $published,
-            $usageImg,
-            $remainImg,
-            $usedImg,
-        ];
+                 $safeName,
+                 $published,
+                 $usageImg,
+                 $remainImg,
+                 $usedImg,
+                ];
 
         return [
-            'item'    => $item,
-            'usage'   => $usage,
-            'limit'   => $limit,
-            'percent' => $percent,
-        ];
+                'item'    => $item,
+                'usage'   => $usage,
+                'limit'   => $limit,
+                'percent' => $percent,
+               ];
 
     }//end presentBroker()
 

@@ -21,33 +21,33 @@ class BrokerUsagePresenterTest extends TestCase
     protected function getHandlerResponse(): array
     {
         return [
-            'period'      => '2026-10',
-            'messageCost' => 3,
-            'brokers'     => [
-                [
-                    'broker'            => 'BROKER_URL_1',
-                    'period'            => '2026-10',
-                    'messageCount'      => 559344,
-                    'messageCost'       => 3,
-                    'usage'             => 1678032,
-                    'monthlyLimit'      => 2000000,
-                    'remaining'         => 321968,
-                    'remainingMessages' => 107322,
-                    'usagePercent'      => 83.9,
-                ],
-                [
-                    'broker'            => 'BROKER_URL_2',
-                    'period'            => '2026-10',
-                    'messageCount'      => 0,
-                    'messageCost'       => 3,
-                    'usage'             => 0,
-                    'monthlyLimit'      => 1500000,
-                    'remaining'         => 1500000,
-                    'remainingMessages' => 500000,
-                    'usagePercent'      => 0,
-                ],
-            ],
-        ];
+                'period'      => '2026-10',
+                'messageCost' => 3,
+                'brokers'     => [
+                                  [
+                                   'broker'            => 'BROKER_URL_1',
+                                   'period'            => '2026-10',
+                                   'messageCount'      => 559344,
+                                   'messageCost'       => 3,
+                                   'usage'             => 1678032,
+                                   'monthlyLimit'      => 2000000,
+                                   'remaining'         => 321968,
+                                   'remainingMessages' => 107322,
+                                   'usagePercent'      => 83.9,
+                                  ],
+                                  [
+                                   'broker'            => 'BROKER_URL_2',
+                                   'period'            => '2026-10',
+                                   'messageCount'      => 0,
+                                   'messageCost'       => 3,
+                                   'usage'             => 0,
+                                   'monthlyLimit'      => 1500000,
+                                   'remaining'         => 1500000,
+                                   'remainingMessages' => 500000,
+                                   'usagePercent'      => 0,
+                                  ],
+                                 ],
+               ];
 
     }//end getHandlerResponse()
 
@@ -151,16 +151,16 @@ class BrokerUsagePresenterTest extends TestCase
     {
         // An older handler only returns messageCount / monthlyLimit / remaining.
         $response = [
-            'period'  => '2026-09',
-            'brokers' => [
-                [
-                    'broker'       => 'BROKER_URL_1',
-                    'messageCount' => 10,
-                    'monthlyLimit' => 100,
-                    'remaining'    => 90,
-                ],
-            ],
-        ];
+                     'period'  => '2026-09',
+                     'brokers' => [
+                                   [
+                                    'broker'       => 'BROKER_URL_1',
+                                    'messageCount' => 10,
+                                    'monthlyLimit' => 100,
+                                    'remaining'    => 90,
+                                   ],
+                                  ],
+                    ];
 
         $presenter = new BrokerUsagePresenter();
 
@@ -202,31 +202,31 @@ class BrokerUsagePresenterTest extends TestCase
     public static function percentColorProvider(): array
     {
         return [
-            'well below warn' => [
-                0.0,
-                'green',
-            ],
-            'just below warn' => [
-                69.99,
-                'green',
-            ],
-            'at warn'         => [
-                70.0,
-                'yellow',
-            ],
-            'below critical'  => [
-                89.99,
-                'yellow',
-            ],
-            'at critical'     => [
-                90.0,
-                'red',
-            ],
-            'over the limit'  => [
-                120.0,
-                'red',
-            ],
-        ];
+                'well below warn' => [
+                                      0.0,
+                                      'green',
+                                     ],
+                'just below warn' => [
+                                      69.99,
+                                      'green',
+                                     ],
+                'at warn'         => [
+                                      70.0,
+                                      'yellow',
+                                     ],
+                'below critical'  => [
+                                      89.99,
+                                      'yellow',
+                                     ],
+                'at critical'     => [
+                                      90.0,
+                                      'red',
+                                     ],
+                'over the limit'  => [
+                                      120.0,
+                                      'red',
+                                     ],
+               ];
 
     }//end percentColorProvider()
 

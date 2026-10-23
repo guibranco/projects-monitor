@@ -57,11 +57,11 @@ class WebhooksHandler
 
         $this->apiUrl  = rtrim($handlerApiUrl, '/').'/';
         $this->headers = [
-            'Authorization: Bearer '.$handlerApiToken,
-            'Accept: application/json',
-            'Cache-Control: no-cache',
-            constant('USER_AGENT'),
-        ];
+                          'Authorization: Bearer '.$handlerApiToken,
+                          'Accept: application/json',
+                          'Cache-Control: no-cache',
+                          constant('USER_AGENT'),
+                         ];
         $this->request = new Request();
 
     }//end __construct()
@@ -82,12 +82,14 @@ class WebhooksHandler
         $status   = $response->getStatusCode();
 
         if ($status === 200) {
-            $decoded = json_decode($response->getBody(), true);
-            if (is_array($decoded) === true) {
-                return $decoded;
+            $decoded = json_decode((string) $response->getBody(), true);
+            if (is_array($decoded) === false) {
+                throw new RequestException(
+                    'Request to WebhooksHandler API returned a non-JSON body: GET '.$endpoint
+                );
             }
 
-            return [];
+            return $decoded;
         }
 
         $error = $response->getBody();
@@ -105,13 +107,22 @@ class WebhooksHandler
     /**
      * Current-month broker usage for every configured broker connection, as
      * reported by GET /broker/usage/current, rendered for the dashboard
-     * (see BrokerUsagePresenter).
+     * (see BrokerUsagePresenter). A 200 whose body has no `brokers` list is
+     * treated as a load failure, never as zero usage.
      *
      * @return array
+     *
+     * @throws RequestException When the handler answers without a brokers list.
      */
     public function getBrokerUsage(): array
     {
-        $usage     = $this->doGet('broker/usage/current');
+        $usage = $this->doGet('broker/usage/current');
+        if (isset($usage['brokers']) === false || is_array($usage['brokers']) === false) {
+            throw new RequestException(
+                'WebhooksHandler usage response has no brokers list: GET broker/usage/current'
+            );
+        }
+
         $presenter = new BrokerUsagePresenter();
 
         return $presenter->present($usage);

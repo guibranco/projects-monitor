@@ -173,9 +173,12 @@ jobs:
           cd Src
           mkdir -p secrets
           cd secrets
+          # Single-quoted PHP literals with \ and ' escaped, so a token containing
+          # "$", a quote or a backslash cannot be interpolated or break the file.
+          php_literal() { printf '%s' "$1" | sed "s/[\\\\']/\\\\&/g"; }
           echo "<?php" >> webhooksHandler.secrets.php
-          echo "\$handlerApiUrl   = \"$WEBHOOKS_HANDLER_API_URL\";" >> webhooksHandler.secrets.php
-          echo "\$handlerApiToken = \"$WEBHOOKS_HANDLER_API_TOKEN\";" >> webhooksHandler.secrets.php
+          echo "\$handlerApiUrl   = '$(php_literal "$WEBHOOKS_HANDLER_API_URL")';" >> webhooksHandler.secrets.php
+          echo "\$handlerApiToken = '$(php_literal "$WEBHOOKS_HANDLER_API_TOKEN")';" >> webhooksHandler.secrets.php
 
       - name: 🔑 Generate LogStream Configuration
         run: |

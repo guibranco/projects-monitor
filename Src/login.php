@@ -751,7 +751,17 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
             return `<span class="badge ${cfg.badge} status-badge">${escHtml(cfg.text)}</span>${next}`;
         }
 
-        function updateIdlePullRequests(items) {
+        // The Idle Retry worker's next run (its last HealthChecks.io ping plus
+        // the hour it sleeps), when the cache knows it; a daemon restart or an
+        // API-triggered run adds a run, so it is a projection.
+        function idleWorkerSummary(worker) {
+            if (!worker?.nextRunAt) {
+                return '';
+            }
+            return ` · next Idle Retry run ${worker.nextRunAt}`;
+        }
+
+        function updateIdlePullRequests(items, worker) {
             const el = document.getElementById('idle-pull-requests');
             const countEl = document.getElementById('idle-pull-requests-count');
             if (!Array.isArray(items)) {
@@ -759,7 +769,8 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 countEl.textContent = '';
                 return;
             }
-            countEl.textContent = items.length === 1 ? '1 pull request' : `${items.length} pull requests`;
+            const count = items.length === 1 ? '1 pull request' : `${items.length} pull requests`;
+            countEl.textContent = `${count}${idleWorkerSummary(worker)}`;
             if (items.length === 0) {
                 el.innerHTML = '<p class="text-muted mb-0 p-3">No idle pull requests</p>';
                 return;
@@ -798,6 +809,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                     <td>${escHtml(pr.updatedAt ?? '—')}</td>
                     <td title="Most recent update to any of the repository's pull requests">${escHtml(pr.repositoryLastPullRequestUpdate ?? '—')}</td>
                     <td>${escHtml(pr.waitingUntil ?? '—')}</td>
+                    <td title="The run projected to give this pull request its next Idle Retry">${escHtml(pr.expectedRetryAt ?? '—')}</td>
                     <td class="text-end"><span class="${retries > 0 ? 'state-count non-zero' : 'state-count'}">${retries}/10</span></td>
                     <td class="text-end">${idleStatusBadge(pr.idleStatus, pr === nextRetry)}</td>
                 </tr>`;
@@ -815,6 +827,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                                 <th>Updated At</th>
                                 <th title="Most recent update to any of the repository's pull requests">Repo Last PR Update</th>
                                 <th>Waiting Until</th>
+                                <th title="The run projected to give the pull request its next Idle Retry">Expected Retry</th>
                                 <th class="text-end">Retries</th>
                                 <th class="text-end">Status</th>
                             </tr>
@@ -853,7 +866,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                     updateLastUpdated(data.generatedAt);
                     updateQueues(data.queues);
                     updateBotProcessingState(data.webhookStats);
-                    updateIdlePullRequests(data.idlePullRequests);
+                    updateIdlePullRequests(data.idlePullRequests, data.idleWorker);
                 })
                 .catch(err => {
                     console.error('Failed to load dashboard data:', err);

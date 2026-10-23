@@ -115,6 +115,42 @@ class HealthChecksIo
         return ['counts' => $counts, 'checks' => $checks];
     }
 
+    /**
+     * The first check, across every write key, whose name contains $needle
+     * (case-insensitive), with its last and next ping as HealthChecks.io
+     * reports them (ISO 8601 with offset, null while it has never pinged);
+     * null when no check matches.
+     *
+     * @param string $needle Fragment of the check's name.
+     *
+     * @return array|null
+     */
+    public function getCheckByName(string $needle): ?array
+    {
+        foreach ($this->writeKeys as $writeKey) {
+            $response = $this->getRequest($writeKey);
+
+            foreach ($response->checks as $check) {
+                if (stripos((string) $check->name, $needle) === false) {
+                    continue;
+                }
+
+                $found = [];
+
+                $found['name']     = $check->name;
+                $found['status']   = $check->status;
+                $found['lastPing'] = $check->last_ping;
+                $found['nextPing'] = $check->next_ping;
+
+                return $found;
+            }
+        }
+
+        return null;
+
+    }//end getCheckByName()
+
+
     public function getChecks()
     {
         $checks = array();

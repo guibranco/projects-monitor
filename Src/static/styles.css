@@ -1022,6 +1022,20 @@ input.gridjs-input {
   to { transform: translateY(-50%) rotate(360deg); }
 }
 
+/* A one-line note above a section's table (the Idle Retry worker's last
+   and next run), inside the collapsible content so it folds with it. */
+.section-note {
+  color: rgba(255, 255, 255, .7);
+  font-size: .9rem;
+  margin: 0 0 12px;
+  min-height: 1.4em;
+}
+
+.section-note strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+
 /* Section content animations */
 .section-content {
   transition: var(--transition-smooth);

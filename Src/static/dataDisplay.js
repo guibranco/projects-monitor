@@ -905,14 +905,21 @@ export class DataDisplayManager {
    * projects them from the worker's HealthChecks.io check (its last ping is
    * the end of its last run; it sleeps an hour between runs). A daemon
    * restart or an API-triggered run adds a run, which shifts everything.
+   * The table shows the dashboard's own accounts only; the worker still
+   * serves every repository, so the hidden rows are counted here.
    */
-  #renderIdleWorker(worker) {
+  #renderIdleWorker(worker, hidden) {
     const el = document.getElementById("pr_idle_worker");
     if (!el) return;
 
+    const hiddenCount = Number(hidden ?? 0);
+    const others = hiddenCount > 0
+      ? ` <span class="text-muted">· ${hiddenCount} idle pull request${hiddenCount === 1 ? "" : "s"} of other accounts not shown (the worker still serves them)</span>`
+      : "";
+
     if (!worker?.lastRunAt) {
       const why = worker?.check ? "its check has not pinged yet" : "no HealthChecks.io check matched";
-      el.innerHTML = `<i class="bi bi-hourglass-split me-1"></i>Idle Retry worker: last run unknown (${why}), so no retry is projected.`;
+      el.innerHTML = `<i class="bi bi-hourglass-split me-1"></i>Idle Retry worker: last run unknown (${why}), so no retry is projected.${others}`;
       return;
     }
 
@@ -922,7 +929,20 @@ export class DataDisplayManager {
     }
 
     el.innerHTML = `<i class="bi bi-hourglass-split me-1"></i>Idle Retry worker: last run <strong>${this.#escHtml(worker.lastRunAt)}</strong>, next run <strong>${this.#escHtml(worker.nextRunAt)}</strong>`
-      + ` — one retry per run, every ${Math.round(Number(worker.intervalSeconds ?? 3600) / 60)} min; a daemon restart or an API-triggered run adds a run and shifts the projection${status}.`;
+      + ` — one retry per run, every ${Math.round(Number(worker.intervalSeconds ?? 3600) / 60)} min; a daemon restart or an API-triggered run adds a run and shifts the projection${status}.${others}`;
+  }
+
+  /**
+   * The listed row the worker retries next: the one projected for the
+   * worker's next run. Without a projection, the first DUE row is next only
+   * when nothing is hidden (a hidden repository may be ahead of it).
+   */
+  #nextIdleRetry(items, worker, hidden) {
+    if (worker?.nextRunAt) {
+      return items.find((i) => i?.expectedRetryAt === worker.nextRunAt);
+    }
+    if (Number(hidden ?? 0) > 0) return undefined;
+    return items.find((i) => i?.idleStatus === "DUE");
   }
 
   /**
@@ -934,11 +954,12 @@ export class DataDisplayManager {
    * idle-pull-requests worker gives an Idle Retry (marks IDLE); a WAITING
    * row's "Waiting Until" is when its backoff window ends, and "Expected
    * Retry" is the run the API projects for each row (see #renderIdleWorker).
+   * Only the dashboard's own accounts' repositories are listed.
    */
   showWebhookPullRequestsIdle(response) {
     const items = Array.isArray(response?.items) ? response.items : [];
-    this.#renderIdleWorker(response?.worker);
-    const nextRetry = items.find((i) => i?.idleStatus === "DUE");
+    this.#renderIdleWorker(response?.worker, response?.hidden);
+    const nextRetry = this.#nextIdleRetry(items, response?.worker, response?.hidden);
     this.#renderProcessingList(items, "pr_idle", "No idle pull requests.", [
       { label: "#Seq", render: (i) => i.sequence },
       { label: "Repository", render: (i) => this.#idleRepositoryCell(i) },

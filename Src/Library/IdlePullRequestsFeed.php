@@ -6,8 +6,14 @@ use Throwable;
 
 /**
  * The Idle Pull Requests feed as both dashboards consume it: the rows of the
- * webhooks API's GET /pull-requests/idle with the Idle Retry forecast
- * applied, and the worker's last and next run.
+ * webhooks API's GET /pull-requests/idle for the dashboard's own GitHub
+ * accounts (GitHubAccounts), with the Idle Retry forecast applied, and the
+ * worker's last and next run.
+ *
+ * The API returns every repository the bot is installed on, and the worker
+ * retries across all of them, so the forecast runs over the whole queue
+ * first and only then are other accounts' rows dropped: an own row's
+ * projected retry still counts the turns the hidden rows take.
  *
  * The worker's last run is the last ping of its HealthChecks.io check (the
  * end of its last tracked run). When the check cannot be found or
@@ -31,25 +37,38 @@ class IdlePullRequestsFeed
      */
     private $healthChecks;
 
+    /**
+     * The accounts whose repositories the dashboards show.
+     *
+     * @var GitHubAccounts
+     */
+    private $accounts;
+
 
     /**
      * Builds the feed on the given clients, or on fresh ones.
      *
      * @param Webhooks|null       $webhooks     The webhooks API client.
      * @param HealthChecksIo|null $healthChecks The HealthChecks.io client.
+     * @param GitHubAccounts|null $accounts     The accounts whose repositories to show.
      */
-    public function __construct(?Webhooks $webhooks=null, ?HealthChecksIo $healthChecks=null)
+    public function __construct(?Webhooks $webhooks=null, ?HealthChecksIo $healthChecks=null, ?GitHubAccounts $accounts=null)
     {
         $this->webhooks     = $webhooks;
         $this->healthChecks = $healthChecks;
+        $this->accounts     = $accounts;
+        if ($this->accounts === null) {
+            $this->accounts = new GitHubAccounts();
+        }
 
     }//end __construct()
 
 
     /**
-     * The feed: the rows with an expectedRetryAt each, and the worker.
+     * The feed: the own accounts' rows with an expectedRetryAt each, how
+     * many rows of other accounts were left out, and the worker.
      *
-     * @return array {items: array, worker: array}
+     * @return array {items: array, hidden: integer, worker: array}
      */
     public function fetch(): array
     {
@@ -65,14 +84,45 @@ class IdlePullRequestsFeed
         $worker['check']       = ($check['name'] ?? null);
         $worker['checkStatus'] = ($check['status'] ?? null);
 
+        $projected = $forecast->apply($rows);
+        $own       = $this->getOwnRows($projected);
+
         $feed = [];
 
-        $feed['items']  = $forecast->apply($rows);
+        $feed['items']  = $own;
+        $feed['hidden'] = (count($projected) - count($own));
         $feed['worker'] = $worker;
 
         return $feed;
 
     }//end fetch()
+
+
+    /**
+     * The rows whose repository belongs to one of the own accounts, in the
+     * order given.
+     *
+     * @param array $rows Rows as returned by GET /pull-requests/idle.
+     *
+     * @return array
+     */
+    private function getOwnRows(array $rows): array
+    {
+        $own = [];
+
+        foreach ($rows as $row) {
+            if (is_array($row) === false) {
+                continue;
+            }
+
+            if ($this->accounts->isOwn(($row['repositoryOwner'] ?? null)) === true) {
+                $own[] = $row;
+            }
+        }
+
+        return $own;
+
+    }//end getOwnRows()
 
 
     /**

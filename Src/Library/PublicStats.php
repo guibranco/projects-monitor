@@ -99,6 +99,8 @@ class PublicStats
             $idleFeed         = (new IdlePullRequestsFeed())->fetch();
             $idlePullRequests = self::summarizeIdlePullRequests($idleFeed['items']);
             $idleWorker       = $idleFeed['worker'];
+
+            $idleWorker['hiddenRows'] = $idleFeed['hidden'];
         } catch (\Throwable) {
         }
 

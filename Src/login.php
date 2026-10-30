@@ -775,7 +775,15 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 el.innerHTML = '<p class="text-muted mb-0 p-3">No idle pull requests</p>';
                 return;
             }
-            const nextRetry = items.find(pr => pr?.idleStatus === 'DUE');
+            // The row retried next is the one projected for the worker's next
+            // run; without a projection, the first due row — unless rows of
+            // other accounts (which may be ahead of it) are left out.
+            let nextRetry = undefined;
+            if (worker?.nextRunAt) {
+                nextRetry = items.find(pr => pr?.expectedRetryAt === worker.nextRunAt);
+            } else if (Number(worker?.hiddenRows ?? 0) === 0) {
+                nextRetry = items.find(pr => pr?.idleStatus === 'DUE');
+            }
             const rows = items.map(pr => {
                 // Private repositories are already redacted in the cached payload
                 // (owner, name, number and title come back null); only an explicit

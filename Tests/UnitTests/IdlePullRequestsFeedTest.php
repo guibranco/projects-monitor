@@ -37,15 +37,18 @@ class IdlePullRequestsFeedTest extends TestCase
     /**
      * One DUE row as the webhooks API returns it.
      *
+     * @param string $owner    The repository's owner.
+     * @param string $activity The repository's last pull request update.
+     *
      * @return array
      */
-    protected function getRow(): array
+    protected function getRow(string $owner='guibranco', string $activity='2026-10-10 08:30:00'): array
     {
         $row = [];
 
-        $row['repositoryOwner']                 = 'guibranco';
+        $row['repositoryOwner']                 = $owner;
         $row['repositoryName']                  = 'projects-monitor';
-        $row['repositoryLastPullRequestUpdate'] = '2026-10-10 08:30:00';
+        $row['repositoryLastPullRequestUpdate'] = $activity;
         $row['updatedAt']                       = '2026-10-05 17:51:21';
         $row['idleStatus']                      = 'DUE';
         $row['waitingUntil']                    = null;
@@ -53,6 +56,29 @@ class IdlePullRequestsFeedTest extends TestCase
         return $row;
 
     }//end getRow()
+
+
+    /**
+     * A HealthChecks.io client whose worker check last pinged at 11:05:12 Dublin.
+     *
+     * @return HealthChecksIo
+     */
+    protected function getHealthChecks(): HealthChecksIo
+    {
+        $check = [];
+
+        $check['name']     = 'Webhooks - Idle Pull Requests';
+        $check['status']   = 'up';
+        $check['lastPing'] = '2026-10-23T10:05:12+00:00';
+        $check['nextPing'] = '2026-10-23T11:10:12+00:00';
+
+        $healthChecks = $this->createMock(HealthChecksIo::class);
+
+        $healthChecks->method('getCheckByName')->willReturn($check);
+
+        return $healthChecks;
+
+    }//end getHealthChecks()
 
 
     /**
@@ -81,10 +107,36 @@ class IdlePullRequestsFeedTest extends TestCase
         $this->assertSame('Webhooks - Idle Pull Requests', $feed['worker']['check']);
         $this->assertSame('up', $feed['worker']['checkStatus']);
         $this->assertCount(1, $feed['items']);
+        $this->assertSame(0, $feed['hidden']);
         $this->assertSame('2026-10-23 12:05:12', $feed['items'][0]['expectedRetryAt']);
         $this->assertSame('DUE', $feed['items'][0]['idleStatus']);
 
     }//end testProjectsFromTheWorkerCheck()
+
+
+    /**
+     * Other accounts' rows are left out, but only after the forecast: the
+     * hidden repository is quieter, so it takes the next run and the own
+     * row is projected an hour later, exactly as the worker will do.
+     *
+     * @return void
+     */
+    public function testHidesOtherAccountsAfterForecasting(): void
+    {
+        $rows = [];
+
+        $rows[] = $this->getRow('octocat', '2026-10-01 00:00:00');
+        $rows[] = $this->getRow('guibranco', '2026-10-10 08:30:00');
+        $rows[] = $this->getRow('ApiBR', '2026-10-12 08:30:00');
+
+        $feed = (new IdlePullRequestsFeed($this->getWebhooks($rows), $this->getHealthChecks()))->fetch();
+
+        $this->assertSame(1, $feed['hidden']);
+        $this->assertSame(['guibranco', 'ApiBR'], array_column($feed['items'], 'repositoryOwner'));
+        $this->assertSame('2026-10-23 13:05:12', $feed['items'][0]['expectedRetryAt']);
+        $this->assertSame('2026-10-23 14:05:12', $feed['items'][1]['expectedRetryAt']);
+
+    }//end testHidesOtherAccountsAfterForecasting()
 
 
     /**

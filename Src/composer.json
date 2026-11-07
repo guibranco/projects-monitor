@@ -20,11 +20,11 @@
         }
     },
     "require": {
-        "guibranco/pancake": "^1.9.31",
+        "guibranco/pancake": "^1.9.37",
         "fastvolt/markdown": "^0.2.5",
         "phpseclib/phpseclib": "^3.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "^13.4.4"
+        "phpunit/phpunit": "^13.4.6"
     }
 }

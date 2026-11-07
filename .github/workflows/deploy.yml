@@ -215,7 +215,7 @@ jobs:
       - name: 📝 Create Version File for API
         run: |
           cd Src       
-          echo ${{ env.fullSemVer }} > version.txt
+          printf '%s' "${{ env.fullSemVer }}" > version.txt
 
       - name: 📦 Package Files for Deployment
         run: |

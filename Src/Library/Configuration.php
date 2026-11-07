@@ -30,7 +30,13 @@ class Configuration
         $version = "1.0.0";
         $versionFile = "../../version.txt";
         if (file_exists($versionFile)) {
-            $version = file_get_contents($versionFile);
+            // The deploy workflow writes version.txt with a trailing newline;
+            // left in, it splits the User-Agent header into two lines and
+            // nginx-fronted APIs answer 400 Bad Request.
+            $fileVersion = trim((string) file_get_contents($versionFile));
+            if ($fileVersion !== "") {
+                $version = $fileVersion;
+            }
         }
 
         define("USER_AGENT_VENDOR", "projects-monitor/{$version} (+https://github.com/guibranco/projects-monitor)");

@@ -304,10 +304,15 @@ jobs:
           echo "WIREGUARD_CONNECTED=true" >> $GITHUB_ENV
           sudo apt-get update
           sudo apt-get install -y wireguard wireguard-tools resolvconf
-          echo "${{ secrets.WIREGUARD_CONFIG }}" > wg0.conf
-          sudo chmod 600 wg0.conf
+          # Ubuntu 26.04 (ubuntu-latest since November 2026) confines wg-quick
+          # with an AppArmor profile that only lets it read configuration
+          # files under /etc/wireguard, so a config in the workspace fails
+          # with "wg0.conf: Permission denied" even under sudo.
+          sudo mkdir -p /etc/wireguard
+          echo "${{ secrets.WIREGUARD_CONFIG }}" | sudo tee /etc/wireguard/wg0.conf > /dev/null
+          sudo chmod 600 /etc/wireguard/wg0.conf
           sudo modprobe wireguard
-          sudo wg-quick up ./wg0.conf
+          sudo wg-quick up wg0
 
       - name: 🧪 Perform dry run of database migrations
         if: github.actor != 'dependabot[bot]'
@@ -322,7 +327,7 @@ jobs:
       - name: 🔓 Disconnect WireGuard VPN
         if: always() && env.WIREGUARD_CONNECTED == 'true' && github.actor != 'dependabot[bot]'
         shell: bash
-        run: sudo wg-quick down ./wg0.conf
+        run: sudo wg-quick down wg0
 
       - name: 🔑 Release WireGuard connection lock
         if: always() && github.actor != 'dependabot[bot]'

@@ -7,7 +7,11 @@ use GuiBranco\Pancake\ShieldsIo;
 
 class Vercel
 {
-    private const VERCEL_API_URL = "https://api.vercel.com/v9/projects?limit=100";
+    private const VERCEL_API_URL = "https://api.vercel.com/v10/projects?limit=100";
+
+    private const STATE_PAUSED = "PAUSED";
+
+    private const STATE_UNKNOWN = "UNKNOWN";
 
     private $request;
 
@@ -30,7 +34,7 @@ class Vercel
         $this->headers = ["Authorization: Bearer {$vercelToken}", "Accept: application/json", constant("USER_AGENT")];
     }
 
-    private function fetchProjects()
+    protected function fetchProjects()
     {
         $response = $this->request->get(self::VERCEL_API_URL, $this->headers);
 
@@ -42,6 +46,23 @@ class Vercel
         return json_decode($response->getBody());
     }
 
+    /**
+     * Resolves the state shown for a project.
+     *
+     * A paused project (paused by hand, by spend management or by Vercel once the
+     * plan's usage limits are exceeded) keeps its latest deployment in the READY
+     * state, while every request to it gets a 503 DEPLOYMENT_PAUSED. The paused
+     * flag therefore takes precedence over the deployment state.
+     */
+    private function resolveState($project, $deployment)
+    {
+        if (($project->paused ?? false) === true) {
+            return self::STATE_PAUSED;
+        }
+
+        return $deployment->readyState ?? self::STATE_UNKNOWN;
+    }
+
     private function mapStatus($state)
     {
         return match ($state) {
@@ -51,6 +72,8 @@ class Vercel
             "QUEUED" => "⏳",
             "CANCELED" => "⏸",
             "INITIALIZING" => "🆕",
+            "BLOCKED" => "🚫",
+            self::STATE_PAUSED => "⛔",
             default => "❓",
         };
     }
@@ -64,6 +87,8 @@ class Vercel
             "QUEUED" => "blue",
             "CANCELED" => "gray",
             "INITIALIZING" => "blue",
+            "BLOCKED" => "red",
+            self::STATE_PAUSED => "red",
             default => "lightgray",
         };
     }
@@ -80,7 +105,7 @@ class Vercel
 
         foreach ($projects as $project) {
             $deployment = $project->latestDeployments[0] ?? null;
-            $state = $deployment->readyState ?? "UNKNOWN";
+            $state = $this->resolveState($project, $deployment);
             $status = $this->mapStatus($state);
             $color = $this->mapColor($state);
 

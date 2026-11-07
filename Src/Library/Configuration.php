@@ -30,9 +30,9 @@ class Configuration
         $version = "1.0.0";
         $versionFile = "../../version.txt";
         if (file_exists($versionFile)) {
-            // version.txt is written by the deploy workflow with a trailing
-            // newline; left in, it splits the User-Agent header into two
-            // lines and nginx-fronted APIs answer 400 Bad Request.
+            // The deploy workflow writes version.txt with a trailing newline;
+            // left in, it splits the User-Agent header into two lines and
+            // nginx-fronted APIs answer 400 Bad Request.
             $fileVersion = trim((string) file_get_contents($versionFile));
             if ($fileVersion !== "") {
                 $version = $fileVersion;

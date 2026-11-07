@@ -102,7 +102,7 @@ class Vercel
     protected function getProbe(): VercelProbe
     {
         if ($this->probe === null) {
-            $this->probe = new VercelProbe();
+            $this->probe = new VercelProbe(VercelProbe::CACHE_FILE);
         }
 
         return $this->probe;

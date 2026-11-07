@@ -10,6 +10,8 @@ use GuiBranco\ProjectsMonitor\Library\VercelProbe;
  */
 class VercelProbeTest extends TestCase
 {
+    private const ERROR_HEADER = "x-vercel-error";
+
     /**
      * The probe, with the requests mocked and the cache in a temporary folder.
      *
@@ -69,12 +71,12 @@ class VercelProbeTest extends TestCase
      *
      * @param string      $url        The URL requested.
      * @param integer     $statusCode The status code, -1 for a failed request.
-     * @param string|null $error      The value of the error header, if any.
+     * @param string|null $error      The value of the error header, or null.
      * @param string      $header     The name of the error header, in any case.
      *
      * @return Response
      */
-    private function getResponse(string $url, int $statusCode, ?string $error = null, string $header = "x-vercel-error"): Response
+    private function getResponse(string $url, int $statusCode, ?string $error, string $header): Response
     {
         if ($statusCode < 0) {
             return new Response(false, null, "Could not resolve host", $statusCode, $url, null);
@@ -121,10 +123,10 @@ class VercelProbeTest extends TestCase
     {
         $responses = [];
 
-        $responses["https://github-readme-stats-guibranco.vercel.app"]  = $this->getResponse("https://github-readme-stats-guibranco.vercel.app", 402, "DEPLOYMENT_DISABLED");
-        $responses["https://progress-bar.xyz"]                          = $this->getResponse("https://progress-bar.xyz", 200);
+        $responses["https://github-readme-stats-guibranco.vercel.app"]  = $this->getResponse("https://github-readme-stats-guibranco.vercel.app", 402, "DEPLOYMENT_DISABLED", self::ERROR_HEADER);
+        $responses["https://progress-bar.xyz"]                          = $this->getResponse("https://progress-bar.xyz", 200, null, self::ERROR_HEADER);
         $responses["https://this-deployment-does-not-exist.vercel.app"] = $this->getResponse("https://this-deployment-does-not-exist.vercel.app", 404, "DEPLOYMENT_NOT_FOUND", "X-Vercel-Error");
-        $responses["https://offline.example.invalid"]                   = $this->getResponse("https://offline.example.invalid", -1);
+        $responses["https://offline.example.invalid"]                   = $this->getResponse("https://offline.example.invalid", -1, null, self::ERROR_HEADER);
 
         return $responses;
 
@@ -261,7 +263,7 @@ class VercelProbeTest extends TestCase
             $batches[] = count($urls);
             $responses = [];
             foreach ($urls as $url) {
-                $responses[$url] = $this->getResponse($url, 200);
+                $responses[$url] = $this->getResponse($url, 200, null, self::ERROR_HEADER);
             }
 
             return $responses;

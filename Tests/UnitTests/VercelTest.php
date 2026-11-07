@@ -15,6 +15,8 @@ use GuiBranco\ProjectsMonitor\Library\VercelProbe;
  */
 class VercelTest extends TestCase
 {
+    private const API_URL = "https://api.vercel.com/v10/projects?limit=100";
+
     /**
      * The tile, with the API and the probe mocked.
      *
@@ -45,11 +47,11 @@ class VercelTest extends TestCase
      *
      * @param string      $readyState The deployment state.
      * @param string      $hostname   The deployment's own hostname.
-     * @param string|null $alias      The alias assigned to it, if any.
+     * @param string|null $alias      The alias assigned to it, or null.
      *
      * @return string JSON.
      */
-    private function getDeployment(string $readyState, string $hostname, ?string $alias = null): string
+    private function getDeployment(string $readyState, string $hostname, ?string $alias): string
     {
         $aliases = "[]";
         if ($alias !== null) {
@@ -71,9 +73,9 @@ class VercelTest extends TestCase
     {
         $live       = $this->getDeployment("READY", "live-project-abc123.vercel.app", "live-project.vercel.app");
         $paused     = $this->getDeployment("READY", "paused-project-abc123.vercel.app", "paused-project.vercel.app");
-        $resumed    = $this->getDeployment("ERROR", "resumed-project-abc123.vercel.app");
+        $resumed    = $this->getDeployment("ERROR", "resumed-project-abc123.vercel.app", null);
         $production = $this->getDeployment("READY", "preview-project-prod123.vercel.app", "preview-project.vercel.app");
-        $preview    = $this->getDeployment("ERROR", "preview-project-git-feature.vercel.app");
+        $preview    = $this->getDeployment("ERROR", "preview-project-git-feature.vercel.app", null);
 
         $projects   = [];
         $projects[] = "{\"name\": \"paused-project\", \"paused\": true, \"latestDeployments\": [{$paused}]}";
@@ -93,11 +95,11 @@ class VercelTest extends TestCase
      * The answer of one URL as VercelProbe describes it.
      *
      * @param integer     $statusCode  The status code, -1 for a failed request.
-     * @param string|null $vercelError The x-vercel-error header, if any.
+     * @param string|null $vercelError The x-vercel-error header, or null.
      *
      * @return array
      */
-    private function getAnswer(int $statusCode, ?string $vercelError = null): array
+    private function getAnswer(int $statusCode, ?string $vercelError): array
     {
         $answer = [];
 
@@ -119,10 +121,10 @@ class VercelTest extends TestCase
     {
         $answers = [];
 
-        $answers["live-project"]    = $this->getAnswer(200);
+        $answers["live-project"]    = $this->getAnswer(200, null);
         $answers["paused-project"]  = $this->getAnswer(503, "DEPLOYMENT_PAUSED");
-        $answers["resumed-project"] = $this->getAnswer(200);
-        $answers["preview-project"] = $this->getAnswer(200);
+        $answers["resumed-project"] = $this->getAnswer(200, null);
+        $answers["preview-project"] = $this->getAnswer(200, null);
 
         return $answers;
 
@@ -181,11 +183,10 @@ class VercelTest extends TestCase
         $vercel = $builder->getMock();
         $vercel->method('getProbe')->willReturn($this->createMock(VercelProbe::class));
 
-        $url       = "https://api.vercel.com/v10/projects?limit=100";
         $live      = $this->getDeployment("READY", "live-project-abc123.vercel.app", "live-project.vercel.app");
-        $listed    = new Response(true, "{\"projects\": [{\"name\": \"live-project\", \"latestDeployments\": [{$live}]}]}", "", 200, $url, []);
-        $forbidden = new Response(true, "{\"error\": \"forbidden\"}", "", 403, $url, []);
-        $failed    = new Response(false, null, "Could not resolve host", -1, $url, null);
+        $listed    = new Response(true, "{\"projects\": [{\"name\": \"live-project\", \"latestDeployments\": [{$live}]}]}", "", 200, self::API_URL, []);
+        $forbidden = new Response(true, "{\"error\": \"forbidden\"}", "", 403, self::API_URL, []);
+        $failed    = new Response(false, null, "Could not resolve host", -1, self::API_URL, null);
 
         $request = $this->createMock(Request::class);
         $request->method('get')->willReturnOnConsecutiveCalls($listed, $forbidden, $failed);
@@ -349,7 +350,7 @@ class VercelTest extends TestCase
         // Disabled by Vercel for exceeding the plan's usage limits: READY for the API.
         $answers["live-project"]    = $this->getAnswer(402, "DEPLOYMENT_DISABLED");
         $answers["paused-project"]  = $this->getAnswer(503, "DEPLOYMENT_PAUSED");
-        $answers["resumed-project"] = $this->getAnswer(500);
+        $answers["resumed-project"] = $this->getAnswer(500, null);
         $answers["preview-project"] = $this->getAnswer(404, "DEPLOYMENT_NOT_FOUND");
 
         $this->getProbeAnswering($answers);
@@ -379,7 +380,7 @@ class VercelTest extends TestCase
         $answers = $this->getHealthyAnswers();
 
         $answers["live-project"]    = $this->getAnswer(503, "DEPLOYMENT_PAUSED");
-        $answers["preview-project"] = $this->getAnswer(-1);
+        $answers["preview-project"] = $this->getAnswer(-1, null);
 
         $this->getProbeAnswering($answers);
 

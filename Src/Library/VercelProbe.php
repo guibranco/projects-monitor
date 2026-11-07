@@ -21,6 +21,8 @@ class VercelProbe
 {
     public const CACHE_TTL_SECONDS = 600;
 
+    public const CACHE_FILE = __DIR__."/../cache/vercel_probe.json";
+
     private const BATCH_SIZE = 10;
 
     /**
@@ -32,16 +34,13 @@ class VercelProbe
 
 
     /**
-     * Builds the probe on the given cache file, or on the default one.
+     * Builds the probe on the given cache file (CACHE_FILE for the tile).
      *
-     * @param string|null $cachePath The cache file to read and write.
+     * @param string $cachePath The cache file to read and write.
      */
-    public function __construct(?string $cachePath = null)
+    public function __construct(string $cachePath)
     {
         $this->cachePath = $cachePath;
-        if ($this->cachePath === null) {
-            $this->cachePath = __DIR__."/../cache/vercel_probe.json";
-        }
 
     }//end __construct()
 

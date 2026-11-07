@@ -10,7 +10,6 @@ use GuiBranco\ProjectsMonitor\Library\VercelProbe;
  */
 class VercelProbeTest extends TestCase
 {
-
     /**
      * The probe, with the requests mocked and the cache in a temporary folder.
      *
@@ -75,7 +74,7 @@ class VercelProbeTest extends TestCase
      *
      * @return Response
      */
-    private function getResponse(string $url, int $statusCode, ?string $error=null, string $header="x-vercel-error"): Response
+    private function getResponse(string $url, int $statusCode, ?string $error = null, string $header = "x-vercel-error"): Response
     {
         if ($statusCode < 0) {
             return new Response(false, null, "Could not resolve host", $statusCode, $url, null);

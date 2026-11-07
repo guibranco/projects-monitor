@@ -310,7 +310,7 @@ class Vercel
         $response = $this->fetchProjects();
         $projects = ($response->projects ?? []);
 
-        usort($projects, fn($first, $second) => strcasecmp($first->name, $second->name));
+        usort($projects, fn ($first, $second) => strcasecmp($first->name, $second->name));
 
         $links = [];
         foreach ($projects as $project) {

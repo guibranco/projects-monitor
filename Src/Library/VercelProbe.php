@@ -36,7 +36,7 @@ class VercelProbe
      *
      * @param string|null $cachePath The cache file to read and write.
      */
-    public function __construct(?string $cachePath=null)
+    public function __construct(?string $cachePath = null)
     {
         $this->cachePath = $cachePath;
         if ($this->cachePath === null) {

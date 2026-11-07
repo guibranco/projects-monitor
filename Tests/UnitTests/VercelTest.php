@@ -15,7 +15,6 @@ use GuiBranco\ProjectsMonitor\Library\VercelProbe;
  */
 class VercelTest extends TestCase
 {
-
     /**
      * The tile, with the API and the probe mocked.
      *
@@ -50,7 +49,7 @@ class VercelTest extends TestCase
      *
      * @return string JSON.
      */
-    private function getDeployment(string $readyState, string $hostname, ?string $alias=null): string
+    private function getDeployment(string $readyState, string $hostname, ?string $alias = null): string
     {
         $aliases = "[]";
         if ($alias !== null) {
@@ -98,7 +97,7 @@ class VercelTest extends TestCase
      *
      * @return array
      */
-    private function getAnswer(int $statusCode, ?string $vercelError=null): array
+    private function getAnswer(int $statusCode, ?string $vercelError = null): array
     {
         $answer = [];
 

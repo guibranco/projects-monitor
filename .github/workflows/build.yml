@@ -75,9 +75,10 @@ jobs:
         run: |
           cd Src/secrets
           echo "<?php" >> logStream.secrets.php
-          echo "\$logStreamServer = \"\";" >> logStream.secrets.php
-          echo "\$logStreamToken  = \"\";" >> logStream.secrets.php
-          echo "\$logStreamAppId  = \"\";" >> logStream.secrets.php
+          echo "\$logStreamServer   = \"\";" >> logStream.secrets.php
+          echo "\$logStreamApiKey   = \"\";" >> logStream.secrets.php
+          echo "\$logStreamApiToken = \"\";" >> logStream.secrets.php
+          echo "\$logStreamAppId    = \"\";" >> logStream.secrets.php
 
       - name: 🐳 Docker compose up
         run: docker compose up -d

@@ -6,6 +6,8 @@ use GuiBranco\Pancake\LogStream as PancakeLogStream;
 
 class LogStream
 {
+    private const DEFAULT_APP_KEY = 'projects-monitor';
+
     private static ?PancakeLogStream $client = null;
 
     public static function initialize(): void
@@ -19,19 +21,22 @@ class LogStream
             return;
         }
 
-        global $logStreamServer, $logStreamToken, $logStreamAppId;
+        global $logStreamServer, $logStreamApiKey, $logStreamApiToken, $logStreamAppId;
         require_once $secretsFile;
 
-        if (empty($logStreamServer) || empty($logStreamToken)) {
+        if (empty($logStreamServer) || empty($logStreamApiToken)) {
             return;
         }
 
+        $appKey = empty($logStreamApiKey) ? self::DEFAULT_APP_KEY : $logStreamApiKey;
+
         self::$client = new PancakeLogStream(
             baseUrl: $logStreamServer,
-            appKey: 'projects-monitor',
-            appId: $logStreamAppId ?? 'production',
-            authMode: PancakeLogStream::AUTH_BEARER,
-            apiSecret: $logStreamToken,
+            appKey: $appKey,
+            appId: empty($logStreamAppId) ? 'production' : $logStreamAppId,
+            authMode: PancakeLogStream::AUTH_API_KEY,
+            apiKey: $appKey,
+            apiToken: $logStreamApiToken,
             userAgent: defined('USER_AGENT_VENDOR') ? USER_AGENT_VENDOR : ''
         );
     }

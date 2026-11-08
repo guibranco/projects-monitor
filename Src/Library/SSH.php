@@ -113,6 +113,7 @@ class SSH
             '10.141.230.4/32' => 'iPhone Beatriz Jesus',
             '10.141.230.5/32' => 'GH Actions - API BR - Vagas Aggregator',
             '10.141.230.6/32' => 'GH Actions - API BR - Sports Agenda',
+            '10.141.230.7/32' => 'GH Actions - LogStream Server',
         ];
 
         return $peers[$peerName] ?? $peerName;

@@ -181,14 +181,21 @@ jobs:
           echo "\$handlerApiToken = '$(php_literal "$WEBHOOKS_HANDLER_API_TOKEN")';" >> webhooksHandler.secrets.php
 
       - name: 🔑 Generate LogStream Configuration
+        env:
+          LOGSTREAM_SERVER: ${{ secrets.LOGSTREAM_SERVER }}
+          LOGSTREAM_API_KEY: ${{ secrets.LOGSTREAM_API_KEY }}
+          LOGSTREAM_API_TOKEN: ${{ secrets.LOGSTREAM_API_TOKEN }}
+          LOGSTREAM_APP_ID: ${{ vars.LOGSTREAM_APP_ID }}
         run: |
           cd Src
           mkdir -p secrets
           cd secrets
+          php_literal() { printf '%s' "$1" | sed "s/[\\\\']/\\\\&/g"; }
           echo "<?php" >> logStream.secrets.php
-          echo "\$logStreamServer = \"${{ secrets.LOGSTREAM_SERVER }}\";" >> logStream.secrets.php
-          echo "\$logStreamToken  = \"${{ secrets.LOGSTREAM_TOKEN }}\";" >> logStream.secrets.php
-          echo "\$logStreamAppId  = \"${{ vars.LOGSTREAM_APP_ID }}\";" >> logStream.secrets.php
+          echo "\$logStreamServer   = '$(php_literal "$LOGSTREAM_SERVER")';" >> logStream.secrets.php
+          echo "\$logStreamApiKey   = '$(php_literal "$LOGSTREAM_API_KEY")';" >> logStream.secrets.php
+          echo "\$logStreamApiToken = '$(php_literal "$LOGSTREAM_API_TOKEN")';" >> logStream.secrets.php
+          echo "\$logStreamAppId    = '$(php_literal "$LOGSTREAM_APP_ID")';" >> logStream.secrets.php
 
       - name: 🔑 Generate Vercel Configuration
         env:

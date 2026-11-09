@@ -167,7 +167,7 @@ class LoggerTest extends TestCase
 
     public function testGetMessagesByGroupSampleIdReturnsAllRowsFromResult(): void
     {
-        $makeRow = static fn(int $id) => [
+        $makeRow = static fn (int $id) => [
             'id'             => $id,
             'name'           => 'App',
             'class'          => 'Cls',

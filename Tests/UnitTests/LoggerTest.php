@@ -81,6 +81,101 @@ class LoggerTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
+    // saveMessage / logMessage / getMessage — ip_address
+    // -------------------------------------------------------------------------
+
+    /**
+     * Mocks prepare() and bind_param() and records the SQL and the bound values.
+     *
+     * @return ArrayObject Holds "sql", "types" and "values" once the statement is bound.
+     */
+    private function captureInsert(): ArrayObject
+    {
+        $captured = new ArrayObject();
+
+        $stmtMock = $this->createMock(mysqli_stmt::class);
+        $stmtMock->method('bind_param')->willReturnCallback(
+            function (string $types, mixed ...$values) use ($captured): bool {
+                $captured['types'] = $types;
+                $captured['values'] = $values;
+                return true;
+            }
+        );
+        $stmtMock->method('execute')->willReturn(true);
+
+        $this->connMock->method('prepare')->willReturnCallback(
+            function (string $sql) use ($captured, $stmtMock): mysqli_stmt {
+                $captured['sql'] = $sql;
+                return $stmtMock;
+            }
+        );
+
+        return $captured;
+    }
+
+    protected function tearDown(): void
+    {
+        unset($_SERVER['REMOTE_ADDR']);
+    }
+
+    public function testSaveMessageStoresRequesterIpAddress(): void
+    {
+        $_SERVER['REMOTE_ADDR'] = '203.0.113.7';
+        $captured = $this->captureInsert();
+
+        $this->assertTrue($this->logger->saveMessage(1));
+
+        $this->assertStringContainsString('`ip_address`', $captured['sql']);
+        $this->assertSame(13, substr_count($captured['sql'], '?'));
+        $this->assertSame(13, strlen($captured['types']));
+        $this->assertCount(13, $captured['values']);
+        $this->assertSame('203.0.113.7', end($captured['values']));
+    }
+
+    public function testSaveMessageStoresNullIpAddressWithoutRemoteAddr(): void
+    {
+        unset($_SERVER['REMOTE_ADDR']);
+        $captured = $this->captureInsert();
+
+        $this->assertTrue($this->logger->saveMessage(1));
+
+        $this->assertNull(end($captured['values']));
+    }
+
+    public function testLogMessageStoresRequesterIpAddress(): void
+    {
+        $_SERVER['REMOTE_ADDR'] = '2001:db8::1';
+        $captured = $this->captureInsert();
+
+        $this->assertTrue($this->logger->logMessage('Something happened'));
+
+        $this->assertSame(13, strlen($captured['types']));
+        $this->assertCount(13, $captured['values']);
+        $this->assertSame('2001:db8::1', end($captured['values']));
+    }
+
+    public function testGetMessageSelectsIpAddress(): void
+    {
+        $row = ['id' => 5, 'ip_address' => '203.0.113.7'];
+        $resultMock = $this->createMock(mysqli_result::class);
+        $resultMock->method('fetch_array')->willReturn($row);
+
+        $stmtMock = $this->createMock(mysqli_stmt::class);
+        $stmtMock->method('get_result')->willReturn($resultMock);
+
+        $sql = '';
+        $this->connMock->method('prepare')->willReturnCallback(
+            function (string $query) use (&$sql, $stmtMock): mysqli_stmt {
+                $sql = $query;
+                return $stmtMock;
+            }
+        );
+
+        $this->assertSame($row, $this->logger->getMessage(5));
+        $this->assertStringContainsString('m.ip_address', $sql);
+    }
+
+    // -------------------------------------------------------------------------
     // convertUserAgentToLink
     // -------------------------------------------------------------------------
 

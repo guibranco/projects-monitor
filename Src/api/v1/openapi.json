@@ -1294,7 +1294,7 @@
     "/api/v1/log-message": {
       "post": {
         "summary": "Log an application message",
-        "description": "Accepts a structured log message from an authenticated application. Authentication is performed via an application-level token (not a user session). Returns true on success.",
+        "description": "Accepts a structured log message from an authenticated application. Authentication is performed via an application-level token (not a user session). The IP address the request came from (the connection's remote address) is stored with the message as `ip_address`. Returns true on success.",
         "operationId": "logMessage",
         "tags": ["Public"],
         "security": [],

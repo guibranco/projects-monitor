@@ -113,17 +113,34 @@ class LoggerTest extends TestCase
         return $captured;
     }
 
-    protected function tearDown(): void
+    /**
+     * Builds a Logger whose request headers are the given ones, sharing the mocked connection.
+     *
+     * @param array $headers The headers getRequestHeaders() returns.
+     *
+     * @return Logger
+     */
+    private function loggerWithHeaders(array $headers): Logger
     {
-        unset($_SERVER['REMOTE_ADDR']);
+        $logger = $this->getMockBuilder(Logger::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['getRequestHeaders'])
+            ->getMock();
+        $logger->method('getRequestHeaders')->willReturn($headers);
+
+        $prop = (new ReflectionClass(Logger::class))->getProperty('connection');
+        $prop->setAccessible(true);
+        $prop->setValue($logger, $this->connMock);
+
+        return $logger;
     }
 
     public function testSaveMessageStoresRequesterIpAddress(): void
     {
-        $_SERVER['REMOTE_ADDR'] = '203.0.113.7';
         $captured = $this->captureInsert();
+        $logger = $this->loggerWithHeaders(['REMOTE_ADDR' => '203.0.113.7']);
 
-        $this->assertTrue($this->logger->saveMessage(1));
+        $this->assertTrue($logger->saveMessage(1));
 
         $this->assertStringContainsString('`ip_address`', $captured['sql']);
         $this->assertSame(13, substr_count($captured['sql'], '?'));
@@ -132,22 +149,22 @@ class LoggerTest extends TestCase
         $this->assertSame('203.0.113.7', end($captured['values']));
     }
 
-    public function testSaveMessageStoresNullIpAddressWithoutRemoteAddr(): void
+    public function testSaveMessageStoresNullIpAddressForCliRuns(): void
     {
-        unset($_SERVER['REMOTE_ADDR']);
         $captured = $this->captureInsert();
+        $logger = $this->loggerWithHeaders(['REMOTE_ADDR' => 'CRONJOB']);
 
-        $this->assertTrue($this->logger->saveMessage(1));
+        $this->assertTrue($logger->saveMessage(1));
 
         $this->assertNull(end($captured['values']));
     }
 
     public function testLogMessageStoresRequesterIpAddress(): void
     {
-        $_SERVER['REMOTE_ADDR'] = '2001:db8::1';
         $captured = $this->captureInsert();
+        $logger = $this->loggerWithHeaders(['REMOTE_ADDR' => '2001:db8::1']);
 
-        $this->assertTrue($this->logger->logMessage('Something happened'));
+        $this->assertTrue($logger->logMessage('Something happened'));
 
         $this->assertSame(13, strlen($captured['types']));
         $this->assertCount(13, $captured['values']);

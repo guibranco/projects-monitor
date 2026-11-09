@@ -65,6 +65,16 @@ class Logger
     }
 
     /**
+     * Returns the headers of the current request, plus REMOTE_ADDR, HTTP_HOST and REQUEST_URI.
+     *
+     * @return array The request headers from Configuration::getRequestHeaders().
+     */
+    protected function getRequestHeaders(): array
+    {
+        return (new Configuration())->getRequestHeaders();
+    }
+
+    /**
      * Returns the IP address of the client that sent the current request.
      *
      * Uses REMOTE_ADDR only: the server answers clients directly (no reverse
@@ -89,7 +99,7 @@ class Logger
     public function logMessage(string $message): bool
     {
         $config = new Configuration();
-        $headers = $config->getRequestHeaders();
+        $headers = $this->getRequestHeaders();
         $data = $config->getRequestData();
 
         $trace = debug_backtrace();
@@ -141,7 +151,7 @@ class Logger
     public function saveMessage($applicationId)
     {
         $config = new Configuration();
-        $headers = $config->getRequestHeaders();
+        $headers = $this->getRequestHeaders();
         $data = $config->getRequestData();
         $sql = $this->getInsert();
 

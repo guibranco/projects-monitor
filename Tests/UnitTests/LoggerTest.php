@@ -50,6 +50,37 @@ class LoggerTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
+    // getClientIpAddress
+    // -------------------------------------------------------------------------
+
+    public function testGetClientIpAddressReturnsIpv4(): void
+    {
+        $this->assertSame('203.0.113.7', $this->logger->getClientIpAddress(['REMOTE_ADDR' => '203.0.113.7']));
+    }
+
+    public function testGetClientIpAddressReturnsIpv6(): void
+    {
+        $this->assertSame('2001:db8::1', $this->logger->getClientIpAddress(['REMOTE_ADDR' => '2001:db8::1']));
+    }
+
+    public function testGetClientIpAddressReturnsNullForCronjob(): void
+    {
+        $this->assertNull($this->logger->getClientIpAddress(['REMOTE_ADDR' => 'CRONJOB']));
+    }
+
+    public function testGetClientIpAddressReturnsNullWhenMissing(): void
+    {
+        $this->assertNull($this->logger->getClientIpAddress([]));
+    }
+
+    public function testGetClientIpAddressIgnoresForwardedForHeader(): void
+    {
+        $headers = ['REMOTE_ADDR' => '203.0.113.7', 'X-Forwarded-For' => '198.51.100.1'];
+
+        $this->assertSame('203.0.113.7', $this->logger->getClientIpAddress($headers));
+    }
+
+    // -------------------------------------------------------------------------
     // convertUserAgentToLink
     // -------------------------------------------------------------------------
 

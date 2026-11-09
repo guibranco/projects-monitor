@@ -58,10 +58,32 @@ class Logger
     private function getInsert()
     {
         $sql = "INSERT INTO messages (`application_id`, `class`, `function`, `file`, `line`,";
-        $sql .= "`object`, `type`, `args`, `message`, `details`, `correlation_id`, `user_agent`) ";
-        $sql .= "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql .= "`object`, `type`, `args`, `message`, `details`, `correlation_id`, `user_agent`, `ip_address`) ";
+        $sql .= "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         return $sql;
+    }
+
+    /**
+     * Returns the IP address of the client that sent the current request.
+     *
+     * Uses REMOTE_ADDR only: the server answers clients directly (no reverse
+     * proxy in front of it), so forwarding headers such as X-Forwarded-For
+     * would be supplied by the client and could be spoofed.
+     *
+     * @param array $headers The request headers from Configuration::getRequestHeaders().
+     *
+     * @return string|null The IPv4/IPv6 address, or null when there is none (e.g. CLI/cron runs).
+     */
+    public function getClientIpAddress(array $headers): ?string
+    {
+        $ipAddress = $headers["REMOTE_ADDR"] ?? null;
+
+        if (!is_string($ipAddress) || filter_var($ipAddress, FILTER_VALIDATE_IP) === false) {
+            return null;
+        }
+
+        return $ipAddress;
     }
 
     public function logMessage(string $message): bool
@@ -91,9 +113,10 @@ class Logger
         $details = isset($data) && $data !== null ? json_encode($data) : "none";
         $correlationId = isset($headers["X-Correlation-Id"]) ? $headers["X-Correlation-Id"] : "none";
         $userAgent = isset($headers["User-Agent"]) ? $headers["User-Agent"] : "none";
+        $ipAddress = $this->getClientIpAddress($headers);
 
         $stmt->bind_param(
-            "isssisssssss",
+            "isssissssssss",
             $appId,
             $class,
             $function,
@@ -105,7 +128,8 @@ class Logger
             $message,
             $details,
             $correlationId,
-            $userAgent
+            $userAgent,
+            $ipAddress
         );
 
         $result = $stmt->execute();
@@ -134,6 +158,7 @@ class Logger
         $details = isset($data["details"]) ? $data["details"] : "none";
         $correlationId = isset($headers["X-Correlation-Id"]) ? $headers["X-Correlation-Id"] : "none";
         $userAgent = isset($headers["User-Agent"]) ? $headers["User-Agent"] : "none";
+        $ipAddress = $this->getClientIpAddress($headers);
 
         $stmt = $this->connection->prepare($sql);
 
@@ -150,7 +175,7 @@ class Logger
         $args = is_array($args) ? json_encode($args) : (string)$args;
 
         $stmt->bind_param(
-            "isssssssssss",
+            "issssssssssss",
             $appId,
             $class,
             $function,
@@ -162,7 +187,8 @@ class Logger
             $message,
             $details,
             $correlationId,
-            $userAgent
+            $userAgent,
+            $ipAddress
         );
 
         $result = $stmt->execute();
@@ -263,7 +289,7 @@ class Logger
     public function getMessagesByGroupSampleId(int $sampleId): array
     {
         $sql = "SELECT m2.id, a.name, m2.class, m2.function, m2.file, m2.line, m2.object, ";
-        $sql .= "m2.type, m2.args, m2.message, m2.details, m2.correlation_id, m2.user_agent, ";
+        $sql .= "m2.type, m2.args, m2.message, m2.details, m2.correlation_id, m2.user_agent, m2.ip_address, ";
         $sql .= "CONVERT_TZ(m2.created_at, '-03:00', '+00:00') AS `created_at` ";
         $sql .= "FROM messages m1 ";
         $sql .= "INNER JOIN messages m2 ON m2.application_id = m1.application_id ";
@@ -354,7 +380,7 @@ class Logger
     public function getMessage($messageId)
     {
         $sql = "SELECT m.id, a.name, m.class, m.function, m.file, m.line, m.object, ";
-        $sql .= "m.type, m.args, m.message, m.details, m.correlation_id, m.user_agent, ";
+        $sql .= "m.type, m.args, m.message, m.details, m.correlation_id, m.user_agent, m.ip_address, ";
         $sql .= "CONVERT_TZ(m.created_at, '-03:00', '+00:00') AS `created_at` ";
         $sql .= "FROM messages as m INNER JOIN applications as a ON m.application_id = a.id ";
         $sql .= "WHERE m.id = ?;";

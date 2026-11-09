@@ -187,6 +187,7 @@ class DashboardApp {
 
     const _msgDetailExtraRow = (m) => {
       const html = `<div class="msg-detail-panel">
+          ${_msgDetailField('bi-geo-alt', 'IP address', m.ip_address ?? 'unknown')}
           ${_msgDetailField('bi-box-seam', 'Object', m.object)}
           ${_msgDetailField('bi-sliders', 'Args', m.args)}
           ${_msgDetailField('bi-info-circle', 'Details', m.details)}

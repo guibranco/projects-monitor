@@ -34,7 +34,7 @@ class LogStream
             baseUrl: $logStreamServer,
             appKey: $appKey,
             // The app id is the deployed version, like the webhooks project does.
-            appId: Configuration::getVersion(),
+            appId: (new Configuration())->getVersion(),
             authMode: PancakeLogStream::AUTH_API_KEY,
             apiKey: $appKey,
             apiToken: $logStreamApiToken,

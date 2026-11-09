@@ -27,27 +27,33 @@ class Configuration
             return;
         }
 
-        $version = self::getVersion();
+        $version = $this->getVersion();
 
         define("USER_AGENT_VENDOR", "projects-monitor/{$version} (+https://github.com/guibranco/projects-monitor)");
         define("USER_AGENT", "User-Agent: " . USER_AGENT_VENDOR);
     }
 
     /**
-     * The deployed version (version.txt, written by the deploy workflow from
-     * GitVersion), or "1.0.0" when the file is missing or empty.
+     * Returns the deployed version, read from version.txt (written by the
+     * deploy workflow from GitVersion), or 1.0.0 when the file is missing or empty.
+     *
+     * @return string
      */
-    public static function getVersion(): string
+    public function getVersion(): string
     {
-        $versionFile = __DIR__ . "/../version.txt";
-        if (!file_exists($versionFile)) {
-            return "1.0.0";
+        $version = "1.0.0";
+        $versionFile = sprintf("%s/../version.txt", __DIR__);
+        if (file_exists($versionFile) === false) {
+            return $version;
         }
 
-        // Trimmed: a trailing newline would split the User-Agent header into
-        // two lines, and nginx-fronted APIs answer 400 Bad Request.
+        // Trimmed, because a trailing newline would split the User-Agent header.
         $fileVersion = trim((string) file_get_contents($versionFile));
-        return $fileVersion === "" ? "1.0.0" : $fileVersion;
+        if ($fileVersion !== "") {
+            $version = $fileVersion;
+        }
+
+        return $version;
     }
 
     public function getTimeZone()

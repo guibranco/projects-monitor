@@ -28,6 +28,24 @@ class ConfigurationTest extends TestCase
         $this->assertStringContainsString("projects-monitor", constant("USER_AGENT_VENDOR"));
     }
 
+    public function testGetVersionReadsVersionFile()
+    {
+        $versionFile = __DIR__ . "/../../Src/version.txt";
+        $existing = file_exists($versionFile) ? file_get_contents($versionFile) : null;
+
+        try {
+            file_put_contents($versionFile, "1.28.1\n");
+            $this->assertSame("1.28.1", Configuration::getVersion());
+
+            unlink($versionFile);
+            $this->assertSame("1.0.0", Configuration::getVersion());
+        } finally {
+            if ($existing !== null) {
+                file_put_contents($versionFile, $existing);
+            }
+        }
+    }
+
     public function testGetTimeZone()
     {
         $this->assertInstanceOf(TimeZone::class, $this->configuration->getTimeZone());

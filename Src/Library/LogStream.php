@@ -21,7 +21,7 @@ class LogStream
             return;
         }
 
-        global $logStreamServer, $logStreamApiKey, $logStreamApiToken, $logStreamAppId;
+        global $logStreamServer, $logStreamApiKey, $logStreamApiToken;
         require_once $secretsFile;
 
         if (empty($logStreamServer) || empty($logStreamApiToken)) {
@@ -33,7 +33,8 @@ class LogStream
         self::$client = new PancakeLogStream(
             baseUrl: $logStreamServer,
             appKey: $appKey,
-            appId: empty($logStreamAppId) ? 'production' : $logStreamAppId,
+            // The app id is the deployed version, like the webhooks project does.
+            appId: Configuration::getVersion(),
             authMode: PancakeLogStream::AUTH_API_KEY,
             apiKey: $appKey,
             apiToken: $logStreamApiToken,

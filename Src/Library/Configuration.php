@@ -27,20 +27,27 @@ class Configuration
             return;
         }
 
-        $version = "1.0.0";
-        $versionFile = "../../version.txt";
-        if (file_exists($versionFile)) {
-            // The deploy workflow writes version.txt with a trailing newline;
-            // left in, it splits the User-Agent header into two lines and
-            // nginx-fronted APIs answer 400 Bad Request.
-            $fileVersion = trim((string) file_get_contents($versionFile));
-            if ($fileVersion !== "") {
-                $version = $fileVersion;
-            }
-        }
+        $version = self::getVersion();
 
         define("USER_AGENT_VENDOR", "projects-monitor/{$version} (+https://github.com/guibranco/projects-monitor)");
         define("USER_AGENT", "User-Agent: " . USER_AGENT_VENDOR);
+    }
+
+    /**
+     * The deployed version (version.txt, written by the deploy workflow from
+     * GitVersion), or "1.0.0" when the file is missing or empty.
+     */
+    public static function getVersion(): string
+    {
+        $versionFile = __DIR__ . "/../version.txt";
+        if (!file_exists($versionFile)) {
+            return "1.0.0";
+        }
+
+        // Trimmed: a trailing newline would split the User-Agent header into
+        // two lines, and nginx-fronted APIs answer 400 Bad Request.
+        $fileVersion = trim((string) file_get_contents($versionFile));
+        return $fileVersion === "" ? "1.0.0" : $fileVersion;
     }
 
     public function getTimeZone()

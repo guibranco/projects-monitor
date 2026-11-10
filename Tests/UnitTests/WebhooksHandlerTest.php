@@ -6,6 +6,7 @@ use GuiBranco\ProjectsMonitor\Library\BrokerUsagePresenter;
 use GuiBranco\ProjectsMonitor\Library\Configuration;
 use GuiBranco\ProjectsMonitor\Library\RequestException;
 use GuiBranco\ProjectsMonitor\Library\SecretsFileNotFoundException;
+use GuiBranco\ProjectsMonitor\Library\ThrottledRepositoriesPresenter;
 use GuiBranco\ProjectsMonitor\Library\WebhooksHandler;
 use PHPUnit\Framework\TestCase;
 
@@ -69,10 +70,11 @@ class WebhooksHandlerTest extends TestCase
      * A mocked Request whose get() returns the given response once.
      *
      * @param Response $response What the handler answers.
+     * @param string   $endpoint Path the client is expected to call.
      *
      * @return Request
      */
-    private function requestReturning(Response $response): Request
+    private function requestReturning(Response $response, string $endpoint='broker/usage/current'): Request
     {
         $builder = $this->getMockBuilder(Request::class);
         $builder->disableOriginalConstructor();
@@ -81,7 +83,7 @@ class WebhooksHandlerTest extends TestCase
 
         $expectation = $request->expects($this->once());
         $expectation->method('get');
-        $expectation->with(self::API_URL.'broker/usage/current', ['Authorization: Bearer test-token']);
+        $expectation->with(self::API_URL.$endpoint, ['Authorization: Bearer test-token']);
         $expectation->willReturn($response);
 
         return $request;
@@ -220,6 +222,78 @@ class WebhooksHandlerTest extends TestCase
         $handler->getBrokerUsage();
 
     }//end testGetBrokerUsageThrowsWhenBrokersListIsMissing()
+
+
+    /**
+     * A 200 with a repositories list is rendered through the presenter.
+     *
+     * @return void
+     */
+    public function testGetThrottledRepositoriesRendersTheHandlerResponse(): void
+    {
+        $payload = [
+                    'enabled'          => true,
+                    'permitsPerMinute' => 60,
+                    'burstSize'        => 120,
+                    'drainPerMinute'   => 30,
+                    'repositories'     => [
+                                           [
+                                            'installationId'  => 1,
+                                            'repositoryId'    => 2,
+                                            'repositoryName'  => 'guibranco/webhooks',
+                                            'throttled'       => 7,
+                                            'lastThrottledAt' => '2026-11-10T21:00:00+00:00',
+                                           ],
+                                          ],
+                   ];
+        $response = $this->responseWith(200, json_encode($payload));
+        $handler  = $this->handlerWith($this->requestReturning($response, 'broker/throttle'));
+
+        $result = $handler->getThrottledRepositories();
+
+        $this->assertTrue($result['enabled']);
+        $this->assertSame(ThrottledRepositoriesPresenter::TABLE_HEADER, $result['repositories'][0]);
+        $this->assertSame(1, $result['total']);
+        $this->assertSame(7, $result['throttled']);
+
+    }//end testGetThrottledRepositoriesRendersTheHandlerResponse()
+
+
+    /**
+     * A non-200 answer is a RequestException naming the throttle endpoint.
+     *
+     * @return void
+     */
+    public function testGetThrottledRepositoriesThrowsOnNon200(): void
+    {
+        $response = $this->responseWith(401, 'nope');
+        $handler  = $this->handlerWith($this->requestReturning($response, 'broker/throttle'));
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('GET broker/throttle (401): nope');
+
+        $handler->getThrottledRepositories();
+
+    }//end testGetThrottledRepositoriesThrowsOnNon200()
+
+
+    /**
+     * A 200 whose JSON has no repositories list is a load failure, not
+     * "nothing throttled".
+     *
+     * @return void
+     */
+    public function testGetThrottledRepositoriesThrowsWhenRepositoriesListIsMissing(): void
+    {
+        $response = $this->responseWith(200, '{"enabled":true}');
+        $handler  = $this->handlerWith($this->requestReturning($response, 'broker/throttle'));
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('no repositories list');
+
+        $handler->getThrottledRepositories();
+
+    }//end testGetThrottledRepositoriesThrowsWhenRepositoriesListIsMissing()
 
 
     /**

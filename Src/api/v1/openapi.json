@@ -513,6 +513,40 @@
         }
       }
     },
+    "/api/v1/throttled-repositories": {
+      "get": {
+        "summary": "Repositories throttled by the WebhooksHandler",
+        "description": "The WebhooksHandler's per-repository throttle (its GET /broker/throttle): the throttle settings and, per installation and repository, how many payloads went to the Throttled Queue (github-throttled) and when the last one did, rendered as a table. The handler keeps these counters in memory, so they reset when it restarts.",
+        "operationId": "getThrottledRepositories",
+        "tags": ["Webhooks"],
+        "responses": {
+          "200": {
+            "description": "Throttle settings and throttled repositories table.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": { "type": "boolean", "example": true },
+                    "permitsPerMinute": { "type": "integer", "description": "Sustained payloads per minute per installation and repository.", "example": 60 },
+                    "burstSize": { "type": "integer", "description": "Payloads a repository may send at once before the rate applies.", "example": 120 },
+                    "drainPerMinute": { "type": "integer", "description": "Payloads per minute moved from the Throttled Queue back to the exchange, all repositories together.", "example": 30 },
+                    "repositories": {
+                      "type": "array",
+                      "description": "Header row followed by one row per throttled repository, most recently throttled first: Repository (link), Installation, Throttled (badge), Last throttled (dashboard time zone).",
+                      "items": { "type": "array", "items": {} }
+                    },
+                    "total": { "type": "integer", "description": "Number of repository rows.", "example": 2 },
+                    "throttled": { "type": "integer", "description": "Payloads throttled across all repositories.", "example": 418 }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
     "/api/v1/gstraccini-jobs": {
       "get": {
         "summary": "List GStraccini bot jobs",

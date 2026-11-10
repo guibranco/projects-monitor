@@ -186,6 +186,8 @@ $configuration = new Configuration();
             <div id="queues"></div>
             <div id="broker_usage_caption" class="small text-white-50 mt-3"></div>
             <div id="broker_usage"></div>
+            <div id="throttled_repositories_caption" class="small text-white-50 mt-3"></div>
+            <div id="throttled_repositories"></div>
             <div id="accounts_usage"></div>
          </div>
          <div class="stats-right">

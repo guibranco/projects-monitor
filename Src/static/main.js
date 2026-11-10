@@ -44,6 +44,7 @@ class DashboardApp {
     window.showPostman = this.dataDisplayManager.showPostman.bind(this.dataDisplayManager);
     window.showQueues = this.dataDisplayManager.showQueues.bind(this.dataDisplayManager);
     window.showBrokerUsage = this.dataDisplayManager.showBrokerUsage.bind(this.dataDisplayManager);
+    window.showThrottledRepositories = this.dataDisplayManager.showThrottledRepositories.bind(this.dataDisplayManager);
     window.showUpTimeRobot = this.dataDisplayManager.showUpTimeRobot.bind(this.dataDisplayManager);
     window.showVercel = this.dataDisplayManager.showVercel.bind(this.dataDisplayManager);
     window.showWebhook = this.dataDisplayManager.showWebhook.bind(this.dataDisplayManager);
@@ -362,6 +363,7 @@ class DashboardApp {
       ),
       queues: JSON.parse('{"queues":[],"total":0}'),
       broker_usage: { period: "", messageCost: 3, brokers: [], total: 0, usage: 0, limit: 0, percent: 0, maxPercent: 0 },
+      throttled_repositories: { loading: true, enabled: false, permitsPerMinute: 0, burstSize: 0, drainPerMinute: 0, repositories: [["Repository", "Installation", "Throttled", "Last throttled"]], total: 0, throttled: 0 },
       webhooks: JSON.parse(
         '{"senders":[],"events":[["Event","Hits"]],"feed":[],"repositories":[],"total":0,"statistics":[["Date","Table #1"],["01/01",0]],"statistics_github":[["Date","Table #1"],["01/01",0]],"branches":[], "pull_requests":[], "workflow_runs":[], "total_workflow_runs":0, "installations":0, "installation_repositories": [], "installation_repositories_count": 0}'
       ),
@@ -375,6 +377,7 @@ class DashboardApp {
     this.dataDisplayManager.showMessages(presetData.messages);
     this.dataDisplayManager.showQueues(presetData.queues);
     this.dataDisplayManager.showBrokerUsage(presetData.broker_usage);
+    this.dataDisplayManager.showThrottledRepositories(presetData.throttled_repositories);
     this.dataDisplayManager.showWebhook(presetData.webhooks);
     this.dataDisplayManager.showDbErrors(presetData.errors_db);
     this.dataDisplayManager.showWebhookProcessingStats(presetData.webhooks_statistics);

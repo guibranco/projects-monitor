@@ -98,17 +98,11 @@ class ThrottledRepositoriesPresenter
      */
     private function presentRepository(array $repository, int $count, ShieldsIo $shields): array
     {
-        $repositoryId   = (int) ($repository['repositoryId'] ?? 0);
         $installationId = (int) ($repository['installationId'] ?? 0);
-        $name           = trim((string) ($repository['repositoryName'] ?? ''));
-
-        if ($name === '') {
-            $cell = htmlspecialchars('#'.$repositoryId, ENT_QUOTES, 'UTF-8');
-        } else {
-            $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
-            $url      = htmlspecialchars('https://github.com/'.$name, ENT_QUOTES, 'UTF-8');
-            $cell     = '<a href="'.$url.'" target="_blank" rel="noopener noreferrer">'.$safeName.'</a>';
-        }
+        $cell           = $this->repositoryCell(
+            trim((string) ($repository['repositoryName'] ?? '')),
+            (int) ($repository['repositoryId'] ?? 0)
+        );
 
         $installation = '—';
         if ($installationId > 0) {
@@ -131,6 +125,28 @@ class ThrottledRepositoriesPresenter
                ];
 
     }//end presentRepository()
+
+
+    /**
+     * Repository cell: a GitHub link, or the repository id when the payload had no name.
+     *
+     * @param string  $name         Full name (owner/repository), may be empty.
+     * @param integer $repositoryId GitHub repository id.
+     *
+     * @return string
+     */
+    private function repositoryCell(string $name, int $repositoryId): string
+    {
+        if ($name === '') {
+            return htmlspecialchars('#'.$repositoryId, ENT_QUOTES, 'UTF-8');
+        }
+
+        $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+        $url      = htmlspecialchars('https://github.com/'.$name, ENT_QUOTES, 'UTF-8');
+
+        return '<a href="'.$url.'" target="_blank" rel="noopener noreferrer">'.$safeName.'</a>';
+
+    }//end repositoryCell()
 
 
     /**

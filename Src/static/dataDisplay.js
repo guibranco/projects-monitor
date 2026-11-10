@@ -561,8 +561,9 @@ export class DataDisplayManager {
       const settings = response.enabled
         ? `Throttle on · ${response.permitsPerMinute}/min per repository, burst ${response.burstSize}, drain ${response.drainPerMinute}/min`
         : "Throttle off";
+      const noun = response.total === 1 ? "repository" : "repositories";
       const totals = response.total
-        ? ` · ${Number(response.throttled).toLocaleString()} payloads throttled across ${response.total} ${response.total === 1 ? "repository" : "repositories"}`
+        ? ` · ${Number(response.throttled).toLocaleString()} payloads throttled across ${response.total} ${noun}`
         : " · no repository throttled since the handler started";
       caption.textContent = `${settings}${totals}`;
     }

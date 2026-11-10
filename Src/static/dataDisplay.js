@@ -557,7 +557,9 @@ export class DataDisplayManager {
    */
   showThrottledRepositories(response) {
     const caption = document.getElementById("throttled_repositories_caption");
-    if (caption) {
+    if (caption && response.loading) {
+      caption.textContent = "Loading throttle status…";
+    } else if (caption) {
       const settings = response.enabled
         ? `Throttle on · ${response.permitsPerMinute}/min per repository, burst ${response.burstSize}, drain ${response.drainPerMinute}/min`
         : "Throttle off";

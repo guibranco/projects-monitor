@@ -86,6 +86,7 @@ jobs:
           echo "\$healthChecksIoWriteKeys[] = \"${{ secrets.HEALTHCHECKSIO_WK1 }}\";" >> healthChecksIo.secrets.php
           echo "\$healthChecksIoWriteKeys[] = \"${{ secrets.HEALTHCHECKSIO_WK2 }}\";" >> healthChecksIo.secrets.php
           echo "\$healthChecksIoWriteKeys[] = \"${{ secrets.HEALTHCHECKSIO_WK3 }}\";" >> healthChecksIo.secrets.php
+          echo "\$healthChecksIoWriteKeys[] = \"${{ secrets.HEALTHCHECKSIO_WK4 }}\";" >> healthChecksIo.secrets.php
 
       - name: 🔑 Generate Ip2WhoIs Configuration
         run: |

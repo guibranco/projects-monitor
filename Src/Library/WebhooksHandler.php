@@ -133,4 +133,31 @@ class WebhooksHandler
     }//end getBrokerUsage()
 
 
+    /**
+     * Throttle settings and the repositories the per-repository throttle has
+     * sent to the Throttled Queue, as reported by GET /broker/throttle,
+     * rendered for the dashboard (see ThrottledRepositoriesPresenter). A 200
+     * whose body has no `repositories` list is treated as a load failure,
+     * never as "nothing throttled".
+     *
+     * @return array
+     *
+     * @throws RequestException When the handler answers without a repositories list.
+     */
+    public function getThrottledRepositories(): array
+    {
+        $status = $this->doGet('broker/throttle');
+        if (isset($status['repositories']) === false || is_array($status['repositories']) === false) {
+            throw new RequestException(
+                'WebhooksHandler throttle response has no repositories list: GET broker/throttle'
+            );
+        }
+
+        $presenter = new ThrottledRepositoriesPresenter();
+
+        return $presenter->present($status);
+
+    }//end getThrottledRepositories()
+
+
 }//end class

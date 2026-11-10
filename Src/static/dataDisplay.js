@@ -550,6 +550,27 @@ export class DataDisplayManager {
   }
 
   /**
+   * Draws the WebhooksHandler throttled repositories table (one row per
+   * installation and repository whose payloads went to the Throttled Queue,
+   * most recently throttled first) with the throttle settings as a caption.
+   * The handler counts in memory, so the table resets when it restarts.
+   */
+  showThrottledRepositories(response) {
+    const caption = document.getElementById("throttled_repositories_caption");
+    if (caption) {
+      const settings = response.enabled
+        ? `Throttle on · ${response.permitsPerMinute}/min per repository, burst ${response.burstSize}, drain ${response.drainPerMinute}/min`
+        : "Throttle off";
+      const totals = response.total
+        ? ` · ${Number(response.throttled).toLocaleString()} payloads throttled across ${response.total} ${response.total === 1 ? "repository" : "repositories"}`
+        : " · no repository throttled since the handler started";
+      caption.textContent = `${settings}${totals}`;
+    }
+
+    this.chartManager.drawDataTable(response.repositories, "throttled_repositories", CHART_OPTIONS.table);
+  }
+
+  /**
    * Draws a data table using the provided response.
    */
   showUpTimeRobot(response) {

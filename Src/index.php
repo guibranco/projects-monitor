@@ -21,6 +21,11 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 $username = $_SESSION['username'] ?? '';
+
+// Release the session lock: nothing below writes to $_SESSION, so the
+// dashboard's parallel API calls don't have to wait for this page to finish.
+session_write_close();
+
 $configuration = new Configuration();
 ?>
 <!DOCTYPE html>

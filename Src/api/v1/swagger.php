@@ -12,6 +12,10 @@ use GuiBranco\ProjectsMonitor\Library\SwaggerPagePresenter;
 
 $presenter = new SwaggerPagePresenter($_SESSION, ($_SERVER['HTTP_HOST'] ?? ''), time(), __DIR__.'/../../version.txt');
 
+// The presenter has its own copy of the session data, so release the lock
+// now; "Try it out" calls from this page would otherwise queue behind it.
+session_write_close();
+
 header('Content-Type: text/html; charset=UTF-8');
 header('Cache-Control: private, no-store, no-cache, must-revalidate, max-age=0');
 

@@ -344,21 +344,32 @@ class RenderTest extends TestCase
      */
     public function testMapsEveryDeployStatus(): void
     {
-        $expected = [];
+        $icons  = [];
+        $colors = [];
 
-        $expected["update_failed"]          = ["❌", "red"];
-        $expected["pre_deploy_failed"]      = ["❌", "red"];
-        $expected["update_in_progress"]     = ["🔨", "yellow"];
-        $expected["pre_deploy_in_progress"] = ["🔨", "yellow"];
-        $expected["created"]                = ["⏳", "blue"];
-        $expected["queued"]                 = ["⏳", "blue"];
-        $expected["canceled"]               = ["⏸", "gray"];
-        $expected["deactivated"]            = ["💤", "gray"];
-        $expected["something_new"]          = ["❓", "lightgray"];
+        $icons["update_failed"]          = "❌";
+        $icons["pre_deploy_failed"]      = "❌";
+        $icons["update_in_progress"]     = "🔨";
+        $icons["pre_deploy_in_progress"] = "🔨";
+        $icons["created"]                = "⏳";
+        $icons["queued"]                 = "⏳";
+        $icons["canceled"]               = "⏸";
+        $icons["deactivated"]            = "💤";
+        $icons["something_new"]          = "❓";
+
+        $colors["update_failed"]          = "red";
+        $colors["pre_deploy_failed"]      = "red";
+        $colors["update_in_progress"]     = "yellow";
+        $colors["pre_deploy_in_progress"] = "yellow";
+        $colors["created"]                = "blue";
+        $colors["queued"]                 = "blue";
+        $colors["canceled"]               = "gray";
+        $colors["deactivated"]            = "gray";
+        $colors["something_new"]          = "lightgray";
 
         $services = [];
         $deploys  = [];
-        foreach (array_keys($expected) as $status) {
+        foreach (array_keys($icons) as $status) {
             $services[] = $this->getService("srv-{$status}", $status, "not_suspended", null);
 
             $deploys["srv-{$status}"] = $this->getDeploy($status, "not a date");
@@ -372,10 +383,10 @@ class RenderTest extends TestCase
             $byState[$row[1]] = $row;
         }
 
-        foreach ($expected as $status => [$icon, $color]) {
+        foreach ($icons as $status => $icon) {
             $row = $byState[strtoupper($status)];
             $this->assertStringContainsString($icon, $row[0]);
-            $this->assertStringContainsString($color, $row[0]);
+            $this->assertStringContainsString($colors[$status], $row[0]);
             $this->assertEquals("-", $row[2]);
         }
 

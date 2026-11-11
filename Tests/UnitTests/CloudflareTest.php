@@ -129,7 +129,6 @@ class CloudflareTest extends TestCase
 
     }//end getAnalytics()
 
-
     /**
      * The analytics queries the tile sent, decoded.
      *
@@ -167,8 +166,8 @@ class CloudflareTest extends TestCase
 
         $batch = $this->createMock(Request::class);
         $batch->method('addRequest')->willReturnCallback(
-            function (string $key, string $url, array $headers, string $method, string $payload): void {
-                $this->payloads[] = json_decode($payload, true);
+            function (...$arguments): void {
+                $this->payloads[] = json_decode($arguments[4], true);
             }
         );
         $batch->method('executeBatch')->willReturn($analytics);

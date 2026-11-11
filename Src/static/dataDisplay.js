@@ -588,6 +588,13 @@ export class DataDisplayManager {
   }
 
   /**
+   * Draws a data table listing Cloudflare domains (zones) with their status and plan.
+   */
+  showCloudflare(response) {
+    this.chartManager.drawDataTable(response.zones, "cloudflare", CHART_OPTIONS.table);
+  }
+
+  /**
    * Draws a data table listing Render services with their latest deploy status.
    */
   showRender(response) {

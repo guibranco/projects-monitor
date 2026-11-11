@@ -196,6 +196,18 @@ jobs:
           echo "\$logStreamApiKey   = '$(php_literal "$LOGSTREAM_API_KEY")';" >> logStream.secrets.php
           echo "\$logStreamApiToken = '$(php_literal "$LOGSTREAM_API_TOKEN")';" >> logStream.secrets.php
 
+      - name: 🔑 Generate Cloudflare Configuration
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          cd Src
+          mkdir -p secrets
+          cd secrets
+          echo "<?php" >> cloudflare.secrets.php
+          echo "\$cloudflareAccountId = \"$CLOUDFLARE_ACCOUNT_ID\";" >> cloudflare.secrets.php
+          echo "\$cloudflareApiToken  = \"$CLOUDFLARE_API_TOKEN\";" >> cloudflare.secrets.php
+
       - name: 🔑 Generate Vercel Configuration
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}

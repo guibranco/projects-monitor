@@ -449,6 +449,7 @@ export class DataLoader {
     this.apiManager.load(API_ENDPOINTS.HEALTHCHECKS, (data) => window.showHealthChecksIo?.(data));
     this.apiManager.load(API_ENDPOINTS.UPTIMEROBOT, (data) => window.showUpTimeRobot?.(data));
     this.apiManager.load(API_ENDPOINTS.VERCEL, (data) => window.showVercel?.(data));
+    this.apiManager.load(API_ENDPOINTS.CLOUDFLARE, (data) => window.showCloudflare?.(data));
     this.apiManager.load(API_ENDPOINTS.RENDER, (data) => window.showRender?.(data));
     this.apiManager.load(API_ENDPOINTS.WIREGUARD, (data) => window.showWireGuard?.(data));
     this.apiManager.load(API_ENDPOINTS.RELEASES, (data) => window.showReleases?.(data));

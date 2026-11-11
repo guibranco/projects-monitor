@@ -91,17 +91,15 @@ class Cloudflare
      */
     protected function fetchZones(int $page)
     {
-        $query = http_build_query(
-            [
-                "account.id" => $this->accountId,
-                "per_page"   => self::PAGE_SIZE,
-                "page"       => $page,
-                "order"      => "name",
-                "direction"  => "asc",
-            ]
-        );
+        $parameters = [];
+        $parameters["account.id"] = $this->accountId;
+        $parameters["per_page"]   = self::PAGE_SIZE;
+        $parameters["page"]       = $page;
+        $parameters["order"]      = "name";
+        $parameters["direction"]  = "asc";
 
-        $response = $this->request->get(self::CLOUDFLARE_API_URL."?".$query, $this->headers);
+        $url      = sprintf("%s?%s", self::CLOUDFLARE_API_URL, http_build_query($parameters));
+        $response = $this->request->get($url, $this->headers);
 
         if ($response->getStatusCode() !== 200) {
             $error = $response->getBody();
@@ -114,7 +112,7 @@ class Cloudflare
 
         $body = json_decode($response->getBody());
         if (($body->success ?? false) !== true) {
-            $errors = json_encode($body->errors ?? []);
+            $errors = json_encode(($body->errors ?? []));
             throw new RequestException("Code: {$response->getStatusCode()} - Error: {$errors}");
         }
 
@@ -226,9 +224,9 @@ class Cloudflare
 
         $badgeUrl  = $shields->generateBadgeUrl($status, $zone->name, $color, "for-the-badge", "white", null);
         $accountId = rawurlencode(($zone->account->id ?? $this->accountId));
-        $link      = self::CLOUDFLARE_DASHBOARD_URL."/{$accountId}/".rawurlencode($zone->name);
-        $badgeLink = "<a href='{$link}' title='{$state}' target='_blank' rel='noopener noreferrer'>"
-            ."<img src='{$badgeUrl}' alt='{$name}' /></a>";
+        $link      = sprintf("%s/%s/%s", self::CLOUDFLARE_DASHBOARD_URL, $accountId, rawurlencode($zone->name));
+        $image     = "<img src='{$badgeUrl}' alt='{$name}' />";
+        $badgeLink = "<a href='{$link}' title='{$state}' target='_blank' rel='noopener noreferrer'>{$image}</a>";
 
         $activated = "-";
         if (empty($zone->activated_on) === false) {

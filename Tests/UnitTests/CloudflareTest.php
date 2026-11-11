@@ -24,19 +24,26 @@ class CloudflareTest extends TestCase
      * @param boolean     $paused      Whether the zone is paused.
      * @param string|null $activatedOn The activation date, or null.
      *
-     * @return array
+     * @return object
      */
-    private function getZone(string $name, string $status, bool $paused, ?string $activatedOn): array
+    private function getZone(string $name, string $status, bool $paused, ?string $activatedOn): object
     {
-        return [
-            "id"           => md5($name),
-            "name"         => $name,
-            "status"       => $status,
-            "paused"       => $paused,
-            "activated_on" => $activatedOn,
-            "account"      => ["id" => self::ACCOUNT_ID],
-            "plan"         => ["name" => "Free Website"],
-        ];
+        $account     = new stdClass();
+        $account->id = self::ACCOUNT_ID;
+
+        $plan       = new stdClass();
+        $plan->name = "Free Website";
+
+        $zone = new stdClass();
+        $zone->id           = md5($name);
+        $zone->name         = $name;
+        $zone->status       = $status;
+        $zone->paused       = $paused;
+        $zone->activated_on = $activatedOn;
+        $zone->account      = $account;
+        $zone->plan         = $plan;
+
+        return $zone;
 
     }//end getZone()
 
@@ -52,20 +59,18 @@ class CloudflareTest extends TestCase
      */
     private function getPage(array $zones, int $page, int $totalPages): Response
     {
-        $body = json_encode(
-            [
-                "success"     => true,
-                "errors"      => [],
-                "result"      => $zones,
-                "result_info" => [
-                    "page"        => $page,
-                    "per_page"    => 50,
-                    "total_pages" => $totalPages,
-                ],
-            ]
-        );
+        $resultInfo = new stdClass();
+        $resultInfo->page        = $page;
+        $resultInfo->per_page    = 50;
+        $resultInfo->total_pages = $totalPages;
 
-        return new Response(true, $body, "", 200, "https://api.cloudflare.com/client/v4/zones", []);
+        $answer = new stdClass();
+        $answer->success     = true;
+        $answer->errors      = [];
+        $answer->result      = $zones;
+        $answer->result_info = $resultInfo;
+
+        return new Response(true, json_encode($answer), "", 200, "https://api.cloudflare.com/client/v4/zones", []);
 
     }//end getPage()
 
@@ -106,14 +111,11 @@ class CloudflareTest extends TestCase
      */
     public function testListsEveryZoneSortedWithItsState(): void
     {
-        $first  = $this->getPage(
-            [
-                $this->getZone("zeta.dev", "active", false, "2025-01-15T10:00:00Z"),
-                $this->getZone("alpha.com", "pending", false, null),
-            ],
-            1,
-            2
-        );
+        $firstZones   = [];
+        $firstZones[] = $this->getZone("zeta.dev", "active", false, "2025-01-15T10:00:00Z");
+        $firstZones[] = $this->getZone("alpha.com", "pending", false, null);
+
+        $first  = $this->getPage($firstZones, 1, 2);
         $second = $this->getPage([$this->getZone("middle.bot", "active", true, "2024-06-01T00:00:00Z")], 2, 2);
 
         $zones = $this->getTile($first, $second)->getZones();

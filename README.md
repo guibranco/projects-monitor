@@ -151,10 +151,11 @@ anonymous visitors *Try it out* is hidden and the protected endpoints answer
 `401`.
 
 Key endpoint groups: `github`, `webhooks*` (statistics, per-entity processing,
-worker control), `gstraccini-jobs` / `gstraccini-job-run`, `appveyor`, `cloudflare`, `cpanel`,
-`dns-records`, `domains`, `healthchecksio`, `uptimerobot`, `vercel`, `queues` /
-`queues-purge`, `wireguard`, `system-report`, `messages*` / `errors*` (log
-retrieval, details, deletion), and `public-stats`.
+worker control), `gstraccini-jobs` / `gstraccini-job-run`, `appveyor`,
+`cloudflare`, `cpanel`, `dns-records`, `domains`, `healthchecksio`,
+`uptimerobot`, `vercel`, `queues` / `queues-purge`, `wireguard`,
+`system-report`, `messages*` / `errors*` (log retrieval, details, deletion), and
+`public-stats`.
 
 ---
 

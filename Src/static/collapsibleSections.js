@@ -166,6 +166,7 @@ export class CollapsibleSectionsManager {
                 content.id.includes('cronjobs') ||
                 content.id.includes('senders') ||
                 content.id.includes('appveyor') ||
+                content.id.includes('cloudflare') ||
                 content.tagName === 'DIV'
             )) {
                 content.classList.add('section-content');

@@ -23,6 +23,7 @@
   ],
   "tags": [
     { "name": "AppVeyor",    "description": "AppVeyor CI build data" },
+    { "name": "Cloudflare",  "description": "Cloudflare domains (zones) of the account, with status and plan" },
     { "name": "cPanel",      "description": "cPanel server stats and error-log file management" },
     { "name": "DNS",         "description": "cPanel DNS zone records for all hosted domains" },
     { "name": "Domains",     "description": "Domain SSL/expiry validity information" },
@@ -935,6 +936,35 @@
                     "monitors": {
                       "type": "array",
                       "items": { "type": "object" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/cloudflare": {
+      "get": {
+        "summary": "Cloudflare domains",
+        "description": "Returns every domain (zone) of the Cloudflare account as table rows: a header row, then one row per zone with a badge linked to the zone in the Cloudflare dashboard, its status (paused wins over the zone status), its plan and its activation date.",
+        "operationId": "getCloudflare",
+        "tags": ["Cloudflare"],
+        "responses": {
+          "200": {
+            "description": "Zone list.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "zones": {
+                      "type": "array",
+                      "items": { "type": "array", "items": { "type": "string" } }
                     }
                   }
                 }

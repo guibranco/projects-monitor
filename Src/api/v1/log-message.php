@@ -12,15 +12,15 @@ if (!$application->validate()) {
     die();
 }
 
-LogStream::info("API request received", ["endpoint" => "POST /api/v1/log-message", "application_id" => $application->getApplicationId()], "api");
+LogStream::info("API request {endpoint} received from application {application_id}", ["endpoint" => "POST /api/v1/log-message", "application_id" => $application->getApplicationId()], "api");
 $log = new Logger();
 $result = $log->saveMessage($application->getApplicationId());
 if ($result) {
     http_response_code(202);
-    LogStream::debug("Log message saved", ["application_id" => $application->getApplicationId()], "api");
+    LogStream::debug("Log message from application {application_id} saved", ["application_id" => $application->getApplicationId()], "api");
 } else {
     http_response_code(500);
-    LogStream::error("Failed to save log message", ["application_id" => $application->getApplicationId()], "api");
+    LogStream::error("Failed to save log message from application {application_id}", ["application_id" => $application->getApplicationId()], "api");
 }
 
 header("Content-Type: application/json; charset=UTF-8");

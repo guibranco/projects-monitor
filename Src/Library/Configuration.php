@@ -27,10 +27,19 @@ class Configuration
             return;
         }
 
+        define("USER_AGENT_VENDOR", $this->getUserAgent());
+        define("USER_AGENT", "User-Agent: " . USER_AGENT_VENDOR);
+    }
+
+    /**
+     * Returns the User-Agent product string for outgoing requests, built from
+     * the deployed version. Usable before init() has defined USER_AGENT_VENDOR.
+     */
+    public function getUserAgent(): string
+    {
         $version = $this->getVersion();
 
-        define("USER_AGENT_VENDOR", "projects-monitor/{$version} (+https://github.com/guibranco/projects-monitor)");
-        define("USER_AGENT", "User-Agent: " . USER_AGENT_VENDOR);
+        return "projects-monitor/{$version} (+https://github.com/guibranco/projects-monitor)";
     }
 
     /**

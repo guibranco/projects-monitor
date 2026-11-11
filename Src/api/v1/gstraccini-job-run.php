@@ -33,7 +33,7 @@ if (!in_array($job, $allowedJobs, true)) {
     exit;
 }
 
-LogStream::info("API request received", ["endpoint" => "POST /api/v1/gstraccini-jobs/run", "job" => $job], "api");
+LogStream::info("API request {endpoint} received to run job {job}", ["endpoint" => "POST /api/v1/gstraccini-jobs/run", "job" => $job], "api");
 $bot = new GStracciniBot();
 $data = $bot->runJob($job);
 echo json_encode($data);

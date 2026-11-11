@@ -6,7 +6,7 @@ require_once '../../vendor/autoload.php';
 use GuiBranco\ProjectsMonitor\Library\Postman;
 use GuiBranco\ProjectsMonitor\Library\LogStream;
 
-LogStream::info("API request received", ["endpoint" => "GET /api/v1/postman"], "api");
+LogStream::info("API request {endpoint} received", ["endpoint" => "GET /api/v1/postman"], "api");
 $postman = new Postman();
 $data = array();
 $data["usage"] = $postman->getUsage();

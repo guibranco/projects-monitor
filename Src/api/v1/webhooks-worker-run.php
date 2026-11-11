@@ -32,7 +32,7 @@ if (!in_array($name, Webhooks::RUNNABLE_WORKER_NAMES, true)) {
     exit;
 }
 
-LogStream::info("API request received", ["endpoint" => "POST /api/v1/webhooks-workers/run", "worker" => $name], "api");
+LogStream::info("API request {endpoint} received to run worker {worker}", ["endpoint" => "POST /api/v1/webhooks-workers/run", "worker" => $name], "api");
 $webhooks = new Webhooks();
 $data = $webhooks->runWorker($name);
 echo json_encode($data);

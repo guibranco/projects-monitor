@@ -51,7 +51,7 @@ class Webhooks
     {
         $response = null;
         $method = strtolower($method);
-        LogStream::debug("Webhooks API request", ["method" => strtoupper($method), "endpoint" => $endpoint], "webhooks");
+        $startedAt = microtime(true);
         switch ($method) {
             case "get":
                 $response = $this->request->get("{$this->apiUrl}{$endpoint}", $this->headers);
@@ -69,15 +69,26 @@ class Webhooks
                 throw new RequestException("Method not mapped: {$method}");
         }
 
+        $durationMs = (int) round((microtime(true) - $startedAt) * 1000);
+
         if ($response->getStatusCode() === $expectedStatusCode) {
+            LogStream::debug("Webhooks API {method} {endpoint} responded {status_code} in {duration_ms} ms", [
+                "method" => strtoupper($method),
+                "endpoint" => $endpoint,
+                "status_code" => $response->getStatusCode(),
+                "duration_ms" => $durationMs,
+            ], "webhooks");
+
             return json_decode($response->getBody(), true);
         }
 
         $error = $response->getStatusCode() == -1 ? $response->getMessage() : $response->getBody();
-        LogStream::error("Webhooks API request failed", [
+        LogStream::error("Webhooks API {method} {endpoint} failed with status {status_code} (expected {expected_status_code}) after {duration_ms} ms: {error}", [
             "method" => strtoupper($method),
             "endpoint" => $endpoint,
             "status_code" => $response->getStatusCode(),
+            "expected_status_code" => $expectedStatusCode,
+            "duration_ms" => $durationMs,
             "error" => $error,
         ], "webhooks");
         throw new RequestException("Code: {$response->getStatusCode()} - Error: {$error}");
@@ -90,100 +101,103 @@ class Webhooks
             throw new \InvalidArgumentException('Invalid filter value provided');
         }
         $endpoint = sprintf("github?feedOptionsFilter=%s", urlencode($feedOptionsFilter));
-        LogStream::info("Fetching webhooks dashboard", ["filter" => $feedOptionsFilter], "webhooks");
+        LogStream::info("Fetching webhooks dashboard with filter {filter}", ["filter" => $feedOptionsFilter], "webhooks");
         $response = $this->doRequest($endpoint, "get", 200);
-        LogStream::debug("Webhooks dashboard fetched", ["total_runs" => count($response["workflow_runs"] ?? [])], "webhooks");
+        LogStream::debug("Webhooks dashboard with filter {filter} fetched: {total_runs} workflow runs", [
+            "filter" => $feedOptionsFilter,
+            "total_runs" => count($response["workflow_runs"] ?? []),
+        ], "webhooks");
 
         return $response;
     }
 
     public function getWebhook($sequence): mixed
     {
-        LogStream::info("Fetching single webhook", ["sequence" => $sequence], "webhooks");
+        LogStream::info("Fetching webhook {sequence}", ["sequence" => $sequence], "webhooks");
         return $this->doRequest("github/{$sequence}", "get", 200);
     }
 
     public function requestRerun($sequence): mixed
     {
-        LogStream::info("Requesting workflow rerun", ["sequence" => $sequence], "webhooks");
+        LogStream::info("Requesting workflow rerun for webhook {sequence}", ["sequence" => $sequence], "webhooks");
         return $this->doRequest("github/workflow", "post", 201, ["sequence" => $sequence]);
     }
 
     public function requestUpdate($sequence): mixed
     {
-        LogStream::info("Requesting workflow update", ["sequence" => $sequence], "webhooks");
+        LogStream::info("Requesting workflow update for webhook {sequence}", ["sequence" => $sequence], "webhooks");
         return $this->doRequest("github/workflow", "put", 202, ["sequence" => $sequence]);
     }
 
     public function requestDelete($sequence): mixed
     {
-        LogStream::info("Requesting workflow delete", ["sequence" => $sequence], "webhooks");
+        LogStream::info("Requesting workflow delete for webhook {sequence}", ["sequence" => $sequence], "webhooks");
         return $this->doRequest("github/workflow/{$sequence}", "delete", 202);
     }
 
     public function getStatistics(): mixed
     {
-        LogStream::debug("Fetching webhooks statistics", null, "webhooks");
+        LogStream::debug("Fetching {resource} from webhooks API", ["resource" => "webhooks statistics"], "webhooks");
         return $this->doRequest("processing-state", "get", 200);
     }
 
     public function getPullRequestsProcessing(): mixed
     {
-        LogStream::debug("Fetching pull requests pending processing", null, "webhooks");
+        LogStream::debug("Fetching {resource} from webhooks API", ["resource" => "pull requests pending processing"], "webhooks");
         return $this->doRequest("pull-requests/processing", "get", 200);
     }
 
     public function getPullRequestsIdle(): mixed
     {
-        LogStream::debug("Fetching idle pull requests", null, "webhooks");
+        LogStream::debug("Fetching {resource} from webhooks API", ["resource" => "idle pull requests"], "webhooks");
         return $this->doRequest("pull-requests/idle", "get", 200);
     }
 
     public function getBranchesProcessing(): mixed
     {
-        LogStream::debug("Fetching branches pending processing", null, "webhooks");
+        LogStream::debug("Fetching {resource} from webhooks API", ["resource" => "branches pending processing"], "webhooks");
         return $this->doRequest("branches/processing", "get", 200);
     }
 
     public function getCommentsProcessing(): mixed
     {
-        LogStream::debug("Fetching comments pending processing", null, "webhooks");
+        LogStream::debug("Fetching {resource} from webhooks API", ["resource" => "comments pending processing"], "webhooks");
         return $this->doRequest("comments/processing", "get", 200);
     }
 
     public function getInstallationsProcessing(): mixed
     {
-        LogStream::debug("Fetching installations pending processing", null, "webhooks");
+        LogStream::debug("Fetching {resource} from webhooks API", ["resource" => "installations pending processing"], "webhooks");
         return $this->doRequest("installations/processing", "get", 200);
     }
 
     public function getIssuesProcessing(): mixed
     {
-        LogStream::debug("Fetching issues pending processing", null, "webhooks");
+        LogStream::debug("Fetching {resource} from webhooks API", ["resource" => "issues pending processing"], "webhooks");
         return $this->doRequest("issues/processing", "get", 200);
     }
 
     public function getPushesProcessing(): mixed
     {
-        LogStream::debug("Fetching pushes pending processing", null, "webhooks");
+        LogStream::debug("Fetching {resource} from webhooks API", ["resource" => "pushes pending processing"], "webhooks");
         return $this->doRequest("pushes/processing", "get", 200);
     }
 
     public function getRepositoriesProcessing(): mixed
     {
-        LogStream::debug("Fetching repositories pending processing", null, "webhooks");
+        LogStream::debug("Fetching {resource} from webhooks API", ["resource" => "repositories pending processing"], "webhooks");
         return $this->doRequest("repositories/processing", "get", 200);
     }
 
     public function getUsersProcessing(): mixed
     {
-        LogStream::debug("Fetching users pending processing", null, "webhooks");
+        LogStream::debug("Fetching {resource} from webhooks API", ["resource" => "users pending processing"], "webhooks");
         return $this->doRequest("users/processing", "get", 200);
     }
 
     public function getWorkers(): mixed
     {
-        LogStream::debug("Fetching workers list", null, "webhooks");
+        LogStream::debug("Fetching {resource} from webhooks API", ["resource" => "workers list"], "webhooks");
         $workers = $this->doRequest("workers", "get", 200);
         return $this->formatWorkersTable($workers);
     }
@@ -194,7 +208,7 @@ class Webhooks
             throw new \InvalidArgumentException("Invalid worker name provided");
         }
 
-        LogStream::info("Triggering worker run", ["worker" => $name], "webhooks");
+        LogStream::info("Triggering webhooks worker {worker}", ["worker" => $name], "webhooks");
         return $this->doRequest("workers/{$name}/run", "post", 202);
     }
 
@@ -205,7 +219,7 @@ class Webhooks
      */
     public function getReleases(): mixed
     {
-        LogStream::debug("Fetching releases list", null, "webhooks");
+        LogStream::debug("Fetching {resource} from webhooks API", ["resource" => "releases list"], "webhooks");
         $releases = $this->doRequest("releases/", "get", 200);
         return $this->formatReleasesTable($releases);
     }
@@ -263,7 +277,7 @@ class Webhooks
      */
     public function getWorkflowRuns(): mixed
     {
-        LogStream::debug("Fetching workflow runs list", null, "webhooks");
+        LogStream::debug("Fetching {resource} from webhooks API", ["resource" => "workflow runs list"], "webhooks");
         $runs = $this->doRequest("workflow-runs/", "get", 200);
         if (is_array($runs) === false) {
             $runs = [];
@@ -285,9 +299,10 @@ class Webhooks
      */
     public function retryWorkflowRun($workflowRunId): array
     {
-        LogStream::info("Requesting workflow run retry", ["workflow_run_id" => $workflowRunId], "webhooks");
-        $response = $this->request->post("{$this->apiUrl}workflow-runs/{$workflowRunId}/retry", $this->headers, "");
-        return $this->toApiResult($response);
+        LogStream::info("Requesting retry of workflow run {workflow_run_id}", ["workflow_run_id" => $workflowRunId], "webhooks");
+        $endpoint = "workflow-runs/{$workflowRunId}/retry";
+        $response = $this->request->post("{$this->apiUrl}{$endpoint}", $this->headers, "");
+        return $this->toApiResult($response, "POST", $endpoint);
     }
 
     /**
@@ -296,9 +311,10 @@ class Webhooks
      */
     public function deleteWorkflowRun($workflowRunId): array
     {
-        LogStream::info("Requesting workflow run delete", ["workflow_run_id" => $workflowRunId], "webhooks");
-        $response = $this->request->delete("{$this->apiUrl}workflow-runs/{$workflowRunId}", $this->headers);
-        return $this->toApiResult($response);
+        LogStream::info("Requesting delete of workflow run {workflow_run_id}", ["workflow_run_id" => $workflowRunId], "webhooks");
+        $endpoint = "workflow-runs/{$workflowRunId}";
+        $response = $this->request->delete("{$this->apiUrl}{$endpoint}", $this->headers);
+        return $this->toApiResult($response, "DELETE", $endpoint);
     }
 
     /**
@@ -306,13 +322,25 @@ class Webhooks
      * through, instead of throwing, since retry/delete have several expected
      * non-2xx outcomes (404/409/422) that the caller needs to relay as-is.
      */
-    private function toApiResult(Response $response): array
+    private function toApiResult(Response $response, string $method, string $endpoint): array
     {
         $statusCode = $response->getStatusCode();
 
         if ($statusCode === -1) {
-            LogStream::error("Webhooks API request failed", ["error" => $response->getMessage()], "webhooks");
+            LogStream::error("Webhooks API {method} {endpoint} failed: {error}", [
+                "method" => $method,
+                "endpoint" => $endpoint,
+                "error" => $response->getMessage(),
+            ], "webhooks");
             return ["statusCode" => 502, "body" => ["error" => $response->getMessage()]];
+        }
+
+        if ($statusCode >= 400) {
+            LogStream::warning("Webhooks API {method} {endpoint} responded {status_code}", [
+                "method" => $method,
+                "endpoint" => $endpoint,
+                "status_code" => $statusCode,
+            ], "webhooks");
         }
 
         return ["statusCode" => $statusCode, "body" => json_decode($response->getBody(), true)];

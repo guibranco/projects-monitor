@@ -6,7 +6,7 @@ require_once '../../vendor/autoload.php';
 use GuiBranco\ProjectsMonitor\Library\Webhooks;
 use GuiBranco\ProjectsMonitor\Library\LogStream;
 
-LogStream::info("API request received", ["endpoint" => "GET /api/v1/webhooks-pull-requests-processing"], "api");
+LogStream::info("API request {endpoint} received", ["endpoint" => "GET /api/v1/webhooks-pull-requests-processing"], "api");
 $webhooks = new Webhooks();
 $data = $webhooks->getPullRequestsProcessing();
 echo json_encode($data);

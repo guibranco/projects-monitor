@@ -11,7 +11,7 @@ $feedOptionsFilter = isset($_GET["feedOptionsFilter"]) && in_array($_GET["feedOp
     ? $_GET["feedOptionsFilter"]
     : "all";
 
-LogStream::info("API request received", ["endpoint" => "GET /api/v1/webhooks", "filter" => $feedOptionsFilter], "api");
+LogStream::info("API request {endpoint} received with filter {filter}", ["endpoint" => "GET /api/v1/webhooks", "filter" => $feedOptionsFilter], "api");
 $webhooks = new Webhooks();
 $data = $webhooks->getDashboard($feedOptionsFilter);
 echo json_encode($data);

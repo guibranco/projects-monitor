@@ -22,7 +22,7 @@ if (json_last_error() !== JSON_ERROR_NONE || $workflowRunId === false) {
 }
 
 LogStream::info(
-    "API request received",
+    "API request {endpoint} received for workflow run {workflow_run_id}",
     ["endpoint" => "POST /api/v1/workflow-runs/retry", "workflow_run_id" => $workflowRunId],
     "api"
 );

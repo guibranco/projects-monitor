@@ -3,17 +3,57 @@
 namespace GuiBranco\ProjectsMonitor\Library;
 
 use GuiBranco\Pancake\Request;
+use GuiBranco\Pancake\Response;
 use GuiBranco\Pancake\ShieldsIo;
 
 /**
  * The Cloudflare tile: every domain (zone) of the account, with its status,
- * plan and activation date, read from the Cloudflare API.
+ * plan and activation date, read from the Cloudflare API, and the traffic of
+ * the last days (requests, cache ratio, bandwidth, visitors and page views),
+ * read from the GraphQL Analytics API.
  */
 class Cloudflare
 {
     private const CLOUDFLARE_API_URL = "https://api.cloudflare.com/client/v4/zones";
 
     private const CLOUDFLARE_DASHBOARD_URL = "https://dash.cloudflare.com";
+
+    private const CLOUDFLARE_GRAPHQL_URL = "https://api.cloudflare.com/client/v4/graphql";
+
+    /**
+     * The days of traffic shown, today included.
+     */
+    public const ANALYTICS_DAYS = 7;
+
+    /**
+     * The zones asked for in one GraphQL query.
+     */
+    private const ZONES_PER_QUERY = 10;
+
+    /**
+     * The queries sent together in one batch, the most the HTTP client runs
+     * at once. Each one is bounded by the client's batch transfer timeout.
+     */
+    private const QUERIES_PER_BATCH = 10;
+
+    /**
+     * The daily traffic of the given zones, summed over the period.
+     */
+    private const ANALYTICS_QUERY = <<<'GRAPHQL'
+        query ZoneTraffic($zoneTags: [string!], $since: Date!, $until: Date!, $limit: uint64!) {
+          viewer {
+            zones(filter: { zoneTag_in: $zoneTags }) {
+              zoneTag
+              httpRequests1dGroups(limit: $limit, filter: { date_geq: $since, date_leq: $until }) {
+                sum { requests cachedRequests bytes pageViews }
+                uniq { uniques }
+              }
+            }
+          }
+        }
+        GRAPHQL;
+
+    private const NO_DATA = "-";
 
     /**
      * The largest page the zones endpoint accepts.
@@ -144,6 +184,264 @@ class Cloudflare
 
 
     /**
+     * A new HTTP client for one batch of analytics queries. The batch API
+     * bounds every transfer, unlike a plain request.
+     *
+     * @return Request
+     */
+    protected function createBatch(): Request
+    {
+        return new Request();
+
+    }//end createBatch()
+
+
+    /**
+     * The body of one analytics query: the given zones' daily traffic.
+     *
+     * @param array  $zoneIds The zone IDs (zone tags).
+     * @param string $since   The first day, as Y-m-d.
+     * @param string $until   The last day, as Y-m-d.
+     *
+     * @return string
+     */
+    private function getAnalyticsPayload(array $zoneIds, string $since, string $until): string
+    {
+        $variables             = [];
+        $variables["zoneTags"] = array_values($zoneIds);
+        $variables["since"]    = $since;
+        $variables["until"]    = $until;
+        $variables["limit"]    = self::ANALYTICS_DAYS;
+
+        $body              = [];
+        $body["query"]     = self::ANALYTICS_QUERY;
+        $body["variables"] = $variables;
+
+        return json_encode($body);
+
+    }//end getAnalyticsPayload()
+
+
+    /**
+     * The decoded answer of one analytics query.
+     *
+     * @param Response $response The answer of the GraphQL Analytics API.
+     *
+     * @return object
+     *
+     * @throws RequestException When the API does not answer 200 without errors.
+     */
+    private function decodeAnalytics(Response $response)
+    {
+        if ($response->getStatusCode() !== 200) {
+            $error = $response->getBody();
+            if ($response->getStatusCode() === -1) {
+                $error = $response->getMessage();
+            }
+
+            throw new RequestException("Code: {$response->getStatusCode()} - Error: {$error}");
+        }
+
+        $body = json_decode($response->getBody());
+        if (is_object($body) === false || empty($body->errors) === false) {
+            $errors = json_encode(($body->errors ?? $response->getBody()));
+            throw new RequestException("Code: {$response->getStatusCode()} - Error: {$errors}");
+        }
+
+        return $body;
+
+    }//end decodeAnalytics()
+
+
+    /**
+     * Runs one analytics query per group of zones, together in one batch.
+     *
+     * @param array  $chunks The groups of zone IDs, one query each.
+     * @param string $since  The first day, as Y-m-d.
+     * @param string $until  The last day, as Y-m-d.
+     *
+     * @return array The decoded answers.
+     *
+     * @throws RequestException When any query fails.
+     */
+    protected function fetchAnalytics(array $chunks, string $since, string $until): array
+    {
+        $headers   = $this->headers;
+        $headers[] = "Content-Type: application/json";
+
+        $batch = $this->createBatch();
+        foreach (array_values($chunks) as $index => $zoneIds) {
+            $payload = $this->getAnalyticsPayload($zoneIds, $since, $until);
+            $batch->addRequest("query{$index}", self::CLOUDFLARE_GRAPHQL_URL, $headers, "POST", $payload);
+        }
+
+        $bodies = [];
+        foreach ($batch->executeBatch() as $response) {
+            $bodies[] = $this->decodeAnalytics($response);
+        }
+
+        return $bodies;
+
+    }//end fetchAnalytics()
+
+
+    /**
+     * The traffic of the last ANALYTICS_DAYS days of every zone, summed per
+     * zone and keyed by zone ID. Visitors are the sum of the daily unique IPs,
+     * like the dashboard's daily rollup.
+     *
+     * @param array $zones The zones as the API lists them.
+     *
+     * @return array
+     */
+    private function getAnalytics(array $zones): array
+    {
+        $zoneIds = array_values(array_filter(array_map(fn ($zone) => ($zone->id ?? null), $zones)));
+        $until   = gmdate("Y-m-d");
+        $since   = gmdate("Y-m-d", strtotime(sprintf("-%d days", (self::ANALYTICS_DAYS - 1))));
+        $traffic = [];
+
+        $queries = array_chunk($zoneIds, self::ZONES_PER_QUERY);
+
+        foreach (array_chunk($queries, self::QUERIES_PER_BATCH) as $chunks) {
+            foreach ($this->fetchAnalytics($chunks, $since, $until) as $body) {
+                foreach (($body->data->viewer->zones ?? []) as $zone) {
+                    $traffic[$zone->zoneTag] = $this->sumDays(($zone->httpRequests1dGroups ?? []));
+                }
+            }
+        }
+
+        return $traffic;
+
+    }//end getAnalytics()
+
+
+    /**
+     * The traffic of a zone's days, summed.
+     *
+     * @param array $days The days, as httpRequests1dGroups returns them.
+     *
+     * @return array
+     */
+    private function sumDays(array $days): array
+    {
+        $totals                   = [];
+        $totals["requests"]       = 0;
+        $totals["cachedRequests"] = 0;
+        $totals["bytes"]          = 0;
+        $totals["pageViews"]      = 0;
+        $totals["uniques"]        = 0;
+
+        foreach ($days as $day) {
+            $totals["requests"]       += (int) ($day->sum->requests ?? 0);
+            $totals["cachedRequests"] += (int) ($day->sum->cachedRequests ?? 0);
+            $totals["bytes"]          += (int) ($day->sum->bytes ?? 0);
+            $totals["pageViews"]      += (int) ($day->sum->pageViews ?? 0);
+            $totals["uniques"]        += (int) ($day->uniq->uniques ?? 0);
+        }
+
+        return $totals;
+
+    }//end sumDays()
+
+
+    /**
+     * A count in a short form: 950, 1.2K, 3.4M, 5.6B.
+     *
+     * @param integer $value The count.
+     *
+     * @return string
+     */
+    private function formatNumber(int $value): string
+    {
+        $units   = [];
+        $units[] = "";
+        $units[] = "K";
+        $units[] = "M";
+        $units[] = "B";
+        $units[] = "T";
+        $index = 0;
+        $short = (float) $value;
+
+        while ($short >= 1000 && $index < (count($units) - 1)) {
+            $short /= 1000;
+            $index++;
+        }
+
+        if ($index === 0) {
+            return (string) $value;
+        }
+
+        return rtrim(rtrim(number_format($short, 1, ".", ""), "0"), ".").$units[$index];
+
+    }//end formatNumber()
+
+
+    /**
+     * A size in bytes in a short form: 512 B, 1.5 KB, 2.3 GB.
+     *
+     * @param integer $bytes The size.
+     *
+     * @return string
+     */
+    private function formatBytes(int $bytes): string
+    {
+        $units   = [];
+        $units[] = "B";
+        $units[] = "KB";
+        $units[] = "MB";
+        $units[] = "GB";
+        $units[] = "TB";
+        $units[] = "PB";
+        $index = 0;
+        $size  = (float) $bytes;
+
+        while ($size >= 1024 && $index < (count($units) - 1)) {
+            $size /= 1024;
+            $index++;
+        }
+
+        if ($index === 0) {
+            return "{$bytes} B";
+        }
+
+        return rtrim(rtrim(number_format($size, 1, ".", ""), "0"), ".")." ".$units[$index];
+
+    }//end formatBytes()
+
+
+    /**
+     * The traffic cells of a zone: requests, cache ratio, bandwidth,
+     * visitors and page views, or a dash for each when there is no data.
+     *
+     * @param array|null $totals The zone's traffic, or null.
+     *
+     * @return array
+     */
+    private function getTrafficCells(?array $totals): array
+    {
+        if ($totals === null) {
+            return array_fill(0, 5, self::NO_DATA);
+        }
+
+        $cached = self::NO_DATA;
+        if ($totals["requests"] > 0) {
+            $cached = sprintf("%d%%", round(($totals["cachedRequests"] * 100 / $totals["requests"])));
+        }
+
+        $cells   = [];
+        $cells[] = $this->formatNumber($totals["requests"]);
+        $cells[] = $cached;
+        $cells[] = $this->formatBytes($totals["bytes"]);
+        $cells[] = $this->formatNumber($totals["uniques"]);
+        $cells[] = $this->formatNumber($totals["pageViews"]);
+
+        return $cells;
+
+    }//end getTrafficCells()
+
+
+    /**
      * The state shown for a zone: paused wins over the zone status, which
      * stays "active" while Cloudflare only resolves DNS for a paused zone.
      *
@@ -212,14 +510,15 @@ class Cloudflare
 
     /**
      * The row of a zone: its badge, linked to the zone in the Cloudflare
-     * dashboard, its state, plan and activation date.
+     * dashboard, its state, plan, activation date and traffic.
      *
-     * @param object    $zone    A zone as the API lists it.
-     * @param ShieldsIo $shields The badge builder.
+     * @param object     $zone    A zone as the API lists it.
+     * @param ShieldsIo  $shields The badge builder.
+     * @param array|null $totals  The zone's traffic, or null.
      *
      * @return array
      */
-    private function getRow($zone, ShieldsIo $shields): array
+    private function getRow($zone, ShieldsIo $shields, ?array $totals): array
     {
         $state  = $this->getState($zone);
         $status = $this->mapStatus($state);
@@ -232,7 +531,7 @@ class Cloudflare
         $image     = "<img src='{$badgeUrl}' alt='{$name}' />";
         $badgeLink = "<a href='{$link}' title='{$state}' target='_blank' rel='noopener noreferrer'>{$image}</a>";
 
-        $activated = "-";
+        $activated = self::NO_DATA;
         if (empty($zone->activated_on) === false) {
             $activated = date("d/m/Y", strtotime($zone->activated_on));
         }
@@ -240,22 +539,32 @@ class Cloudflare
         $row   = [];
         $row[] = $badgeLink;
         $row[] = $state;
-        $row[] = ($zone->plan->name ?? "-");
+        $row[] = ($zone->plan->name ?? self::NO_DATA);
         $row[] = $activated;
 
-        return $row;
+        return array_merge($row, $this->getTrafficCells($totals));
 
     }//end getRow()
 
 
     /**
      * The rows of the tile: a header, then one row per zone sorted by name.
+     * When the analytics cannot be read (for example, a token without the
+     * Zone Analytics read permission) the zones are still listed, with a
+     * dash in every traffic column.
      *
      * @return array
      */
     public function getZones(): array
     {
         $zones = $this->getAllZones();
+
+        $traffic = [];
+        try {
+            $traffic = $this->getAnalytics($zones);
+        } catch (RequestException) {
+            $traffic = [];
+        }
 
         usort($zones, fn ($first, $second) => strcasecmp($first->name, $second->name));
 
@@ -266,10 +575,15 @@ class Cloudflare
         $header[] = "Status";
         $header[] = "Plan";
         $header[] = "Activated";
+        $header[] = sprintf("Requests (%dd)", self::ANALYTICS_DAYS);
+        $header[] = "Cached";
+        $header[] = "Bandwidth";
+        $header[] = "Visitors";
+        $header[] = "Page views";
         $result   = [$header];
 
         foreach ($zones as $zone) {
-            $result[] = $this->getRow($zone, $shields);
+            $result[] = $this->getRow($zone, $shields, ($traffic[($zone->id ?? "")] ?? null));
         }
 
         return $result;

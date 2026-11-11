@@ -344,17 +344,17 @@ class RenderTest extends TestCase
      */
     public function testMapsEveryDeployStatus(): void
     {
-        $expected = [
-            "update_failed"          => ["❌", "red"],
-            "pre_deploy_failed"      => ["❌", "red"],
-            "update_in_progress"     => ["🔨", "yellow"],
-            "pre_deploy_in_progress" => ["🔨", "yellow"],
-            "created"                => ["⏳", "blue"],
-            "queued"                 => ["⏳", "blue"],
-            "canceled"               => ["⏸", "gray"],
-            "deactivated"            => ["💤", "gray"],
-            "something_new"          => ["❓", "lightgray"],
-        ];
+        $expected = [];
+
+        $expected["update_failed"]          = ["❌", "red"];
+        $expected["pre_deploy_failed"]      = ["❌", "red"];
+        $expected["update_in_progress"]     = ["🔨", "yellow"];
+        $expected["pre_deploy_in_progress"] = ["🔨", "yellow"];
+        $expected["created"]                = ["⏳", "blue"];
+        $expected["queued"]                 = ["⏳", "blue"];
+        $expected["canceled"]               = ["⏸", "gray"];
+        $expected["deactivated"]            = ["💤", "gray"];
+        $expected["something_new"]          = ["❓", "lightgray"];
 
         $services = [];
         $deploys  = [];

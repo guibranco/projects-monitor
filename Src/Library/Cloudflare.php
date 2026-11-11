@@ -245,28 +245,42 @@ class Cloudflare
             $body = $this->fetchAnalytics($chunk, $since, $until);
 
             foreach (($body->data->viewer->zones ?? []) as $zone) {
-                $totals                   = [];
-                $totals["requests"]       = 0;
-                $totals["cachedRequests"] = 0;
-                $totals["bytes"]          = 0;
-                $totals["pageViews"]      = 0;
-                $totals["uniques"]        = 0;
-
-                foreach (($zone->httpRequests1dGroups ?? []) as $day) {
-                    $totals["requests"]       += (int) ($day->sum->requests ?? 0);
-                    $totals["cachedRequests"] += (int) ($day->sum->cachedRequests ?? 0);
-                    $totals["bytes"]          += (int) ($day->sum->bytes ?? 0);
-                    $totals["pageViews"]      += (int) ($day->sum->pageViews ?? 0);
-                    $totals["uniques"]        += (int) ($day->uniq->uniques ?? 0);
-                }
-
-                $traffic[$zone->zoneTag] = $totals;
+                $traffic[$zone->zoneTag] = $this->sumDays(($zone->httpRequests1dGroups ?? []));
             }
-        }//end foreach
+        }
 
         return $traffic;
 
     }//end getAnalytics()
+
+
+    /**
+     * The traffic of a zone's days, summed.
+     *
+     * @param array $days The days, as httpRequests1dGroups returns them.
+     *
+     * @return array
+     */
+    private function sumDays(array $days): array
+    {
+        $totals                   = [];
+        $totals["requests"]       = 0;
+        $totals["cachedRequests"] = 0;
+        $totals["bytes"]          = 0;
+        $totals["pageViews"]      = 0;
+        $totals["uniques"]        = 0;
+
+        foreach ($days as $day) {
+            $totals["requests"]       += (int) ($day->sum->requests ?? 0);
+            $totals["cachedRequests"] += (int) ($day->sum->cachedRequests ?? 0);
+            $totals["bytes"]          += (int) ($day->sum->bytes ?? 0);
+            $totals["pageViews"]      += (int) ($day->sum->pageViews ?? 0);
+            $totals["uniques"]        += (int) ($day->uniq->uniques ?? 0);
+        }
+
+        return $totals;
+
+    }//end sumDays()
 
 
     /**

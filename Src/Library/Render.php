@@ -133,6 +133,18 @@ class Render
 
 
     /**
+     * A new HTTP client for one batch of parallel requests.
+     *
+     * @return Request
+     */
+    protected function createBatchRequest(): Request
+    {
+        return new Request();
+
+    }//end createBatchRequest()
+
+
+    /**
      * The latest deploy of each service, requested in parallel batches. A
      * service whose request failed, or that was never deployed, is left
      * out.
@@ -145,7 +157,7 @@ class Render
     {
         $deploys = [];
         foreach (array_chunk($serviceIds, self::BATCH_SIZE) as $chunk) {
-            $request = new Request();
+            $request = $this->createBatchRequest();
             foreach ($chunk as $serviceId) {
                 $url = sprintf("%s/services/%s/deploys?limit=1", self::RENDER_API_URL, rawurlencode($serviceId));
                 $request->addRequest($serviceId, $url, $this->headers);

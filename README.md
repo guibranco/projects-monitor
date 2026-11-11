@@ -152,9 +152,9 @@ anonymous visitors *Try it out* is hidden and the protected endpoints answer
 
 Key endpoint groups: `github`, `webhooks*` (statistics, per-entity processing,
 worker control), `gstraccini-jobs` / `gstraccini-job-run`, `appveyor`, `cpanel`,
-`dns-records`, `domains`, `healthchecksio`, `uptimerobot`, `vercel`, `render`, `queues` /
-`queues-purge`, `wireguard`, `system-report`, `messages*` / `errors*` (log
-retrieval, details, deletion), and `public-stats`.
+`dns-records`, `domains`, `healthchecksio`, `uptimerobot`, `vercel`, `render`,
+`queues` / `queues-purge`, `wireguard`, `system-report`, `messages*` /
+`errors*` (log retrieval, details, deletion), and `public-stats`.
 
 ---
 

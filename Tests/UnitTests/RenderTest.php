@@ -19,21 +19,21 @@ class RenderTest extends TestCase
     /**
      * A service as GET /v1/services lists it, trimmed to the fields the tile reads.
      *
-     * @param string      $id        The service ID.
+     * @param string      $serviceId The service ID.
      * @param string      $name      The service name.
      * @param string      $suspended "suspended" or "not_suspended".
      * @param string|null $url       The public URL, or null for services without one.
      *
      * @return object
      */
-    private function getService(string $id, string $name, string $suspended, ?string $url): object
+    private function getService(string $serviceId, string $name, string $suspended, ?string $url): object
     {
         $service = new stdClass();
 
-        $service->id             = $id;
+        $service->id             = $serviceId;
         $service->name           = $name;
         $service->suspended      = $suspended;
-        $service->dashboardUrl   = "https://dashboard.render.com/web/{$id}";
+        $service->dashboardUrl   = "https://dashboard.render.com/web/{$serviceId}";
         $service->serviceDetails = new stdClass();
         if ($url !== null) {
             $service->serviceDetails->url = $url;
@@ -198,6 +198,188 @@ class RenderTest extends TestCase
         $render->getServices();
 
     }//end testFetchesTheServicesFromTheApiOrFails()
+
+
+    /**
+     * Every page of GET /v1/services is read: a full page is followed by a
+     * request with the cursor of its last item, a short page ends the list.
+     *
+     * @return void
+     */
+    public function testFollowsTheCursorUntilAShortPage(): void
+    {
+        $builder = $this->getMockBuilder(Render::class);
+        $builder->disableOriginalConstructor();
+        $builder->onlyMethods(['fetchLatestDeploys']);
+
+        $render = $builder->getMock();
+        $render->method('fetchLatestDeploys')->willReturn([]);
+
+        $full = [];
+        for ($index = 1; $index <= 100; $index++) {
+            $full[] = "{\"cursor\": \"c{$index}\", \"service\": {\"id\": \"srv-{$index}\", \"name\": \"service-{$index}\", \"suspended\": \"not_suspended\"}}";
+        }
+
+        $first  = new Response(true, "[".implode(", ", $full)."]", "", 200, self::API_URL, []);
+        $second = new Response(true, "[{\"cursor\": \"c101\", \"service\": {\"id\": \"srv-101\", \"name\": \"service-101\", \"suspended\": \"not_suspended\"}}]", "", 200, self::API_URL, []);
+
+        $request = $this->createMock(Request::class);
+        $request->expects($this->exactly(2))
+            ->method('get')
+            ->willReturnCallback(
+                function (string $url) use ($first, $second) {
+                    if (str_contains($url, "cursor=") === false) {
+                        return $first;
+                    }
+
+                    $this->assertStringContainsString("cursor=c100", $url);
+                    return $second;
+                }
+            );
+
+        $this->setPrivateProperty($render, 'request', $request);
+        $this->setPrivateProperty($render, 'headers', []);
+
+        $this->assertCount(102, $render->getServices());
+
+    }//end testFollowsTheCursorUntilAShortPage()
+
+
+    /**
+     * A body that is not a list ends the listing with what was read.
+     *
+     * @return void
+     */
+    public function testStopsOnAnUnexpectedBody(): void
+    {
+        $builder = $this->getMockBuilder(Render::class);
+        $builder->disableOriginalConstructor();
+        $builder->onlyMethods(['fetchLatestDeploys']);
+
+        $render = $builder->getMock();
+        $render->method('fetchLatestDeploys')->willReturn([]);
+
+        $request = $this->createMock(Request::class);
+        $request->method('get')->willReturn(new Response(true, "{\"unexpected\": true}", "", 200, self::API_URL, []));
+
+        $this->setPrivateProperty($render, 'request', $request);
+        $this->setPrivateProperty($render, 'headers', []);
+
+        $this->assertEquals([["Service", "Status", "Last Deployment"]], $render->getServices());
+
+    }//end testStopsOnAnUnexpectedBody()
+
+
+    /**
+     * The latest deploy of each service is requested in batches of ten; a
+     * failed request or a service never deployed is left out.
+     *
+     * @return void
+     */
+    public function testFetchesTheLatestDeployOfEachServiceInBatches(): void
+    {
+        $builder = $this->getMockBuilder(Render::class);
+        $builder->disableOriginalConstructor();
+        $builder->onlyMethods(['fetchServices', 'createBatchRequest']);
+
+        $render = $builder->getMock();
+
+        $services = [];
+        for ($index = 1; $index <= 12; $index++) {
+            $services[] = $this->getService("srv-{$index}", sprintf("service-%02d", $index), "not_suspended", null);
+        }
+
+        $render->method('fetchServices')->willReturn($services);
+
+        $live      = "[{\"cursor\": \"d1\", \"deploy\": {\"status\": \"live\", \"finishedAt\": \"2026-11-10T10:05:00Z\"}}]";
+        $responses = [];
+        foreach ($services as $service) {
+            $responses[$service->id] = new Response(true, $live, "", 200, "https://api.render.com", []);
+        }
+
+        $responses["srv-2"]  = new Response(true, "{\"message\": \"not found\"}", "", 404, "https://api.render.com", []);
+        $responses["srv-11"] = new Response(true, "[]", "", 200, "https://api.render.com", []);
+
+        $added   = [];
+        $batches = [];
+        $factory = function () use (&$added, &$batches, $responses) {
+            $request = $this->createMock(Request::class);
+            $keys    = [];
+            $request->method('addRequest')->willReturnCallback(
+                function (string $key, string $url) use (&$keys, &$added) {
+                    $keys[]  = $key;
+                    $added[] = $url;
+                }
+            );
+            $request->method('executeBatch')->willReturnCallback(
+                function () use (&$keys, &$batches, $responses) {
+                    $batches[] = count($keys);
+                    return array_intersect_key($responses, array_flip($keys));
+                }
+            );
+
+            return $request;
+        };
+
+        $render->method('createBatchRequest')->willReturnCallback($factory);
+        $this->setPrivateProperty($render, 'headers', []);
+
+        $rows   = $render->getServices();
+        $states = array_map(fn ($row) => $row[1], array_slice($rows, 1));
+
+        $this->assertEquals([10, 2], $batches);
+        $this->assertContains("https://api.render.com/v1/services/srv-1/deploys?limit=1", $added);
+        $this->assertEquals("UNKNOWN", $states[1]);
+        $this->assertEquals("UNKNOWN", $states[10]);
+        $this->assertCount(10, array_filter($states, fn ($state) => $state === "LIVE"));
+
+    }//end testFetchesTheLatestDeployOfEachServiceInBatches()
+
+
+    /**
+     * Every deploy status has its icon and colour; an unknown status, a
+     * missing status and an unreadable date fall back to the defaults.
+     *
+     * @return void
+     */
+    public function testMapsEveryDeployStatus(): void
+    {
+        $expected = [
+            "update_failed"          => ["❌", "red"],
+            "pre_deploy_failed"      => ["❌", "red"],
+            "update_in_progress"     => ["🔨", "yellow"],
+            "pre_deploy_in_progress" => ["🔨", "yellow"],
+            "created"                => ["⏳", "blue"],
+            "queued"                 => ["⏳", "blue"],
+            "canceled"               => ["⏸", "gray"],
+            "deactivated"            => ["💤", "gray"],
+            "something_new"          => ["❓", "lightgray"],
+        ];
+
+        $services = [];
+        $deploys  = [];
+        foreach (array_keys($expected) as $status) {
+            $services[] = $this->getService("srv-{$status}", $status, "not_suspended", null);
+
+            $deploys["srv-{$status}"] = $this->getDeploy($status, "not a date");
+        }
+
+        $rows = $this->getRender($services, $deploys)->getServices();
+        array_shift($rows);
+
+        $byState = [];
+        foreach ($rows as $row) {
+            $byState[$row[1]] = $row;
+        }
+
+        foreach ($expected as $status => [$icon, $color]) {
+            $row = $byState[strtoupper($status)];
+            $this->assertStringContainsString($icon, $row[0]);
+            $this->assertStringContainsString($color, $row[0]);
+            $this->assertEquals("-", $row[2]);
+        }
+
+    }//end testMapsEveryDeployStatus()
 
 
     /**

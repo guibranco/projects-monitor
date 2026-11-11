@@ -477,6 +477,9 @@ class VercelTest extends TestCase
         $this->assertEquals("DEPLOYMENT_DISABLED", $projects[1][1]);
         $this->assertStringContainsString("-red", $projects[1][0]);
 
+        // The badge leads to what Vercel serves, not to the other host.
+        $this->assertStringContainsString("href='https://progressbar.vercel.app'", $projects[1][0]);
+
     }//end testProbesTheVercelUrlAndTheCustomDomainApart()
 
 

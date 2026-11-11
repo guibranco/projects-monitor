@@ -352,7 +352,7 @@ class Vercel
         $badgeLink = "<img src='{$badgeUrl}' alt='{$project->name}' />";
         $link      = $this->getVercelLink($deployment);
         $domain    = $this->getDomainLink($deployment);
-        if ($domain !== null && $state !== self::STATE_DOMAIN_ELSEWHERE) {
+        if ($domain !== null && $this->isServedElsewhere($domainProbe) === false) {
             $link = $domain;
         }
 

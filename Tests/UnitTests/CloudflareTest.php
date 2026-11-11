@@ -16,6 +16,13 @@ class CloudflareTest extends TestCase
 {
     private const ACCOUNT_ID = "account123";
 
+    /**
+     * The analytics queries the tile sent, decoded.
+     *
+     * @var array
+     */
+    private $payloads = [];
+
 
     /**
      * A zone as GET /client/v4/zones lists it, trimmed to the fields the tile reads.
@@ -128,13 +135,6 @@ class CloudflareTest extends TestCase
         return new Response(true, json_encode($answer), "", 200, "https://api.cloudflare.com/client/v4/graphql", []);
 
     }//end getAnalytics()
-
-    /**
-     * The analytics queries the tile sent, decoded.
-     *
-     * @var array
-     */
-    private $payloads = [];
 
 
     /**

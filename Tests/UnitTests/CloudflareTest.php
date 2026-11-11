@@ -9,11 +9,19 @@ use GuiBranco\ProjectsMonitor\Library\SecretsFileNotFoundException;
 
 /**
  * Tests the Cloudflare tile: every zone of the account, across all pages,
- * sorted by name, with paused winning over the zone status.
+ * sorted by name, with paused winning over the zone status, and each zone's
+ * traffic from the GraphQL Analytics API.
  */
 class CloudflareTest extends TestCase
 {
     private const ACCOUNT_ID = "account123";
+
+    /**
+     * The analytics queries the tile sent, decoded.
+     *
+     * @var array
+     */
+    private $payloads = [];
 
 
     /**
@@ -76,22 +84,95 @@ class CloudflareTest extends TestCase
 
 
     /**
-     * The tile with its constructor skipped and the HTTP client mocked.
+     * One day of a zone's traffic, as httpRequests1dGroups returns it.
      *
-     * @param Response ...$responses The answers of the API, in order.
+     * @param integer $requests       The requests.
+     * @param integer $cachedRequests The cached requests.
+     * @param integer $bytes          The bandwidth.
+     * @param integer $pageViews      The page views.
+     * @param integer $uniques        The unique visitors.
+     *
+     * @return array
+     */
+    private function getDay(int $requests, int $cachedRequests, int $bytes, int $pageViews, int $uniques): array
+    {
+        $sum                   = [];
+        $sum["requests"]       = $requests;
+        $sum["cachedRequests"] = $cachedRequests;
+        $sum["bytes"]          = $bytes;
+        $sum["pageViews"]      = $pageViews;
+
+        $day         = [];
+        $day["sum"]  = $sum;
+        $day["uniq"] = ["uniques" => $uniques];
+
+        return $day;
+
+    }//end getDay()
+
+
+    /**
+     * An answer of the GraphQL Analytics API.
+     *
+     * @param array $zones The days of traffic, keyed by zone name.
+     *
+     * @return Response
+     */
+    private function getAnalytics(array $zones): Response
+    {
+        $result = [];
+        foreach ($zones as $name => $days) {
+            $zone                         = [];
+            $zone["zoneTag"]              = md5($name);
+            $zone["httpRequests1dGroups"] = $days;
+            $result[]                     = $zone;
+        }
+
+        $answer           = [];
+        $answer["data"]   = ["viewer" => ["zones" => $result]];
+        $answer["errors"] = null;
+
+        return new Response(true, json_encode($answer), "", 200, "https://api.cloudflare.com/client/v4/graphql", []);
+
+    }//end getAnalytics()
+
+
+    /**
+     * The tile with its constructor skipped and the HTTP clients mocked.
+     *
+     * @param array    $analytics    The answers of the analytics batch, one per query;
+     *                               empty for an unauthorized answer.
+     * @param Response ...$responses The answers of the zones endpoint, in order.
      *
      * @return Cloudflare
      */
-    private function getTile(Response ...$responses): Cloudflare
+    private function getTile(array $analytics, Response ...$responses): Cloudflare
     {
         $builder = $this->getMockBuilder(Cloudflare::class);
         $builder->disableOriginalConstructor();
-        $builder->onlyMethods([]);
+        $builder->onlyMethods(["createBatch"]);
 
         $tile = $builder->getMock();
 
         $request = $this->createMock(Request::class);
         $request->method('get')->willReturnOnConsecutiveCalls(...$responses);
+
+        if (empty($analytics) === true) {
+            $denied      = "{\"data\": null, \"errors\": [{\"message\": \"not authorized\"}]}";
+            $analytics[] = new Response(true, $denied, "", 200, "https://api.cloudflare.com/client/v4/graphql", []);
+        }
+
+        $this->payloads = [];
+
+        $batch = $this->createMock(Request::class);
+        $batch->method('addRequest')->willReturnCallback(
+            function (...$arguments): void {
+                $this->payloads[] = json_decode($arguments[4], true);
+            }
+        );
+        $batch->method('executeBatch')->willReturn($analytics);
+
+        $tile->method('createBatch')->willReturn($batch);
 
         foreach (["request" => $request, "headers" => [], "accountId" => self::ACCOUNT_ID] as $property => $value) {
             $reflection = new ReflectionProperty(Cloudflare::class, $property);
@@ -118,10 +199,10 @@ class CloudflareTest extends TestCase
         $first  = $this->getPage($firstZones, 1, 2);
         $second = $this->getPage([$this->getZone("middle.bot", "active", true, "2024-06-01T00:00:00Z")], 2, 2);
 
-        $zones = $this->getTile($first, $second)->getZones();
+        $zones = $this->getTile([], $first, $second)->getZones();
 
         $this->assertCount(4, $zones);
-        $this->assertSame(["Domain", "Status", "Plan", "Activated"], $zones[0]);
+        $this->assertSame(["Domain", "Status", "Plan", "Activated", "Requests (7d)", "Cached", "Bandwidth", "Visitors", "Page views"], $zones[0]);
 
         $this->assertStringContainsString("alpha.com", $zones[1][0]);
         $this->assertStringContainsString("https://dash.cloudflare.com/account123/alpha.com", $zones[1][0]);
@@ -152,7 +233,7 @@ class CloudflareTest extends TestCase
         $rejected  = new Response(true, "{\"success\": false, \"errors\": [{\"code\": 9109, \"message\": \"Invalid access token\"}]}", "", 200, $url, []);
         $failed    = new Response(false, null, "Could not resolve host", -1, $url, null);
 
-        $tile = $this->getTile($forbidden, $rejected, $failed);
+        $tile = $this->getTile([], $forbidden, $rejected, $failed);
 
         try {
             $tile->getZones();
@@ -174,6 +255,82 @@ class CloudflareTest extends TestCase
         $tile->getZones();
 
     }//end testFailsWhenTheApiDoesNotAnswer()
+
+
+    /**
+     * The traffic of every day is summed per zone and shown in a short form;
+     * a zone without analytics shows a dash in every traffic column.
+     *
+     * @return void
+     */
+    public function testShowsTheTrafficOfEachZone(): void
+    {
+        $zones   = [];
+        $zones[] = $this->getZone("alpha.com", "active", false, "2025-01-15T10:00:00Z");
+        $zones[] = $this->getZone("beta.dev", "pending", false, null);
+
+        $days   = [];
+        $days[] = $this->getDay(1000, 400, 1048576, 300, 120);
+        $days[] = $this->getDay(1500, 600, 524288, 200, 80);
+
+        $traffic              = [];
+        $traffic["alpha.com"] = $days;
+
+        $rows = $this->getTile([$this->getAnalytics($traffic)], $this->getPage($zones, 1, 1))->getZones();
+
+        $this->assertSame(["2.5K", "40%", "1.5 MB", "200", "500"], array_slice($rows[1], 4));
+        $this->assertSame(["-", "-", "-", "-", "-"], array_slice($rows[2], 4));
+
+    }//end testShowsTheTrafficOfEachZone()
+
+
+    /**
+     * Each query asks for at most ten zones, and the answers of every query
+     * reach the rows of their zones.
+     *
+     * @return void
+     */
+    public function testQueriesAtMostTenZonesEach(): void
+    {
+        $zones = [];
+        for ($index = 0; $index < 11; $index++) {
+            $zones[] = $this->getZone(sprintf("z%02d.dev", $index), "active", false, null);
+        }
+
+        $first  = $this->getAnalytics(["z00.dev" => [$this->getDay(10, 5, 2048, 4, 3)]]);
+        $second = $this->getAnalytics(["z10.dev" => [$this->getDay(20, 0, 512, 6, 2)]]);
+
+        $rows = $this->getTile([$first, $second], $this->getPage($zones, 1, 1))->getZones();
+
+        $this->assertCount(2, $this->payloads);
+        $this->assertCount(10, $this->payloads[0]["variables"]["zoneTags"]);
+        $this->assertSame([md5("z10.dev")], $this->payloads[1]["variables"]["zoneTags"]);
+
+        $this->assertSame(["10", "50%", "2 KB", "3", "4"], array_slice($rows[1], 4));
+        $this->assertSame(["20", "0%", "512 B", "2", "6"], array_slice($rows[11], 4));
+        $this->assertSame(["-", "-", "-", "-", "-"], array_slice($rows[2], 4));
+
+    }//end testQueriesAtMostTenZonesEach()
+
+
+    /**
+     * When the analytics cannot be read the zones are still listed, with a
+     * dash in every traffic column.
+     *
+     * @return void
+     */
+    public function testListsTheZonesWhenTheAnalyticsFail(): void
+    {
+        $page = $this->getPage([$this->getZone("alpha.com", "active", false, null)], 1, 1);
+        $down = new Response(false, null, "Could not resolve host", -1, "https://api.cloudflare.com/client/v4/graphql", null);
+
+        $rows = $this->getTile([$down], $page)->getZones();
+
+        $this->assertCount(2, $rows);
+        $this->assertSame("active", $rows[1][1]);
+        $this->assertSame(["-", "-", "-", "-", "-"], array_slice($rows[1], 4));
+
+    }//end testListsTheZonesWhenTheAnalyticsFail()
 
 
     /**

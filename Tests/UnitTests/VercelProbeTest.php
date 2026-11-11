@@ -90,6 +90,11 @@ class VercelProbeTest extends TestCase
             $headers[$header] = $error;
         }
 
+        // Vercel stamps every answer it serves; progress-bar.xyz is on another host.
+        if (str_ends_with((string) parse_url($url, PHP_URL_HOST), ".vercel.app") === true) {
+            $headers["X-Vercel-Id"] = "dub1::abc12-1762343999000-0123456789ab";
+        }
+
         return new Response(true, "", "", $statusCode, $url, $headers);
 
     }//end getResponse()
@@ -150,7 +155,10 @@ class VercelProbeTest extends TestCase
         $this->assertSame("DEPLOYMENT_DISABLED", $answers["readme-stats"]["vercelError"]);
         $this->assertSame(200, $answers["progressbar"]["statusCode"]);
         $this->assertNull($answers["progressbar"]["vercelError"]);
+        $this->assertFalse($answers["progressbar"]["servedByVercel"]);
+        $this->assertTrue($answers["readme-stats"]["servedByVercel"]);
         $this->assertSame("DEPLOYMENT_NOT_FOUND", $answers["gone"]["vercelError"]);
+        $this->assertTrue($answers["gone"]["servedByVercel"]);
         $this->assertSame(-1, $answers["offline"]["statusCode"]);
         $this->assertNull($answers["offline"]["vercelError"]);
         $this->assertEqualsWithDelta(time(), $answers["gone"]["checkedAt"], 5);

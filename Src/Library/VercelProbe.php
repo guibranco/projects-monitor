@@ -16,6 +16,10 @@ use GuiBranco\Pancake\Response;
  * CACHE_TTL_SECONDS: the dashboard refreshes the Vercel tile every 60
  * seconds, and every probe is a request (and, for function-backed projects,
  * an invocation) counted against the quota that caused the pause.
+ *
+ * Each answer also says whether Vercel served it (the x-vercel-id header,
+ * which survives a Cloudflare proxy in front): a custom domain whose DNS now
+ * points to another host answers 200 without it.
  */
 class VercelProbe
 {
@@ -49,9 +53,9 @@ class VercelProbe
      * The answer of each link, served from the cache while fresh and
      * requested again only for the links missing from it or expired.
      *
-     * @param array $links URL keyed by project name.
+     * @param array $links URL keyed by any name (the tile uses one key per project and URL).
      *
-     * @return array Answer (or null) keyed by project name: {checkedAt: integer, statusCode: integer, vercelError: string|null}.
+     * @return array Answer (or null) keyed like $links: {checkedAt: integer, statusCode: integer, vercelError: string|null, servedByVercel: boolean}.
      */
     public function probe(array $links): array
     {
@@ -120,7 +124,7 @@ class VercelProbe
      *
      * @param Response $response The answer of one URL.
      *
-     * @return array {checkedAt: integer, statusCode: integer, vercelError: string|null}
+     * @return array {checkedAt: integer, statusCode: integer, vercelError: string|null, servedByVercel: boolean}
      */
     private function describe(Response $response): array
     {
@@ -129,6 +133,8 @@ class VercelProbe
         $result["checkedAt"]   = time();
         $result["statusCode"]  = $response->getStatusCode();
         $result["vercelError"] = $this->getHeader($response, "x-vercel-error");
+
+        $result["servedByVercel"] = ($this->getHeader($response, "x-vercel-id") !== null);
 
         return $result;
 

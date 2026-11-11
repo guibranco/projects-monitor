@@ -94,18 +94,20 @@ class VercelTest extends TestCase
     /**
      * The answer of one URL as VercelProbe describes it.
      *
-     * @param integer     $statusCode  The status code, -1 for a failed request.
-     * @param string|null $vercelError The x-vercel-error header, or null.
+     * @param integer     $statusCode     The status code, -1 for a failed request.
+     * @param string|null $vercelError    The x-vercel-error header, or null.
+     * @param boolean     $servedByVercel Whether the x-vercel-id header came back.
      *
      * @return array
      */
-    private function getAnswer(int $statusCode, ?string $vercelError): array
+    private function getAnswer(int $statusCode, ?string $vercelError, bool $servedByVercel=true): array
     {
         $answer = [];
 
-        $answer["checkedAt"]   = time();
-        $answer["statusCode"]  = $statusCode;
-        $answer["vercelError"] = $vercelError;
+        $answer["checkedAt"]      = time();
+        $answer["statusCode"]     = $statusCode;
+        $answer["vercelError"]    = $vercelError;
+        $answer["servedByVercel"] = $servedByVercel;
 
         return $answer;
 
@@ -132,16 +134,26 @@ class VercelTest extends TestCase
 
 
     /**
-     * Plugs a probe that answers the given results into the tile.
+     * Plugs a probe that answers the given results into the tile. A key
+     * without a prefix is the project's *.vercel.app URL.
      *
-     * @param array $answers Answers keyed by project name.
+     * @param array $answers Answers keyed by project name, or by "domain:" and project name.
      *
      * @return VercelProbe The mocked probe.
      */
     private function getProbeAnswering(array $answers): VercelProbe
     {
+        $keyed = [];
+        foreach ($answers as $key => $answer) {
+            if (str_contains($key, ":") === false) {
+                $key = "vercel:{$key}";
+            }
+
+            $keyed[$key] = $answer;
+        }
+
         $probe = $this->createMock(VercelProbe::class);
-        $probe->method('probe')->willReturn($answers);
+        $probe->method('probe')->willReturn($keyed);
 
         $this->vercel->method('getProbe')->willReturn($probe);
 
@@ -322,10 +334,10 @@ class VercelTest extends TestCase
     {
         $links = [];
 
-        $links["live-project"]    = "https://live-project.vercel.app";
-        $links["paused-project"]  = "https://paused-project.vercel.app";
-        $links["preview-project"] = "https://preview-project.vercel.app";
-        $links["resumed-project"] = "https://resumed-project-abc123.vercel.app";
+        $links["vercel:live-project"]    = "https://live-project.vercel.app";
+        $links["vercel:paused-project"]  = "https://paused-project.vercel.app";
+        $links["vercel:preview-project"] = "https://preview-project.vercel.app";
+        $links["vercel:resumed-project"] = "https://resumed-project-abc123.vercel.app";
 
         $probe = $this->createMock(VercelProbe::class);
         $probe->expects($this->once())->method('probe')->with($links)->willReturn($this->getHealthyAnswers());
@@ -413,6 +425,121 @@ class VercelTest extends TestCase
 
 
     /**
+     * A tile on one project whose production deployment has a custom domain
+     * listed before its *.vercel.app alias.
+     *
+     * @param VercelProbe $probe The probe to plug in.
+     *
+     * @return Vercel
+     */
+    private function getCustomDomainTile(VercelProbe $probe): Vercel
+    {
+        $builder = $this->getMockBuilder(Vercel::class);
+        $builder->disableOriginalConstructor();
+        $builder->onlyMethods(['fetchProjects', 'getProbe']);
+
+        $deployment = "{\"readyState\": \"READY\", \"alias\": [\"progress-bar.xyz\", \"progressbar.vercel.app\"], \"url\": \"progressbar-abc123.vercel.app\", \"createdAt\": 1762343999000}";
+        $response   = json_decode("{\"projects\": [{\"name\": \"progressbar\", \"targets\": {\"production\": {$deployment}}, \"latestDeployments\": [{$deployment}]}]}");
+
+        $vercel = $builder->getMock();
+        $vercel->method('fetchProjects')->willReturn($response);
+        $vercel->method('getProbe')->willReturn($probe);
+
+        return $vercel;
+
+    }//end getCustomDomainTile()
+
+
+    /**
+     * The state comes from the *.vercel.app URL, never from the custom
+     * domain, whose DNS may send visitors elsewhere: both are probed.
+     *
+     * @return void
+     */
+    public function testProbesTheVercelUrlAndTheCustomDomainApart(): void
+    {
+        $links = [];
+
+        $links["vercel:progressbar"] = "https://progressbar.vercel.app";
+        $links["domain:progressbar"] = "https://progress-bar.xyz";
+
+        $answers = [];
+
+        $answers["vercel:progressbar"] = $this->getAnswer(402, "DEPLOYMENT_DISABLED");
+        $answers["domain:progressbar"] = $this->getAnswer(200, null, false);
+
+        $probe = $this->createMock(VercelProbe::class);
+        $probe->expects($this->once())->method('probe')->with($links)->willReturn($answers);
+
+        $projects = $this->getCustomDomainTile($probe)->getProjects();
+
+        // Disabled on Vercel although the domain, now on another host, answers 200.
+        $this->assertEquals("DEPLOYMENT_DISABLED", $projects[1][1]);
+        $this->assertStringContainsString("-red", $projects[1][0]);
+
+        // The badge leads to what Vercel serves, not to the other host.
+        $this->assertStringContainsString("href='https://progressbar.vercel.app'", $projects[1][0]);
+
+    }//end testProbesTheVercelUrlAndTheCustomDomainApart()
+
+
+    /**
+     * A healthy project whose custom domain answers from another host is
+     * DOMAIN_ELSEWHERE, linked to its *.vercel.app URL; served by Vercel it
+     * stays READY, linked to the domain.
+     *
+     * @return void
+     */
+    public function testFlagsACustomDomainServedElsewhere(): void
+    {
+        $elsewhere = [];
+
+        $elsewhere["vercel:progressbar"] = $this->getAnswer(200, null);
+        $elsewhere["domain:progressbar"] = $this->getAnswer(200, null, false);
+
+        $probe = $this->createMock(VercelProbe::class);
+        $probe->method('probe')->willReturn($elsewhere);
+
+        $projects = $this->getCustomDomainTile($probe)->getProjects();
+
+        $this->assertEquals("DOMAIN_ELSEWHERE", $projects[1][1]);
+        $this->assertStringContainsString("-orange", $projects[1][0]);
+        $this->assertStringContainsString("href='https://progressbar.vercel.app'", $projects[1][0]);
+
+        $onVercel = [];
+
+        $onVercel["vercel:progressbar"] = $this->getAnswer(200, null);
+        $onVercel["domain:progressbar"] = $this->getAnswer(200, null);
+
+        $probe = $this->createMock(VercelProbe::class);
+        $probe->method('probe')->willReturn($onVercel);
+
+        $projects = $this->getCustomDomainTile($probe)->getProjects();
+
+        $this->assertEquals("READY", $projects[1][1]);
+        $this->assertStringContainsString("href='https://progress-bar.xyz'", $projects[1][0]);
+
+        // A failed request, or an answer cached before the header was recorded, says nothing.
+        $unknown = [];
+
+        $unknown["vercel:progressbar"] = $this->getAnswer(200, null);
+        $legacy = [];
+
+        $legacy["checkedAt"]   = time();
+        $legacy["statusCode"]  = 200;
+        $legacy["vercelError"] = null;
+
+        $unknown["domain:progressbar"] = $legacy;
+
+        $probe = $this->createMock(VercelProbe::class);
+        $probe->method('probe')->willReturn($unknown);
+
+        $this->assertEquals("READY", $this->getCustomDomainTile($probe)->getProjects()[1][1]);
+
+    }//end testFlagsACustomDomainServedElsewhere()
+
+
+    /**
      * Deployment states keep their icons and colours; UNKNOWN is grey; the
      * platform's codes and anything else the probe reports are red.
      *
@@ -431,6 +558,7 @@ class VercelTest extends TestCase
         $this->assertEquals("⛔", $status->invoke($this->vercel, "PAUSED"));
         $this->assertEquals("⛔", $status->invoke($this->vercel, "DEPLOYMENT_DISABLED"));
         $this->assertEquals("🔥", $status->invoke($this->vercel, "DEPLOYMENT_NOT_FOUND"));
+        $this->assertEquals("↪️", $status->invoke($this->vercel, "DOMAIN_ELSEWHERE"));
 
         $this->assertEquals("green", $color->invoke($this->vercel, "READY"));
         $this->assertEquals("blue", $color->invoke($this->vercel, "QUEUED"));
@@ -440,6 +568,7 @@ class VercelTest extends TestCase
         $this->assertEquals("red", $color->invoke($this->vercel, "BLOCKED"));
         $this->assertEquals("red", $color->invoke($this->vercel, "PAUSED"));
         $this->assertEquals("red", $color->invoke($this->vercel, "HTTP 500"));
+        $this->assertEquals("orange", $color->invoke($this->vercel, "DOMAIN_ELSEWHERE"));
 
     }//end testMapsStatesToIconsAndColours()
 

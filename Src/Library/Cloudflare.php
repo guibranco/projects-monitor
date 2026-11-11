@@ -157,7 +157,11 @@ class Cloudflare
             return self::STATE_PAUSED;
         }
 
-        return ($zone->status ?? self::STATE_UNKNOWN);
+        if (isset($zone->status) === false) {
+            return self::STATE_UNKNOWN;
+        }
+
+        return $zone->status;
 
     }//end getState()
 

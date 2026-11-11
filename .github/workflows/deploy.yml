@@ -218,6 +218,17 @@ jobs:
           echo "<?php" >> vercel.secrets.php
           echo "\$vercelToken = \"$VERCEL_TOKEN\";" >> vercel.secrets.php
 
+      - name: 🔑 Generate Render Configuration
+        env:
+          RENDER_TOKEN: ${{ secrets.RENDER_TOKEN }}
+        run: |
+          cd Src
+          mkdir -p secrets
+          cd secrets
+          php_literal() { printf '%s' "$1" | sed "s/[\\\\']/\\\\&/g"; }
+          echo "<?php" >> render.secrets.php
+          echo "\$renderToken = '$(php_literal "$RENDER_TOKEN")';" >> render.secrets.php
+
       - name: 🔑 Generate GStraccini Bot Configuration
         env:
           GSTRACCINI_API_URL: ${{ secrets.GSTRACCINI_API_URL }}

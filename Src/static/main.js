@@ -48,6 +48,7 @@ class DashboardApp {
     window.showUpTimeRobot = this.dataDisplayManager.showUpTimeRobot.bind(this.dataDisplayManager);
     window.showVercel = this.dataDisplayManager.showVercel.bind(this.dataDisplayManager);
     window.showCloudflare = this.dataDisplayManager.showCloudflare.bind(this.dataDisplayManager);
+    window.showRender = this.dataDisplayManager.showRender.bind(this.dataDisplayManager);
     window.showWebhook = this.dataDisplayManager.showWebhook.bind(this.dataDisplayManager);
     window.showWebhookProcessingStats = this.dataDisplayManager.showWebhookProcessingStats.bind(this.dataDisplayManager);
     window.showWebhookPullRequestsProcessing = this.dataDisplayManager.showWebhookPullRequestsProcessing.bind(this.dataDisplayManager);

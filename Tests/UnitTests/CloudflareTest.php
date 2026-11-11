@@ -89,15 +89,17 @@ class CloudflareTest extends TestCase
      */
     private function getDay(int $requests, int $cachedRequests, int $bytes, int $pageViews, int $uniques): array
     {
-        return [
-            "sum"  => [
-                "requests"       => $requests,
-                "cachedRequests" => $cachedRequests,
-                "bytes"          => $bytes,
-                "pageViews"      => $pageViews,
-            ],
-            "uniq" => ["uniques" => $uniques],
-        ];
+        $sum                   = [];
+        $sum["requests"]       = $requests;
+        $sum["cachedRequests"] = $cachedRequests;
+        $sum["bytes"]          = $bytes;
+        $sum["pageViews"]      = $pageViews;
+
+        $day         = [];
+        $day["sum"]  = $sum;
+        $day["uniq"] = ["uniques" => $uniques];
+
+        return $day;
 
     }//end getDay()
 
@@ -113,10 +115,15 @@ class CloudflareTest extends TestCase
     {
         $result = [];
         foreach ($zones as $name => $days) {
-            $result[] = ["zoneTag" => md5($name), "httpRequests1dGroups" => $days];
+            $zone                         = [];
+            $zone["zoneTag"]              = md5($name);
+            $zone["httpRequests1dGroups"] = $days;
+            $result[]                     = $zone;
         }
 
-        $answer = ["data" => ["viewer" => ["zones" => $result]], "errors" => null];
+        $answer           = [];
+        $answer["data"]   = ["viewer" => ["zones" => $result]];
+        $answer["errors"] = null;
 
         return new Response(true, json_encode($answer), "", 200, "https://api.cloudflare.com/client/v4/graphql", []);
 
@@ -240,12 +247,12 @@ class CloudflareTest extends TestCase
         $zones[] = $this->getZone("alpha.com", "active", false, "2025-01-15T10:00:00Z");
         $zones[] = $this->getZone("beta.dev", "pending", false, null);
 
-        $traffic = [
-            "alpha.com" => [
-                $this->getDay(1000, 400, 1048576, 300, 120),
-                $this->getDay(1500, 600, 524288, 200, 80),
-            ],
-        ];
+        $days   = [];
+        $days[] = $this->getDay(1000, 400, 1048576, 300, 120);
+        $days[] = $this->getDay(1500, 600, 524288, 200, 80);
+
+        $traffic              = [];
+        $traffic["alpha.com"] = $days;
 
         $rows = $this->getTile($this->getAnalytics($traffic), $this->getPage($zones, 1, 1))->getZones();
 

@@ -195,7 +195,10 @@ class Cloudflare
         $variables["until"]    = $until;
         $variables["limit"]    = self::ANALYTICS_DAYS;
 
-        $payload = json_encode(["query" => self::ANALYTICS_QUERY, "variables" => $variables]);
+        $body              = [];
+        $body["query"]     = self::ANALYTICS_QUERY;
+        $body["variables"] = $variables;
+        $payload           = json_encode($body);
 
         $headers   = $this->headers;
         $headers[] = "Content-Type: application/json";
@@ -242,13 +245,12 @@ class Cloudflare
             $body = $this->fetchAnalytics($chunk, $since, $until);
 
             foreach (($body->data->viewer->zones ?? []) as $zone) {
-                $totals = [
-                    "requests"       => 0,
-                    "cachedRequests" => 0,
-                    "bytes"          => 0,
-                    "pageViews"      => 0,
-                    "uniques"        => 0,
-                ];
+                $totals                   = [];
+                $totals["requests"]       = 0;
+                $totals["cachedRequests"] = 0;
+                $totals["bytes"]          = 0;
+                $totals["pageViews"]      = 0;
+                $totals["uniques"]        = 0;
 
                 foreach (($zone->httpRequests1dGroups ?? []) as $day) {
                     $totals["requests"]       += (int) ($day->sum->requests ?? 0);
@@ -256,11 +258,11 @@ class Cloudflare
                     $totals["bytes"]          += (int) ($day->sum->bytes ?? 0);
                     $totals["pageViews"]      += (int) ($day->sum->pageViews ?? 0);
                     $totals["uniques"]        += (int) ($day->uniq->uniques ?? 0);
-                }
+                }//end foreach
 
                 $traffic[$zone->zoneTag] = $totals;
-            }
-        }
+            }//end foreach
+        }//end foreach
 
         return $traffic;
 
@@ -276,7 +278,13 @@ class Cloudflare
      */
     private function formatNumber(int $value): string
     {
-        $units = ["", "K", "M", "B", "T"];
+        $units = [
+            "",
+            "K",
+            "M",
+            "B",
+            "T",
+        ];
         $index = 0;
         $short = (float) $value;
 
@@ -303,7 +311,14 @@ class Cloudflare
      */
     private function formatBytes(int $bytes): string
     {
-        $units = ["B", "KB", "MB", "GB", "TB", "PB"];
+        $units = [
+            "B",
+            "KB",
+            "MB",
+            "GB",
+            "TB",
+            "PB",
+        ];
         $index = 0;
         $size  = (float) $bytes;
 
@@ -340,13 +355,14 @@ class Cloudflare
             $cached = sprintf("%d%%", round(($totals["cachedRequests"] * 100 / $totals["requests"])));
         }
 
-        return [
-            $this->formatNumber($totals["requests"]),
-            $cached,
-            $this->formatBytes($totals["bytes"]),
-            $this->formatNumber($totals["uniques"]),
-            $this->formatNumber($totals["pageViews"]),
-        ];
+        $cells   = [];
+        $cells[] = $this->formatNumber($totals["requests"]);
+        $cells[] = $cached;
+        $cells[] = $this->formatBytes($totals["bytes"]);
+        $cells[] = $this->formatNumber($totals["uniques"]);
+        $cells[] = $this->formatNumber($totals["pageViews"]);
+
+        return $cells;
 
     }//end getTrafficCells()
 
@@ -472,8 +488,8 @@ class Cloudflare
         $traffic = [];
         try {
             $traffic = $this->getAnalytics($zones);
-        } catch (RequestException $exception) {
-            LogStream::warning("Cloudflare analytics unavailable", ["error" => $exception->getMessage()], "cloudflare");
+        } catch (RequestException) {
+            $traffic = [];
         }
 
         usort($zones, fn ($first, $second) => strcasecmp($first->name, $second->name));

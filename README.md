@@ -89,7 +89,7 @@ The full set of integrations and their secrets files:
 | GitHub                      | `gitHub.secrets.php`                 |
 | AppVeyor CI                 | `appVeyor.secrets.php`               |
 | cPanel                      | `cPanel.secrets.php`                 |
-| Cloudflare (token needs Zone → Zone: Read and Zone → Analytics: Read) | `cloudflare.secrets.php` |
+| Cloudflare                  | `cloudflare.secrets.php`             |
 | HealthChecks.io             | `healthChecksIo.secrets.php`         |
 | UptimeRobot                 | `upTimeRobot.secrets.php`            |
 | Vercel                      | `vercel.secrets.php`                 |
@@ -102,6 +102,10 @@ The full set of integrations and their secrets files:
 | WebhooksHandler (broker usage) | `webhooksHandler.secrets.php`     |
 | GStraccini Bot              | `gstracciniBot.secrets.php`          |
 | LogStream                   | `logStream.secrets.php`              |
+
+The Cloudflare API token needs **Zone → Zone → Read** and
+**Zone → Analytics → Read**. Without the analytics permission the
+Cloudflare tile still lists the zones, with a dash in every traffic column.
 
 ### GitHub Actions billing
 

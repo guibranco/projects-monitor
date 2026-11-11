@@ -3,6 +3,7 @@
 namespace GuiBranco\ProjectsMonitor\Library;
 
 use GuiBranco\Pancake\Request;
+use GuiBranco\Pancake\Response;
 use GuiBranco\Pancake\ShieldsIo;
 
 /**
@@ -28,6 +29,12 @@ class Cloudflare
      * The zones asked for in one GraphQL query.
      */
     private const ZONES_PER_QUERY = 10;
+
+    /**
+     * The queries sent together in one batch, the most the HTTP client runs
+     * at once. Each one is bounded by the client's batch transfer timeout.
+     */
+    private const QUERIES_PER_BATCH = 10;
 
     /**
      * The daily traffic of the given zones, summed over the period.
@@ -177,17 +184,28 @@ class Cloudflare
 
 
     /**
-     * The daily traffic of some zones, as the GraphQL Analytics API answers it.
+     * A new HTTP client for one batch of analytics queries. The batch API
+     * bounds every transfer, unlike a plain request.
+     *
+     * @return Request
+     */
+    protected function createBatch(): Request
+    {
+        return new Request();
+
+    }//end createBatch()
+
+
+    /**
+     * The body of one analytics query: the given zones' daily traffic.
      *
      * @param array  $zoneIds The zone IDs (zone tags).
      * @param string $since   The first day, as Y-m-d.
      * @param string $until   The last day, as Y-m-d.
      *
-     * @return object The decoded response.
-     *
-     * @throws RequestException When the API does not answer 200 without errors.
+     * @return string
      */
-    protected function fetchAnalytics(array $zoneIds, string $since, string $until)
+    private function getAnalyticsPayload(array $zoneIds, string $since, string $until): string
     {
         $variables             = [];
         $variables["zoneTags"] = array_values($zoneIds);
@@ -198,13 +216,23 @@ class Cloudflare
         $body              = [];
         $body["query"]     = self::ANALYTICS_QUERY;
         $body["variables"] = $variables;
-        $payload           = json_encode($body);
 
-        $headers   = $this->headers;
-        $headers[] = "Content-Type: application/json";
+        return json_encode($body);
 
-        $response = $this->request->post(self::CLOUDFLARE_GRAPHQL_URL, $headers, $payload);
+    }//end getAnalyticsPayload()
 
+
+    /**
+     * The decoded answer of one analytics query.
+     *
+     * @param Response $response The answer of the GraphQL Analytics API.
+     *
+     * @return object
+     *
+     * @throws RequestException When the API does not answer 200 without errors.
+     */
+    private function decodeAnalytics(Response $response)
+    {
         if ($response->getStatusCode() !== 200) {
             $error = $response->getBody();
             if ($response->getStatusCode() === -1) {
@@ -221,6 +249,38 @@ class Cloudflare
         }
 
         return $body;
+
+    }//end decodeAnalytics()
+
+
+    /**
+     * Runs one analytics query per group of zones, together in one batch.
+     *
+     * @param array  $chunks The groups of zone IDs, one query each.
+     * @param string $since  The first day, as Y-m-d.
+     * @param string $until  The last day, as Y-m-d.
+     *
+     * @return array The decoded answers.
+     *
+     * @throws RequestException When any query fails.
+     */
+    protected function fetchAnalytics(array $chunks, string $since, string $until): array
+    {
+        $headers   = $this->headers;
+        $headers[] = "Content-Type: application/json";
+
+        $batch = $this->createBatch();
+        foreach (array_values($chunks) as $index => $zoneIds) {
+            $payload = $this->getAnalyticsPayload($zoneIds, $since, $until);
+            $batch->addRequest("query{$index}", self::CLOUDFLARE_GRAPHQL_URL, $headers, "POST", $payload);
+        }
+
+        $bodies = [];
+        foreach ($batch->executeBatch() as $response) {
+            $bodies[] = $this->decodeAnalytics($response);
+        }
+
+        return $bodies;
 
     }//end fetchAnalytics()
 
@@ -241,11 +301,13 @@ class Cloudflare
         $since   = gmdate("Y-m-d", strtotime(sprintf("-%d days", (self::ANALYTICS_DAYS - 1))));
         $traffic = [];
 
-        foreach (array_chunk($zoneIds, self::ZONES_PER_QUERY) as $chunk) {
-            $body = $this->fetchAnalytics($chunk, $since, $until);
+        $queries = array_chunk($zoneIds, self::ZONES_PER_QUERY);
 
-            foreach (($body->data->viewer->zones ?? []) as $zone) {
-                $traffic[$zone->zoneTag] = $this->sumDays(($zone->httpRequests1dGroups ?? []));
+        foreach (array_chunk($queries, self::QUERIES_PER_BATCH) as $chunks) {
+            foreach ($this->fetchAnalytics($chunks, $since, $until) as $body) {
+                foreach (($body->data->viewer->zones ?? []) as $zone) {
+                    $traffic[$zone->zoneTag] = $this->sumDays(($zone->httpRequests1dGroups ?? []));
+                }
             }
         }
 

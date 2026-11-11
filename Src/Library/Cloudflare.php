@@ -258,7 +258,7 @@ class Cloudflare
                     $totals["bytes"]          += (int) ($day->sum->bytes ?? 0);
                     $totals["pageViews"]      += (int) ($day->sum->pageViews ?? 0);
                     $totals["uniques"]        += (int) ($day->uniq->uniques ?? 0);
-                }//end foreach
+                }
 
                 $traffic[$zone->zoneTag] = $totals;
             }//end foreach
@@ -278,13 +278,12 @@ class Cloudflare
      */
     private function formatNumber(int $value): string
     {
-        $units = [
-            "",
-            "K",
-            "M",
-            "B",
-            "T",
-        ];
+        $units   = [];
+        $units[] = "";
+        $units[] = "K";
+        $units[] = "M";
+        $units[] = "B";
+        $units[] = "T";
         $index = 0;
         $short = (float) $value;
 
@@ -311,14 +310,13 @@ class Cloudflare
      */
     private function formatBytes(int $bytes): string
     {
-        $units = [
-            "B",
-            "KB",
-            "MB",
-            "GB",
-            "TB",
-            "PB",
-        ];
+        $units   = [];
+        $units[] = "B";
+        $units[] = "KB";
+        $units[] = "MB";
+        $units[] = "GB";
+        $units[] = "TB";
+        $units[] = "PB";
         $index = 0;
         $size  = (float) $bytes;
 

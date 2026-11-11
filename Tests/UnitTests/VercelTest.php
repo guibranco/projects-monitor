@@ -520,7 +520,13 @@ class VercelTest extends TestCase
         $unknown = [];
 
         $unknown["vercel:progressbar"] = $this->getAnswer(200, null);
-        $unknown["domain:progressbar"] = ["checkedAt" => time(), "statusCode" => 200, "vercelError" => null];
+        $legacy = [];
+
+        $legacy["checkedAt"]   = time();
+        $legacy["statusCode"]  = 200;
+        $legacy["vercelError"] = null;
+
+        $unknown["domain:progressbar"] = $legacy;
 
         $probe = $this->createMock(VercelProbe::class);
         $probe->method('probe')->willReturn($unknown);

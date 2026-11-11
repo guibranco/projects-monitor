@@ -4,7 +4,6 @@ require_once 'session_validator.php';
 require_once '../../vendor/autoload.php';
 
 use GuiBranco\ProjectsMonitor\Library\GStracciniBot;
-use GuiBranco\ProjectsMonitor\Library\LogStream;
 
 $requestBody = file_get_contents("php://input");
 $input = json_decode($requestBody, true);
@@ -33,7 +32,6 @@ if (!in_array($job, $allowedJobs, true)) {
     exit;
 }
 
-LogStream::info("API request {endpoint} received to run job {job}", ["endpoint" => "POST /api/v1/gstraccini-jobs/run", "job" => $job], "api");
 $bot = new GStracciniBot();
 $data = $bot->runJob($job);
 echo json_encode($data);

@@ -3,9 +3,10 @@
 namespace GuiBranco\ProjectsMonitor\Library;
 
 use GuiBranco\Pancake\LogStream as PancakeLogStream;
+use GuiBranco\Pancake\Response;
 
 /**
- * Static facade over the Pancake LogStream client.
+ * Sends log entries to LogStream.
  *
  * Messages are message templates: `{name}` placeholders refer to keys of the
  * context (dotted names reach nested arrays) and are rendered by logstream-server,
@@ -13,339 +14,389 @@ use GuiBranco\Pancake\LogStream as PancakeLogStream;
  * line can then be found with `?message_template=` whatever the values were:
  *
  * ```php
- * LogStream::warning("SSH connection to {host} failed: {reason}", [
- *     "host" => $name,
- *     "reason" => $e->getMessage(),
- *     "exception" => $e,
- * ], "ssh");
+ * (new LogStream())->warning("SSH connection to {host} failed: {reason}", ["host" => $name, "reason" => $e->getMessage(), "exception" => $e], "ssh");
  * ```
  *
- * Each entry is enriched with ambient context, without the caller passing it:
+ * Every entry also gets, without the caller passing it (see LogContext):
  *
- * - `request`: method, path, script, client IP, user agent and session user (web only)
- * - `process`: script and arguments count (CLI only)
- * - `runtime`: host, PID, SAPI, PHP version, peak memory and elapsed time
+ * - `request`: method, path, script, host, client IP, user agent and user (web only)
+ * - `process`: script and number of arguments (CLI only)
+ * - `runtime`: hostname, PID, SAPI, PHP version, peak memory and elapsed time
  * - `source`:  file, line and function of the call site
  *
  * Every entry of one request (or CLI run) shares a trace id: the incoming
  * `X-Request-Id`/`X-Trace-Id` header when valid, otherwise a generated UUID.
- * Throwables anywhere at the top level of the context are expanded into type,
- * message, code, file, line, previous and a truncated stack trace.
+ * Throwables at the top level of the context are expanded.
+ *
+ * The client, the server variables and the user are shared by every instance:
+ * bootstrap.php registers $_SERVER and session_validator.php the user, so no
+ * class reads superglobals itself.
  */
 class LogStream
 {
-    private const DEFAULT_APP_KEY = 'projects-monitor';
+    private const DEFAULT_APP_KEY = "projects-monitor";
 
-    /** Context keys the ambient data is stored under; caller keys of the same name win. */
-    public const KEY_REQUEST = 'request';
-    public const KEY_PROCESS = 'process';
-    public const KEY_RUNTIME = 'runtime';
-    public const KEY_SOURCE = 'source';
+    private const LEVELS = "|debug|info|notice|warning|error|critical|";
 
-    public const LEVELS = ['debug', 'info', 'notice', 'warning', 'error', 'critical'];
-
-    private const MAX_HEADER_LENGTH = 256;
-    private const MAX_TRACE_LENGTH = 4000;
-    private const TRACE_ID_PATTERN = '/^[A-Za-z0-9._:-]{8,128}$/';
-
-    private static ?PancakeLogStream $client = null;
-    private static bool $initialized = false;
-    private static ?string $traceId = null;
+    private const MAX_ERROR_LENGTH = 500;
 
     /**
-     * Creates the client from secrets/logStream.secrets.php. Safe to call more
-     * than once; logging methods call it themselves, so entries written before
-     * Configuration::init() (e.g. at the top of an API endpoint) are not lost.
+     * The Pancake client, or null when LogStream is not configured.
+     *
+     * @var PancakeLogStream|null
      */
-    public static function initialize(): void
+    private static $client = null;
+
+    /**
+     * Whether the secrets file was already read.
+     *
+     * @var boolean
+     */
+    private static $initialized = false;
+
+    /**
+     * The trace id shared by every entry of this request or CLI run.
+     *
+     * @var string|null
+     */
+    private static $traceId = null;
+
+    /**
+     * The server variables of this request or CLI run.
+     *
+     * @var array
+     */
+    private static $server = [];
+
+    /**
+     * The logged in user, or null.
+     *
+     * @var mixed
+     */
+    private static $userId = null;
+
+
+    /**
+     * Registers the server variables ($_SERVER) of this request or CLI run.
+     *
+     * @param array $server The server variables.
+     *
+     * @return void
+     */
+    public function setServer(array $server): void
     {
-        if (self::$initialized) {
+        self::$server  = $server;
+        self::$traceId = null;
+
+    }//end setServer()
+
+
+    /**
+     * Registers the logged in user.
+     *
+     * @param mixed $userId The user id, or null.
+     *
+     * @return void
+     */
+    public function setUserId(mixed $userId): void
+    {
+        self::$userId = $userId;
+
+    }//end setUserId()
+
+
+    /**
+     * Replaces the client read from the secrets file; null disables sending.
+     *
+     * @param PancakeLogStream|null $client The client.
+     *
+     * @return void
+     */
+    public function setClient(?PancakeLogStream $client): void
+    {
+        self::$client      = $client;
+        self::$initialized = true;
+
+    }//end setClient()
+
+
+    /**
+     * The trace id shared by every entry of this request or CLI run.
+     *
+     * @return string The trace id.
+     */
+    public function getTraceId(): string
+    {
+        if (self::$traceId === null) {
+            self::$traceId = (new LogContext())->resolveTraceId(self::$server);
+        }
+
+        return self::$traceId;
+
+    }//end getTraceId()
+
+
+    /**
+     * Logs a debug entry.
+     *
+     * @param string     $message  The message template.
+     * @param array|null $context  The values of the placeholders and any other data.
+     * @param string     $category The category.
+     *
+     * @return void
+     */
+    public function debug(string $message, ?array $context=null, string $category=""): void
+    {
+        $this->write("debug", $message, $context, $category);
+
+    }//end debug()
+
+
+    /**
+     * Logs an info entry.
+     *
+     * @param string     $message  The message template.
+     * @param array|null $context  The values of the placeholders and any other data.
+     * @param string     $category The category.
+     *
+     * @return void
+     */
+    public function info(string $message, ?array $context=null, string $category=""): void
+    {
+        $this->write("info", $message, $context, $category);
+
+    }//end info()
+
+
+    /**
+     * Logs a notice entry.
+     *
+     * @param string     $message  The message template.
+     * @param array|null $context  The values of the placeholders and any other data.
+     * @param string     $category The category.
+     *
+     * @return void
+     */
+    public function notice(string $message, ?array $context=null, string $category=""): void
+    {
+        $this->write("notice", $message, $context, $category);
+
+    }//end notice()
+
+
+    /**
+     * Logs a warning entry.
+     *
+     * @param string     $message  The message template.
+     * @param array|null $context  The values of the placeholders and any other data.
+     * @param string     $category The category.
+     *
+     * @return void
+     */
+    public function warning(string $message, ?array $context=null, string $category=""): void
+    {
+        $this->write("warning", $message, $context, $category);
+
+    }//end warning()
+
+
+    /**
+     * Logs an error entry.
+     *
+     * @param string     $message  The message template.
+     * @param array|null $context  The values of the placeholders and any other data.
+     * @param string     $category The category.
+     *
+     * @return void
+     */
+    public function error(string $message, ?array $context=null, string $category=""): void
+    {
+        $this->write("error", $message, $context, $category);
+
+    }//end error()
+
+
+    /**
+     * Logs a critical entry.
+     *
+     * @param string     $message  The message template.
+     * @param array|null $context  The values of the placeholders and any other data.
+     * @param string     $category The category.
+     *
+     * @return void
+     */
+    public function critical(string $message, ?array $context=null, string $category=""): void
+    {
+        $this->write("critical", $message, $context, $category);
+
+    }//end critical()
+
+
+    /**
+     * Logs an entry at a level chosen at runtime; an unknown level logs an error.
+     *
+     * @param string     $level    One of debug, info, notice, warning, error or critical.
+     * @param string     $message  The message template.
+     * @param array|null $context  The values of the placeholders and any other data.
+     * @param string     $category The category.
+     *
+     * @return void
+     */
+    public function log(string $level, string $message, ?array $context=null, string $category=""): void
+    {
+        $resolved = "error";
+        if (str_contains(self::LEVELS, "|{$level}|") === true) {
+            $resolved = $level;
+        }
+
+        $this->write($resolved, $message, $context, $category);
+
+    }//end log()
+
+
+    /**
+     * Logs the outcome of an HTTP call: debug when a GET succeeded, info when
+     * another method succeeded, warning on a 4xx answer, error on a 5xx answer
+     * or a transport failure.
+     *
+     * @param string   $service   The called service, e.g. "Webhooks API".
+     * @param string   $method    The HTTP method.
+     * @param Response $response  The response.
+     * @param float    $startedAt When the call started (microtime(true)).
+     * @param string   $category  The category.
+     *
+     * @return void
+     */
+    public function logResponse(string $service, string $method, Response $response, float $startedAt, string $category): void
+    {
+        $statusCode = $response->getStatusCode();
+
+        $context                = [];
+        $context["service"]     = $service;
+        $context["method"]      = strtoupper($method);
+        $context["endpoint"]    = parse_url($response->getUrl(), PHP_URL_PATH);
+        $context["status_code"] = $statusCode;
+        $context["duration_ms"] = (int) round(((microtime(true) - $startedAt) * 1000));
+
+        $query = parse_url($response->getUrl(), PHP_URL_QUERY);
+        if (is_string($query) === true) {
+            $context["endpoint"] = sprintf("%s?%s", $context["endpoint"], $query);
+        }
+
+        $level = "debug";
+        if ($context["method"] !== "GET") {
+            $level = "info";
+        }
+
+        $message = "{service} {method} {endpoint} responded {status_code} in {duration_ms} ms";
+        if ($statusCode >= 400) {
+            $level            = "warning";
+            $message          = "{service} {method} {endpoint} responded {status_code} in {duration_ms} ms: {error}";
+            $context["error"] = (new LogContext())->truncate((string) $response->getBody(), self::MAX_ERROR_LENGTH);
+        }
+
+        if ($statusCode >= 500 || $statusCode === -1) {
+            $level = "error";
+        }
+
+        if ($statusCode === -1) {
+            $message          = "{service} {method} {endpoint} failed after {duration_ms} ms: {error}";
+            $context["error"] = $response->getMessage();
+        }
+
+        $this->write($level, $message, $context, $category);
+
+    }//end logResponse()
+
+
+    /**
+     * Sends an entry with the ambient context, unless LogStream is not configured.
+     * A failure to send never breaks the request being logged.
+     *
+     * @param string     $level    The level.
+     * @param string     $message  The message template.
+     * @param array|null $context  The context given by the caller.
+     * @param string     $category The category.
+     *
+     * @return void
+     */
+    private function write(string $level, string $message, ?array $context, string $category): void
+    {
+        $client = $this->getClient();
+        if ($client === null) {
             return;
         }
 
-        self::$initialized = true;
+        $logContext  = new LogContext();
+        $skipFiles   = [__FILE__];
+        $callSite    = $logContext->getCallSite(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 4), $skipFiles);
+        $fullContext = $logContext->build($context, self::$server, self::$userId, $callSite, PHP_SAPI);
 
-        $secretsFile = __DIR__ . "/../secrets/logStream.secrets.php";
-        if (!file_exists($secretsFile)) {
-            return;
+        try {
+            $client->{$level}($message, $fullContext, $category, $this->getTraceId());
+        } catch (\Throwable $exception) {
+            error_log(sprintf("LogStream: failed to send entry: %s", $exception->getMessage()));
+        }
+
+    }//end write()
+
+
+    /**
+     * The client, created from secrets/logStream.secrets.php on first use.
+     *
+     * @return PancakeLogStream|null The client, or null when LogStream is not configured.
+     */
+    private function getClient(): ?PancakeLogStream
+    {
+        if (self::$initialized === false) {
+            self::$initialized = true;
+            self::$client      = $this->createClient(__DIR__."/../secrets/logStream.secrets.php");
+        }
+
+        return self::$client;
+
+    }//end getClient()
+
+
+    /**
+     * Creates the client from a secrets file.
+     *
+     * @param string $secretsFile The secrets file path.
+     *
+     * @return PancakeLogStream|null The client, or null when the file or its settings are missing.
+     */
+    public function createClient(string $secretsFile): ?PancakeLogStream
+    {
+        if (file_exists($secretsFile) === false) {
+            return null;
         }
 
         global $logStreamServer, $logStreamApiKey, $logStreamApiToken;
-        require_once $secretsFile;
+        include_once $secretsFile;
 
-        if (empty($logStreamServer) || empty($logStreamApiToken)) {
-            return;
+        if (empty($logStreamServer) === true || empty($logStreamApiToken) === true) {
+            return null;
         }
 
-        $appKey = empty($logStreamApiKey) ? self::DEFAULT_APP_KEY : $logStreamApiKey;
+        $appKey = self::DEFAULT_APP_KEY;
+        if (empty($logStreamApiKey) === false) {
+            $appKey = $logStreamApiKey;
+        }
+
         $configuration = new Configuration();
 
-        self::$client = new PancakeLogStream(
+        // The app id is the deployed version, like the webhooks project does.
+        return new PancakeLogStream(
             baseUrl: $logStreamServer,
             appKey: $appKey,
-            // The app id is the deployed version, like the webhooks project does.
             appId: $configuration->getVersion(),
             authMode: PancakeLogStream::AUTH_API_KEY,
             apiKey: $appKey,
             apiToken: $logStreamApiToken,
-            userAgent: defined('USER_AGENT_VENDOR') ? constant('USER_AGENT_VENDOR') : $configuration->getUserAgent()
+            userAgent: $configuration->getUserAgent()
         );
-    }
 
-    public static function debug(string $message, ?array $context = null, string $category = ''): void
-    {
-        self::write('debug', $message, $context, $category);
-    }
+    }//end createClient()
 
-    public static function info(string $message, ?array $context = null, string $category = ''): void
-    {
-        self::write('info', $message, $context, $category);
-    }
 
-    public static function notice(string $message, ?array $context = null, string $category = ''): void
-    {
-        self::write('notice', $message, $context, $category);
-    }
-
-    public static function warning(string $message, ?array $context = null, string $category = ''): void
-    {
-        self::write('warning', $message, $context, $category);
-    }
-
-    public static function error(string $message, ?array $context = null, string $category = ''): void
-    {
-        self::write('error', $message, $context, $category);
-    }
-
-    public static function critical(string $message, ?array $context = null, string $category = ''): void
-    {
-        self::write('critical', $message, $context, $category);
-    }
-
-    /**
-     * Logs at a level chosen at runtime (one of LEVELS); an unknown level is logged as error.
-     */
-    public static function log(string $level, string $message, ?array $context = null, string $category = ''): void
-    {
-        self::write(in_array($level, self::LEVELS, true) ? $level : 'error', $message, $context, $category);
-    }
-
-    /** The trace id shared by every entry of this request or CLI run. */
-    public static function getTraceId(): string
-    {
-        return self::$traceId ??= self::resolveTraceId($_SERVER);
-    }
-
-    /**
-     * Returns the incoming X-Request-Id (or X-Trace-Id) header when it is a
-     * safe identifier, otherwise a new UUID v4.
-     */
-    public static function resolveTraceId(array $server): string
-    {
-        foreach (['HTTP_X_REQUEST_ID', 'HTTP_X_TRACE_ID'] as $header) {
-            $value = $server[$header] ?? null;
-            if (is_string($value) && preg_match(self::TRACE_ID_PATTERN, $value) === 1) {
-                return $value;
-            }
-        }
-
-        $bytes = random_bytes(16);
-        $bytes[6] = chr((ord($bytes[6]) & 0x0f) | 0x40);
-        $bytes[8] = chr((ord($bytes[8]) & 0x3f) | 0x80);
-
-        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($bytes), 4));
-    }
-
-    /**
-     * Merges the caller context with the ambient request/process, runtime and
-     * source data. Caller keys win over ambient keys of the same name.
-     *
-     * @param array      $server  $_SERVER (or a test double)
-     * @param array|null $session $_SESSION when a session was started
-     * @param array|null $source  Call site, as returned by callSite()
-     * @param string     $sapi    PHP_SAPI (or a test double)
-     */
-    public static function buildContext(
-        ?array $context,
-        array $server,
-        ?array $session,
-        ?array $source = null,
-        string $sapi = PHP_SAPI
-    ): array {
-        $context = self::normalizeThrowables($context ?? []);
-
-        $ambient = [];
-        if ($sapi === 'cli') {
-            $ambient[self::KEY_PROCESS] = self::processContext($server);
-        } else {
-            $ambient[self::KEY_REQUEST] = self::requestContext($server, $session);
-        }
-
-        $ambient[self::KEY_RUNTIME] = self::runtimeContext($server, $sapi);
-
-        if ($source !== null) {
-            $ambient[self::KEY_SOURCE] = $source;
-        }
-
-        return $context + $ambient;
-    }
-
-    /**
-     * Finds the first frame outside this class: the file and line that called
-     * LogStream, and the function or method that line belongs to.
-     *
-     * @param array $frames debug_backtrace() output, innermost first
-     */
-    public static function callSite(array $frames): ?array
-    {
-        foreach ($frames as $index => $frame) {
-            if (!isset($frame['file']) || $frame['file'] === __FILE__) {
-                continue;
-            }
-
-            $caller = $frames[$index + 1] ?? null;
-            $function = '{main}';
-            if ($caller !== null && isset($caller['function'])) {
-                $function = isset($caller['class'])
-                    ? self::shortClassName($caller['class']) . '::' . $caller['function']
-                    : $caller['function'];
-            }
-
-            return [
-                'file' => self::relativePath($frame['file']),
-                'line' => $frame['line'] ?? null,
-                'function' => $function,
-            ];
-        }
-
-        return null;
-    }
-
-    /** Expands every top-level Throwable value into a serializable array. */
-    public static function normalizeThrowables(array $context): array
-    {
-        foreach ($context as $key => $value) {
-            if ($value instanceof \Throwable) {
-                $context[$key] = self::describeThrowable($value);
-            }
-        }
-
-        return $context;
-    }
-
-    public static function describeThrowable(\Throwable $throwable): array
-    {
-        $description = [
-            'type' => get_class($throwable),
-            'message' => $throwable->getMessage(),
-            'code' => $throwable->getCode(),
-            'file' => self::relativePath($throwable->getFile()),
-            'line' => $throwable->getLine(),
-            'trace' => self::truncate($throwable->getTraceAsString(), self::MAX_TRACE_LENGTH),
-        ];
-
-        $previous = $throwable->getPrevious();
-        if ($previous !== null) {
-            $description['previous'] = [
-                'type' => get_class($previous),
-                'message' => $previous->getMessage(),
-                'file' => self::relativePath($previous->getFile()),
-                'line' => $previous->getLine(),
-            ];
-        }
-
-        return $description;
-    }
-
-    private static function write(string $level, string $message, ?array $context, string $category): void
-    {
-        self::initialize();
-
-        if (self::$client === null) {
-            return;
-        }
-
-        $source = self::callSite(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 4));
-        $session = isset($_SESSION) && is_array($_SESSION) ? $_SESSION : null;
-        $fullContext = self::buildContext($context, $_SERVER, $session, $source);
-
-        try {
-            self::$client->{$level}($message, $fullContext, $category, self::getTraceId());
-        } catch (\Throwable $e) {
-            // Logging must never break the request that is being logged.
-            error_log("LogStream: failed to send entry: " . $e->getMessage());
-        }
-    }
-
-    private static function requestContext(array $server, ?array $session): array
-    {
-        $uri = (string) ($server['REQUEST_URI'] ?? '');
-        $path = parse_url($uri, PHP_URL_PATH);
-
-        $request = [
-            'method' => $server['REQUEST_METHOD'] ?? null,
-            'path' => is_string($path) ? $path : null,
-            'script' => $server['SCRIPT_NAME'] ?? null,
-            'host' => $server['HTTP_HOST'] ?? null,
-            'client_ip' => $server['REMOTE_ADDR'] ?? null,
-            'user_agent' => isset($server['HTTP_USER_AGENT'])
-                ? self::truncate((string) $server['HTTP_USER_AGENT'], self::MAX_HEADER_LENGTH)
-                : null,
-            'referer' => isset($server['HTTP_REFERER'])
-                ? self::truncate((string) strtok((string) $server['HTTP_REFERER'], '?'), self::MAX_HEADER_LENGTH)
-                : null,
-        ];
-
-        if ($session !== null && !empty($session['user_id'])) {
-            $request['user_id'] = $session['user_id'];
-        }
-
-        return array_filter($request, static fn ($value) => $value !== null && $value !== '');
-    }
-
-    private static function processContext(array $server): array
-    {
-        $argv = $server['argv'] ?? [];
-
-        return [
-            'script' => isset($argv[0]) ? basename((string) $argv[0]) : ($server['SCRIPT_NAME'] ?? null),
-            'arguments' => max(0, count($argv) - 1),
-        ];
-    }
-
-    private static function runtimeContext(array $server, string $sapi): array
-    {
-        $runtime = [
-            'hostname' => gethostname() ?: null,
-            'pid' => getmypid() ?: null,
-            'sapi' => $sapi,
-            'php_version' => PHP_VERSION,
-            'memory_peak_mb' => round(memory_get_peak_usage(true) / 1048576, 2),
-        ];
-
-        if (isset($server['REQUEST_TIME_FLOAT'])) {
-            $runtime['elapsed_ms'] = (int) round((microtime(true) - (float) $server['REQUEST_TIME_FLOAT']) * 1000);
-        }
-
-        return $runtime;
-    }
-
-    private static function relativePath(string $file): string
-    {
-        $root = dirname(__DIR__) . DIRECTORY_SEPARATOR;
-
-        return str_starts_with($file, $root) ? substr($file, strlen($root)) : $file;
-    }
-
-    private static function shortClassName(string $class): string
-    {
-        $position = strrpos($class, '\\');
-
-        return $position === false ? $class : substr($class, $position + 1);
-    }
-
-    private static function truncate(string $value, int $length): string
-    {
-        return mb_strlen($value) > $length ? mb_substr($value, 0, $length) . '…' : $value;
-    }
-}
+}//end class

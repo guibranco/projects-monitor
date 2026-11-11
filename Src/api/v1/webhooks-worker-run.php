@@ -4,7 +4,6 @@ require_once 'session_validator.php';
 require_once '../../vendor/autoload.php';
 
 use GuiBranco\ProjectsMonitor\Library\Webhooks;
-use GuiBranco\ProjectsMonitor\Library\LogStream;
 
 $requestBody = file_get_contents("php://input");
 $input = json_decode($requestBody, true);
@@ -32,7 +31,6 @@ if (!in_array($name, Webhooks::RUNNABLE_WORKER_NAMES, true)) {
     exit;
 }
 
-LogStream::info("API request {endpoint} received to run worker {worker}", ["endpoint" => "POST /api/v1/webhooks-workers/run", "worker" => $name], "api");
 $webhooks = new Webhooks();
 $data = $webhooks->runWorker($name);
 echo json_encode($data);

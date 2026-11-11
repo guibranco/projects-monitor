@@ -1,224 +1,256 @@
 <?php
 
-declare(strict_types=1);
-
-use GuiBranco\ProjectsMonitor\Library\LogStream;
 use PHPUnit\Framework\TestCase;
+use GuiBranco\Pancake\LogStream as PancakeLogStream;
+use GuiBranco\Pancake\Request;
+use GuiBranco\Pancake\Response;
+use GuiBranco\ProjectsMonitor\Library\LogStream;
 
+/**
+ * Tests what LogStream sends: the level, the message template, the caller
+ * context and the ambient context, through a Pancake client whose HTTP
+ * request is stubbed.
+ */
 class LogStreamTest extends TestCase
 {
-    // -------------------------------------------------------------------------
-    // resolveTraceId
-    // -------------------------------------------------------------------------
+    private const URL = "https://webhooks.example.com/api/v1/github/workflow?feedOptionsFilter=mine";
 
-    public function testResolveTraceIdUsesValidRequestIdHeader(): void
+    /**
+     * The decoded bodies the client posted.
+     *
+     * @var array
+     */
+    private $sent = [];
+
+    /**
+     * The logger under test.
+     *
+     * @var LogStream
+     */
+    private $logStream;
+
+
+    /**
+     * Gives LogStream a client whose request records what it posts.
+     *
+     * @return void
+     */
+    protected function setUp(): void
     {
-        $this->assertSame('abc-123_def.456', LogStream::resolveTraceId(['HTTP_X_REQUEST_ID' => 'abc-123_def.456']));
-    }
+        $this->sent      = [];
+        $this->logStream = new LogStream();
+        $this->logStream->setServer(["HTTP_X_REQUEST_ID" => "trace-from-test"]);
+        $this->logStream->setClient($this->createClient(false));
 
-    public function testResolveTraceIdFallsBackToTraceIdHeader(): void
+    }//end setUp()
+
+
+    /**
+     * Leaves LogStream without a client, as when no secrets file exists.
+     *
+     * @return void
+     */
+    protected function tearDown(): void
     {
-        $this->assertSame('trace-0001', LogStream::resolveTraceId(['HTTP_X_TRACE_ID' => 'trace-0001']));
-    }
+        $this->logStream->setClient(null);
+        $this->logStream->setServer([]);
 
-    public function testResolveTraceIdIgnoresUnsafeHeaderAndGeneratesUuid(): void
+    }//end tearDown()
+
+
+    /**
+     * Every level sends one entry with the template, the caller context, the
+     * ambient context, the call site and the trace id.
+     *
+     * @return void
+     */
+    public function testEveryLevelSendsTheTemplateAndContext(): void
     {
-        $traceId = LogStream::resolveTraceId(['HTTP_X_REQUEST_ID' => "bad id\r\nX-Injected: 1"]);
+        $this->logStream->debug("Fetching {resource}", ["resource" => "workers"], "webhooks");
+        $this->logStream->info("Fetching {resource}", ["resource" => "workers"], "webhooks");
+        $this->logStream->notice("Fetching {resource}", ["resource" => "workers"], "webhooks");
+        $this->logStream->warning("Fetching {resource}", ["resource" => "workers"], "webhooks");
+        $this->logStream->error("Fetching {resource}", ["resource" => "workers"], "webhooks");
+        $this->logStream->critical("Fetching {resource}", ["resource" => "workers"], "webhooks");
 
-        $this->assertMatchesRegularExpression(
-            '/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/',
-            $traceId
+        $this->assertSame(["debug", "info", "notice", "warning", "error", "critical"], array_column($this->sent, "level"));
+
+        $entry = $this->sent[0];
+        $this->assertSame("Fetching {resource}", $entry["message"]);
+        $this->assertSame("webhooks", $entry["category"]);
+        $this->assertSame("trace-from-test", $entry["trace_id"]);
+        $this->assertSame("workers", $entry["context"]["resource"]);
+        $this->assertSame("cli", $entry["context"]["runtime"]["sapi"]);
+        $this->assertSame(__FILE__, $entry["context"]["source"]["file"]);
+        $this->assertSame("LogStreamTest::testEveryLevelSendsTheTemplateAndContext", $entry["context"]["source"]["function"]);
+        $this->assertSame("trace-from-test", $this->logStream->getTraceId());
+
+    }//end testEveryLevelSendsTheTemplateAndContext()
+
+
+    /**
+     * A level chosen at runtime is used when known, otherwise the entry is an error.
+     *
+     * @return void
+     */
+    public function testLogUsesTheGivenLevelOrError(): void
+    {
+        $this->logStream->log("warning", "Worker {worker} done", ["worker" => "ProcessErrorLogs"], "worker");
+        $this->logStream->log("loud", "Worker {worker} done", ["worker" => "ProcessErrorLogs"], "worker");
+
+        $this->assertSame(["warning", "error"], array_column($this->sent, "level"));
+        $this->assertSame(__FILE__, $this->sent[1]["context"]["source"]["file"]);
+
+    }//end testLogUsesTheGivenLevelOrError()
+
+
+    /**
+     * A successful GET is debug and a successful POST is info, with the
+     * endpoint, status code and duration.
+     *
+     * @return void
+     */
+    public function testLogResponseLogsSuccessByMethod(): void
+    {
+        $response = new Response(true, "{}", "", 200, self::URL, []);
+
+        $this->logStream->logResponse("Webhooks API", "get", $response, microtime(true), "webhooks");
+        $this->logStream->logResponse("Webhooks API", "post", $response, microtime(true), "webhooks");
+
+        $this->assertSame(["debug", "info"], array_column($this->sent, "level"));
+        $entry = $this->sent[0];
+        $this->assertSame("{service} {method} {endpoint} responded {status_code} in {duration_ms} ms", $entry["message"]);
+        $this->assertSame("Webhooks API", $entry["context"]["service"]);
+        $this->assertSame("GET", $entry["context"]["method"]);
+        $this->assertSame("/api/v1/github/workflow?feedOptionsFilter=mine", $entry["context"]["endpoint"]);
+        $this->assertSame(200, $entry["context"]["status_code"]);
+        $this->assertIsInt($entry["context"]["duration_ms"]);
+        $this->assertArrayNotHasKey("error", $entry["context"]);
+
+    }//end testLogResponseLogsSuccessByMethod()
+
+
+    /**
+     * A 4xx answer is a warning and a 5xx answer an error, both with the body.
+     *
+     * @return void
+     */
+    public function testLogResponseLogsErrorAnswersWithTheBody(): void
+    {
+        $this->logStream->logResponse("Webhooks API", "DELETE", new Response(false, "Not found", "", 404, self::URL, []), microtime(true), "webhooks");
+        $this->logStream->logResponse("GStraccini bot", "POST", new Response(false, str_repeat("x", 600), "", 503, self::URL, []), microtime(true), "gstraccini-bot");
+
+        $this->assertSame(["warning", "error"], array_column($this->sent, "level"));
+        $this->assertSame("{service} {method} {endpoint} responded {status_code} in {duration_ms} ms: {error}", $this->sent[0]["message"]);
+        $this->assertSame("Not found", $this->sent[0]["context"]["error"]);
+        $this->assertSame(501, mb_strlen($this->sent[1]["context"]["error"]));
+        $this->assertSame("gstraccini-bot", $this->sent[1]["category"]);
+
+    }//end testLogResponseLogsErrorAnswersWithTheBody()
+
+
+    /**
+     * A transport failure is an error with the transport message.
+     *
+     * @return void
+     */
+    public function testLogResponseLogsTransportFailures(): void
+    {
+        $response = new Response(false, null, "Could not resolve host", -1, self::URL, null);
+
+        $this->logStream->logResponse("Webhooks API", "GET", $response, microtime(true), "webhooks");
+
+        $this->assertSame("error", $this->sent[0]["level"]);
+        $this->assertSame("{service} {method} {endpoint} failed after {duration_ms} ms: {error}", $this->sent[0]["message"]);
+        $this->assertSame("Could not resolve host", $this->sent[0]["context"]["error"]);
+
+    }//end testLogResponseLogsTransportFailures()
+
+
+    /**
+     * A failure to send does not reach the caller.
+     *
+     * @return void
+     */
+    public function testSendFailureIsSwallowed(): void
+    {
+        $this->logStream->setClient($this->createClient(true));
+        $errorLog = ini_set("error_log", "/dev/null");
+
+        $this->logStream->error("Failed to parse {path}", ["path" => "error_log"], "worker");
+
+        ini_set("error_log", (string) $errorLog);
+        $this->assertSame([], $this->sent);
+
+    }//end testSendFailureIsSwallowed()
+
+
+    /**
+     * Without a client nothing is sent and a new trace id follows a new server registration.
+     *
+     * @return void
+     */
+    public function testNothingIsSentWithoutClient(): void
+    {
+        $this->logStream->setClient(null);
+        $this->logStream->setServer([]);
+
+        $this->logStream->info("API request {request.method} {request.path} received", null, "api");
+
+        $this->assertSame([], $this->sent);
+        $this->assertNotSame("trace-from-test", $this->logStream->getTraceId());
+
+    }//end testNothingIsSentWithoutClient()
+
+
+    /**
+     * The client is created only from a secrets file with a server and a token.
+     *
+     * @return void
+     */
+    public function testCreateClientNeedsServerAndToken(): void
+    {
+        $directory = sys_get_temp_dir();
+        $partial   = tempnam($directory, "logstream");
+        $complete  = tempnam($directory, "logstream");
+        file_put_contents($partial, "<?php\n\$logStreamServer = \"https://logs.example.com\";\n\$logStreamApiKey = \"\";\n\$logStreamApiToken = \"\";\n");
+        file_put_contents($complete, "<?php\n\$logStreamServer = \"https://logs.example.com\";\n\$logStreamApiKey = \"\";\n\$logStreamApiToken = \"lss_token\";\n");
+
+        $this->assertNull($this->logStream->createClient("{$directory}/missing.secrets.php"));
+        $this->assertNull($this->logStream->createClient($partial));
+        $this->assertInstanceOf(PancakeLogStream::class, $this->logStream->createClient($complete));
+
+        unlink($partial);
+        unlink($complete);
+
+    }//end testCreateClientNeedsServerAndToken()
+
+
+    /**
+     * A Pancake client whose request records each posted body, or throws.
+     *
+     * @param boolean $failing Whether posting throws.
+     *
+     * @return PancakeLogStream The client.
+     */
+    private function createClient(bool $failing): PancakeLogStream
+    {
+        $request = $this->createStub(Request::class);
+        $request->method("post")->willReturnCallback(
+            function (string $url, array $headers, string $body) use ($failing): Response {
+                if ($failing === true) {
+                    throw new RuntimeException("LogStream is down");
+                }
+
+                $this->assertContains("X-Api-Token: test-token", $headers);
+                $this->sent[] = json_decode($body, true);
+                return new Response(true, "{\"saved\":1}", "", 201, $url, []);
+            }
         );
-    }
 
-    public function testResolveTraceIdGeneratesDifferentUuids(): void
-    {
-        $this->assertNotSame(LogStream::resolveTraceId([]), LogStream::resolveTraceId([]));
-    }
+        return new PancakeLogStream("https://logs.example.com", "projects-monitor", "1.0.0", PancakeLogStream::AUTH_API_KEY, "", "projects-monitor", "test-token", $request);
 
-    public function testGetTraceIdIsStableWithinProcess(): void
-    {
-        $this->assertSame(LogStream::getTraceId(), LogStream::getTraceId());
-    }
+    }//end createClient()
 
-    // -------------------------------------------------------------------------
-    // buildContext
-    // -------------------------------------------------------------------------
 
-    public function testBuildContextAddsRequestDataForWebRequests(): void
-    {
-        $server = [
-            'REQUEST_METHOD' => 'POST',
-            'REQUEST_URI' => '/api/v1/workflow-runs/retry?token=secret',
-            'SCRIPT_NAME' => '/api/v1/workflow-runs-retry.php',
-            'HTTP_HOST' => 'monitor.example.com',
-            'REMOTE_ADDR' => '203.0.113.7',
-            'HTTP_USER_AGENT' => 'Mozilla/5.0',
-            'HTTP_REFERER' => 'https://monitor.example.com/index.php?x=1',
-            'REQUEST_TIME_FLOAT' => microtime(true),
-        ];
-
-        $context = LogStream::buildContext(['workflow_run_id' => 42], $server, ['user_id' => 7], null, 'fpm-fcgi');
-
-        $this->assertSame(42, $context['workflow_run_id']);
-        $this->assertSame('POST', $context['request']['method']);
-        $this->assertSame('/api/v1/workflow-runs/retry', $context['request']['path'], 'query string must be dropped');
-        $this->assertSame('/api/v1/workflow-runs-retry.php', $context['request']['script']);
-        $this->assertSame('monitor.example.com', $context['request']['host']);
-        $this->assertSame('203.0.113.7', $context['request']['client_ip']);
-        $this->assertSame('Mozilla/5.0', $context['request']['user_agent']);
-        $this->assertSame('https://monitor.example.com/index.php', $context['request']['referer']);
-        $this->assertSame(7, $context['request']['user_id']);
-        $this->assertArrayNotHasKey('process', $context);
-    }
-
-    public function testBuildContextOmitsMissingRequestFields(): void
-    {
-        $context = LogStream::buildContext(null, ['REQUEST_METHOD' => 'GET'], null, null, 'fpm-fcgi');
-
-        $this->assertSame(['method' => 'GET'], $context['request']);
-    }
-
-    public function testBuildContextAddsProcessDataForCli(): void
-    {
-        $server = ['argv' => ['/srv/Src/Worker/ProcessErrorLogs.php', '--verbose']];
-
-        $context = LogStream::buildContext(null, $server, null, null, 'cli');
-
-        $this->assertSame(['script' => 'ProcessErrorLogs.php', 'arguments' => 1], $context['process']);
-        $this->assertArrayNotHasKey('request', $context);
-    }
-
-    public function testBuildContextAddsRuntimeData(): void
-    {
-        $context = LogStream::buildContext(null, ['REQUEST_TIME_FLOAT' => microtime(true) - 1.5], null, null, 'cli');
-
-        $this->assertSame('cli', $context['runtime']['sapi']);
-        $this->assertSame(PHP_VERSION, $context['runtime']['php_version']);
-        $this->assertSame(getmypid(), $context['runtime']['pid']);
-        $this->assertIsFloat($context['runtime']['memory_peak_mb']);
-        $this->assertGreaterThanOrEqual(1500, $context['runtime']['elapsed_ms']);
-    }
-
-    public function testBuildContextAddsSourceWhenGiven(): void
-    {
-        $source = ['file' => 'Library/Webhooks.php', 'line' => 10, 'function' => 'Webhooks::doRequest'];
-
-        $context = LogStream::buildContext(null, [], null, $source, 'cli');
-
-        $this->assertSame($source, $context['source']);
-    }
-
-    public function testBuildContextCallerKeysWinOverAmbientKeys(): void
-    {
-        $context = LogStream::buildContext(['runtime' => 'mine'], [], null, null, 'cli');
-
-        $this->assertSame('mine', $context['runtime']);
-    }
-
-    public function testBuildContextKeepsCallerKeysFirst(): void
-    {
-        $context = LogStream::buildContext(['host' => 'vinhedo1', 'reason' => 'timeout'], [], null, null, 'cli');
-
-        $this->assertSame(['host', 'reason', 'process', 'runtime'], array_keys($context));
-    }
-
-    public function testBuildContextExpandsThrowables(): void
-    {
-        $previous = new InvalidArgumentException('inner');
-        $exception = new RuntimeException('outer', 12, $previous);
-
-        $context = LogStream::buildContext(['exception' => $exception], [], null, null, 'cli');
-
-        $this->assertSame('RuntimeException', $context['exception']['type']);
-        $this->assertSame('outer', $context['exception']['message']);
-        $this->assertSame(12, $context['exception']['code']);
-        $this->assertSame(__FILE__, $context['exception']['file']);
-        $this->assertIsInt($context['exception']['line']);
-        $this->assertIsString($context['exception']['trace']);
-        $this->assertSame('InvalidArgumentException', $context['exception']['previous']['type']);
-        $this->assertSame('inner', $context['exception']['previous']['message']);
-    }
-
-    public function testDescribeThrowableTruncatesLongTraces(): void
-    {
-        $exception = $this->deepException(200);
-
-        $description = LogStream::describeThrowable($exception);
-
-        $this->assertLessThanOrEqual(4001, mb_strlen($description['trace']));
-        $this->assertArrayNotHasKey('previous', $description);
-    }
-
-    // -------------------------------------------------------------------------
-    // callSite
-    // -------------------------------------------------------------------------
-
-    public function testCallSiteSkipsLogStreamFramesAndNamesEnclosingMethod(): void
-    {
-        $logStreamFile = (new ReflectionClass(LogStream::class))->getFileName();
-        $root = dirname(dirname($logStreamFile)) . DIRECTORY_SEPARATOR;
-
-        $frames = [
-            ['file' => $logStreamFile, 'line' => 90, 'function' => 'write', 'class' => LogStream::class],
-            ['file' => $root . 'Library/Webhooks.php', 'line' => 54, 'function' => 'debug', 'class' => LogStream::class],
-            ['file' => $root . 'api/v1/webhooks.php', 'line' => 16, 'function' => 'doRequest', 'class' => 'GuiBranco\\ProjectsMonitor\\Library\\Webhooks'],
-        ];
-
-        $this->assertSame(
-            ['file' => 'Library/Webhooks.php', 'line' => 54, 'function' => 'Webhooks::doRequest'],
-            LogStream::callSite($frames)
-        );
-    }
-
-    public function testCallSiteReportsMainForTopLevelScripts(): void
-    {
-        $logStreamFile = (new ReflectionClass(LogStream::class))->getFileName();
-
-        $frames = [
-            ['file' => $logStreamFile, 'line' => 90, 'function' => 'write', 'class' => LogStream::class],
-            ['file' => '/elsewhere/worker.php', 'line' => 27, 'function' => 'info', 'class' => LogStream::class],
-        ];
-
-        $this->assertSame(
-            ['file' => '/elsewhere/worker.php', 'line' => 27, 'function' => '{main}'],
-            LogStream::callSite($frames)
-        );
-    }
-
-    public function testCallSiteNamesPlainFunctions(): void
-    {
-        $frames = [
-            ['file' => '/elsewhere/worker.php', 'line' => 5, 'function' => 'info', 'class' => LogStream::class],
-            ['file' => '/elsewhere/worker.php', 'line' => 30, 'function' => 'workerStarted'],
-        ];
-
-        $this->assertSame('workerStarted', LogStream::callSite($frames)['function']);
-    }
-
-    public function testCallSiteReturnsNullWithoutExternalFrames(): void
-    {
-        $this->assertNull(LogStream::callSite([]));
-    }
-
-    // -------------------------------------------------------------------------
-    // Logging without a configured client
-    // -------------------------------------------------------------------------
-
-    public function testLoggingWithoutSecretsIsANoOp(): void
-    {
-        LogStream::info("API request {endpoint} received", ["endpoint" => "GET /api/v1/test"], "api");
-        LogStream::log('unknown-level', "Fallback {level}", ["level" => "x"]);
-
-        $this->addToAssertionCount(1);
-    }
-
-    private function deepException(int $depth): Throwable
-    {
-        if ($depth === 0) {
-            return new RuntimeException('deep');
-        }
-
-        return $this->deepException($depth - 1);
-    }
-}
+}//end class

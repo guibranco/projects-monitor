@@ -7,7 +7,6 @@ use GuiBranco\ProjectsMonitor\Library\GitHub;
 use GuiBranco\ProjectsMonitor\Library\GitHubActionsUsage;
 use GuiBranco\ProjectsMonitor\Library\LogStream;
 
-LogStream::info("API request {endpoint} received", ["endpoint" => "GET /api/v1/github"], "api");
 $github = new GitHub();
 $apiUsage = $github->getApiUsage();
 ;
@@ -17,10 +16,7 @@ $data["api_usage_core"] = $apiUsage["core"];
 try {
     $data["accounts_usage"] = (new GitHubActionsUsage())->getAccountsUsageTable();
 } catch (\Throwable $e) {
-    LogStream::error("GitHub Actions billing config failed to load: {reason}", [
-        "reason" => $e->getMessage(),
-        "exception" => $e,
-    ], "github-billing");
+    (new LogStream())->error("GitHub Actions billing config failed to load: {reason}", ["reason" => $e->getMessage(), "exception" => $e], "github-billing");
     $data["accounts_usage"] = [GitHubActionsUsage::TABLE_HEADER];
 }
 

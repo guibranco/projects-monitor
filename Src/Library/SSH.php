@@ -101,11 +101,7 @@ class SSH
             $this->connected = $this->ssh->login($this->username, $privateKey);
         } catch (\Throwable $e) {
             $this->connected = false;
-            LogStream::warning("SSH connection to {host} ({address}) failed: {reason}", [
-                "host" => $this->name,
-                "address" => "{$this->host}:{$this->port}", "reason" => $e->getMessage(),
-                "exception" => $e,
-            ], "ssh");
+            (new LogStream())->warning("SSH connection to {host} ({address}) failed: {reason}", ["host" => $this->name, "address" => "{$this->host}:{$this->port}", "reason" => $e->getMessage(), "exception" => $e], "ssh");
         }
     }
 
@@ -167,11 +163,7 @@ class SSH
             $report = $this->fetchMonitorReport();
             return $this->formatWireGuardPeers((array) ($report['wireguard']['peers'] ?? []));
         } catch (\Exception $e) {
-            LogStream::warning("Failed to fetch WireGuard connections from {host}: {reason}", [
-                "host" => $this->name,
-                "address" => "{$this->host}:{$this->port}", "reason" => $e->getMessage(),
-                "exception" => $e,
-            ], "ssh");
+            (new LogStream())->warning("Failed to fetch WireGuard connections from {host}: {reason}", ["host" => $this->name, "reason" => $e->getMessage(), "exception" => $e], "ssh");
         }
 
         return [];
@@ -230,11 +222,7 @@ class SSH
             $report = $this->fetchMonitorReport();
             return $this->formatSystemReport($report);
         } catch (\Exception $e) {
-            LogStream::warning("Failed to fetch system report from {host}: {reason}", [
-                "host" => $this->name,
-                "reason" => $e->getMessage(),
-                "exception" => $e,
-            ], "ssh");
+            (new LogStream())->warning("Failed to fetch system report from {host}: {reason}", ["host" => $this->name, "reason" => $e->getMessage(), "exception" => $e], "ssh");
         }
 
         return [];
@@ -253,11 +241,7 @@ class SSH
         try {
             $report = $this->fetchMonitorReport();
         } catch (\Exception $e) {
-            LogStream::warning("Failed to fetch resource usage from {host}: {reason}", [
-                "host" => $this->name,
-                "reason" => $e->getMessage(),
-                "exception" => $e,
-            ], "ssh");
+            (new LogStream())->warning("Failed to fetch resource usage from {host}: {reason}", ["host" => $this->name, "reason" => $e->getMessage(), "exception" => $e], "ssh");
             return $this->unknownResourceUsage();
         }
 

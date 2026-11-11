@@ -130,11 +130,7 @@ class GitHubActionsUsage
         try {
             return $this->getAccountUsage($account);
         } catch (\Throwable $e) {
-            LogStream::warning("GitHub Actions usage unavailable for account {account}: {reason}", [
-                "account" => $account["account"],
-                "reason" => $e->getMessage(),
-                "exception" => $e,
-            ], "github-billing");
+            (new LogStream())->warning("GitHub Actions usage unavailable for account {account}: {reason}", ["account" => $account["account"], "reason" => $e->getMessage(), "exception" => $e], "github-billing");
 
             return $this->degradedResult($account, $e->getMessage());
         }
@@ -166,11 +162,7 @@ class GitHubActionsUsage
         $inferredMinutes = GitHubActionsUsageCalculator::inferIncludedMinutes($usageItems);
 
         if (GitHubActionsUsageCalculator::allowanceDiverges((float) $account["minutes"], $inferredMinutes)) {
-            LogStream::warning("GitHub Actions included-minutes allowance of {account} diverges from github-billing.json: configured {configuredMinutes}, inferred {inferredMinutes}", [
-                "account" => $accountName,
-                "configuredMinutes" => $account["minutes"],
-                "inferredMinutes" => $inferredMinutes,
-            ], "github-billing");
+            (new LogStream())->warning("GitHub Actions included-minutes allowance of {account} diverges from github-billing.json: configured {configuredMinutes}, inferred {inferredMinutes}", ["account" => $accountName, "configuredMinutes" => $account["minutes"], "inferredMinutes" => $inferredMinutes], "github-billing");
         }
 
         $includedStorageGb = $account["storageMb"] / 1024;
@@ -381,11 +373,7 @@ class GitHubActionsUsage
             return $decoded;
         } catch (RequestException $e) {
             if ($cached !== null) {
-                LogStream::warning("GitHub billing request to {url} failed, serving stale cache: {reason}", [
-                    "url" => $url,
-                    "reason" => $e->getMessage(),
-                    "exception" => $e,
-                ], "github-billing");
+                (new LogStream())->warning("GitHub billing request to {url} failed, serving stale cache: {reason}", ["url" => $url, "reason" => $e->getMessage(), "exception" => $e], "github-billing");
 
                 return $cached;
             }

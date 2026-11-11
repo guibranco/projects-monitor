@@ -18,7 +18,6 @@ class Configuration
 
         error_reporting(E_ALL);
         $this->setUserAgent();
-        LogStream::initialize();
     }
 
     private function setUserAgent()
@@ -34,6 +33,8 @@ class Configuration
     /**
      * Returns the User-Agent product string for outgoing requests, built from
      * the deployed version. Usable before init() has defined USER_AGENT_VENDOR.
+     *
+     * @return string The product string, e.g. "projects-monitor/1.0.0 (+https://github.com/guibranco/projects-monitor)".
      */
     public function getUserAgent(): string
     {

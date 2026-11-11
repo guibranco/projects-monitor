@@ -573,6 +573,13 @@ $configuration = new Configuration();
                </div>
                <div id="vercel" class="section-content"></div>
             </div>
+            <div class="data-item">
+               <div class="section-header">
+                  <i class="bi bi-cloud me-2"></i>Render <span id="counter_render"
+                     class="badge rounded-pill"></span>
+               </div>
+               <div id="render" class="section-content"></div>
+            </div>
          </div>
       </div>
 

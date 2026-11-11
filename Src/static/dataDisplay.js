@@ -588,6 +588,13 @@ export class DataDisplayManager {
   }
 
   /**
+   * Draws a data table listing Render services with their latest deploy status.
+   */
+  showRender(response) {
+    this.chartManager.drawDataTable(response.services, "render", CHART_OPTIONS.table);
+  }
+
+  /**
    * Updates charts and displays webhook statistics based on response data.
    */
   showWebhook(response) {

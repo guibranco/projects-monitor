@@ -40,6 +40,7 @@ export const API_ENDPOINTS = {
   HEALTHCHECKS: "api/v1/healthchecksio",
   UPTIMEROBOT: "api/v1/uptimerobot",
   VERCEL: "api/v1/vercel",
+  RENDER: "api/v1/render",
   WIREGUARD: "api/v1/wireguard",
   SYSTEM_REPORT: "api/v1/system-report",
   POSTMAN: "api/v1/postman",

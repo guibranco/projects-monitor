@@ -14,13 +14,13 @@
 
 ## Overview
 
-Projects Monitor is a PHP dashboard backed by a REST-like API (`Src/api/v1`). It logs in over a session-based auth flow, then renders live tiles and gauges for every service the author's projects depend on — GitHub, cPanel, RabbitMQ, WireGuard, Vercel, and more — so an outage or a stuck queue is visible at a glance instead of buried in a dozen separate dashboards. A preview of the login and dashboard screens is at the bottom of this README.
+Projects Monitor is a PHP dashboard backed by a REST-like API (`Src/api/v1`). It logs in over a session-based auth flow, then renders live tiles and gauges for every service the author's projects depend on — GitHub, cPanel, RabbitMQ, WireGuard, Vercel, Render, and more — so an outage or a stuck queue is visible at a glance instead of buried in a dozen separate dashboards. A preview of the login and dashboard screens is at the bottom of this README.
 
 ### Features
 
 - **GitHub integration** — open/pending pull requests, issues across repositories, workflow runs (failures highlighted), API rate-limit usage, and the latest releases of tracked projects.
 - **Webhooks & automation** — GitHub webhook statistics and processing-state counts, plus a right-hand **Actions** panel (offcanvas, top-right of the dashboard) listing live webhook workers and GStraccini Bot job runs.
-- **Infrastructure health** — HealthChecks.io, UpTimeRobot, AppVeyor CI, and Vercel project status (the production deployment's state, overridden by the project's paused flag and by what its production URL actually answers — `DEPLOYMENT_DISABLED`, `DEPLOYMENT_PAUSED`, `DEPLOYMENT_NOT_FOUND`, a 5xx or an unreachable host — each URL probed at most once every 10 minutes); CloudAMQP/RabbitMQ queue, message, consumer, and connection stats; WireGuard VPN client/connection status over SSH; a remote server health report (load average, CPU/memory/swap/disk usage, pending-reboot flag, and key systemd service states) collected by running a `monitor-report` script on the host over the same SSH connection.
+- **Infrastructure health** — HealthChecks.io, UpTimeRobot, AppVeyor CI, and Vercel project status (the production deployment's state, overridden by the project's paused flag and by what its production URL actually answers — `DEPLOYMENT_DISABLED`, `DEPLOYMENT_PAUSED`, `DEPLOYMENT_NOT_FOUND`, a 5xx or an unreachable host — each URL probed at most once every 10 minutes) and Render service status (the latest deploy's status, overridden by the service's suspended flag); CloudAMQP/RabbitMQ queue, message, consumer, and connection stats; WireGuard VPN client/connection status over SSH; a remote server health report (load average, CPU/memory/swap/disk usage, pending-reboot flag, and key systemd service states) collected by running a `monitor-report` script on the host over the same SSH connection.
 - **Domains** — registrar and lifecycle information (expiration, transfer status) via IP2WHOIS, plus a dedicated [DNS Records page](Src/dns.php) listing every zone record (A, CNAME, MX, TXT, ...) pulled live from cPanel, filterable by source domain/record type and sortable by any column.
 - **Logs & errors** — cPanel error logs and SQL-backed application errors, aggregated with grouping and statistics by application or error content.
 - **Public stats** — a pre-computed, unauthenticated stats page fed by a cron worker (see [Background workers](#background-workers)).
@@ -92,6 +92,7 @@ The full set of integrations and their secrets files:
 | HealthChecks.io             | `healthChecksIo.secrets.php`         |
 | UptimeRobot                 | `upTimeRobot.secrets.php`            |
 | Vercel                      | `vercel.secrets.php`                 |
+| Render                      | `render.secrets.php`                 |
 | RabbitMQ / CloudAMQP        | `rabbitMq.secrets.php`               |
 | SSH (also used for WireGuard status and the server health report) | `ssh.secrets.php` |
 | IP2WHOIS (domain lookups)   | `Ip2WhoIsSecrets.php`                |
@@ -151,7 +152,7 @@ anonymous visitors *Try it out* is hidden and the protected endpoints answer
 
 Key endpoint groups: `github`, `webhooks*` (statistics, per-entity processing,
 worker control), `gstraccini-jobs` / `gstraccini-job-run`, `appveyor`, `cpanel`,
-`dns-records`, `domains`, `healthchecksio`, `uptimerobot`, `vercel`, `queues` /
+`dns-records`, `domains`, `healthchecksio`, `uptimerobot`, `vercel`, `render`, `queues` /
 `queues-purge`, `wireguard`, `system-report`, `messages*` / `errors*` (log
 retrieval, details, deletion), and `public-stats`.
 

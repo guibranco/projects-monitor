@@ -199,7 +199,9 @@ class Vercel
             return false;
         }
 
-        return (($probe["servedByVercel"] ?? true) === false);
+        $servedByVercel = ($probe["servedByVercel"] ?? true);
+
+        return $servedByVercel === false;
 
     }//end isServedElsewhere()
 
@@ -258,22 +260,17 @@ class Vercel
      */
     private function getState($project, $deployment, ?array $probe, ?array $domainProbe): string
     {
-        if (($project->paused ?? false) === true) {
-            return self::STATE_PAUSED;
+        $state = $this->getProblem($probe);
+        if (($project->paused ?? false) === true || $state === "DEPLOYMENT_PAUSED") {
+            $state = self::STATE_PAUSED;
         }
 
-        $problem = $this->getProblem($probe);
-        if ($problem === "DEPLOYMENT_PAUSED") {
-            return self::STATE_PAUSED;
+        if ($state === null) {
+            $state = ($deployment->readyState ?? self::STATE_UNKNOWN);
         }
 
-        if ($problem !== null) {
-            return $problem;
-        }
-
-        $state = ($deployment->readyState ?? self::STATE_UNKNOWN);
         if ($state === "READY" && $this->isServedElsewhere($domainProbe) === true) {
-            return self::STATE_DOMAIN_ELSEWHERE;
+            $state = self::STATE_DOMAIN_ELSEWHERE;
         }
 
         return $state;

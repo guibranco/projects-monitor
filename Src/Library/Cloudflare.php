@@ -261,7 +261,7 @@ class Cloudflare
                 }
 
                 $traffic[$zone->zoneTag] = $totals;
-            }//end foreach
+            }
         }//end foreach
 
         return $traffic;

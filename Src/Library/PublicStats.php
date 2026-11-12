@@ -55,7 +55,7 @@ class PublicStats
                         'host'   => $hostName,
                         'reason' => $e->getMessage(),
                     ];
-                    LogStream::warning('Failed to query SSH host resource usage', $context, 'public-stats');
+                    (new LogStream())->warning('Failed to query resource usage of SSH host {host}: {reason}', $context, 'public-stats');
                     $sshServers[] = [
                         'name'    => $hostName,
                         'status'  => 'unknown',
@@ -64,7 +64,7 @@ class PublicStats
                 }
             }
         } catch (\Throwable $e) {
-            LogStream::warning("Failed to load SSH hosts configuration", ["reason" => $e->getMessage()], "public-stats");
+            (new LogStream())->warning("Failed to load SSH hosts configuration: {reason}", ["reason" => $e->getMessage(), "exception" => $e], "public-stats");
         }
 
         try {

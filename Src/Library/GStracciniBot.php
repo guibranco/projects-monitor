@@ -70,16 +70,12 @@ class GStracciniBot
             throw new \InvalidArgumentException("Invalid job name provided");
         }
 
-        LogStream::info("Triggering GStraccini bot job", ["job" => $job], "gstraccini-bot");
+        $startedAt = microtime(true);
         $response = $this->request->post("{$this->apiUrl}jobs/{$job}/", $this->headers);
+        (new LogStream())->logResponse("GStraccini bot", "POST", $response, $startedAt, "gstraccini-bot");
 
         if ($response->getStatusCode() !== 202) {
             $error = $response->getStatusCode() == -1 ? $response->getMessage() : $response->getBody();
-            LogStream::error("GStraccini bot job trigger failed", [
-                "job" => $job,
-                "status_code" => $response->getStatusCode(),
-                "error" => $error,
-            ], "gstraccini-bot");
             throw new RequestException("Code: {$response->getStatusCode()} - Error: {$error}");
         }
 

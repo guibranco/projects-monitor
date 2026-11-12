@@ -41,11 +41,7 @@ function validateIP()
     if ($_SESSION['ip'] !== $_SERVER['REMOTE_ADDR']) {
         $logger = new Logger();
         $logger->logMessage("Potential session hijacking attempt: ".$_SERVER['REMOTE_ADDR']." in ".$_SERVER["SCRIPT_NAME"]);
-        LogStream::warning("Session hijacking attempt detected", [
-            "ip" => $_SERVER['REMOTE_ADDR'],
-            "stored_ip" => $_SESSION['ip'],
-            "script" => $_SERVER["SCRIPT_NAME"],
-        ], "security");
+        (new LogStream())->warning("Session hijacking attempt detected from {ip} on {script}, session bound to {stored_ip}", ["ip" => $_SERVER['REMOTE_ADDR'], "stored_ip" => $_SESSION['ip'], "script" => $_SERVER["SCRIPT_NAME"]], "security");
         session_destroy();
         sendErrorResponse("Session invalid", 401);
     }
@@ -65,11 +61,7 @@ if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
 if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > SESSION_TIMEOUT) {
     $logger = new Logger();
     $logger->logMessage("Session timeout for user: " . $_SESSION['user_id']." in ".$_SERVER["SCRIPT_NAME"]);
-    LogStream::info("Session expired", [
-        "user_id" => $_SESSION['user_id'],
-        "script" => $_SERVER["SCRIPT_NAME"],
-        "idle_seconds" => time() - $_SESSION['last_activity'],
-    ], "security");
+    (new LogStream())->info("Session of user {user_id} expired on {script} after {idle_seconds}s idle", ["user_id" => $_SESSION['user_id'], "script" => $_SERVER["SCRIPT_NAME"], "idle_seconds" => (time() - $_SESSION['last_activity'])], "security");
     session_unset();
     session_destroy();
     sendErrorResponse("Session expired. Please log in again.", 401);
@@ -83,11 +75,7 @@ if (!isset($_SESSION['request_count'])) {
         if ($_SESSION['request_count'] > MAX_REQUESTS_PER_MINUTE) {
             $logger = new Logger();
             $logger->logMessage("Rate limit exceeded for user: " . $_SESSION['user_id']);
-            LogStream::warning("Rate limit exceeded", [
-                "user_id" => $_SESSION['user_id'],
-                "request_count" => $_SESSION['request_count'],
-                "script" => $_SERVER["SCRIPT_NAME"],
-            ], "security");
+            (new LogStream())->warning("Rate limit exceeded by user {user_id} on {script}: {request_count} requests", ["user_id" => $_SESSION['user_id'], "request_count" => $_SESSION['request_count'], "script" => $_SERVER["SCRIPT_NAME"]], "security");
             sendErrorResponse("Too many requests", 429);
         }
         $_SESSION['request_count']++;
@@ -99,5 +87,9 @@ if (!isset($_SESSION['request_count'])) {
 
 $_SESSION['last_activity'] = time();
 $userId = $_SESSION['user_id'];
+
+$logStream = new LogStream();
+$logStream->setUserId($userId);
+$logStream->info("API request {request.method} {request.path} received", null, "api");
 
 session_write_close();

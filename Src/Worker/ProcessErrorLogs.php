@@ -60,7 +60,7 @@ function workerStarted(): void
 // Bootstrap
 // ---------------------------------------------------------------------------
 
-LogStream::initialize();
+$logStream = new LogStream();
 
 $stats = ['files' => 0, 'processed' => 0, 'inserted' => 0, 'skipped' => 0, 'errors' => 0];
 
@@ -71,7 +71,7 @@ try {
 } catch (Throwable $e) {
     workerStarted();
     workerLog('FATAL: could not initialise services — ' . $e->getMessage());
-    LogStream::critical("ProcessErrorLogs failed to initialise services", ["error" => $e->getMessage()], "worker");
+    $logStream->critical("{worker} failed to initialise services: {error}", ["worker" => "ProcessErrorLogs", "error" => $e->getMessage(), "exception" => $e], "worker");
     exit(1);
 }
 
@@ -84,7 +84,7 @@ try {
 } catch (Throwable $e) {
     workerStarted();
     workerLog('FATAL: could not query cPanel for error_log files — ' . $e->getMessage());
-    LogStream::critical("ProcessErrorLogs failed to query cPanel", ["error" => $e->getMessage()], "worker");
+    $logStream->critical("{worker} failed to query cPanel for error_log files: {error}", ["worker" => "ProcessErrorLogs", "error" => $e->getMessage(), "exception" => $e], "worker");
     exit(1);
 }
 
@@ -96,7 +96,7 @@ if ($stats['files'] === 0) {
 
 workerStarted();
 workerLog("Found {$stats['files']} error_log file(s)");
-LogStream::info("ProcessErrorLogs worker started", ["files_found" => $stats['files']], "worker");
+$logStream->info("{worker} worker started with {files_found} error_log file(s)", ["worker" => "ProcessErrorLogs", "files_found" => $stats['files']], "worker");
 
 // ---------------------------------------------------------------------------
 // Process each file
@@ -111,7 +111,7 @@ foreach ($files as $fileInfo) {
     // Step 1 — rename to lock the file against concurrent cron runs
     if (!$cPanel->renameFile($fullPath, $processingPath)) {
         workerLog("  WARN: rename failed, skipping");
-        LogStream::warning("Could not lock error log file for processing", ["path" => $fullPath], "worker");
+        $logStream->warning("Could not lock error log file {path} for processing", ["worker" => "ProcessErrorLogs", "path" => $fullPath], "worker");
         $stats['errors']++;
         continue;
     }
@@ -120,7 +120,7 @@ foreach ($files as $fileInfo) {
     $content = $cPanel->readFile($processingPath);
     if ($content === null || trim($content['contents']) === '') {
         workerLog("  WARN: file is empty or unreadable, deleting");
-        LogStream::warning("Error log file is empty or unreadable", ["path" => $processingPath], "worker");
+        $logStream->warning("Error log file {path} is empty or unreadable", ["worker" => "ProcessErrorLogs", "path" => $processingPath, "unreadable" => ($content === null)], "worker");
         $cPanel->deleteFile($processingPath);
         $stats['errors']++;
         continue;
@@ -131,13 +131,14 @@ foreach ($files as $fileInfo) {
         $entries = $parser->parse($content['contents']);
     } catch (Throwable $e) {
         workerLog("  ERROR: parse failed — " . $e->getMessage() . ", deleting");
-        LogStream::error("Failed to parse error log file", ["path" => $processingPath, "error" => $e->getMessage()], "worker");
+        $logStream->error("Failed to parse error log file {path}: {error}", ["worker" => "ProcessErrorLogs", "path" => $processingPath, "error" => $e->getMessage(), "exception" => $e], "worker");
         $cPanel->deleteFile($processingPath);
         $stats['errors']++;
         continue;
     }
 
     workerLog("  Parsed " . count($entries) . " entr(ies)");
+    $logStream->info("Parsed {entries} entries from error log file {path}", ["worker" => "ProcessErrorLogs", "path" => $fullPath, "entries" => count($entries)], "worker");
 
     // Step 4 — persist each entry
     foreach ($entries as $entry) {
@@ -194,4 +195,4 @@ workerLog(sprintf(
     $stats['skipped'],
     $stats['errors']
 ));
-LogStream::info("ProcessErrorLogs worker completed", array_merge($stats, ["elapsed_seconds" => $elapsed]), "worker");
+$logStream->info("{worker} worker completed in {elapsed_seconds}s: {processed}/{files} files processed, {inserted} inserted, {skipped} skipped, {errors} errors", array_merge($stats, ["worker" => "ProcessErrorLogs", "elapsed_seconds" => $elapsed]), "worker");

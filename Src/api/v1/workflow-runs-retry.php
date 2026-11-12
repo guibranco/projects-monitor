@@ -6,7 +6,6 @@ require_once '../../vendor/autoload.php';
 header('Content-Type: application/json');
 
 use GuiBranco\ProjectsMonitor\Library\Webhooks;
-use GuiBranco\ProjectsMonitor\Library\LogStream;
 
 $requestBody = file_get_contents("php://input");
 $input = json_decode($requestBody, true);
@@ -21,11 +20,6 @@ if (json_last_error() !== JSON_ERROR_NONE || $workflowRunId === false) {
     exit;
 }
 
-LogStream::info(
-    "API request received",
-    ["endpoint" => "POST /api/v1/workflow-runs/retry", "workflow_run_id" => $workflowRunId],
-    "api"
-);
 
 $webhooks = new Webhooks();
 $result = $webhooks->retryWorkflowRun($workflowRunId);

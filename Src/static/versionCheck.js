@@ -194,14 +194,14 @@
   // the bare one); for JS modules it also parses the static and dynamic
   // imports and recurses, so the whole import graph is refreshed.
   function refreshAsset(asset, seen, done) {
-    if (seen.indexOf(asset.href) !== -1) {
+    if (seen.includes(asset.href)) {
       done();
       return;
     }
     seen.push(asset.href);
 
     var tasks = [];
-    if (asset.bare !== asset.href && seen.indexOf(asset.bare) === -1) {
+    if (asset.bare !== asset.href && !seen.includes(asset.bare)) {
       seen.push(asset.bare);
       tasks.push(function (callback) {
         refetch(asset.bare).then(callback, callback);
@@ -210,13 +210,14 @@
     tasks.push(function (callback) {
       refetch(asset.href)
         .then(function (response) {
-          if (!asset.module || !response.ok) {
+          return asset.module && response.ok ? response.text() : null;
+        })
+        .then(function (source) {
+          if (source === null) {
             callback();
             return;
           }
-          response.text().then(function (source) {
-            refreshImports(source, asset.href, seen, callback);
-          }, callback);
+          refreshImports(source, asset.href, seen, callback);
         })
         .catch(callback);
     });
@@ -266,11 +267,18 @@
       .catch(done);
   }
 
+  // Current query-string parts, minus any cache-buster parameter.
+  function paramsWithoutBuster() {
+    return window.location.search
+      .replace(/^\?/, "")
+      .split("&")
+      .filter(function (part) {
+        return part !== "" && !part.startsWith(BUST_PARAM + "=");
+      });
+  }
+
   function reloadWithBuster(version) {
-    var search = window.location.search.replace(/^\?/, "");
-    var params = search.split("&").filter(function (part) {
-      return part !== "" && part.indexOf(BUST_PARAM + "=") !== 0;
-    });
+    var params = paramsWithoutBuster();
     params.push(
       BUST_PARAM + "=" + encodeURIComponent(version + "-" + Date.now()),
     );
@@ -308,11 +316,10 @@
   // Removes the one-off cache-buster parameter from the address bar after a
   // busted reload, so it doesn't end up in bookmarks or shared links.
   function cleanBusterParam() {
-    var search = window.location.search.replace(/^\?/, "");
-    var params = search.split("&").filter(function (part) {
-      return part !== "" && part.indexOf(BUST_PARAM + "=") !== 0;
-    });
-    if (params.length === search.split("&").filter(Boolean).length) {
+    var params = paramsWithoutBuster();
+    if (
+      params.length === window.location.search.split("&").filter(Boolean).length
+    ) {
       return;
     }
     try {

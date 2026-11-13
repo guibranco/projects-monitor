@@ -7,3 +7,13 @@ RewriteEngine On
 RewriteCond %{HTTP_HOST} !^localhost:8000$ [NC]
 RewriteCond %{HTTP_HOST} !^guilherme\.straccini\.com$ [NC]
 RewriteRule ^(.*)$ https://guilherme.straccini.com/projects-monitor/$1 [L,R=301]
+
+# Never cache the dashboard pages' HTML: it carries the mtime-stamped asset
+# URLs (main.js?<mtime>, ...), so a stale copy would keep pointing the browser
+# at outdated JS/CSS after a deploy (see static/versionCheck.js).
+<IfModule mod_headers.c>
+    <FilesMatch "^(index|releases|dns)\.php$">
+        Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+        Header set Pragma "no-cache"
+    </FilesMatch>
+</IfModule>

@@ -175,6 +175,33 @@ class BrokerUsagePresenterTest extends TestCase
 
 
     /**
+     * A broker with zero published payloads still shows "0" in its badge.
+     *
+     * @return void
+     */
+    public function testPresentKeepsZeroInPublishedBadge(): void
+    {
+        $response = [
+                     'period'  => '2026-11',
+                     'brokers' => [
+                                   [
+                                    'broker'       => 'BROKER_URL_1',
+                                    'messageCount' => 0,
+                                    'monthlyLimit' => 100,
+                                   ],
+                                  ],
+                    ];
+
+        $presenter = new BrokerUsagePresenter();
+
+        $row = $presenter->present($response)['brokers'][1];
+
+        $this->assertStringContainsString('https://img.shields.io/badge/published-0-blue?', $row[1]);
+
+    }//end testPresentKeepsZeroInPublishedBadge()
+
+
+    /**
      * No brokers yields a header-only table and zero totals.
      *
      * @return void

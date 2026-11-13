@@ -27,10 +27,6 @@ $username = $_SESSION['username'] ?? '';
 session_write_close();
 
 $configuration = new Configuration();
-// Never cache this HTML: it carries the mtime-stamped asset URLs, so a stale
-// copy would keep pointing the browser at outdated JS/CSS after a deploy.
-header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-header('Pragma: no-cache');
 ?>
 <!DOCTYPE html>
 <html lang="en">

@@ -84,7 +84,10 @@
     reloadBtn.className = "version-reload";
     reloadBtn.textContent = "Reload now";
     reloadBtn.addEventListener("click", function () {
-      window.location.reload();
+      reloadBtn.disabled = true;
+      dismissBtn.disabled = true;
+      reloadBtn.textContent = "Updating…";
+      bustCacheAndReload(newVersion);
     });
 
     var dismissBtn = document.createElement("button");
@@ -100,6 +103,235 @@
     banner.appendChild(reloadBtn);
     banner.appendChild(dismissBtn);
     document.body.appendChild(banner);
+  }
+
+  // ---------------------------------------------------------------------
+  // Cache busting
+  //
+  // A plain location.reload() is not enough after a deploy: index.php only
+  // versions the entry points (main.js?<mtime>), but the ES modules they
+  // import (./api.js, ./ui.js, ./constants.js, ...) are requested by bare URL
+  // and are served from the browser's HTTP cache. The reload then runs the
+  // new main.js against stale modules (or the old main.js altogether), which
+  // breaks any feature that depends on new JS.
+  //
+  // So before reloading we:
+  //   1. wipe the Cache Storage API (service-worker caches), if any;
+  //   2. walk every same-origin script/stylesheet on the page plus the full
+  //      ES module import graph, and re-fetch each with cache: "reload",
+  //      which bypasses the HTTP cache AND overwrites the stored entry;
+  //   3. navigate to the page with a one-off query parameter, so the HTML
+  //      (and the mtime-stamped URLs inside it) is fetched fresh too.
+  // Every step is best-effort and bounded by a timeout: whatever happens,
+  // the page is reloaded.
+  // ---------------------------------------------------------------------
+
+  var BUST_PARAM = "_pmv";
+  var BUST_TIMEOUT_MS = 8000;
+  // Matches `from "x"`, `import "x"` and `import("x")`. The specifier is
+  // filtered to JS files in code, keeping this pattern linear-time.
+  var IMPORT_PATTERN = /\b(?:from|import)[\s(]*["']([^"'\n]+)["']/g;
+  var JS_FILE_PATTERN = /\.m?js(?:\?|$)/;
+
+  // Resolves `spec` against `base` with an anchor element (no URL API
+  // needed) and returns the parts used below.
+  function resolve(spec, base) {
+    var target = spec;
+    if (!/^(?:[a-z][a-z0-9+.-]*:|\/)/i.test(spec) && base) {
+      target = base.slice(0, base.lastIndexOf("/") + 1) + spec;
+    }
+    var anchor = document.createElement("a");
+    anchor.href = target;
+    var origin = anchor.protocol + "//" + anchor.host;
+    return {
+      href: anchor.href,
+      bare: origin + anchor.pathname,
+      sameOrigin:
+        origin === window.location.protocol + "//" + window.location.host,
+    };
+  }
+
+  // Runs each task (a function taking a callback) and calls `done` once all
+  // of them have called back.
+  function runAll(tasks, done) {
+    var pending = tasks.length;
+    if (pending === 0) {
+      done();
+      return;
+    }
+    tasks.forEach(function (task) {
+      task(function () {
+        pending -= 1;
+        if (pending === 0) {
+          done();
+        }
+      });
+    });
+  }
+
+  function collectPageAssets() {
+    var assets = [];
+    var selector =
+      "script[src], link[rel~='stylesheet'][href], link[rel='modulepreload'][href]";
+    var nodes = document.querySelectorAll(selector);
+    Array.prototype.forEach.call(nodes, function (node) {
+      var asset = resolve(node.src || node.href, null);
+      if (asset.sameOrigin) {
+        asset.module = node.type === "module";
+        assets.push(asset);
+      }
+    });
+    return assets;
+  }
+
+  function refetch(url) {
+    // Only reached when fetch exists (checked in bustCacheAndReload).
+    // eslint-disable-next-line compat/compat
+    return window.fetch(url, { cache: "reload", credentials: "same-origin" });
+  }
+
+  // Re-fetches an asset (both its stamped and bare URL, since modules import
+  // the bare one); for JS modules it also parses the static and dynamic
+  // imports and recurses, so the whole import graph is refreshed.
+  function refreshAsset(asset, seen, done) {
+    if (seen.includes(asset.href)) {
+      done();
+      return;
+    }
+    seen.push(asset.href);
+
+    var tasks = [];
+    if (asset.bare !== asset.href && !seen.includes(asset.bare)) {
+      seen.push(asset.bare);
+      tasks.push(function (callback) {
+        refetch(asset.bare).then(callback, callback);
+      });
+    }
+    tasks.push(function (callback) {
+      refetch(asset.href)
+        .then(function (response) {
+          return asset.module && response.ok ? response.text() : null;
+        })
+        .then(function (source) {
+          if (source === null) {
+            callback();
+            return;
+          }
+          refreshImports(source, asset.href, seen, callback);
+        })
+        .catch(callback);
+    });
+    runAll(tasks, done);
+  }
+
+  function refreshImports(source, base, seen, done) {
+    var children = [];
+    var match = IMPORT_PATTERN.exec(source);
+    while (match !== null) {
+      if (JS_FILE_PATTERN.test(match[1])) {
+        var child = resolve(match[1], base);
+        if (child.sameOrigin) {
+          child.module = true;
+          children.push(child);
+        }
+      }
+      match = IMPORT_PATTERN.exec(source);
+    }
+    runAll(
+      children.map(function (child) {
+        return function (callback) {
+          refreshAsset(child, seen, callback);
+        };
+      }),
+      done,
+    );
+  }
+
+  function clearCacheStorage(done) {
+    if (!window.caches || typeof window.caches.keys !== "function") {
+      done();
+      return;
+    }
+    window.caches
+      .keys()
+      .then(function (keys) {
+        runAll(
+          keys.map(function (key) {
+            return function (callback) {
+              window.caches.delete(key).then(callback, callback);
+            };
+          }),
+          done,
+        );
+      })
+      .catch(done);
+  }
+
+  // Current query-string parts, minus any cache-buster parameter.
+  function paramsWithoutBuster() {
+    return window.location.search
+      .replace(/^\?/, "")
+      .split("&")
+      .filter(function (part) {
+        return part !== "" && !part.startsWith(BUST_PARAM + "=");
+      });
+  }
+
+  function reloadWithBuster(version) {
+    var params = paramsWithoutBuster();
+    params.push(
+      BUST_PARAM + "=" + encodeURIComponent(version + "-" + Date.now()),
+    );
+    window.location.replace(
+      window.location.pathname + "?" + params.join("&") + window.location.hash,
+    );
+  }
+
+  function bustCacheAndReload(version) {
+    var finished = false;
+    function finish() {
+      if (!finished) {
+        finished = true;
+        reloadWithBuster(version);
+      }
+    }
+
+    if (typeof window.fetch !== "function") {
+      finish();
+      return;
+    }
+
+    setTimeout(finish, BUST_TIMEOUT_MS);
+
+    var seen = [];
+    var tasks = collectPageAssets().map(function (asset) {
+      return function (callback) {
+        refreshAsset(asset, seen, callback);
+      };
+    });
+    tasks.push(clearCacheStorage);
+    runAll(tasks, finish);
+  }
+
+  // Removes the one-off cache-buster parameter from the address bar after a
+  // busted reload, so it doesn't end up in bookmarks or shared links.
+  function cleanBusterParam() {
+    var params = paramsWithoutBuster();
+    if (
+      params.length === window.location.search.split("&").filter(Boolean).length
+    ) {
+      return;
+    }
+    try {
+      var query = params.length > 0 ? "?" + params.join("&") : "";
+      window.history.replaceState(
+        window.history.state,
+        "",
+        window.location.pathname + query + window.location.hash,
+      );
+    } catch (e) {
+      // History API unavailable — the parameter is harmless.
+    }
   }
 
   function checkForUpdate(serverVersion) {
@@ -118,5 +350,6 @@
     }, POLL_INTERVAL_MS);
   }
 
+  cleanBusterParam();
   fetchVersion(init);
 })();

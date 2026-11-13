@@ -12,7 +12,7 @@ RUN apt-get update \
        unzip \
        zip \
     # Enable Apache modules
-    && a2enmod rewrite \
+    && a2enmod rewrite headers \
     # Install PHP extensions
     && docker-php-ext-install -j$(nproc) \
        mbstring \

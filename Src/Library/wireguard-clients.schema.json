@@ -1,0 +1,30 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "WireGuard clients",
+    "description": "Maps each WireGuard peer's allowed IPs (as reported by the monitor-report script) to a human-readable client name shown on the dashboard.",
+    "type": "object",
+    "required": ["version", "clients"],
+    "additionalProperties": false,
+    "properties": {
+        "$schema": { "type": "string" },
+        "version": { "type": "integer", "minimum": 1 },
+        "clients": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": ["allowedIps", "name"],
+                "additionalProperties": false,
+                "properties": {
+                    "allowedIps": {
+                        "type": "string",
+                        "description": "The peer's allowed IPs exactly as WireGuard reports them, e.g. \"10.141.230.2/32\"."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Display name for the client."
+                    }
+                }
+            }
+        }
+    }
+}

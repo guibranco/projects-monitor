@@ -105,18 +105,28 @@ class SSH
         }
     }
 
-    private function mapPeerToHostname($peerName)
+    /**
+     * Loads the WireGuard client name mapping from wireguard-clients.json.
+     * A missing or invalid file is logged and yields an empty mapping, so
+     * peers are still listed (by their allowed IPs) instead of the whole
+     * WireGuard tile failing.
+     *
+     * @return array<string, string> allowedIps => client name.
+     */
+    private function loadWireGuardClients(): array
     {
-        $peers = [
-            '10.141.230.2/32' => 'GH Actions - Projects Monitor',
-            '10.141.230.3/32' => 'GH Actions - Webhooks',
-            '10.141.230.4/32' => 'iPhone Beatriz Jesus',
-            '10.141.230.5/32' => 'GH Actions - API BR - Vagas Aggregator',
-            '10.141.230.6/32' => 'GH Actions - API BR - Sports Agenda',
-            '10.141.230.7/32' => 'GH Actions - LogStream Server',
-        ];
+        try {
+            $config = new WireGuardClientsConfig();
+        } catch (WireGuardClientsConfigException $e) {
+            (new LogStream())->error("Invalid WireGuard clients configuration: {reason}", ["reason" => $e->getMessage(), "exception" => $e], "wireguard");
+            return [];
+        }
 
-        return $peers[$peerName] ?? $peerName;
+        if (!$config->isLoaded()) {
+            (new LogStream())->warning("WireGuard clients configuration not found at {path}; showing peers by allowed IPs", ["path" => $config->getConfigPath()], "wireguard");
+        }
+
+        return $config->getClients();
     }
 
     /**
@@ -172,6 +182,7 @@ class SSH
     private function formatWireGuardPeers(array $peers): array
     {
         $shields = new ShieldsIo();
+        $clients = $this->loadWireGuardClients();
 
         $rows = [];
         $rows[] = ["Peer", "Status", "Last Handshake", "Received", "Sent"];
@@ -198,8 +209,10 @@ class SSH
             $status = $shields->generateBadgeUrl($label, $content, $color, "for-the-badge", "white", null);
             $statusImg = "<img src='$status' alt='Status' />";
 
+            $allowedIps = (string) ($peer['allowed_ips'] ?? '');
+
             $rows[] = array(
-                $this->mapPeerToHostname($peer['allowed_ips'] ?? ''),
+                $clients[$allowedIps] ?? $allowedIps,
                 $statusImg,
                 $hasHandshake ? date("Y-m-d H:i:s", $handshakeTimestamp) : 'Never',
                 $this->formatBytes((int) ($peer['rx_bytes'] ?? 0)),

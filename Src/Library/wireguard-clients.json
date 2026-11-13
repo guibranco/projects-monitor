@@ -1,0 +1,12 @@
+{
+    "$schema": "./wireguard-clients.schema.json",
+    "version": 1,
+    "clients": [
+        { "allowedIps": "10.141.230.2/32", "name": "GH Actions - Projects Monitor" },
+        { "allowedIps": "10.141.230.3/32", "name": "GH Actions - Webhooks" },
+        { "allowedIps": "10.141.230.4/32", "name": "iPhone Beatriz Jesus" },
+        { "allowedIps": "10.141.230.5/32", "name": "GH Actions - API BR - Vagas Aggregator" },
+        { "allowedIps": "10.141.230.6/32", "name": "GH Actions - API BR - Sports Agenda" },
+        { "allowedIps": "10.141.230.7/32", "name": "GH Actions - LogStream Server" }
+    ]
+}

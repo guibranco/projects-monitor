@@ -1,176 +1,188 @@
 <?php
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use GuiBranco\ProjectsMonitor\Library\WireGuardClientsConfig;
 use GuiBranco\ProjectsMonitor\Library\WireGuardClientsConfigException;
 
-/** Tests WireGuardClientsConfig's loading, schema validation and graceful handling of a missing file. */
+/**
+ * Tests WireGuardClientsConfig's loading, validation and graceful handling of a missing file.
+ */
 class WireGuardClientsConfigTest extends TestCase
 {
+    private const VALID_CONFIG = '{"version": 1, "clients": [{"allowedIps": "10.0.0.2/32", "name": "Client A"}, {"allowedIps": "10.0.0.3/32", "name": "Client B"}]}';
+
+    /**
+     * Temp fixture files written during the test.
+     *
+     * @var array
+     */
     private array $writtenFiles = [];
 
-    /** Deletes any temp fixture files written during the test. */
+
+    /**
+     * Deletes the temp fixture files written during the test.
+     *
+     * @return void
+     */
     protected function tearDown(): void
     {
         foreach ($this->writtenFiles as $path) {
-            if (file_exists($path)) {
+            if (file_exists($path) === true) {
                 unlink($path);
             }
         }
-        $this->writtenFiles = [];
-    }
 
-    /** Writes raw contents to a temp fixture file, tracked for cleanup. */
-    private function writeRaw(string $contents): string
+        $this->writtenFiles = [];
+
+    }//end tearDown()
+
+
+    /**
+     * Writes the contents to a temp fixture file, tracked for cleanup.
+     *
+     * @param string $contents Contents of the fixture file.
+     *
+     * @return string Path of the fixture file.
+     */
+    private function getFixturePath(string $contents): string
     {
-        $path = sys_get_temp_dir() . "/wireguard-clients-" . uniqid("", true) . ".json";
+        $path = sprintf('%s/wireguard-clients-%s.json', sys_get_temp_dir(), uniqid('', true));
         file_put_contents($path, $contents);
         $this->writtenFiles[] = $path;
+
         return $path;
-    }
 
-    /** Writes $data as a temp JSON fixture file. */
-    private function writeFixture(array $data): string
-    {
-        return $this->writeRaw(json_encode($data));
-    }
+    }//end getFixturePath()
 
-    private function baseConfig(): array
-    {
-        return [
-            "version" => 1,
-            "clients" => [
-                ["allowedIps" => "10.0.0.2/32", "name" => "Client A"],
-                ["allowedIps" => "10.0.0.3/32", "name" => "Client B"],
-            ],
-        ];
-    }
 
-    /** The committed wireguard-clients.json must load cleanly against its schema. */
+    /**
+     * The committed wireguard-clients.json must load cleanly.
+     *
+     * @return void
+     */
     public function testShippedConfigIsValid(): void
     {
-        $config = new WireGuardClientsConfig();
+        $config = new WireGuardClientsConfig(sprintf('%s/../../Src/Library/wireguard-clients.json', __DIR__));
 
         $this->assertTrue($config->isLoaded());
         $this->assertNotEmpty($config->getClients());
-        $this->assertSame("GH Actions - Projects Monitor", $config->getClientName("10.141.230.2/32"));
-    }
+        $this->assertSame('GH Actions - Projects Monitor', $config->getClients()['10.141.230.2/32']);
 
+    }//end testShippedConfigIsValid()
+
+
+    /**
+     * A valid file is loaded into an allowed IPs to name mapping.
+     *
+     * @return void
+     */
     public function testLoadsClientsFromJson(): void
     {
-        $config = new WireGuardClientsConfig($this->writeFixture($this->baseConfig()));
+        $config = new WireGuardClientsConfig($this->getFixturePath(self::VALID_CONFIG));
 
         $this->assertTrue($config->isLoaded());
-        $this->assertSame(["10.0.0.2/32" => "Client A", "10.0.0.3/32" => "Client B"], $config->getClients());
-        $this->assertSame("Client B", $config->getClientName("10.0.0.3/32"));
-    }
+        $this->assertSame(['10.0.0.2/32' => 'Client A', '10.0.0.3/32' => 'Client B'], $config->getClients());
 
-    public function testUnmappedPeerFallsBackToAllowedIps(): void
-    {
-        $config = new WireGuardClientsConfig($this->writeFixture($this->baseConfig()));
+    }//end testLoadsClientsFromJson()
 
-        $this->assertSame("10.0.0.99/32", $config->getClientName("10.0.0.99/32"));
-    }
 
+    /**
+     * A missing file gives an empty mapping instead of an error.
+     *
+     * @return void
+     */
     public function testMissingFileIsHandledGracefully(): void
     {
-        $config = new WireGuardClientsConfig(sys_get_temp_dir() . "/does-not-exist-" . uniqid() . ".json");
+        $config = new WireGuardClientsConfig(sprintf('%s/does-not-exist-%s.json', sys_get_temp_dir(), uniqid()));
 
         $this->assertFalse($config->isLoaded());
         $this->assertSame([], $config->getClients());
-        $this->assertSame("10.0.0.2/32", $config->getClientName("10.0.0.2/32"));
-    }
 
+    }//end testMissingFileIsHandledGracefully()
+
+
+    /**
+     * An empty clients list is valid.
+     *
+     * @return void
+     */
     public function testEmptyClientListIsValid(): void
     {
-        $data = $this->baseConfig();
-        $data["clients"] = [];
-
-        $config = new WireGuardClientsConfig($this->writeFixture($data));
+        $config = new WireGuardClientsConfig($this->getFixturePath('{"version": 1, "clients": []}'));
 
         $this->assertTrue($config->isLoaded());
         $this->assertSame([], $config->getClients());
-    }
 
-    public function testMalformedJsonThrows(): void
+    }//end testEmptyClientListIsValid()
+
+
+    /**
+     * An invalid file throws an exception whose message names the problem.
+     *
+     * @param string $contents        Contents of the configuration file.
+     * @param string $expectedMessage Part of the expected exception message.
+     *
+     * @return void
+     */
+    #[DataProvider('getInvalidConfigs')]
+    public function testInvalidConfigThrows(string $contents, string $expectedMessage): void
     {
-        $this->expectException(WireGuardClientsConfigException::class);
-        $this->expectExceptionMessage("Invalid JSON");
-
-        new WireGuardClientsConfig($this->writeRaw('{"version": 1, "clients": ['));
-    }
-
-    public function testNonObjectRootThrows(): void
-    {
-        $this->expectException(WireGuardClientsConfigException::class);
-        $this->expectExceptionMessage("root must be a JSON object");
-
-        new WireGuardClientsConfig($this->writeRaw('[]'));
-    }
-
-    public function testMissingClientsPropertyThrows(): void
-    {
-        $data = $this->baseConfig();
-        unset($data["clients"]);
+        $path = $this->getFixturePath($contents);
 
         $this->expectException(WireGuardClientsConfigException::class);
-        $this->expectExceptionMessage("missing required property 'clients'");
+        $this->expectExceptionMessage($expectedMessage);
 
-        new WireGuardClientsConfig($this->writeFixture($data));
-    }
+        new WireGuardClientsConfig($path);
 
-    public function testClientMissingNameThrows(): void
+    }//end testInvalidConfigThrows()
+
+
+    /**
+     * Invalid configuration files and the error each one must produce.
+     *
+     * @return array Test cases keyed by description, each with the file contents and the expected message.
+     */
+    public static function getInvalidConfigs(): array
     {
-        $data = $this->baseConfig();
-        unset($data["clients"][1]["name"]);
+        $cases = [];
+        $cases['malformed JSON'] = self::getCase('{"version": 1, "clients": [', 'Invalid JSON');
+        $cases['empty file'] = self::getCase('', 'Invalid JSON');
+        $cases['non-object root'] = self::getCase('[]', '$ must be a JSON object');
+        $cases['missing version'] = self::getCase('{"clients": []}', '$.version must be an integer >= 1');
+        $cases['zero version'] = self::getCase('{"version": 0, "clients": []}', '$.version must be an integer >= 1');
+        $cases['missing clients'] = self::getCase('{"version": 1}', '$.clients must be an array');
+        $cases['unexpected root property'] = self::getCase('{"version": 1, "clients": [], "peers": []}', "$: unexpected property 'peers'");
+        $cases['client not an object'] = self::getCase('{"version": 1, "clients": ["10.0.0.2/32"]}', '$.clients[0] must be an object');
+        $cases['client missing name'] = self::getCase('{"version": 1, "clients": [{"allowedIps": "10.0.0.2/32"}]}', '$.clients[0].name must be a non-empty string');
+        $cases['client name not a string'] = self::getCase('{"version": 1, "clients": [{"allowedIps": "10.0.0.2/32", "name": 42}]}', '$.clients[0].name must be a non-empty string');
+        $cases['client blank name'] = self::getCase('{"version": 1, "clients": [{"allowedIps": "10.0.0.2/32", "name": "  "}]}', '$.clients[0].name must be a non-empty string');
+        $cases['client blank allowedIps'] = self::getCase('{"version": 1, "clients": [{"allowedIps": "", "name": "A"}]}', '$.clients[0].allowedIps must be a non-empty string');
+        $cases['unexpected client property'] = self::getCase('{"version": 1, "clients": [{"allowedIps": "10.0.0.2/32", "name": "A", "ip": "10.0.0.2"}]}', "$.clients[0]: unexpected property 'ip'");
+        $cases['duplicate allowedIps'] = self::getCase(str_replace('10.0.0.3/32', '10.0.0.2/32', self::VALID_CONFIG), "$.clients[1] repeats allowedIps '10.0.0.2/32' (already mapped to 'Client A')");
 
-        $this->expectException(WireGuardClientsConfigException::class);
-        $this->expectExceptionMessage("\$.clients[1]: missing required property 'name'");
+        return $cases;
 
-        new WireGuardClientsConfig($this->writeFixture($data));
-    }
+    }//end getInvalidConfigs()
 
-    public function testUnexpectedPropertyThrows(): void
+
+    /**
+     * Builds one data provider case.
+     *
+     * @param string $contents        Contents of the configuration file.
+     * @param string $expectedMessage Part of the expected exception message.
+     *
+     * @return array The case's arguments, in order.
+     */
+    private static function getCase(string $contents, string $expectedMessage): array
     {
-        $data = $this->baseConfig();
-        $data["clients"][0]["ip"] = "10.0.0.2";
+        $case = [];
+        $case[] = $contents;
+        $case[] = $expectedMessage;
 
-        $this->expectException(WireGuardClientsConfigException::class);
-        $this->expectExceptionMessage("unexpected property 'ip'");
+        return $case;
 
-        new WireGuardClientsConfig($this->writeFixture($data));
-    }
+    }//end getCase()
 
-    public function testWrongTypeThrows(): void
-    {
-        $data = $this->baseConfig();
-        $data["clients"][0]["name"] = 42;
 
-        $this->expectException(WireGuardClientsConfigException::class);
-        $this->expectExceptionMessage("\$.clients[0].name: expected type string, got integer");
-
-        new WireGuardClientsConfig($this->writeFixture($data));
-    }
-
-    public function testBlankNameThrows(): void
-    {
-        $data = $this->baseConfig();
-        $data["clients"][0]["name"] = "   ";
-
-        $this->expectException(WireGuardClientsConfigException::class);
-        $this->expectExceptionMessage("non-empty");
-
-        new WireGuardClientsConfig($this->writeFixture($data));
-    }
-
-    public function testDuplicateAllowedIpsThrows(): void
-    {
-        $data = $this->baseConfig();
-        $data["clients"][1]["allowedIps"] = "10.0.0.2/32";
-
-        $this->expectException(WireGuardClientsConfigException::class);
-        $this->expectExceptionMessage("repeats allowedIps '10.0.0.2/32' (already mapped to 'Client A')");
-
-        new WireGuardClientsConfig($this->writeFixture($data));
-    }
-}
+}//end class

@@ -118,22 +118,40 @@ Cloudflare tile still lists the zones, with a dash in every traffic column.
 
 ### WireGuard clients
 
-The WireGuard tile lists each peer reported by the `monitor-report` script. `Src/Library/wireguard-clients.json` (validated against `wireguard-clients.schema.json`) maps a peer's allowed IPs to the name shown in the **Peer** column — see [WireGuardClientsConfig.php](Src/Library/WireGuardClientsConfig.php). To add, rename or remove a client, edit the JSON; no code change is needed.
+The WireGuard tile lists each peer reported by the `monitor-report`
+script. `Src/Library/wireguard-clients.json` (validated by
+[WireGuardClientsConfig.php](Src/Library/WireGuardClientsConfig.php);
+`wireguard-clients.schema.json` describes it for editors) maps a peer's
+allowed IPs to the name shown in the **Peer** column. To add, rename or
+remove a client, edit the JSON; no code change is needed.
 
 ```json
 {
     "$schema": "./wireguard-clients.schema.json",
     "version": 1,
     "clients": [
-        { "allowedIps": "10.141.230.2/32", "name": "GH Actions - Projects Monitor" }
+        {
+            "allowedIps": "10.141.230.2/32",
+            "name": "GH Actions - Projects Monitor"
+        }
     ]
 }
 ```
 
-- `allowedIps` must match the peer's allowed IPs exactly as WireGuard reports them (including the `/32` suffix); `name` is the display name. Both are required and non-empty, and each `allowedIps` may appear only once.
+- `version` is an integer, currently `1`.
+- `allowedIps` must match the peer's allowed IPs exactly as WireGuard
+  reports them, `/32` suffix included; `name` is the display name. Both
+  are required, non-empty strings, and each `allowedIps` may appear only
+  once. No other property is allowed.
 - Peers without an entry are shown by their allowed IPs.
-- **Missing file**: the tile still works, showing every peer by its allowed IPs, and a warning is logged (category `wireguard`).
-- **Invalid file** (malformed JSON, a schema violation, a blank field or a duplicate `allowedIps`): `WireGuardClientsConfigException` names the file and the offending entry; it's logged as an error (category `wireguard`) and the tile falls back to allowed IPs.
+- **Missing file**: the tile still works, showing every peer by its
+  allowed IPs, and a warning is logged (category `wireguard`).
+- **Invalid file** (malformed JSON, a missing or unexpected property, a
+  wrong type, a blank value or a duplicate `allowedIps`): the
+  `WireGuardClientsConfigException` message names the file and the JSON
+  path at fault, e.g. `$.clients[1].name must be a non-empty string`. It
+  is logged as an error (category `wireguard`) and the tile falls back
+  to allowed IPs.
 
 ### Tests
 

@@ -30,6 +30,13 @@ class SSH
     private $reportCache = null;
 
     /**
+     * WireGuard peer name lookup, created on first use.
+     *
+     * @var WireGuardPeerNames|null
+     */
+    private $wireGuardPeerNames = null;
+
+    /**
      * Connects to the given host, or to the default host (the entry named
      * "Vinhedo1" in ssh.secrets.php, falling back to the first entry) when omitted.
      *
@@ -106,28 +113,20 @@ class SSH
     }
 
     /**
-     * Loads the WireGuard client name mapping from wireguard-clients.json.
-     * A missing or invalid file is logged and yields an empty mapping, so
-     * peers are still listed (by their allowed IPs) instead of the whole
-     * WireGuard tile failing.
+     * Maps a WireGuard peer's allowed IPs to the client name configured in
+     * wireguard-clients.json (see WireGuardPeerNames).
      *
-     * @return array<string, string> allowedIps => client name.
+     * @param string $peerName The peer's allowed IPs, as WireGuard reports them.
+     *
+     * @return string The client name, or the allowed IPs when they are not mapped.
      */
-    private function loadWireGuardClients(): array
+    private function mapPeerToHostname($peerName)
     {
-        try {
-            $config = new WireGuardClientsConfig();
-        } catch (WireGuardClientsConfigException $e) {
-            (new LogStream())->error("Invalid WireGuard clients configuration: {reason}", ["reason" => $e->getMessage(), "exception" => $e], "wireguard");
-            return [];
-        }
+        $this->wireGuardPeerNames ??= new WireGuardPeerNames(sprintf('%s/wireguard-clients.json', __DIR__), new LogStream());
 
-        if (!$config->isLoaded()) {
-            (new LogStream())->warning("WireGuard clients configuration not found at {path}; showing peers by allowed IPs", ["path" => $config->getConfigPath()], "wireguard");
-        }
+        return $this->wireGuardPeerNames->getName((string) $peerName);
 
-        return $config->getClients();
-    }
+    }//end mapPeerToHostname()
 
     /**
      * Runs the `monitor-report` script on the remote host (installed at
@@ -182,7 +181,6 @@ class SSH
     private function formatWireGuardPeers(array $peers): array
     {
         $shields = new ShieldsIo();
-        $clients = $this->loadWireGuardClients();
 
         $rows = [];
         $rows[] = ["Peer", "Status", "Last Handshake", "Received", "Sent"];
@@ -209,10 +207,8 @@ class SSH
             $status = $shields->generateBadgeUrl($label, $content, $color, "for-the-badge", "white", null);
             $statusImg = "<img src='$status' alt='Status' />";
 
-            $allowedIps = (string) ($peer['allowed_ips'] ?? '');
-
             $rows[] = array(
-                $clients[$allowedIps] ?? $allowedIps,
+                $this->mapPeerToHostname($peer['allowed_ips'] ?? ''),
                 $statusImg,
                 $hasHandshake ? date("Y-m-d H:i:s", $handshakeTimestamp) : 'Never',
                 $this->formatBytes((int) ($peer['rx_bytes'] ?? 0)),

@@ -45,7 +45,7 @@
         "domain": "progress-bar.xyz",
         "ip2whois": true,
         "registrar": "NameCheap",
-        "dnsManager": "NameCheap"
+        "dnsManager": "Cloudflare"
     },
     {
         "domain": "straccini.com",

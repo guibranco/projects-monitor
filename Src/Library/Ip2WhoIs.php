@@ -45,6 +45,24 @@ class Ip2WhoIs
         return json_decode(file_get_contents($file), true);
     }
 
+    /**
+     * Shows the detected value and flags it when it no longer matches domains.json.
+     */
+    private function describeDetected(?string $detected, ?string $configured): string
+    {
+        if (empty($detected)) {
+            return (string) $configured;
+        }
+
+        if (empty($configured) || stripos($detected, $configured) !== false) {
+            return $detected;
+        }
+
+        $detected = htmlspecialchars($detected, ENT_QUOTES);
+        $configured = htmlspecialchars($configured, ENT_QUOTES);
+        return "{$detected} <span title='domains.json says {$configured}'>⚠️</span>";
+    }
+
     public function getDomainValidity()
     {
         $domains = $this->getDomains();
@@ -55,7 +73,11 @@ class Ip2WhoIs
             $domain = $domainConfig["domain"];
             $link = "<a href='https://whois.domaintools.com/$domain' target='_blank' rel='noopener noreferrer'>$domain</a>";
             $registrar = $domainConfig["registrar"];
-            $dnsManager = $domainConfig["dnsManager"];
+            $liveNameservers = DnsProviderDetector::lookupNameservers($domain);
+            $dnsManager = $this->describeDetected(
+                DnsProviderDetector::detect($liveNameservers, $domainConfig["dnsManager"]),
+                $domainConfig["dnsManager"]
+            );
 
             if (empty($domainConfig["ip2whois"])) {
                 $data[] = [
@@ -105,8 +127,19 @@ class Ip2WhoIs
 
             $createdImg = "<img alt='Created date' src='https://img.shields.io/badge/" . str_replace("/", "%2F", $createdDate) . "-" . $createdDays . "_days-" . $createdColor . "?style=for-the-badge&labelColor=black' />";
             $expireImg = "<img alt='Expire date' src='https://img.shields.io/badge/" . str_replace("/", "%2F", $expireDate) . "-In_" . $expireDaysString . "_days-" . $expireColor . "?style=for-the-badge&labelColor=black' />";
+            if (empty($liveNameservers) && !empty($response->nameservers)) {
+                $dnsManager = $this->describeDetected(
+                    DnsProviderDetector::detect($response->nameservers, $domainConfig["dnsManager"]),
+                    $domainConfig["dnsManager"]
+                );
+            }
+
+            if (!empty($response->registrar->name)) {
+                $registrar = $this->describeDetected($response->registrar->name, $domainConfig["registrar"]);
+            }
+
             $status = preg_replace($pattern, '', $response->status);
-            $nameservers = implode(" ", $response->nameservers);
+            $nameservers = implode(" ", !empty($liveNameservers) ? $liveNameservers : $response->nameservers);
             $data[] = [
                 $link,
                 $registrar,

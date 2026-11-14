@@ -12,6 +12,13 @@ class Ip2WhoIs
 
     private $headers;
 
+    /**
+     * Detects the DNS provider of each domain.
+     *
+     * @var DnsProviderDetector
+     */
+    private $dnsDetector;
+
     public function __construct()
     {
         $config = new Configuration();
@@ -22,6 +29,7 @@ class Ip2WhoIs
             "Accept: application/json",
             constant("USER_AGENT")
         ];
+        $this->dnsDetector = new DnsProviderDetector();
     }
 
     private function getWhoIs($domain)
@@ -55,9 +63,10 @@ class Ip2WhoIs
             $domain = $domainConfig["domain"];
             $link = "<a href='https://whois.domaintools.com/$domain' target='_blank' rel='noopener noreferrer'>$domain</a>";
             $registrar = $domainConfig["registrar"];
-            $dnsManager = $domainConfig["dnsManager"];
+            $dnsManager = $this->dnsDetector->describeDomain($domain, [], $domainConfig["dnsManager"]);
 
             if (empty($domainConfig["ip2whois"])) {
+                $nameservers = $this->dnsDetector->formatNameservers($domain, []);
                 $data[] = [
                     $link,
                     $registrar,
@@ -65,7 +74,7 @@ class Ip2WhoIs
                     "-",
                     "-",
                     "-",
-                    "-"
+                    $nameservers
                 ];
                 continue;
             }
@@ -105,8 +114,10 @@ class Ip2WhoIs
 
             $createdImg = "<img alt='Created date' src='https://img.shields.io/badge/" . str_replace("/", "%2F", $createdDate) . "-" . $createdDays . "_days-" . $createdColor . "?style=for-the-badge&labelColor=black' />";
             $expireImg = "<img alt='Expire date' src='https://img.shields.io/badge/" . str_replace("/", "%2F", $expireDate) . "-In_" . $expireDaysString . "_days-" . $expireColor . "?style=for-the-badge&labelColor=black' />";
+            $dnsManager = $this->dnsDetector->describeDomain($domain, (array) $response->nameservers, $domainConfig["dnsManager"]);
+            $registrar = $this->dnsDetector->flagMismatch((string) ($response->registrar->name ?? ""), $domainConfig["registrar"]);
             $status = preg_replace($pattern, '', $response->status);
-            $nameservers = implode(" ", $response->nameservers);
+            $nameservers = $this->dnsDetector->formatNameservers($domain, (array) $response->nameservers);
             $data[] = [
                 $link,
                 $registrar,

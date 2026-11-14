@@ -1,0 +1,46 @@
+[
+    {
+        "pattern": "/(^|\\.)ns\\.cloudflare\\.com$/",
+        "name": "Cloudflare"
+    },
+    {
+        "pattern": "/(^|\\.)(registrar-servers|namecheaphosting)\\.com$/",
+        "name": "NameCheap"
+    },
+    {
+        "pattern": "/(^|\\.)dns\\.br$/",
+        "name": "Registro.br"
+    },
+    {
+        "pattern": "/(^|\\.)vercel-dns\\.com$/",
+        "name": "Vercel"
+    },
+    {
+        "pattern": "/\\.awsdns-\\d+\\.(com|net|org|co\\.uk)$/",
+        "name": "AWS Route 53"
+    },
+    {
+        "pattern": "/\\.azure-dns\\.(com|net|org|info)$/",
+        "name": "Azure DNS"
+    },
+    {
+        "pattern": "/^ns-cloud-[a-z]\\d+\\.googledomains\\.com$/",
+        "name": "Google Cloud DNS"
+    },
+    {
+        "pattern": "/(^|\\.)domaincontrol\\.com$/",
+        "name": "GoDaddy"
+    },
+    {
+        "pattern": "/(^|\\.)digitalocean\\.com$/",
+        "name": "DigitalOcean"
+    },
+    {
+        "pattern": "/(^|\\.)nsone\\.net$/",
+        "name": "NS1"
+    },
+    {
+        "pattern": "/(^|\\.)render\\.com$/",
+        "name": "Render"
+    }
+]

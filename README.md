@@ -116,6 +116,43 @@ Cloudflare tile still lists the zones, with a dash in every traffic column.
 - **Token scopes**: the shared `gitHubToken` from `gitHub.secrets.php` needs to cover Actions billing reads for every configured account — a classic PAT needs `admin:org` (for the org endpoints) plus user/plan read for the personal account; a fine-grained PAT needs "Plan" (user, read) and "Administration" (org, read). If one token can't cover every account, set that account's `tokenSecret` in the JSON to the name of another global variable defined in `gitHub.secrets.php` (the JSON only ever holds a variable *name*, never a token value).
 - **Where the numbers come from**: allowances come from the JSON, not the API — GitHub's usage endpoints don't return the included quota. `GitHubActionsUsage` also infers an allowance from `discountAmount`/`pricePerUnit` per SKU and logs a warning (category `github-billing`) when it diverges from the configured value by more than 5%, as an early signal that a plan changed and the JSON is stale.
 
+### WireGuard clients
+
+The WireGuard tile lists each peer reported by the `monitor-report`
+script. `Src/Library/wireguard-clients.json` (validated by
+[WireGuardClientsConfig.php](Src/Library/WireGuardClientsConfig.php);
+`wireguard-clients.schema.json` describes it for editors) maps a peer's
+allowed IPs to the name shown in the **Peer** column. To add, rename or
+remove a client, edit the JSON; no code change is needed.
+
+```json
+{
+    "$schema": "./wireguard-clients.schema.json",
+    "version": 1,
+    "clients": [
+        {
+            "allowedIps": "10.141.230.2/32",
+            "name": "GH Actions - Projects Monitor"
+        }
+    ]
+}
+```
+
+- `version` is an integer, currently `1`.
+- `allowedIps` must match the peer's allowed IPs exactly as WireGuard
+  reports them, `/32` suffix included; `name` is the display name. Both
+  are required, non-empty strings, and each `allowedIps` may appear only
+  once. No other property is allowed.
+- Peers without an entry are shown by their allowed IPs.
+- **Missing file**: the tile still works, showing every peer by its
+  allowed IPs, and a warning is logged (category `wireguard`).
+- **Invalid file** (malformed JSON, a missing or unexpected property, a
+  wrong type, a blank value or a duplicate `allowedIps`): the
+  `WireGuardClientsConfigException` message names the file and the JSON
+  path at fault, e.g. `$.clients[1].name must be a non-empty string`. It
+  is logged as an error (category `wireguard`) and the tile falls back
+  to allowed IPs.
+
 ### Tests
 
 ```bash

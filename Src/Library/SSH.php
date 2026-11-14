@@ -30,6 +30,13 @@ class SSH
     private $reportCache = null;
 
     /**
+     * WireGuard peer name lookup, created on first use.
+     *
+     * @var WireGuardPeerNames|null
+     */
+    private $wireGuardPeerNames = null;
+
+    /**
      * Connects to the given host, or to the default host (the entry named
      * "Vinhedo1" in ssh.secrets.php, falling back to the first entry) when omitted.
      *
@@ -105,19 +112,21 @@ class SSH
         }
     }
 
+    /**
+     * Maps a WireGuard peer's allowed IPs to the client name configured in
+     * wireguard-clients.json (see WireGuardPeerNames).
+     *
+     * @param string $peerName The peer's allowed IPs, as WireGuard reports them.
+     *
+     * @return string The client name, or the allowed IPs when they are not mapped.
+     */
     private function mapPeerToHostname($peerName)
     {
-        $peers = [
-            '10.141.230.2/32' => 'GH Actions - Projects Monitor',
-            '10.141.230.3/32' => 'GH Actions - Webhooks',
-            '10.141.230.4/32' => 'iPhone Beatriz Jesus',
-            '10.141.230.5/32' => 'GH Actions - API BR - Vagas Aggregator',
-            '10.141.230.6/32' => 'GH Actions - API BR - Sports Agenda',
-            '10.141.230.7/32' => 'GH Actions - LogStream Server',
-        ];
+        $this->wireGuardPeerNames ??= new WireGuardPeerNames(sprintf('%s/wireguard-clients.json', __DIR__), new LogStream());
 
-        return $peers[$peerName] ?? $peerName;
-    }
+        return $this->wireGuardPeerNames->getName((string) $peerName);
+
+    }//end mapPeerToHostname()
 
     /**
      * Runs the `monitor-report` script on the remote host (installed at

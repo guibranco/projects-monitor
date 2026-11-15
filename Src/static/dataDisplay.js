@@ -172,7 +172,7 @@ export class DataDisplayManager {
    */
   showGitHub(response) {
     const releaseElement = document.getElementById("latest_release");
-    if (typeof response.latest_release !== "undefined" && releaseElement) {
+    if (response.latest_release !== undefined && releaseElement) {
       const r = response.latest_release;
       releaseElement.innerHTML = `
         <div class="release-notes">

@@ -150,7 +150,7 @@ export class GridManager {
 
     select.addEventListener("change", (e) => {
       const raw = e.target.value;
-      applySize(raw === "all" ? "all" : parseInt(raw, 10));
+      applySize(raw === "all" ? "all" : Number.parseInt(raw, 10));
     });
     toolbar
       .querySelector(".gridjs-view-all")

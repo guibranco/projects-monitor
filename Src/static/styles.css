@@ -1683,12 +1683,12 @@ footer a:hover {
 .page-tab:hover,
 .page-tab:focus {
   color: #fff;
-  background: rgba(255, 255, 255, 0.08);
+  background: #262c38;
 }
 
 .page-tab.active {
   color: #fff;
-  background: rgba(255, 255, 255, 0.14);
+  background: #323a4b;
 }
 
 .page-tab-dot {
@@ -1807,7 +1807,7 @@ footer a:hover {
 
 .kpi-thresholds {
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.65);
 }
 
 .entity-chips {
@@ -1832,7 +1832,7 @@ footer a:hover {
 }
 
 .entity-chip.active {
-  background: rgba(255, 255, 255, 0.16);
+  background: #323a4b;
   color: #fff;
 }
 

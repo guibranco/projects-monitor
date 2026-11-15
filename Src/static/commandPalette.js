@@ -3,6 +3,8 @@
 // Ctrl+K (Cmd+K on macOS) palette: type to jump to another page or to a
 // section of this page (expanding it if it is collapsed).
 
+import { headerTitle } from "./sectionTitle.js";
+
 const escapeHtml = (value) =>
   String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -59,9 +61,7 @@ export class CommandPalette {
   sectionItem(section) {
     const header = section.querySelector(".section-header");
     const item = {
-      label:
-        header?.textContent.trim().replace(/\s+\d+$/, "") ??
-        section.dataset.section,
+      label: headerTitle(header) || section.dataset.section,
       hint: "Section",
       run: () => {
         section.classList.remove("is-empty");

@@ -19,7 +19,7 @@ const ENTITIES = new Map(
 );
 
 // Columns every entity shares; the rest are folded into "Details".
-const COMMON = [
+const COMMON = new Set([
   "#Seq",
   "Sender",
   "State",
@@ -27,7 +27,7 @@ const COMMON = [
   "Receiver",
   "Handler",
   "Bot",
-];
+]);
 
 const HEADER = [
   "Entity",
@@ -65,7 +65,7 @@ export class PendingProcessingTable {
         columns.map((column) => [column.label, column.render(item)]),
       );
       const details = columns
-        .filter((column) => !COMMON.includes(column.label))
+        .filter((column) => !COMMON.has(column.label))
         .map(
           (column) =>
             `<span class="pp-detail"><small>${column.label}</small> ${cells.get(column.label)}</span>`,

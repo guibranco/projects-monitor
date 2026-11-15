@@ -4,6 +4,8 @@
 // much room as real problems. They are listed in one line at the bottom
 // of the page ("3 empty sections hidden: … · Show"), which can show them.
 
+import { headerTitle } from "./sectionTitle.js";
+
 export class EmptySectionsManager {
   constructor() {
     this.sections = [];
@@ -14,11 +16,7 @@ export class EmptySectionsManager {
       .map((section) => ({
         section,
         counter: section.querySelector('.section-header [id^="counter_"]'),
-        title:
-          section
-            .querySelector(".section-header")
-            ?.textContent.trim()
-            .replace(/\s+\d+$/, "") ?? "",
+        title: headerTitle(section.querySelector(".section-header")),
       }))
       .filter((entry) => entry.counter);
 

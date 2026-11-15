@@ -17,8 +17,9 @@ export function formatDuration(seconds) {
   return `${Math.floor(value / 86400)}d`;
 }
 
-const DASHBOARD_FORMAT = /^(\d{2}):(\d{2}):(\d{2}) (\d{2})\/(\d{2})\/(\d{4})$/;
-const SQL_FORMAT = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/;
+// Shapes only; the numbers are read by splitting, which keeps the patterns simple.
+const DASHBOARD_FORMAT = /^\d\d:\d\d:\d\d \d\d\/\d\d\/\d{4}$/;
+const SQL_FORMAT = /^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d$/;
 const ISO_START = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/;
 const ISO_ZONE = /(Z|[+-]\d{2}:\d{2})$/;
 
@@ -32,15 +33,17 @@ const ISO_ZONE = /(Z|[+-]\d{2}:\d{2})$/;
  */
 export function parseTableDate(text) {
   const value = String(text ?? "").trim();
-  let match = DASHBOARD_FORMAT.exec(value);
-  if (match) {
-    const [, hour, minute, second, day, month, year] = match.map(Number);
+  if (DASHBOARD_FORMAT.test(value)) {
+    const [hour, minute, second, day, month, year] = value
+      .split(/[ :/]/)
+      .map(Number);
     return new Date(year, month - 1, day, hour, minute, second);
   }
 
-  match = SQL_FORMAT.exec(value);
-  if (match) {
-    const [, year, month, day, hour, minute, second] = match.map(Number);
+  if (SQL_FORMAT.test(value)) {
+    const [year, month, day, hour, minute, second] = value
+      .split(/[ :-]/)
+      .map(Number);
     return new Date(year, month - 1, day, hour, minute, second);
   }
 

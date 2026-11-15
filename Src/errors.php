@@ -76,7 +76,7 @@ require_once "partials/dashboard-head.php";
       </div>
          <!-- Message detail modal -->
          <div class="modal fade" id="messageDetailsModal" tabindex="-1"
-            aria-labelledby="messageDetailsModalLabel" aria-modal="true" role="dialog">
+            aria-labelledby="messageDetailsModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-xl modal-dialog-scrollable">
                <div class="modal-content"
                   style="background:rgba(13,17,23,.97);border:1px solid rgba(255,255,255,.15);color:#fff;">
@@ -95,9 +95,8 @@ require_once "partials/dashboard-head.php";
                   </div>
                   <div class="modal-body p-0" id="msgDetailBody">
                      <div class="text-center py-4">
-                        <div class="spinner-border text-light" role="status">
-                           <span class="visually-hidden">Loading…</span>
-                        </div>
+                        <div class="spinner-border text-light" aria-hidden="true"></div>
+                        <span class="visually-hidden">Loading…</span>
                      </div>
                   </div>
                </div>

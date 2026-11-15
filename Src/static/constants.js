@@ -18,6 +18,8 @@ export const FEED_FILTERS = {
 
 export const API_ENDPOINTS = {
   APPVEYOR: "api/v1/appveyor",
+  ATTENTION: "api/v1/attention",
+  ATTENTION_STATE: "api/v1/attention/state",
   CPANEL: "api/v1/cpanel",
   CPANEL_DELETE: "api/v1/cpanel/delete",
   MESSAGES: "api/v1/messages",

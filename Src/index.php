@@ -72,6 +72,10 @@ $configuration = new Configuration();
             </button>
          </div>
          <div class="d-flex align-items-center gap-3">
+            <button type="button" id="data_freshness" class="freshness-indicator d-none d-md-inline-flex"
+               title="Click to re-check every source now">
+               <span class="status-dot" aria-hidden="true"></span>Loading…
+            </button>
             <span class="navbar-user d-none d-lg-flex align-items-center gap-2">
                <i class="bi bi-person-circle"></i>
                <span><?php echo htmlspecialchars($username); ?></span>
@@ -157,6 +161,20 @@ $configuration = new Configuration();
 
    <div class="dashboard-layout">
       <div class="dashboard-container">
+      <section id="attention_panel" class="attention-panel" aria-labelledby="attention_heading">
+         <div id="attention_strip" class="status-strip"></div>
+         <div class="attention-heading">
+            <h2 id="attention_heading" class="attention-heading-title"><i class="bi bi-exclamation-diamond me-2"></i>Needs attention</h2>
+            <span id="counter_attention" class="badge rounded-pill attention-counter"></span>
+         </div>
+         <div id="attention_list" class="attention-list">
+            <div class="attention-empty">
+               <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Checking every source…
+            </div>
+         </div>
+         <div id="attention_all_clear" class="attention-all-clear"></div>
+      </section>
+
       <div class="full-width-section">
          <div class="section-header">
             <i class="bi bi-bar-chart-line me-2"></i>GitHub Webhooks Statistics <span

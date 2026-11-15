@@ -1348,3 +1348,312 @@ footer a:hover {
 .dns-badge-srv { background: #ca8a04; }
 .dns-badge-caa { background: #db2777; }
 .dns-badge-default { background: #334155; }
+
+/* ===========================================
+   ATTENTION OVERVIEW (status strip, "Needs attention", freshness)
+   Colour means status only: neutral frame, red = broken,
+   amber = degraded, green dot = healthy.
+   =========================================== */
+:root {
+  --status-critical: #f85149;
+  --status-critical-bg: rgba(248, 81, 73, 0.14);
+  --status-warning: #d29922;
+  --status-warning-bg: rgba(210, 153, 34, 0.14);
+  --status-ok: #3fb950;
+  --panel-neutral-bg: rgba(255, 255, 255, 0.04);
+  --panel-neutral-border: rgba(255, 255, 255, 0.12);
+}
+
+.attention-panel {
+  background: var(--panel-neutral-bg);
+  border: 1px solid var(--panel-neutral-border);
+  border-radius: var(--border-radius-small);
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 8px;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.status-dot.status-ok {
+  background: var(--status-ok);
+}
+
+.status-dot.status-warning {
+  background: var(--status-warning);
+}
+
+.status-dot.status-critical {
+  background: var(--status-critical);
+}
+
+.status-strip {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.status-tile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--panel-neutral-border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
+  font-weight: 500;
+  text-align: left;
+  transition: var(--transition);
+}
+
+.status-tile:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.status-tile.is-filtered {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 1px;
+}
+
+.status-tile .status-dot {
+  margin-right: 0;
+}
+
+.status-tile .status-tile-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.status-tile .status-tile-count {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.status-tile.status-ok .status-dot {
+  background: var(--status-ok);
+}
+
+.status-tile.status-warning {
+  border-color: var(--status-warning);
+  background: var(--status-warning-bg);
+}
+
+.status-tile.status-warning .status-dot {
+  background: var(--status-warning);
+}
+
+.status-tile.status-critical {
+  border-color: var(--status-critical);
+  background: var(--status-critical-bg);
+}
+
+.status-tile.status-critical .status-dot {
+  background: var(--status-critical);
+}
+
+.attention-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.attention-heading h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.attention-counter {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.attention-counter.status-critical {
+  background: var(--status-critical);
+}
+
+.attention-counter.status-warning {
+  background: var(--status-warning);
+  color: #0d1117;
+}
+
+.attention-counter.status-ok:empty {
+  display: none;
+}
+
+.attention-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.attention-item {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr) 48px auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border-left: 3px solid transparent;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.attention-item.severity-critical {
+  border-left-color: var(--status-critical);
+}
+
+.attention-item.severity-warning {
+  border-left-color: var(--status-warning);
+}
+
+.attention-item.is-acknowledged {
+  opacity: 0.55;
+  border-left-color: rgba(255, 255, 255, 0.25);
+}
+
+.severity-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-align: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.severity-badge.severity-critical {
+  background: var(--status-critical);
+  color: #fff;
+}
+
+.severity-badge.severity-warning {
+  background: var(--status-warning);
+  color: #0d1117;
+}
+
+.attention-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attention-source {
+  display: block;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.attention-age {
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.75);
+  text-align: right;
+}
+
+.attention-actions {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.btn-attention {
+  color: var(--text-primary);
+  border: 1px solid var(--panel-neutral-border);
+  background: transparent;
+}
+
+.btn-attention:hover,
+.btn-attention:focus {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.attention-empty {
+  padding: 10px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.attention-all-clear {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.attention-link {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.85rem;
+  vertical-align: baseline;
+  margin-left: 0.3em;
+}
+
+.freshness-indicator {
+  align-items: center;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+  background: transparent;
+  border: 1px solid var(--panel-neutral-border);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.freshness-indicator:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.freshness-indicator.is-stale {
+  color: var(--status-warning);
+  border-color: var(--status-warning);
+}
+
+@media (max-width: 1100px) {
+  .status-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 576px) {
+  .status-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .attention-item {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "badge age"
+      "title title"
+      "actions actions";
+    gap: 6px 12px;
+  }
+
+  .attention-item .severity-badge {
+    grid-area: badge;
+    justify-self: start;
+  }
+
+  .attention-item .attention-age {
+    grid-area: age;
+  }
+
+  .attention-item .attention-title {
+    grid-area: title;
+  }
+
+  .attention-item .attention-actions {
+    grid-area: actions;
+    justify-content: flex-start;
+  }
+}

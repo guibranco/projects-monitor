@@ -47,6 +47,67 @@ class Ip2WhoIs
         return json_decode($response->getBody());
     }
 
+    /**
+     * The WHOIS record of a domain, from the day-old cache when there is one.
+     * The cache path is relative to the working directory (Src/api/v1 for
+     * the API endpoints), so every endpoint shares it.
+     *
+     * @param string $domain The domain.
+     *
+     * @return mixed
+     *
+     * @throws SecretsFileNotFoundException When the record must be fetched and there is no API key.
+     */
+    private function loadWhoIs(string $domain): mixed
+    {
+        $cache = sprintf("cache/domain_%s.json", str_replace(".", "_", $domain));
+        if (file_exists($cache) === true && filemtime($cache) > strtotime("-1 day")) {
+            return json_decode(file_get_contents($cache));
+        }
+
+        if (class_exists(Ip2WhoIsSecrets::class) === false) {
+            throw new SecretsFileNotFoundException("File not found: Ip2WhoIsSecrets.php");
+        }
+
+        $response = $this->getWhoIs($domain);
+        file_put_contents($cache, json_encode($response));
+        return $response;
+
+    }//end loadWhoIs()
+
+
+    /**
+     * The expiry date of every domain checked through IP2WHOIS, as rows of
+     * domain and expiresAt (Unix time, null when WHOIS gives none).
+     *
+     * @return array
+     */
+    public function getExpirations(): array
+    {
+        $expirations = [];
+        foreach ($this->getDomains() as $domainConfig) {
+            if (empty($domainConfig["ip2whois"]) === true) {
+                continue;
+            }
+
+            $response   = $this->loadWhoIs($domainConfig["domain"]);
+            $expireTime = strtotime((string) ($response->expire_date ?? ""));
+            $expiration = [];
+
+            $expiration["domain"]    = $domainConfig["domain"];
+            $expiration["expiresAt"] = null;
+            if ($expireTime !== false) {
+                $expiration["expiresAt"] = $expireTime;
+            }
+
+            $expirations[] = $expiration;
+        }
+
+        return $expirations;
+
+    }//end getExpirations()
+
+
     private function getDomains()
     {
         $file = __DIR__ . "/domains.json";
@@ -79,13 +140,7 @@ class Ip2WhoIs
                 continue;
             }
 
-            $cache = "cache/domain_" . str_replace(".", "_", $domain) . ".json";
-            if (file_exists($cache) && filemtime($cache) > strtotime("-1 day")) {
-                $response = json_decode(file_get_contents($cache));
-            } else {
-                $response = $this->getWhoIs($domain);
-                file_put_contents($cache, json_encode($response));
-            }
+            $response = $this->loadWhoIs($domain);
 
             $createdTime = strtotime($response->create_date);
             $createdDate = date("d/m/Y", $createdTime);

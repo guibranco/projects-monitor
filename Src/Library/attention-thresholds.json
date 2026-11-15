@@ -1,0 +1,17 @@
+{
+    "_comment": "Defaults for the attention evaluators. Override any of them without a deploy by inserting a row into the attention_thresholds table (name, value).",
+    "queue.messages.warning": 100,
+    "queue.messages.critical": 1000,
+    "webhooks.pending.warning": 200,
+    "webhooks.pending.critical": 1000,
+    "messages.application.warning": 50,
+    "messages.application.critical": 500,
+    "errors.database.warning": 1,
+    "errors.database.critical": 100,
+    "github.quota.warning": 75,
+    "github.quota.critical": 90,
+    "domains.expiry.warningDays": 30,
+    "domains.expiry.criticalDays": 10,
+    "cache.attention.ttlSeconds": 60,
+    "cache.publicStats.staleSeconds": 900
+}

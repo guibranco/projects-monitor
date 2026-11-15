@@ -4,6 +4,8 @@ RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME} !-f
 
 RewriteRule ^appveyor$ appveyor.php [NC,L]
+RewriteRule ^attention$ attention.php [NC,L]
+RewriteRule ^attention/state$ attention-state.php [NC,L]
 RewriteRule ^broker-usage$ broker-usage.php [NC,L]
 RewriteRule ^cloudflare$ cloudflare.php [NC,L]
 RewriteRule ^cpanel$ cpanel.php [NC,L]

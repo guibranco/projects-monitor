@@ -232,6 +232,25 @@ class Webhooks
     }
 
     /**
+     * Returns the raw rows of the webhooks API's GET /workflow-runs/ (an
+     * empty list when the payload is not a list), for callers that judge
+     * the runs rather than render them.
+     *
+     * @return array
+     */
+    public function getWorkflowRunRows(): array
+    {
+        $runs = $this->doRequest("workflow-runs/", "get", 200);
+        if (is_array($runs) === false) {
+            return [];
+        }
+
+        return $runs;
+
+    }//end getWorkflowRunRows()
+
+
+    /**
      * Returns the latest status of every tracked workflow run (not just the
      * deploy/release-keyword-matched ones the releases table shows), from the
      * webhooks API's `github_workflow_runs_view`-backed endpoint, with raw
@@ -239,10 +258,7 @@ class Webhooks
      */
     public function getWorkflowRuns(): mixed
     {
-        $runs = $this->doRequest("workflow-runs/", "get", 200);
-        if (is_array($runs) === false) {
-            $runs = [];
-        }
+        $runs = $this->getWorkflowRunRows();
 
         $presenter = new WorkflowRunsPresenter();
 

@@ -18,6 +18,7 @@ Projects Monitor is a PHP dashboard backed by a REST-like API (`Src/api/v1`). It
 
 ### Features
 
+- **Needs attention (manage by exception)** — the top of the dashboard shows only what is wrong right now: a status strip with one tile per domain (Ops, Pipeline, Errors, CI, GitHub, Domains) coloured by its worst item, a "Needs attention" list sorted by severity then age with inline Open / Re-run / Snooze / Acknowledge, a one-line summary of everything healthy, and a data-freshness indicator in the navbar that turns amber when the public stats worker stops writing its cache. See [Attention feed](#attention-feed).
 - **GitHub integration** — open/pending pull requests, issues across repositories, workflow runs (failures highlighted), API rate-limit usage, and the latest releases of tracked projects.
 - **Webhooks & automation** — GitHub webhook statistics and processing-state counts, plus a right-hand **Actions** panel (offcanvas, top-right of the dashboard) listing live webhook workers and GStraccini Bot job runs.
 - **Infrastructure health** — HealthChecks.io, UpTimeRobot, AppVeyor CI, Cloudflare domains (each zone's status — paused wins — plan and activation date, linked to the Cloudflare dashboard, plus the last 7 days of traffic from the GraphQL Analytics API: requests, cache ratio, bandwidth, visitors — the sum of each day's unique visitors — and page views), and Vercel project status (the production deployment's state, overridden by the project's paused flag and by what its production URL actually answers — `DEPLOYMENT_DISABLED`, `DEPLOYMENT_PAUSED`, `DEPLOYMENT_NOT_FOUND`, a 5xx or an unreachable host — each URL probed at most once every 10 minutes) and Render service status (the latest deploy's status, overridden by the service's suspended flag); CloudAMQP/RabbitMQ queue, message, consumer, and connection stats; WireGuard VPN client/connection status over SSH; a remote server health report (load average, CPU/memory/swap/disk usage, pending-reboot flag, and key systemd service states) collected by running a `monitor-report` script on the host over the same SSH connection.
@@ -162,6 +163,15 @@ bash Tests/smoke-tests.sh                  # hits the running app's key endpoint
 bash Tests/db-integrity.sh                 # checks the applied schema
 ```
 
+### Attention feed
+
+`GET /api/v1/attention` decides what needs attention; the dashboard only renders it. One evaluator per source lives in `Src/Library/Attention/Evaluators/` (Healthchecks.io, UpTimeRobot, servers and database from the public stats cache, broker queues, the GStraccini-bot webhooks backlog, application messages, PHP errors, cPanel `error_log` files, the latest run of each workflow of the followed accounts, the GitHub API core quota and domain expiry). Each item has a `source`, `domain`, `severity` (`critical` = broken, `warning` = degraded), `title`, `since`, `link`, `actions` and a stable `fingerprint`.
+
+- **Thresholds** default to `Src/Library/attention-thresholds.json`. To change one without a deploy, insert a row into `attention_thresholds`, e.g. `INSERT INTO attention_thresholds (name, value) VALUES ('queue.messages.warning', 500);` (delete the row to go back to the default).
+- **Snooze and acknowledge** are stored by fingerprint in `attention_states` (`POST /api/v1/attention/state`). A snooze hides the item until it ends; an acknowledgement keeps it listed (dimmed) but stops counting it until the item's `since` changes. Ended snoozes and acknowledgements of items no longer raised are pruned on the next full evaluation.
+- **Caching**: sources are evaluated at most once per `cache.attention.ttlSeconds` (snapshot in `Src/cache/attention.json`; `?refresh=1`, or clicking the freshness indicator, forces a new one). A source without its secrets file is reported as `not_configured`; one that fails becomes a warning item of its own, so a broken integration never passes for a healthy one.
+- **Adding a source**: write an `AttentionEvaluator` (a `fetch()` that reads, an `evaluate()` without I/O that decides) and list it in `AttentionSources`.
+
 ### Background workers
 
 Two CLI workers are meant to run on a cron schedule against the deployed instance (see the docblock in each file for the exact crontab line):
@@ -192,7 +202,7 @@ is served from the same origin as the API, so the browser attaches the
 anonymous visitors *Try it out* is hidden and the protected endpoints answer
 `401`.
 
-Key endpoint groups: `github`, `webhooks*` (statistics, per-entity processing,
+Key endpoint groups: `attention` / `attention/state`, `github`, `webhooks*` (statistics, per-entity processing,
 worker control), `gstraccini-jobs` / `gstraccini-job-run`, `appveyor`,
 `cloudflare`, `cpanel`, `dns-records`, `domains`, `healthchecksio`,
 `uptimerobot`, `vercel`, `render`, `queues` / `queues-purge`, `wireguard`,

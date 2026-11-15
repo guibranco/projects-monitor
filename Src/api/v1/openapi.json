@@ -23,6 +23,7 @@
   ],
   "tags": [
     { "name": "AppVeyor",    "description": "AppVeyor CI build data" },
+    { "name": "Attention",   "description": "Manage-by-exception feed: what needs attention now, with snooze and acknowledge" },
     { "name": "Cloudflare",  "description": "Cloudflare domains (zones) of the account, with status and plan" },
     { "name": "cPanel",      "description": "cPanel server stats and error-log file management" },
     { "name": "DNS",         "description": "cPanel DNS zone records for all hosted domains" },
@@ -74,6 +75,78 @@
       }
     },
     "schemas": {
+      "AttentionItem": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "example": "healthchecks"
+          },
+          "domain": {
+            "type": "string",
+            "enum": [
+              "ops",
+              "pipeline",
+              "errors",
+              "ci",
+              "github",
+              "domains"
+            ]
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "critical",
+              "warning"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "example": "Healthcheck vinhedo2 unattended-upgrades is down"
+          },
+          "since": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "link": {
+            "type": "string",
+            "example": "index.php#healthchecksio"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "open",
+                "rerun",
+                "snooze",
+                "acknowledge"
+              ]
+            }
+          },
+          "fingerprint": {
+            "type": "string",
+            "example": "hc:vinhedo2-unattended-upgrades"
+          },
+          "meta": {
+            "type": "object",
+            "description": "Data the actions need, e.g. workflowRunId for rerun."
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "active",
+              "acknowledged"
+            ]
+          },
+          "snoozedUntil": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
       "Error": {
         "type": "object",
         "properties": {
@@ -208,6 +281,260 @@
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "429": { "$ref": "#/components/responses/RateLimited" },
           "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/attention": {
+      "get": {
+        "tags": [
+          "Attention"
+        ],
+        "summary": "What needs attention right now",
+        "operationId": "getAttention",
+        "description": "The \"manage by exception\" feed behind the dashboard's status strip and Needs attention list. One evaluator per source (Healthchecks.io, UpTimeRobot, servers from the public stats cache, broker queues, the webhooks backlog, application messages, PHP errors, cPanel error_log files, workflow runs, the GitHub API quota and domain expiry) judges its data against thresholds (defaults in Src/Library/attention-thresholds.json, overridden by rows of the attention_thresholds table). Sources are evaluated at most once per cache.attention.ttlSeconds (60 s by default); snoozes and acknowledgements are applied on every read. A source without secrets is reported as not_configured; a source that fails becomes a warning item of its own.",
+        "parameters": [
+          {
+            "name": "refresh",
+            "in": "query",
+            "required": false,
+            "description": "1 to evaluate every source now instead of using the cached snapshot.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "1"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status tiles, items, summary, freshness and per-source status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "generatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "domains": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "domain": {
+                            "type": "string",
+                            "enum": [
+                              "ops",
+                              "pipeline",
+                              "errors",
+                              "ci",
+                              "github",
+                              "domains"
+                            ]
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "severity": {
+                            "type": "string",
+                            "enum": [
+                              "ok",
+                              "warning",
+                              "critical"
+                            ]
+                          },
+                          "count": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AttentionItem"
+                      }
+                    },
+                    "summary": {
+                      "type": "object",
+                      "properties": {
+                        "active": {
+                          "type": "integer"
+                        },
+                        "critical": {
+                          "type": "integer"
+                        },
+                        "warning": {
+                          "type": "integer"
+                        },
+                        "snoozed": {
+                          "type": "integer"
+                        },
+                        "acknowledged": {
+                          "type": "integer"
+                        },
+                        "healthy": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "freshness": {
+                      "type": "object",
+                      "properties": {
+                        "ageSeconds": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "cacheUpdatedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "cacheAgeSeconds": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "cacheStale": {
+                          "type": "boolean",
+                          "description": "True when the public stats worker (the cache script) has not written its file for cache.publicStats.staleSeconds."
+                        },
+                        "cacheStaleSeconds": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "sources": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "source": {
+                            "type": "string"
+                          },
+                          "domain": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "ok",
+                              "not_configured",
+                              "error"
+                            ]
+                          },
+                          "fetchedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "error": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "durationMs": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        }
+      }
+    },
+    "/api/v1/attention/state": {
+      "post": {
+        "tags": [
+          "Attention"
+        ],
+        "summary": "Snooze, acknowledge or restore an attention item",
+        "operationId": "setAttentionState",
+        "description": "Stored by fingerprint in the attention_states table. A snooze hides the item until it ends. An acknowledgement keeps the item listed (dimmed, last) but stops counting it, for as long as the item's since value is the one sent. clear removes either.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "fingerprint",
+                  "action"
+                ],
+                "properties": {
+                  "fingerprint": {
+                    "type": "string",
+                    "maxLength": 191,
+                    "example": "hc:vinhedo2-upgrades"
+                  },
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "snooze",
+                      "acknowledge",
+                      "clear"
+                    ]
+                  },
+                  "minutes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 43200,
+                    "description": "Required for snooze."
+                  },
+                  "since": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 25,
+                    "description": "For acknowledge: the item's since value."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "fingerprint": {
+                      "type": "string"
+                    },
+                    "action": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid body."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "405": {
+            "description": "Not a POST."
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "description": "The database is unavailable."
+          }
         }
       }
     },

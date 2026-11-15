@@ -5,6 +5,7 @@ import { API_ENDPOINTS } from './constants.js';
 import { UIManager, GitHubStatsManager, CookieManager } from './ui.js';
 import { DataDisplayManager } from './dataDisplay.js';
 import { CollapsibleSectionsManager } from './collapsibleSections.js'; // Add this import
+import { AttentionPanel } from './attention.js';
 
 class DashboardApp {
   constructor() {
@@ -13,6 +14,7 @@ class DashboardApp {
     this.dataLoader = new DataLoader(this.apiManager);
     this.dataDisplayManager = new DataDisplayManager();
     this.collapsibleSectionsManager = new CollapsibleSectionsManager(); // Add this line
+    this.attentionPanel = new AttentionPanel(this.apiManager);
 
     // Initialize state objects
     this.feedState = new FeedState();
@@ -465,6 +467,9 @@ class DashboardApp {
   drawChart() {
     this.preset();
     GitHubStatsManager.show();
+
+    // The "Needs attention" block refreshes on its own 30s timer.
+    this.attentionPanel.init();
 
     // Initial data load
     this.dataLoader.load30Interval();

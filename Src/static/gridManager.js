@@ -89,6 +89,7 @@ export class GridManager {
         : false,
       search: false,
       resizable: false,
+      autoWidth: false,
       className: { table: "gridjs-table-dark" },
     });
 

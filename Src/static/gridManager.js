@@ -1,8 +1,10 @@
 // gridManager.js
 import { TablePageSizeState } from './storage.js';
+import { relativeTimeHtml } from './timeFormat.js';
 
-const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
-const DEFAULT_PAGE_SIZE = 10;
+// Tables show 5 rows unless the viewer picked another size or "View all".
+const PAGE_SIZE_OPTIONS = [5, 10, 25, 50, 100];
+const DEFAULT_PAGE_SIZE = 5;
 
 export class GridManager {
   constructor() {
@@ -20,7 +22,7 @@ export class GridManager {
   draw(data, elementId, options = {}, hideColumn = -1) {
     const el = document.getElementById(elementId);
     if (!el) {
-      console.error(`Element with id ${elementId} not found`);
+      // Expected: each page only holds its own sections.
       return null;
     }
 
@@ -50,9 +52,15 @@ export class GridManager {
       columns = [{ name: '#' }, ...columns];
     }
 
-    const wrapCell = (cell) => (allowHtml && typeof cell === 'string'
-      ? this.gridjs.html(cell)
-      : cell);
+    // Dates show as "5m ago" with the exact value on hover.
+    const wrapCell = (cell) => {
+      const relative = typeof cell === 'string' ? relativeTimeHtml(cell) : null;
+      if (relative) {
+        return this.gridjs.html(relative);
+      }
+
+      return allowHtml && typeof cell === 'string' ? this.gridjs.html(cell) : cell;
+    };
 
     const gridData = bodyRows.map((row, i) => {
       const cells = showRowNumber ? [i + 1, ...row] : [...row];
@@ -98,7 +106,11 @@ export class GridManager {
 
     const toolbar = document.createElement('div');
     toolbar.className = 'gridjs-page-size-toolbar';
+    const viewAll = totalRows > DEFAULT_PAGE_SIZE && currentSize !== 'all'
+      ? `<button type="button" class="btn btn-link btn-sm gridjs-view-all">View all ${totalRows}</button>`
+      : '';
     toolbar.innerHTML = `
+      ${viewAll}
       <label>
         Rows per page:
         <select class="gridjs-page-size-select" aria-label="Rows per page">
@@ -106,14 +118,21 @@ export class GridManager {
         </select>
       </label>`;
 
-    toolbar.querySelector('select').addEventListener('change', (e) => {
-      const raw = e.target.value;
-      const newSize = raw === 'all' ? 'all' : parseInt(raw, 10);
+    const select = toolbar.querySelector('select');
+    const applySize = (newSize) => {
       this.pageSizeState.setPageSize(elementId, newSize);
       const grid = this.grids.get(elementId);
       const newLimit = newSize === 'all' ? Math.max(totalRows, 1) : newSize;
       grid?.updateConfig({ pagination: { limit: newLimit, summary: true } }).forceRender();
+      select.value = String(newSize);
+      toolbar.querySelector('.gridjs-view-all')?.remove();
+    };
+
+    select.addEventListener('change', (e) => {
+      const raw = e.target.value;
+      applySize(raw === 'all' ? 'all' : parseInt(raw, 10));
     });
+    toolbar.querySelector('.gridjs-view-all')?.addEventListener('click', () => applySize('all'));
 
     return toolbar;
   }

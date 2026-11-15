@@ -404,64 +404,101 @@ export class ApiManager {
   }
 }
 
+/**
+ * Which endpoints each dashboard page loads, how often (seconds), and the
+ * window.show* function that renders the response. A page only loads the
+ * endpoints whose sections it shows; the rest of a response is ignored.
+ */
+const LOADERS = [
+  { endpoint: "APPVEYOR", every: 30, show: "showAppVeyor", pages: ["ops"] },
+  { endpoint: "CPANEL", every: 30, show: "showCPanel", pages: ["errors", "ops"] },
+  { endpoint: "MESSAGES", every: 30, show: "showMessages", pages: ["overview", "errors", "stats"] },
+  { endpoint: "QUEUES", every: 30, show: "showQueues", pages: ["overview", "pipeline"] },
+  { endpoint: "WORKFLOW_RUNS", every: 30, show: "showWorkflowRunsManagement", pages: ["github"] },
+  { endpoint: "WEBHOOKS", every: 30, show: "showWebhook", pages: ["overview", "pipeline", "github", "stats"] },
+  { endpoint: "WEBHOOKS_STATISTICS", every: 30, show: "showWebhookProcessingStats", pages: ["overview", "pipeline"] },
+  { endpoint: "WEBHOOKS_PR_PROCESSING", every: 30, show: "showWebhookPullRequestsProcessing", pages: ["pipeline"] },
+  { endpoint: "WEBHOOKS_PR_IDLE", every: 30, show: "showWebhookPullRequestsIdle", pages: ["pipeline"] },
+  { endpoint: "WEBHOOKS_BRANCHES_PROCESSING", every: 30, show: "showBranchesProcessing", pages: ["pipeline"] },
+  { endpoint: "WEBHOOKS_COMMENTS_PROCESSING", every: 30, show: "showCommentsProcessing", pages: ["pipeline"] },
+  { endpoint: "WEBHOOKS_INSTALLATIONS_PROCESSING", every: 30, show: "showInstallationsProcessing", pages: ["pipeline"] },
+  { endpoint: "WEBHOOKS_ISSUES_PROCESSING", every: 30, show: "showIssuesProcessing", pages: ["pipeline"] },
+  { endpoint: "WEBHOOKS_PUSHES_PROCESSING", every: 30, show: "showPushesProcessing", pages: ["pipeline"] },
+  { endpoint: "WEBHOOKS_REPOSITORIES_PROCESSING", every: 30, show: "showRepositoriesProcessing", pages: ["pipeline"] },
+  { endpoint: "WEBHOOKS_USERS_PROCESSING", every: 30, show: "showUsersProcessing", pages: ["pipeline"] },
+  { endpoint: "DOMAINS", every: 60, show: "showDomains", pages: ["ops"] },
+  { endpoint: "BROKER_USAGE", every: 60, show: "showBrokerUsage", pages: ["pipeline"] },
+  { endpoint: "THROTTLED_REPOSITORIES", every: 60, show: "showThrottledRepositories", pages: ["pipeline"] },
+  { endpoint: "ERRORS", every: 60, show: "showDbErrors", pages: ["errors"] },
+  { endpoint: "GITHUB", every: 60, show: "showGitHub", pages: ["github", "ops"] },
+  { endpoint: "HEALTHCHECKS", every: 60, show: "showHealthChecksIo", pages: ["ops"] },
+  { endpoint: "UPTIMEROBOT", every: 60, show: "showUpTimeRobot", pages: ["ops"] },
+  { endpoint: "VERCEL", every: 60, show: "showVercel", pages: ["ops"] },
+  { endpoint: "CLOUDFLARE", every: 60, show: "showCloudflare", pages: ["ops"] },
+  { endpoint: "RENDER", every: 60, show: "showRender", pages: ["ops"] },
+  { endpoint: "WIREGUARD", every: 60, show: "showWireGuard", pages: ["ops"] },
+  { endpoint: "RELEASES", every: 60, show: "showReleases", pages: ["github"] },
+  { endpoint: "SYSTEM_REPORT", every: 60, show: "showSystemReport", pages: ["ops"] },
+  { endpoint: "POSTMAN", every: 300, show: "showPostman", pages: ["stats"] },
+  { endpoint: "WEBHOOKS_WORKERS", every: 300, show: "showWorkers", pages: ["pipeline"] },
+  { endpoint: "GSTRACCINI_JOBS", every: 300, show: "showGStracciniJobs", pages: ["pipeline"] },
+];
+
 export class DataLoader {
-  constructor(apiManager) {
+  /**
+   * @param {ApiManager} apiManager - Shared API manager (session handling).
+   * @param {string} page - The current page (the body's data-page).
+   */
+  constructor(apiManager, page) {
     this.apiManager = apiManager;
+    this.page = page || "overview";
+    this.lastLoadedAt = 0;
   }
 
   /**
-   * Loads data from various endpoints and displays it using corresponding window functions.
+   * The loaders of the current page.
+   *
+   * @returns {Array<object>}
    */
-  load30Interval() {
-    this.apiManager.load(API_ENDPOINTS.APPVEYOR, (data) => window.showAppVeyor?.(data));
-    this.apiManager.load(API_ENDPOINTS.CPANEL, (data) => window.showCPanel?.(data));
-    this.apiManager.load(API_ENDPOINTS.MESSAGES, (data) => window.showMessages?.(data));
-    this.apiManager.load(API_ENDPOINTS.QUEUES, (data) => window.showQueues?.(data));
-    this.apiManager.load(API_ENDPOINTS.WORKFLOW_RUNS, (data) => window.showWorkflowRunsManagement?.(data));
-    
-    const feedState = window.feedState || { filter: 'all' };
-
-    this.apiManager.load(
-      `${API_ENDPOINTS.WEBHOOKS}?feedOptionsFilter=${feedState.filter}`,
-      (data) => window.showWebhook?.(data)
-    );
-    this.apiManager.load(API_ENDPOINTS.WEBHOOKS_STATISTICS, (data) => window.showWebhookProcessingStats?.(data));
-    this.apiManager.load(API_ENDPOINTS.WEBHOOKS_PR_PROCESSING, (data) => window.showWebhookPullRequestsProcessing?.(data));
-    this.apiManager.load(API_ENDPOINTS.WEBHOOKS_PR_IDLE, (data) => window.showWebhookPullRequestsIdle?.(data));
-    this.apiManager.load(API_ENDPOINTS.WEBHOOKS_BRANCHES_PROCESSING, (data) => window.showBranchesProcessing?.(data));
-    this.apiManager.load(API_ENDPOINTS.WEBHOOKS_COMMENTS_PROCESSING, (data) => window.showCommentsProcessing?.(data));
-    this.apiManager.load(API_ENDPOINTS.WEBHOOKS_INSTALLATIONS_PROCESSING, (data) => window.showInstallationsProcessing?.(data));
-    this.apiManager.load(API_ENDPOINTS.WEBHOOKS_ISSUES_PROCESSING, (data) => window.showIssuesProcessing?.(data));
-    this.apiManager.load(API_ENDPOINTS.WEBHOOKS_PUSHES_PROCESSING, (data) => window.showPushesProcessing?.(data));
-    this.apiManager.load(API_ENDPOINTS.WEBHOOKS_REPOSITORIES_PROCESSING, (data) => window.showRepositoriesProcessing?.(data));
-    this.apiManager.load(API_ENDPOINTS.WEBHOOKS_USERS_PROCESSING, (data) => window.showUsersProcessing?.(data));
+  getLoaders() {
+    return LOADERS.filter((loader) => loader.pages.includes(this.page));
   }
 
   /**
-   * Loads data from various API endpoints and displays it using corresponding show functions.
+   * The intervals (seconds) the current page needs a timer for.
+   *
+   * @returns {number[]}
    */
-  load60Interval() {
-    this.apiManager.load(API_ENDPOINTS.DOMAINS, (data) => window.showDomains?.(data));
-    this.apiManager.load(API_ENDPOINTS.BROKER_USAGE, (data) => window.showBrokerUsage?.(data));
-    this.apiManager.load(API_ENDPOINTS.THROTTLED_REPOSITORIES, (data) => window.showThrottledRepositories?.(data));
-    this.apiManager.load(API_ENDPOINTS.ERRORS, (data) => window.showDbErrors?.(data));
-    this.apiManager.load(API_ENDPOINTS.GITHUB, (data) => window.showGitHub?.(data));
-    this.apiManager.load(API_ENDPOINTS.HEALTHCHECKS, (data) => window.showHealthChecksIo?.(data));
-    this.apiManager.load(API_ENDPOINTS.UPTIMEROBOT, (data) => window.showUpTimeRobot?.(data));
-    this.apiManager.load(API_ENDPOINTS.VERCEL, (data) => window.showVercel?.(data));
-    this.apiManager.load(API_ENDPOINTS.CLOUDFLARE, (data) => window.showCloudflare?.(data));
-    this.apiManager.load(API_ENDPOINTS.RENDER, (data) => window.showRender?.(data));
-    this.apiManager.load(API_ENDPOINTS.WIREGUARD, (data) => window.showWireGuard?.(data));
-    this.apiManager.load(API_ENDPOINTS.RELEASES, (data) => window.showReleases?.(data));
-    this.apiManager.load(API_ENDPOINTS.SYSTEM_REPORT, (data) => window.showSystemReport?.(data));
+  getIntervals() {
+    return [...new Set(this.getLoaders().map((loader) => loader.every))];
   }
 
   /**
-   * Loads data from POSTMAN endpoint and shows it in the postman window.
+   * Loads every endpoint of the current page refreshed every `every` seconds.
+   *
+   * @param {number} every - The interval, in seconds.
    */
-  load300Interval() {
-    this.apiManager.load(API_ENDPOINTS.POSTMAN, (data) => window.showPostman?.(data));
-    this.apiManager.load(API_ENDPOINTS.WEBHOOKS_WORKERS, (data) => window.showWorkers?.(data));
-    this.apiManager.load(API_ENDPOINTS.GSTRACCINI_JOBS, (data) => window.showGStracciniJobs?.(data));
+  load(every) {
+    for (const loader of this.getLoaders().filter((item) => item.every === every)) {
+      this.apiManager.load(this.getUrl(loader.endpoint), (data) => {
+        window[loader.show]?.(data);
+        this.lastLoadedAt = Date.now();
+      });
+    }
+  }
+
+  /**
+   * The URL of an endpoint; the webhooks one carries the feed filter.
+   *
+   * @param {string} endpoint - A key of API_ENDPOINTS.
+   * @returns {string}
+   */
+  getUrl(endpoint) {
+    if (endpoint !== "WEBHOOKS") {
+      return API_ENDPOINTS[endpoint];
+    }
+
+    const feedState = window.feedState || { filter: "all" };
+    return `${API_ENDPOINTS.WEBHOOKS}?feedOptionsFilter=${feedState.filter}`;
   }
 }

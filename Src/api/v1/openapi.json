@@ -111,7 +111,7 @@
           },
           "link": {
             "type": "string",
-            "example": "index.php#healthchecksio"
+            "example": "ops.php#healthchecksio"
           },
           "actions": {
             "type": "array",

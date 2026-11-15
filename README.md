@@ -1,6 +1,9 @@
 # Projects Monitor
 
-⚙️ 🔔 A single-page "flight control panel" for GitHub repositories, personal projects, and the infrastructure behind them — pull requests, issues, webhooks, health checks, DNS, queues, and error logs, all in one authenticated dashboard.
+⚙️ 🔔 A "flight control panel" for GitHub repositories, personal projects, and
+the infrastructure behind them — pull requests, issues, webhooks, health checks,
+DNS, queues, and error logs, in one authenticated dashboard that opens on what
+needs attention.
 
 [![wakatime](https://wakatime.com/badge/github/guibranco/projects-monitor.svg)](https://wakatime.com/badge/github/guibranco/projects-monitor)
 [![Build](https://github.com/guibranco/Projects-Monitor/actions/workflows/build.yml/badge.svg)](https://github.com/guibranco/Projects-Monitor/actions/workflows/build.yml)
@@ -26,7 +29,9 @@ Projects Monitor is a PHP dashboard backed by a REST-like API (`Src/api/v1`). It
   indicator in the navbar that turns amber when the public stats worker stops
   writing its cache. See [Attention feed](#attention-feed).
 - **GitHub integration** — open/pending pull requests, issues across repositories, workflow runs (failures highlighted), API rate-limit usage, and the latest releases of tracked projects.
-- **Webhooks & automation** — GitHub webhook statistics and processing-state counts, plus a right-hand **Actions** panel (offcanvas, top-right of the dashboard) listing live webhook workers and GStraccini Bot job runs.
+- **Webhooks & automation** — GitHub webhook statistics and processing-state
+  counts, plus the live webhook workers and GStraccini Bot job runs, with their
+  Run buttons, on the Pipeline page.
 - **Infrastructure health** — HealthChecks.io, UpTimeRobot, AppVeyor CI, Cloudflare domains (each zone's status — paused wins — plan and activation date, linked to the Cloudflare dashboard, plus the last 7 days of traffic from the GraphQL Analytics API: requests, cache ratio, bandwidth, visitors — the sum of each day's unique visitors — and page views), and Vercel project status (the production deployment's state, overridden by the project's paused flag and by what its production URL actually answers — `DEPLOYMENT_DISABLED`, `DEPLOYMENT_PAUSED`, `DEPLOYMENT_NOT_FOUND`, a 5xx or an unreachable host — each URL probed at most once every 10 minutes) and Render service status (the latest deploy's status, overridden by the service's suspended flag); CloudAMQP/RabbitMQ queue, message, consumer, and connection stats; WireGuard VPN client/connection status over SSH; a remote server health report (load average, CPU/memory/swap/disk usage, pending-reboot flag, and key systemd service states) collected by running a `monitor-report` script on the host over the same SSH connection.
 - **Domains** — registrar and lifecycle information (expiration, transfer status) via IP2WHOIS, plus a dedicated [DNS Records page](Src/dns.php) listing every zone record (A, CNAME, MX, TXT, ...) pulled live from cPanel, filterable by source domain/record type and sortable by any column.
 - **Logs & errors** — cPanel error logs and SQL-backed application errors, aggregated with grouping and statistics by application or error content.
@@ -168,6 +173,36 @@ vendor/bin/phpunit -c Tests/phpunit.xml   # unit tests
 bash Tests/smoke-tests.sh                  # hits the running app's key endpoints
 bash Tests/db-integrity.sh                 # checks the applied schema
 ```
+
+### Dashboard pages
+
+The dashboard is split by the question each page answers. Every page has the
+same navbar: one tab per page (with a red or amber dot when the attention feed
+has active items in that page's domains), the data freshness indicator, and a
+Ctrl+K palette to jump to any page or section.
+
+- **Overview** (`index.php`) — Is anything broken? Status strip, Needs
+  attention, key numbers.
+- **Pipeline** (`pipeline.php`) — Is the webhook/bot pipeline healthy? Pending
+  processing (one table with entity chips), processing state counts, idle PRs,
+  queues and brokers, workers, bot jobs, feed, senders, repositories, webhook
+  statistics.
+- **Errors** (`errors.php`) — What's failing in my code? Messages grouped,
+  database errors, error log messages and files, messages by application.
+- **GitHub work** (`github.php`) — What needs me on GitHub? Needs me, Waiting on
+  others, Blocked and Activity groups.
+- **Ops** (`ops.php`) — Is my infra up? Server health, Healthchecks.io,
+  UptimeRobot, WireGuard, domains, cronjobs, Cloudflare, Vercel, Render,
+  AppVeyor, GitHub API and Actions usage.
+- **Stats** (`stats.php`) — How am I doing? GitHub stats and streak, Wakatime,
+  Postman, pie charts.
+
+Each page loads only its own endpoints (`LOADERS` in `Src/static/api.js`).
+Design rules applied everywhere: colour only for status, sections whose counter
+is 0 are hidden and listed in one line at the bottom of the page, tables show 5
+rows with "View all", dates show relatively with the exact time on hover, and
+the old gauges are KPI tiles with their thresholds and a 24h sparkline (built
+from the samples this browser has seen).
 
 ### Attention feed
 

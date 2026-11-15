@@ -6,15 +6,21 @@ import { UIManager, GitHubStatsManager, CookieManager } from './ui.js';
 import { DataDisplayManager } from './dataDisplay.js';
 import { CollapsibleSectionsManager } from './collapsibleSections.js'; // Add this import
 import { AttentionPanel } from './attention.js';
+import { CommandPalette } from './commandPalette.js';
+import { EmptySectionsManager } from './emptySections.js';
+import { formatDuration } from './timeFormat.js';
 
 class DashboardApp {
   constructor() {
     this.showPreset = true;
     this.apiManager = new ApiManager();
-    this.dataLoader = new DataLoader(this.apiManager);
+    this.page = document.body.dataset.page || 'overview';
+    this.dataLoader = new DataLoader(this.apiManager, this.page);
     this.dataDisplayManager = new DataDisplayManager();
     this.collapsibleSectionsManager = new CollapsibleSectionsManager(); // Add this line
     this.attentionPanel = new AttentionPanel(this.apiManager);
+    this.commandPalette = new CommandPalette();
+    this.emptySections = new EmptySectionsManager();
 
     // Initialize state objects
     this.feedState = new FeedState();
@@ -462,25 +468,49 @@ class DashboardApp {
   }
 
   /**
+   * "Updated 12s ago" in the page heading: when the last response of this
+   * page's own endpoints arrived (the overview also counts the attention feed).
+   */
+  showPageUpdated() {
+    const element = document.getElementById('page_updated');
+    if (!element) return;
+
+    const loadedAt = Math.max(this.dataLoader.lastLoadedAt, this.attentionPanel.loadedAt || 0);
+    if (loadedAt === 0) {
+      element.textContent = 'Loading…';
+      return;
+    }
+
+    element.textContent = `Updated ${formatDuration((Date.now() - loadedAt) / 1000)} ago`;
+    element.title = new Date(loadedAt).toLocaleString();
+  }
+
+  /**
    * Initializes chart, loads initial data, and sets up data loading intervals.
    */
   drawChart() {
     this.preset();
-    GitHubStatsManager.show();
+    if (this.page === 'stats') {
+      GitHubStatsManager.show();
+    }
 
     // The "Needs attention" block refreshes on its own 30s timer.
     this.attentionPanel.init();
 
-    // Initial data load
-    this.dataLoader.load30Interval();
-    this.dataLoader.load60Interval();
-    this.dataLoader.load300Interval();
+    // Each page loads only the endpoints of its own sections.
+    for (const every of this.dataLoader.getIntervals()) {
+      this.dataLoader.load(every);
+      setInterval(() => this.dataLoader.load(every), every * 1000);
+    }
 
-    // Set up intervals
-    setInterval(() => this.dataLoader.load30Interval(), 30 * 1000);
-    setInterval(() => this.dataLoader.load60Interval(), 60 * 1000);
-    setInterval(() => this.dataLoader.load300Interval(), 300 * 1000);
-    setInterval(GitHubStatsManager.show, 60 * 15 * 1000);
+    if (this.page === 'stats') {
+      setInterval(GitHubStatsManager.show, 60 * 15 * 1000);
+    }
+
+    this.emptySections.init();
+    this.commandPalette.init();
+    this.showPageUpdated();
+    setInterval(() => this.showPageUpdated(), 2 * 1000);
 
     // Reinitialize collapsible sections after initial data load
     setTimeout(() => {

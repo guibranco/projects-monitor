@@ -61,7 +61,7 @@ class UpTimeRobotEvaluator extends MonitorsEvaluator
      */
     protected function getLink(): string
     {
-        return "index.php#uptimerobot";
+        return "ops.php#uptimerobot";
 
     }//end getLink()
 

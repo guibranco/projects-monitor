@@ -8,6 +8,7 @@
 // GET api/v1/attention; the judgement of what is wrong lives in the backend.
 import { API_ENDPOINTS } from "./constants.js";
 import { NotificationManager } from "./ui.js";
+import { formatDuration } from "./timeFormat.js";
 
 const SNOOZE_OPTIONS = [
   { label: "1 hour", minutes: 60 },
@@ -33,20 +34,6 @@ const escapeHtml = (value) =>
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
 
-/**
- * "40s", "5m", "3h", "2d": how long ago a time was, for compact rows.
- *
- * @param {number} seconds - Elapsed seconds.
- * @returns {string}
- */
-export function formatDuration(seconds) {
-  const value = Math.max(0, Math.floor(seconds));
-  if (value < 60) return `${value}s`;
-  if (value < 3600) return `${Math.floor(value / 60)}m`;
-  if (value < 86400) return `${Math.floor(value / 3600)}h`;
-  return `${Math.floor(value / 86400)}d`;
-}
-
 export class AttentionPanel {
   /**
    * @param {import('./api.js').ApiManager} apiManager - Shared API manager (session handling).
@@ -60,12 +47,13 @@ export class AttentionPanel {
 
   /**
    * Wires the click handlers (once) and starts the refresh and clock timers.
+   * Every page loads the feed, for the freshness indicator and the status
+   * dots on the page tabs; only the overview has the strip and the list.
    */
   init() {
-    const panel = document.getElementById("attention_panel");
-    if (!panel) return;
-
-    panel.addEventListener("click", (event) => this.onClick(event));
+    document
+      .getElementById("attention_panel")
+      ?.addEventListener("click", (event) => this.onClick(event));
     document
       .getElementById("data_freshness")
       ?.addEventListener("click", () => this.load(true));
@@ -92,9 +80,38 @@ export class AttentionPanel {
 
   render() {
     if (!this.data) return;
+    this.renderTabDots();
     this.renderStrip();
     this.renderList();
     this.renderFreshness();
+  }
+
+  /**
+   * A status dot on each page tab, the worst active severity of the
+   * domains that page covers (its data-domains).
+   */
+  renderTabDots() {
+    const tiles = new Map(
+      (this.data.domains || []).map((tile) => [tile.domain, tile]),
+    );
+    for (const tab of document.querySelectorAll(".page-tab[data-domains]")) {
+      const covered = (tab.dataset.domains || "")
+        .split(" ")
+        .filter(Boolean)
+        .map((domain) => tiles.get(domain))
+        .filter(Boolean);
+      const count = covered.reduce((sum, tile) => sum + tile.count, 0);
+      let severity = "";
+      if (covered.some((tile) => tile.severity === "critical")) {
+        severity = "critical";
+      } else if (count > 0) {
+        severity = "warning";
+      }
+
+      tab.dataset.severity = severity;
+      const label = tab.title.split(" (")[0];
+      tab.title = count > 0 ? `${label} (${count} need attention)` : label;
+    }
   }
 
   renderStrip() {

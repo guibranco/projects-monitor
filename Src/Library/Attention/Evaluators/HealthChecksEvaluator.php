@@ -61,7 +61,7 @@ class HealthChecksEvaluator extends MonitorsEvaluator
      */
     protected function getLink(): string
     {
-        return "index.php#healthchecksio";
+        return "ops.php#healthchecksio";
 
     }//end getLink()
 

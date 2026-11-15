@@ -8,6 +8,18 @@ if [ "$RESULT" -ne 200 ]; then
     exit 1
 fi
 
+# Every dashboard page answers (with --location, an anonymous request ends
+# on the login page).
+for PAGE in pipeline errors github ops stats; do
+    RESULT=$(curl -s -o /dev/null -w "%{http_code}" --location "http://localhost:8000/$PAGE.php")
+    if [ "$RESULT" -ne 200 ]; then
+        CONTENT=$(curl --location "http://localhost:8000/$PAGE.php")
+        echo "content=$CONTENT" >>"$GITHUB_OUTPUT"
+        echo "error=true" >>"$GITHUB_OUTPUT"
+        exit 1
+    fi
+done
+
 # The API reference is public: both the Swagger UI and the spec must render
 # without a session (no redirect to the login page).
 RESULT=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8000/api/v1/swagger")

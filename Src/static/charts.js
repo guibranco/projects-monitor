@@ -1,10 +1,12 @@
 // charts.js
 import { GridManager } from './gridManager.js';
+import { KpiTileRenderer } from './kpiTiles.js';
 
 export class ChartManager {
   constructor() {
     this.echarts = window.echarts;
     this.gridManager = new GridManager();
+    this.kpiTiles = new KpiTileRenderer();
     this._echartsIds = new Set();
   }
 
@@ -37,7 +39,7 @@ export class ChartManager {
   #getOrInitChart(elementId) {
     const el = document.getElementById(elementId);
     if (!el) {
-      console.error(`Element with id ${elementId} not found`);
+      // Expected: each page only holds its own sections.
       return null;
     }
     let instance = this.echarts.getInstanceByDom(el);
@@ -46,22 +48,6 @@ export class ChartManager {
       this._echartsIds.add(elementId);
     }
     return instance;
-  }
-
-  /**
-   * Converts Google-style {min,max,greenTo,yellowTo,redTo} zone thresholds
-   * into ECharts axisLine.lineStyle.color stop-array format.
-   */
-  #zonesToColorStops(options) {
-    const min = options.min ?? 0;
-    const max = options.max ?? 100;
-    const range = (max - min) || 1;
-    const frac = (v) => Math.min(1, Math.max(0, (v - min) / range));
-    return [
-      [frac(options.greenTo ?? max), '#2ecc71'],
-      [frac(options.yellowTo ?? max), '#f1c40f'],
-      [frac(options.redTo ?? max), '#e74c3c'],
-    ];
   }
 
   #baseText() {
@@ -77,10 +63,10 @@ export class ChartManager {
   }
 
   /**
-   * Draws a chart of the specified type (table, line, pie, gauge) into elementId.
+   * Draws a chart of the specified type (table, line or pie) into elementId.
    *
    * @param {Array<Array<any>>} data - The dataset for the chart.
-   * @param {string} chartType - The type of chart to draw (e.g., 'table', 'line', 'pie', 'gauge').
+   * @param {string} chartType - The type of chart to draw (e.g., 'table', 'line', 'pie').
    * @param {string} elementId - The ID of the HTML element where the chart will be rendered.
    * @param {Object} customOptions - Custom options for the chart.
    * @param {number} [hideColumn=-1] - Index of the column to hide (table charts only).
@@ -99,8 +85,6 @@ export class ChartManager {
         return this.#drawLine(data, elementId, customOptions);
       case "pie":
         return this.#drawPie(data, elementId, customOptions);
-      case "gauge":
-        return this.#drawGauge(data, elementId, customOptions);
       default:
         console.error(`Invalid chart type: ${chartType}`);
         return null;
@@ -135,18 +119,11 @@ export class ChartManager {
   }
 
   /**
-   * Draws a gauge chart with the given label, value, element ID, and options.
+   * Draws a KPI tile (formerly a gauge) with the given label, value, element ID, and threshold options.
    */
   drawGaugeChart(label, value, elementId, options) {
-    return this.drawChartByType(
-      [
-        ["", ""],
-        [label, value],
-      ],
-      "gauge",
-      elementId,
-      options
-    );
+    // Gauges are now KPI tiles: value, status colour, thresholds, trend.
+    return this.kpiTiles.render(elementId, label, value, options || {});
   }
 
   /**
@@ -161,35 +138,6 @@ export class ChartManager {
         this.echarts.getInstanceByDom(el)?.resize();
       }
     }
-  }
-
-  #drawGauge(data, elementId, options) {
-    const chart = this.#getOrInitChart(elementId);
-    if (!chart) return null;
-
-    const [, [label, value]] = data;
-    const option = this.deepMerge(this.#baseText(), {
-      series: [{
-        type: 'gauge',
-        min: options.min ?? 0,
-        max: options.max ?? 100,
-        startAngle: 200,
-        endAngle: -20,
-        progress: { show: false },
-        axisLine: { lineStyle: { width: 14, color: this.#zonesToColorStops(options) } },
-        axisTick: { show: false },
-        splitLine: { length: 10, lineStyle: { color: '#ffffff', width: 2 } },
-        axisLabel: { color: '#ffffff', fontSize: 10, distance: 18 },
-        pointer: { itemStyle: { color: '#ffffff' } },
-        title: { fontSize: 13, offsetCenter: [0, '70%'], color: '#ffffff' },
-        detail: { fontSize: 18, offsetCenter: [0, '40%'], color: '#ffffff', formatter: '{value}' },
-        data: [{ value, name: label }],
-      }],
-    });
-
-    chart.setOption(option, true);
-    chart.resize();
-    return chart;
   }
 
   #drawLine(data, elementId, options) {

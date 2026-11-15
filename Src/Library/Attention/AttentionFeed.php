@@ -3,13 +3,12 @@
 namespace GuiBranco\ProjectsMonitor\Library\Attention;
 
 use GuiBranco\ProjectsMonitor\Library\LogStream;
-use GuiBranco\ProjectsMonitor\Library\PublicStats;
 
 /**
  * The attention feed behind GET /api/v1/attention: collects from every source
- * at most once per cache.attention.ttlSeconds (the snapshot is cached in
- * Src/cache/attention.json), then applies the stored snoozes and
- * acknowledgements on every read so they take effect at once.
+ * at most once per cache.attention.ttlSeconds (the snapshot is cached in a
+ * JSON file), then applies the stored snoozes and acknowledgements on every
+ * read so they take effect at once.
  */
 class AttentionFeed
 {
@@ -20,19 +19,44 @@ class AttentionFeed
      *
      * @var AttentionStore|null
      */
-    private ?AttentionStore $store = null;
+    private ?AttentionStore $store;
+
+    /**
+     * Runs the evaluators.
+     *
+     * @var AttentionCollector
+     */
+    private AttentionCollector $collector;
+
+    /**
+     * Where the snapshot is cached.
+     *
+     * @var string
+     */
+    private string $cacheFile;
+
+    /**
+     * The public stats worker's (the cache script's) output file, whose age is the freshness indicator.
+     *
+     * @var string
+     */
+    private string $publicStatsFile;
 
 
     /**
-     * Connects to the store, carrying on without it when the database is unavailable.
+     * Creates the feed.
+     *
+     * @param AttentionStore|null $store           The store, null when the database is unavailable.
+     * @param AttentionCollector  $collector       Runs the evaluators.
+     * @param string              $cacheFile       Where the snapshot is cached.
+     * @param string              $publicStatsFile The public stats worker's output file.
      */
-    public function __construct()
+    public function __construct(?AttentionStore $store, AttentionCollector $collector, string $cacheFile, string $publicStatsFile)
     {
-        try {
-            $this->store = new AttentionStore();
-        } catch (\Throwable $exception) {
-            (new LogStream())->warning("Attention store unavailable: {reason}", ["reason" => $exception->getMessage()], "attention");
-        }
+        $this->store           = $store;
+        $this->collector       = $collector;
+        $this->cacheFile       = $cacheFile;
+        $this->publicStatsFile = $publicStatsFile;
 
     }//end __construct()
 
@@ -41,21 +65,25 @@ class AttentionFeed
      * The attention API response.
      *
      * @param boolean $refresh Collect again even when the cached snapshot is recent.
+     * @param integer $now     The current Unix time.
      *
      * @return array
      */
-    public function getResponse(bool $refresh): array
+    public function getResponse(bool $refresh, int $now): array
     {
-        $now        = time();
         $thresholds = new AttentionThresholds($this->readStore("getThresholdOverrides"));
-        $snapshot   = $this->readCache($thresholds, $now);
-        if ($refresh === true || $snapshot === null) {
+        $snapshot   = null;
+        if ($refresh === false) {
+            $snapshot = $this->readCache($thresholds, $now);
+        }
+
+        if ($snapshot === null) {
             $snapshot = $this->refresh($thresholds, $now);
         }
 
         $freshness = [];
 
-        $freshness["updatedAt"]    = $this->getPublicStatsTime();
+        $freshness["updatedAt"]    = $this->getFileTime($this->publicStatsFile);
         $freshness["staleSeconds"] = $thresholds->getValue("cache.publicStats.staleSeconds");
 
         $view = new AttentionView($now);
@@ -75,11 +103,10 @@ class AttentionFeed
      */
     private function refresh(AttentionThresholds $thresholds, int $now): array
     {
-        $collector = new AttentionCollector((new AttentionSources())->getEvaluators());
-        $snapshot  = $collector->collect($thresholds, $now);
-        $cacheDir  = dirname(self::CACHE_FILE);
+        $snapshot = $this->collector->collect($thresholds, $now);
+        $cacheDir = dirname($this->cacheFile);
         if (is_dir($cacheDir) === true && is_writable($cacheDir) === true) {
-            file_put_contents(self::CACHE_FILE, json_encode($snapshot), LOCK_EX);
+            file_put_contents($this->cacheFile, json_encode($snapshot), LOCK_EX);
         }
 
         $failed = array_filter($snapshot["sources"], fn ($source) => $source["status"] === "error");
@@ -93,7 +120,8 @@ class AttentionFeed
 
 
     /**
-     * The cached snapshot, or null when there is none or it is older than cache.attention.ttlSeconds.
+     * The cached snapshot, or null when there is none, it is older than
+     * cache.attention.ttlSeconds or it cannot be read.
      *
      * @param AttentionThresholds $thresholds The thresholds.
      * @param integer             $now        The current Unix time.
@@ -102,15 +130,12 @@ class AttentionFeed
      */
     private function readCache(AttentionThresholds $thresholds, int $now): ?array
     {
-        if (file_exists(self::CACHE_FILE) === false) {
+        $writtenAt = $this->getFileTime($this->cacheFile);
+        if ($writtenAt === null || ($now - $writtenAt) >= $thresholds->getValue("cache.attention.ttlSeconds")) {
             return null;
         }
 
-        if (($now - (int) filemtime(self::CACHE_FILE)) >= $thresholds->getValue("cache.attention.ttlSeconds")) {
-            return null;
-        }
-
-        $snapshot = json_decode((string) file_get_contents(self::CACHE_FILE), true);
+        $snapshot = json_decode((string) file_get_contents($this->cacheFile), true);
         if (is_array($snapshot) === false || isset($snapshot["items"], $snapshot["sources"]) === false) {
             return null;
         }
@@ -121,19 +146,21 @@ class AttentionFeed
 
 
     /**
-     * When the public stats worker (the cache script) last wrote its file, null when it never did.
+     * When a file was last written, null when it does not exist.
+     *
+     * @param string $path The file.
      *
      * @return integer|null
      */
-    private function getPublicStatsTime(): ?int
+    private function getFileTime(string $path): ?int
     {
-        if (file_exists(PublicStats::CACHE_FILE) === false) {
+        if (file_exists($path) === false) {
             return null;
         }
 
-        return (int) filemtime(PublicStats::CACHE_FILE);
+        return (int) filemtime($path);
 
-    }//end getPublicStatsTime()
+    }//end getFileTime()
 
 
     /**

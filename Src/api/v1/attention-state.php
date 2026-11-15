@@ -11,6 +11,7 @@ require_once '../../vendor/autoload.php';
 
 use GuiBranco\ProjectsMonitor\Library\Attention\AttentionStateRequest;
 use GuiBranco\ProjectsMonitor\Library\Attention\AttentionStore;
+use GuiBranco\ProjectsMonitor\Library\Database;
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     sendErrorResponse("Method not allowed", 405);
@@ -23,7 +24,7 @@ if ($error !== null) {
 }
 
 try {
-    $store = new AttentionStore();
+    $store = new AttentionStore((new Database())->getConnection());
 } catch (Throwable $exception) {
     sendErrorResponse("Attention store unavailable", 503);
 }

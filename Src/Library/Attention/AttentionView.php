@@ -128,7 +128,8 @@ class AttentionView
                      $right["title"],
                     ];
 
-        return ($keyLeft <=> $keyRight);
+        $order = ($keyLeft <=> $keyRight);
+        return $order;
 
     }//end compareItems()
 

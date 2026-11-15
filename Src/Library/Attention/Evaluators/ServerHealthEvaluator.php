@@ -53,8 +53,9 @@ class ServerHealthEvaluator implements AttentionEvaluator
             return [];
         }
 
-        $stats = json_decode((string) file_get_contents(PublicStats::CACHE_FILE), true);
-        return ($stats["systemStatus"] ?? []);
+        $stats        = json_decode((string) file_get_contents(PublicStats::CACHE_FILE), true);
+        $systemStatus = ($stats["systemStatus"] ?? []);
+        return $systemStatus;
 
     }//end fetch()
 

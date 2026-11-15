@@ -50,11 +50,37 @@ class AttentionStateRequest
      */
     public function validate(): ?string
     {
+        $error = ($this->validateFingerprint() ?? $this->validateAction());
+        $error = ($error ?? $this->validateSince());
+        return $error;
+
+    }//end validate()
+
+
+    /**
+     * What is wrong with the fingerprint, null when it is valid.
+     *
+     * @return string|null
+     */
+    private function validateFingerprint(): ?string
+    {
         $fingerprint = ($this->input["fingerprint"] ?? null);
         if (is_string($fingerprint) === false || $fingerprint === "" || strlen($fingerprint) > self::MAX_FINGERPRINT_LENGTH) {
             return "A valid 'fingerprint' is required";
         }
 
+        return null;
+
+    }//end validateFingerprint()
+
+
+    /**
+     * What is wrong with the action (and the minutes of a snooze), null when it is valid.
+     *
+     * @return string|null
+     */
+    private function validateAction(): ?string
+    {
         $action = ($this->input["action"] ?? null);
         if (in_array($action, self::ACTIONS, true) === false) {
             return "'action' must be snooze, acknowledge or clear";
@@ -64,9 +90,9 @@ class AttentionStateRequest
             return sprintf("'minutes' must be between 1 and %d", self::MAX_SNOOZE_MINUTES);
         }
 
-        return $this->validateSince();
+        return null;
 
-    }//end validate()
+    }//end validateAction()
 
 
     /**

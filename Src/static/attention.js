@@ -27,11 +27,11 @@ const DOMAIN_ICONS = {
 
 const escapeHtml = (value) =>
   String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
 
 /**
  * "40s", "5m", "3h", "2d": how long ago a time was, for compact rows.
@@ -100,7 +100,8 @@ export class AttentionPanel {
     strip.innerHTML = (this.data.domains || []).map((tile) => {
       const active = this.domainFilter === tile.domain ? ' is-filtered' : '';
       const count = tile.count > 0 ? tile.count : '';
-      const status = tile.count > 0 ? `${tile.count} need${tile.count === 1 ? 's' : ''} attention` : 'All clear';
+      const verb = tile.count === 1 ? 'needs' : 'need';
+      const status = tile.count > 0 ? `${tile.count} ${verb} attention` : 'All clear';
       return `
         <button type="button" class="status-tile status-${escapeHtml(tile.severity)}${active}"
           data-action="filter-domain" data-domain="${escapeHtml(tile.domain)}"
@@ -219,9 +220,12 @@ export class AttentionPanel {
     const elapsed = (Date.now() - this.loadedAt) / 1000;
     const age = formatDuration((freshness.ageSeconds ?? 0) + elapsed);
     const stale = freshness.cacheStale === true;
-    const cache = freshness.cacheAgeSeconds === null || freshness.cacheAgeSeconds === undefined
-      ? 'cache missing'
-      : (stale ? `cache ${formatDuration(freshness.cacheAgeSeconds + elapsed)} old` : 'cache OK');
+    let cache = 'cache OK';
+    if (freshness.cacheAgeSeconds === null || freshness.cacheAgeSeconds === undefined) {
+      cache = 'cache missing';
+    } else if (stale) {
+      cache = `cache ${formatDuration(freshness.cacheAgeSeconds + elapsed)} old`;
+    }
 
     element.className = `freshness-indicator d-none d-md-inline-flex ${stale ? 'is-stale' : ''}`;
     element.title = `Attention data generated ${this.data.generatedAt ?? 'never'}; the cache script last wrote ${freshness.cacheUpdatedAt ?? 'never'}. Click to re-check every source now.`;
@@ -239,13 +243,13 @@ export class AttentionPanel {
         this.render();
         break;
       case 'snooze':
-        this.saveState({ fingerprint, action, minutes: Number(target.dataset.minutes) }, 'Snoozed');
+        void this.saveState({ fingerprint, action, minutes: Number(target.dataset.minutes) }, 'Snoozed');
         break;
       case 'acknowledge':
-        this.saveState({ fingerprint, action, since: target.dataset.since || null }, 'Acknowledged');
+        void this.saveState({ fingerprint, action, since: target.dataset.since || null }, 'Acknowledged');
         break;
       case 'clear':
-        this.saveState({ fingerprint, action }, 'Restored');
+        void this.saveState({ fingerprint, action }, 'Restored');
         break;
       case 'rerun':
         window.confirmRetryWorkflowRun?.(target.dataset.run, () => window.retryWorkflowRun?.(Number(target.dataset.run)));

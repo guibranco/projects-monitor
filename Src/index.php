@@ -162,14 +162,14 @@ $configuration = new Configuration();
    <div class="dashboard-layout">
       <div class="dashboard-container">
       <section id="attention_panel" class="attention-panel" aria-labelledby="attention_heading">
-         <div id="attention_strip" class="status-strip" role="group" aria-label="Status by domain"></div>
+         <div id="attention_strip" class="status-strip"></div>
          <div class="attention-heading">
             <h2 id="attention_heading"><i class="bi bi-exclamation-diamond me-2"></i>Needs attention</h2>
             <span id="counter_attention" class="badge rounded-pill attention-counter"></span>
          </div>
          <div id="attention_list" class="attention-list">
             <div class="attention-empty">
-               <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Checking every source…
+               <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Checking every source…
             </div>
          </div>
          <div id="attention_all_clear" class="attention-all-clear"></div>

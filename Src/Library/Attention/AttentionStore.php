@@ -2,8 +2,6 @@
 
 namespace GuiBranco\ProjectsMonitor\Library\Attention;
 
-use GuiBranco\ProjectsMonitor\Library\Database;
-
 /**
  * Persists snoozes and acknowledgements of attention items, by fingerprint,
  * and reads the threshold overrides, in the attention_states and
@@ -24,11 +22,13 @@ class AttentionStore
 
 
     /**
-     * Opens the database connection.
+     * Uses an open database connection.
+     *
+     * @param \mysqli $connection The connection.
      */
-    public function __construct()
+    public function __construct(\mysqli $connection)
     {
-        $this->connection = (new Database())->getConnection();
+        $this->connection = $connection;
 
     }//end __construct()
 

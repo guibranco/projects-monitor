@@ -75,6 +75,7 @@ export class KpiTileRenderer {
    * storage only means starting without a trend.
    */
   loadHistory() {
+    // eslint-disable-next-line compat/compat
     Promise.resolve()
       .then(() => JSON.parse(window.localStorage.getItem(HISTORY_KEY) || "{}"))
       .then((stored) => {
@@ -91,6 +92,7 @@ export class KpiTileRenderer {
    * Keeps the samples. A full or unavailable storage only loses the trend.
    */
   saveHistory() {
+    // eslint-disable-next-line compat/compat
     Promise.resolve()
       .then(() =>
         window.localStorage.setItem(

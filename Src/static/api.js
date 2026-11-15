@@ -612,7 +612,7 @@ export class DataLoader {
    */
   getUrl(endpoint) {
     if (endpoint !== "WEBHOOKS") {
-      return API_ENDPOINTS[endpoint];
+      return new Map(Object.entries(API_ENDPOINTS)).get(endpoint);
     }
 
     const feedState = window.feedState || { filter: "all" };

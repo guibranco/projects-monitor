@@ -21,7 +21,7 @@ export function formatDuration(seconds) {
 const DASHBOARD_FORMAT = /^\d\d:\d\d:\d\d \d\d\/\d\d\/\d{4}$/;
 const SQL_FORMAT = /^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d$/;
 const ISO_START = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/;
-const ISO_ZONE = /(Z|[+-]\d{2}:\d{2})$/;
+const ISO_ZONE = /(?:Z|[+-]\d{2}:\d{2})$/;
 
 /**
  * Parses the date formats the dashboard's tables use: "H:i:s d/m/Y" and

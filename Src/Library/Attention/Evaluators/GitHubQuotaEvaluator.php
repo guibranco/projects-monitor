@@ -82,7 +82,7 @@ class GitHubQuotaEvaluator implements AttentionEvaluator
 
         $time  = new TimeFormatter();
         $title = sprintf("GitHub API core quota at %d%% (resets %s UTC)", (int) $percent, gmdate("H:i", (int) ($core["reset"] ?? 0)));
-        $evaluation->addItem(new AttentionItem($this->getSource(), $this->getDomain(), $severity, $title, $time->fromTimestamp($now), "index.php#api_usage", "github:quota-core"));
+        $evaluation->addItem(new AttentionItem($this->getSource(), $this->getDomain(), $severity, $title, $time->fromTimestamp($now), "ops.php#api_usage", "github:quota-core"));
 
         return $evaluation;
 

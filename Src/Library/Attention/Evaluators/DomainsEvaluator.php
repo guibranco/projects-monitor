@@ -82,7 +82,7 @@ class DomainsEvaluator implements AttentionEvaluator
             }
 
             $domain = (string) ($row["domain"] ?? "");
-            $evaluation->addItem(new AttentionItem($this->getSource(), $this->getDomain(), $severity, $this->getTitle($domain, $daysLeft), null, "index.php#domains", $fingerprint->make("domain", $domain)));
+            $evaluation->addItem(new AttentionItem($this->getSource(), $this->getDomain(), $severity, $this->getTitle($domain, $daysLeft), null, "ops.php#domains", $fingerprint->make("domain", $domain)));
         }
 
         return $evaluation;

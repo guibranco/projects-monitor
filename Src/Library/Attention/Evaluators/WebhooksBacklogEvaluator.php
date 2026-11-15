@@ -89,7 +89,7 @@ class WebhooksBacklogEvaluator implements AttentionEvaluator
         }
 
         $title = sprintf("%d webhook entities pending processing (%s)", $pending, implode(", ", $largest));
-        $evaluation->addItem(new AttentionItem($this->getSource(), $this->getDomain(), $severity, $title, null, "index.php#webhook_processing_stats", "webhooks:pending"));
+        $evaluation->addItem(new AttentionItem($this->getSource(), $this->getDomain(), $severity, $title, null, "pipeline.php#pending_processing", "webhooks:pending"));
 
         return $evaluation;
 

@@ -77,7 +77,7 @@ class QueuesEvaluator implements AttentionEvaluator
             }
 
             $title = sprintf("Queue %s has %d messages waiting", $name, $messages);
-            $item  = new AttentionItem($this->getSource(), $this->getDomain(), $severity, $title, null, "index.php#queues", $fingerprint->make("queue", $name));
+            $item  = new AttentionItem($this->getSource(), $this->getDomain(), $severity, $title, null, "pipeline.php#queues", $fingerprint->make("queue", $name));
             $evaluation->addItem($item);
         }
 

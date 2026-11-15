@@ -117,7 +117,7 @@ class ServerHealthEvaluator implements AttentionEvaluator
         }
 
         $fingerprint = new Fingerprint();
-        return new AttentionItem($this->getSource(), $this->getDomain(), $severity, $title, null, "index.php#server_health", $fingerprint->make("server", $label));
+        return new AttentionItem($this->getSource(), $this->getDomain(), $severity, $title, null, "ops.php#server_health", $fingerprint->make("server", $label));
 
     }//end buildItem()
 

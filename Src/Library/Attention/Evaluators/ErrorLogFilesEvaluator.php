@@ -80,7 +80,7 @@ class ErrorLogFilesEvaluator implements AttentionEvaluator
             $directory = (string) ($row[0] ?? "");
             $title     = sprintf("error_log in /%s (%s)", $directory, (string) ($row[1] ?? "?"));
             $since     = $time->fromDashboardFormat(($row[2] ?? ""));
-            $evaluation->addItem(new AttentionItem($this->getSource(), $this->getDomain(), AttentionItem::WARNING, $title, $since, "index.php#error_log_files", $fingerprint->make("errlog", $directory)));
+            $evaluation->addItem(new AttentionItem($this->getSource(), $this->getDomain(), AttentionItem::WARNING, $title, $since, "errors.php#error_log_files", $fingerprint->make("errlog", $directory)));
         }
 
         return $evaluation;

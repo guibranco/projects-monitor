@@ -139,7 +139,7 @@ class WorkflowRunsEvaluator implements AttentionEvaluator
         $fingerprint = new Fingerprint();
         $time        = new TimeFormatter();
         $title       = sprintf("%s/%s: %s %s", ($run["owner"] ?? ""), ($run["repo"] ?? ""), ($run["name"] ?? "workflow"), str_replace("_", " ", $conclusion));
-        $item        = new AttentionItem($this->getSource(), $this->getDomain(), $severity, $title, $time->toIso(($run["updated_at"] ?? null)), "index.php#workflow_runs_management", $fingerprint->make("wf", $workflow));
+        $item        = new AttentionItem($this->getSource(), $this->getDomain(), $severity, $title, $time->toIso(($run["updated_at"] ?? null)), "github.php#workflow_runs_management", $fingerprint->make("wf", $workflow));
         $runId       = (int) ($run["workflow_run_id"] ?? 0);
         if ($runId > 0 && in_array($conclusion, WorkflowRunsPresenter::RETRYABLE_CONCLUSIONS, true) === true) {
             return $item->withAction("rerun", ["workflowRunId" => $runId]);

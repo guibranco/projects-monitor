@@ -1,10 +1,12 @@
 // dataDisplay.js
 import { CHART_OPTIONS } from './constants.js';
 import { ChartManager } from './charts.js';
+import { PendingProcessingTable } from './pendingProcessing.js';
 
 export class DataDisplayManager {
   constructor() {
     this.chartManager = new ChartManager();
+    this.pendingProcessing = new PendingProcessingTable(this.chartManager, "pending_processing");
     this.eventAssigned = false;
     this.eventAssignedError = false;
     this.eventAssignedQueues = false;
@@ -140,7 +142,7 @@ export class DataDisplayManager {
         this.eventAssignedError = true;
         document
           .getElementById("error_log_files")
-          .addEventListener("click", (e) => {
+          ?.addEventListener("click", (e) => {
             const deleteButton = e.target.closest('[data-action="delete"]');
             if (deleteButton) {
               const { directory } = deleteButton.dataset;
@@ -169,9 +171,10 @@ export class DataDisplayManager {
    *                             and API usage statistics.
    */
   showGitHub(response) {
-    if (typeof response.latest_release !== "undefined") {
+    const releaseElement = document.getElementById("latest_release");
+    if (response.latest_release !== undefined && releaseElement) {
       const r = response.latest_release;
-      document.getElementById("latest_release").innerHTML = `
+      releaseElement.innerHTML = `
         <div class="release-notes">
           <div class="release-notes-header">
             <div class="release-notes-heading">
@@ -401,7 +404,7 @@ export class DataDisplayManager {
         this.eventAssigned = true;
         document
           .getElementById("messages_by_applications")
-          .addEventListener("click", (e) => {
+          ?.addEventListener("click", (e) => {
             const deleteButton = e.target.closest('[data-action="delete"]');
             if (deleteButton) {
               const { application } = deleteButton.dataset;
@@ -472,7 +475,8 @@ export class DataDisplayManager {
     if (typeof response.usage === "undefined") {
       return;
     }
-    document.getElementById("postman").innerHTML = response.usage;
+    const postman = document.getElementById("postman");
+    if (postman) postman.innerHTML = response.usage;
   }
 
   /**
@@ -499,7 +503,7 @@ export class DataDisplayManager {
       this.eventAssignedQueues = true;
       document
         .getElementById("queues")
-        .addEventListener("click", (e) => {
+        ?.addEventListener("click", (e) => {
           const purgeButton = e.target.closest('[data-action="purge"]');
           if (purgeButton) {
             const { host, vhost, queue } = purgeButton.dataset;
@@ -746,11 +750,10 @@ export class DataDisplayManager {
   }
 
   /**
-   * Shared renderer for every "<Entity> Pending Processing" section: builds a
-   * [header, ...rows] table from a flat array of processing items, updates
-   * the section's counter badge, and shows a friendly empty state.
+   * Renders a flat array of items as a table with a counter badge and a
+   * friendly empty state (the Idle Pull Requests section).
    */
-  #renderProcessingList(response, elementId, emptyMessage, columns) {
+  #renderList(response, elementId, emptyMessage, columns) {
     const container = document.getElementById(elementId);
     const counterEl = document.getElementById(`counter_${elementId}`);
     if (!container) return;
@@ -771,10 +774,19 @@ export class DataDisplayManager {
   }
 
   /**
+   * Renders one of the eight "<Entity> pending processing" endpoints into
+   * the merged Pending processing table (#pending_processing), which shows
+   * every entity in one table with filter chips.
+   */
+  #renderProcessingList(response, elementId, columns) {
+    this.pendingProcessing.update(elementId, response, columns);
+  }
+
+  /**
    * Renders branch create/delete events pending processing.
    */
   showBranchesProcessing(response) {
-    this.#renderProcessingList(response, "branches_processing", "No branch events pending processing.", [
+    this.#renderProcessingList(response, "branches_processing", [
       { label: "#Seq", render: (i) => i.sequence },
       { label: "Repository", render: (i) => this.#repoLink(i.repositoryOwner, i.repositoryName) },
       { label: "Ref", render: (i) => this.#refCell(i.ref) },
@@ -793,7 +805,7 @@ export class DataDisplayManager {
    * Renders pull request comment events pending processing.
    */
   showCommentsProcessing(response) {
-    this.#renderProcessingList(response, "comments_processing", "No comment events pending processing.", [
+    this.#renderProcessingList(response, "comments_processing", [
       { label: "#Seq", render: (i) => i.sequence },
       { label: "Repository", render: (i) => this.#repoLink(i.repositoryOwner, i.repositoryName) },
       { label: "PR", render: (i) => `<a href="https://github.com/${this.#escHtml(i.repositoryOwner)}/${this.#escHtml(i.repositoryName)}/pull/${i.pullRequestNumber}" target="_blank" rel="noopener noreferrer">#${i.pullRequestNumber}</a>` },
@@ -812,7 +824,7 @@ export class DataDisplayManager {
    * Renders GitHub App installation events pending processing.
    */
   showInstallationsProcessing(response) {
-    this.#renderProcessingList(response, "installations_processing", "No installation events pending processing.", [
+    this.#renderProcessingList(response, "installations_processing", [
       { label: "#Seq", render: (i) => i.sequence },
       { label: "Account", render: (i) => this.#fmt(i.accountLogin) },
       { label: "Account Type", render: (i) => this.#fmt(i.accountType) },
@@ -831,7 +843,7 @@ export class DataDisplayManager {
    * Renders issue events pending processing.
    */
   showIssuesProcessing(response) {
-    this.#renderProcessingList(response, "issues_processing", "No issue events pending processing.", [
+    this.#renderProcessingList(response, "issues_processing", [
       { label: "#Seq", render: (i) => i.sequence },
       { label: "Repository", render: (i) => this.#repoLink(i.repositoryOwner, i.repositoryName) },
       { label: "Issue", render: (i) => `<a href="https://github.com/${this.#escHtml(i.repositoryOwner)}/${this.#escHtml(i.repositoryName)}/issues/${i.number}" target="_blank" rel="noopener noreferrer">#${i.number}</a>` },
@@ -848,7 +860,7 @@ export class DataDisplayManager {
    * Renders push events pending processing.
    */
   showPushesProcessing(response) {
-    this.#renderProcessingList(response, "pushes_processing", "No push events pending processing.", [
+    this.#renderProcessingList(response, "pushes_processing", [
       { label: "#Seq", render: (i) => i.sequence },
       { label: "Repository", render: (i) => this.#repoLink(i.repositoryOwner, i.repositoryName) },
       { label: "Ref", render: (i) => this.#refCell(i.ref) },
@@ -865,7 +877,7 @@ export class DataDisplayManager {
    * Renders pull request events pending processing.
    */
   showWebhookPullRequestsProcessing(response) {
-    this.#renderProcessingList(response, "pr_processing", "No pull requests pending processing.", [
+    this.#renderProcessingList(response, "pr_processing", [
       { label: "#Seq", render: (i) => i.sequence },
       { label: "Repository", render: (i) => this.#repoLink(i.repositoryOwner, i.repositoryName) },
       { label: "PR", render: (i) => `<a href="https://github.com/${this.#escHtml(i.repositoryOwner)}/${this.#escHtml(i.repositoryName)}/pull/${i.number}" target="_blank" rel="noopener noreferrer">#${i.number}</a>` },
@@ -998,7 +1010,7 @@ export class DataDisplayManager {
     const items = Array.isArray(response?.items) ? response.items : [];
     this.#renderIdleWorker(response?.worker, response?.hidden);
     const nextRetry = this.#nextIdleRetry(items, response?.worker, response?.hidden);
-    this.#renderProcessingList(items, "pr_idle", "No idle pull requests.", [
+    this.#renderList(items, "pr_idle", "No idle pull requests.", [
       { label: "#Seq", render: (i) => i.sequence },
       { label: "Repository", render: (i) => this.#idleRepositoryCell(i) },
       { label: "Rank", render: (i) => this.#idleRankCell(i) },
@@ -1019,7 +1031,7 @@ export class DataDisplayManager {
    * Renders repository events pending processing.
    */
   showRepositoriesProcessing(response) {
-    this.#renderProcessingList(response, "repositories_processing", "No repository events pending processing.", [
+    this.#renderProcessingList(response, "repositories_processing", [
       { label: "#Seq", render: (i) => i.sequence },
       { label: "Repository", render: (i) => this.#fmt(i.fullName) },
       { label: "Owner", render: (i) => this.#fmt(i.ownerLogin) },
@@ -1040,7 +1052,7 @@ export class DataDisplayManager {
    * Sender* columns.
    */
   showUsersProcessing(response) {
-    this.#renderProcessingList(response, "users_processing", "No user records pending processing.", [
+    this.#renderProcessingList(response, "users_processing", [
       { label: "#Seq", render: (i) => i.sequence },
       { label: "Login", render: (i) => this.#fmt(i.login) },
       { label: "Full Name", render: (i) => this.#fmt(i.fullName) },
@@ -1205,9 +1217,9 @@ export class DataDisplayManager {
         <div class="server-health-card">
           <div class="server-health-name">${this.#escHtml(report.name)}</div>
           <div class="server-health-gauges">
-            <div id="gauge_chart_ssh_${i}_cpu" class="gauge"></div>
-            <div id="gauge_chart_ssh_${i}_memory" class="gauge"></div>
-            <div id="gauge_chart_ssh_${i}_disk" class="gauge"></div>
+            <div id="gauge_chart_ssh_${i}_cpu" class="kpi-tile"></div>
+            <div id="gauge_chart_ssh_${i}_memory" class="kpi-tile"></div>
+            <div id="gauge_chart_ssh_${i}_disk" class="kpi-tile"></div>
           </div>
           <div id="system_report_${i}" class="section-content"></div>
         </div>`)

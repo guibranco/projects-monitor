@@ -164,7 +164,7 @@ $configuration = new Configuration();
       <section id="attention_panel" class="attention-panel" aria-labelledby="attention_heading">
          <div id="attention_strip" class="status-strip"></div>
          <div class="attention-heading">
-            <h2 id="attention_heading"><i class="bi bi-exclamation-diamond me-2"></i>Needs attention</h2>
+            <h2 id="attention_heading" class="attention-heading-title"><i class="bi bi-exclamation-diamond me-2"></i>Needs attention</h2>
             <span id="counter_attention" class="badge rounded-pill attention-counter"></span>
          </div>
          <div id="attention_list" class="attention-list">

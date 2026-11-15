@@ -3,6 +3,7 @@
    =========================================== */
 :root {
   --bg-gradient: linear-gradient(135deg, #0d1117 0%, #1a1e2e 100%);
+
   /* Neutral frame: colour is reserved for status (red, amber, green dot). */
   --accent-gradient: linear-gradient(135deg, #2a3140 0%, #232937 100%);
   --accent-hover-gradient: linear-gradient(135deg, #323a4b 0%, #2a3140 100%);

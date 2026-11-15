@@ -1,6 +1,6 @@
 // charts.js
 import { GridManager } from './gridManager.js';
-import { KpiTileRenderer } from './kpiTiles.js';
+import { KpiTileRenderer } from "./kpiTiles.js";
 
 export class ChartManager {
   constructor() {

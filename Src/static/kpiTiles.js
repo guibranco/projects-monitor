@@ -66,23 +66,39 @@ export function sparklineSvg(samples) {
 
 export class KpiTileRenderer {
   constructor() {
-    this.history = this.loadHistory();
+    this.history = new Map();
+    this.loadHistory();
   }
 
+  /**
+   * Reads the kept samples. Asynchronous so that unreadable or corrupt
+   * storage only means starting without a trend.
+   */
   loadHistory() {
-    try {
-      return JSON.parse(localStorage.getItem(HISTORY_KEY) || "{}") || {};
-    } catch {
-      return {};
-    }
+    Promise.resolve()
+      .then(() => JSON.parse(window.localStorage.getItem(HISTORY_KEY) || "{}"))
+      .then((stored) => {
+        for (const [key, samples] of Object.entries(stored || {})) {
+          if (Array.isArray(samples) && !this.history.has(key)) {
+            this.history.set(key, samples);
+          }
+        }
+      })
+      .catch(() => this.history.clear());
   }
 
+  /**
+   * Keeps the samples. A full or unavailable storage only loses the trend.
+   */
   saveHistory() {
-    try {
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(this.history));
-    } catch {
-      // Storage full or unavailable: the tiles still render, without a trend.
-    }
+    Promise.resolve()
+      .then(() =>
+        window.localStorage.setItem(
+          HISTORY_KEY,
+          JSON.stringify(Object.fromEntries(this.history)),
+        ),
+      )
+      .catch(() => undefined);
   }
 
   /**
@@ -94,7 +110,7 @@ export class KpiTileRenderer {
    * @returns {Array<{t:number,v:number}>}
    */
   record(key, value, now) {
-    const samples = (this.history[key] || []).filter(
+    const samples = (this.history.get(key) || []).filter(
       (sample) => now - sample.t <= HISTORY_WINDOW_MS,
     );
     const last = samples[samples.length - 1];
@@ -104,9 +120,10 @@ export class KpiTileRenderer {
       last.v = value;
     }
 
-    this.history[key] = samples.slice(-MAX_SAMPLES);
+    const kept = samples.slice(-MAX_SAMPLES);
+    this.history.set(key, kept);
     this.saveHistory();
-    return this.history[key];
+    return kept;
   }
 
   /**

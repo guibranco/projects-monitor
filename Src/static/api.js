@@ -411,37 +411,152 @@ export class ApiManager {
  */
 const LOADERS = [
   { endpoint: "APPVEYOR", every: 30, show: "showAppVeyor", pages: ["ops"] },
-  { endpoint: "CPANEL", every: 30, show: "showCPanel", pages: ["errors", "ops"] },
-  { endpoint: "MESSAGES", every: 30, show: "showMessages", pages: ["overview", "errors", "stats"] },
-  { endpoint: "QUEUES", every: 30, show: "showQueues", pages: ["overview", "pipeline"] },
-  { endpoint: "WORKFLOW_RUNS", every: 30, show: "showWorkflowRunsManagement", pages: ["github"] },
-  { endpoint: "WEBHOOKS", every: 30, show: "showWebhook", pages: ["overview", "pipeline", "github", "stats"] },
-  { endpoint: "WEBHOOKS_STATISTICS", every: 30, show: "showWebhookProcessingStats", pages: ["overview", "pipeline"] },
-  { endpoint: "WEBHOOKS_PR_PROCESSING", every: 30, show: "showWebhookPullRequestsProcessing", pages: ["pipeline"] },
-  { endpoint: "WEBHOOKS_PR_IDLE", every: 30, show: "showWebhookPullRequestsIdle", pages: ["pipeline"] },
-  { endpoint: "WEBHOOKS_BRANCHES_PROCESSING", every: 30, show: "showBranchesProcessing", pages: ["pipeline"] },
-  { endpoint: "WEBHOOKS_COMMENTS_PROCESSING", every: 30, show: "showCommentsProcessing", pages: ["pipeline"] },
-  { endpoint: "WEBHOOKS_INSTALLATIONS_PROCESSING", every: 30, show: "showInstallationsProcessing", pages: ["pipeline"] },
-  { endpoint: "WEBHOOKS_ISSUES_PROCESSING", every: 30, show: "showIssuesProcessing", pages: ["pipeline"] },
-  { endpoint: "WEBHOOKS_PUSHES_PROCESSING", every: 30, show: "showPushesProcessing", pages: ["pipeline"] },
-  { endpoint: "WEBHOOKS_REPOSITORIES_PROCESSING", every: 30, show: "showRepositoriesProcessing", pages: ["pipeline"] },
-  { endpoint: "WEBHOOKS_USERS_PROCESSING", every: 30, show: "showUsersProcessing", pages: ["pipeline"] },
+  {
+    endpoint: "CPANEL",
+    every: 30,
+    show: "showCPanel",
+    pages: ["errors", "ops"],
+  },
+  {
+    endpoint: "MESSAGES",
+    every: 30,
+    show: "showMessages",
+    pages: ["overview", "errors", "stats"],
+  },
+  {
+    endpoint: "QUEUES",
+    every: 30,
+    show: "showQueues",
+    pages: ["overview", "pipeline"],
+  },
+  {
+    endpoint: "WORKFLOW_RUNS",
+    every: 30,
+    show: "showWorkflowRunsManagement",
+    pages: ["github"],
+  },
+  {
+    endpoint: "WEBHOOKS",
+    every: 30,
+    show: "showWebhook",
+    pages: ["overview", "pipeline", "github", "stats"],
+  },
+  {
+    endpoint: "WEBHOOKS_STATISTICS",
+    every: 30,
+    show: "showWebhookProcessingStats",
+    pages: ["overview", "pipeline"],
+  },
+  {
+    endpoint: "WEBHOOKS_PR_PROCESSING",
+    every: 30,
+    show: "showWebhookPullRequestsProcessing",
+    pages: ["pipeline"],
+  },
+  {
+    endpoint: "WEBHOOKS_PR_IDLE",
+    every: 30,
+    show: "showWebhookPullRequestsIdle",
+    pages: ["pipeline"],
+  },
+  {
+    endpoint: "WEBHOOKS_BRANCHES_PROCESSING",
+    every: 30,
+    show: "showBranchesProcessing",
+    pages: ["pipeline"],
+  },
+  {
+    endpoint: "WEBHOOKS_COMMENTS_PROCESSING",
+    every: 30,
+    show: "showCommentsProcessing",
+    pages: ["pipeline"],
+  },
+  {
+    endpoint: "WEBHOOKS_INSTALLATIONS_PROCESSING",
+    every: 30,
+    show: "showInstallationsProcessing",
+    pages: ["pipeline"],
+  },
+  {
+    endpoint: "WEBHOOKS_ISSUES_PROCESSING",
+    every: 30,
+    show: "showIssuesProcessing",
+    pages: ["pipeline"],
+  },
+  {
+    endpoint: "WEBHOOKS_PUSHES_PROCESSING",
+    every: 30,
+    show: "showPushesProcessing",
+    pages: ["pipeline"],
+  },
+  {
+    endpoint: "WEBHOOKS_REPOSITORIES_PROCESSING",
+    every: 30,
+    show: "showRepositoriesProcessing",
+    pages: ["pipeline"],
+  },
+  {
+    endpoint: "WEBHOOKS_USERS_PROCESSING",
+    every: 30,
+    show: "showUsersProcessing",
+    pages: ["pipeline"],
+  },
   { endpoint: "DOMAINS", every: 60, show: "showDomains", pages: ["ops"] },
-  { endpoint: "BROKER_USAGE", every: 60, show: "showBrokerUsage", pages: ["pipeline"] },
-  { endpoint: "THROTTLED_REPOSITORIES", every: 60, show: "showThrottledRepositories", pages: ["pipeline"] },
+  {
+    endpoint: "BROKER_USAGE",
+    every: 60,
+    show: "showBrokerUsage",
+    pages: ["pipeline"],
+  },
+  {
+    endpoint: "THROTTLED_REPOSITORIES",
+    every: 60,
+    show: "showThrottledRepositories",
+    pages: ["pipeline"],
+  },
   { endpoint: "ERRORS", every: 60, show: "showDbErrors", pages: ["errors"] },
-  { endpoint: "GITHUB", every: 60, show: "showGitHub", pages: ["github", "ops"] },
-  { endpoint: "HEALTHCHECKS", every: 60, show: "showHealthChecksIo", pages: ["ops"] },
-  { endpoint: "UPTIMEROBOT", every: 60, show: "showUpTimeRobot", pages: ["ops"] },
+  {
+    endpoint: "GITHUB",
+    every: 60,
+    show: "showGitHub",
+    pages: ["github", "ops"],
+  },
+  {
+    endpoint: "HEALTHCHECKS",
+    every: 60,
+    show: "showHealthChecksIo",
+    pages: ["ops"],
+  },
+  {
+    endpoint: "UPTIMEROBOT",
+    every: 60,
+    show: "showUpTimeRobot",
+    pages: ["ops"],
+  },
   { endpoint: "VERCEL", every: 60, show: "showVercel", pages: ["ops"] },
   { endpoint: "CLOUDFLARE", every: 60, show: "showCloudflare", pages: ["ops"] },
   { endpoint: "RENDER", every: 60, show: "showRender", pages: ["ops"] },
   { endpoint: "WIREGUARD", every: 60, show: "showWireGuard", pages: ["ops"] },
   { endpoint: "RELEASES", every: 60, show: "showReleases", pages: ["github"] },
-  { endpoint: "SYSTEM_REPORT", every: 60, show: "showSystemReport", pages: ["ops"] },
+  {
+    endpoint: "SYSTEM_REPORT",
+    every: 60,
+    show: "showSystemReport",
+    pages: ["ops"],
+  },
   { endpoint: "POSTMAN", every: 300, show: "showPostman", pages: ["stats"] },
-  { endpoint: "WEBHOOKS_WORKERS", every: 300, show: "showWorkers", pages: ["pipeline"] },
-  { endpoint: "GSTRACCINI_JOBS", every: 300, show: "showGStracciniJobs", pages: ["pipeline"] },
+  {
+    endpoint: "WEBHOOKS_WORKERS",
+    every: 300,
+    show: "showWorkers",
+    pages: ["pipeline"],
+  },
+  {
+    endpoint: "GSTRACCINI_JOBS",
+    every: 300,
+    show: "showGStracciniJobs",
+    pages: ["pipeline"],
+  },
 ];
 
 export class DataLoader {
@@ -479,7 +594,9 @@ export class DataLoader {
    * @param {number} every - The interval, in seconds.
    */
   load(every) {
-    for (const loader of this.getLoaders().filter((item) => item.every === every)) {
+    for (const loader of this.getLoaders().filter(
+      (item) => item.every === every,
+    )) {
       this.apiManager.load(this.getUrl(loader.endpoint), (data) => {
         window[loader.show]?.(data);
         this.lastLoadedAt = Date.now();

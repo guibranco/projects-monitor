@@ -5,16 +5,18 @@
 // users) instead of eight sections. Each endpoint's rows are kept per
 // entity; chips filter the table by entity and show each one's count.
 
-const ENTITIES = {
-  branches_processing: "Branches",
-  comments_processing: "Comments",
-  installations_processing: "Installations",
-  issues_processing: "Issues",
-  pr_processing: "Pull requests",
-  pushes_processing: "Pushes",
-  repositories_processing: "Repositories",
-  users_processing: "Users",
-};
+const ENTITIES = new Map(
+  Object.entries({
+    branches_processing: "Branches",
+    comments_processing: "Comments",
+    installations_processing: "Installations",
+    issues_processing: "Issues",
+    pr_processing: "Pull requests",
+    pushes_processing: "Pushes",
+    repositories_processing: "Repositories",
+    users_processing: "Users",
+  }),
+);
 
 // Columns every entity shares; the rest are folded into "Details".
 const COMMON = [
@@ -57,32 +59,33 @@ export class PendingProcessingTable {
    * @param {Array<{label:string, render:Function}>} columns - How to render them.
    */
   update(sourceId, items, columns) {
-    const entity = ENTITIES[sourceId] ?? sourceId;
-    const byLabel = (item) =>
-      Object.fromEntries(
+    const entity = ENTITIES.get(sourceId) ?? sourceId;
+    const rows = (Array.isArray(items) ? items : []).map((item) => {
+      const cells = new Map(
         columns.map((column) => [column.label, column.render(item)]),
       );
-    const rows = (Array.isArray(items) ? items : []).map((item) => {
-      const cells = byLabel(item);
       const details = columns
         .filter((column) => !COMMON.includes(column.label))
         .map(
           (column) =>
-            `<span class="pp-detail"><small>${column.label}</small> ${cells[column.label]}</span>`,
+            `<span class="pp-detail"><small>${column.label}</small> ${cells.get(column.label)}</span>`,
         )
         .join(" ");
       const versions = ["Receiver", "Handler", "Bot"]
-        .map((label) => `<span title="${label}">${cells[label] ?? "—"}</span>`)
+        .map(
+          (label) => `<span title="${label}">${cells.get(label) ?? "—"}</span>`,
+        )
         .join(" / ");
-      return [
+      const row = [
         entity,
-        cells["#Seq"],
+        cells.get("#Seq"),
         details,
-        cells.Sender ?? "—",
-        cells.State,
-        cells["Processing Date"],
+        cells.get("Sender") ?? "—",
+        cells.get("State"),
+        cells.get("Processing Date"),
         versions,
       ];
+      return row;
     });
 
     this.rowsByEntity.set(entity, rows);

@@ -45,22 +45,31 @@ export class CommandPalette {
       },
     }));
     const sections = [...document.querySelectorAll("[data-section]")].map(
-      (section) => {
-        const header = section.querySelector(".section-header");
-        return {
-          label:
-            header?.textContent.trim().replace(/\s+\d+$/, "") ??
-            section.dataset.section,
-          hint: "Section",
-          run: () => {
-            section.classList.remove("is-empty");
-            if (header?.classList.contains("collapsed")) header.click();
-            section.scrollIntoView({ behavior: "smooth", block: "start" });
-          },
-        };
-      },
+      (section) => this.sectionItem(section),
     );
     return [...pages, ...sections];
+  }
+
+  /**
+   * The palette entry of a section: scrolls to it, showing and expanding it.
+   *
+   * @param {HTMLElement} section - The section ([data-section]).
+   * @returns {{label:string, hint:string, run:Function}}
+   */
+  sectionItem(section) {
+    const header = section.querySelector(".section-header");
+    const item = {
+      label:
+        header?.textContent.trim().replace(/\s+\d+$/, "") ??
+        section.dataset.section,
+      hint: "Section",
+      run: () => {
+        section.classList.remove("is-empty");
+        if (header?.classList.contains("collapsed")) header.click();
+        section.scrollIntoView({ behavior: "smooth", block: "start" });
+      },
+    };
+    return item;
   }
 
   build() {
@@ -76,7 +85,7 @@ export class CommandPalette {
       </div>`,
     );
     const element = document.getElementById("command_palette");
-    this.modal = new bootstrap.Modal(element);
+    this.modal = new window.bootstrap.Modal(element);
     const input = element.querySelector("input");
     element.addEventListener("shown.bs.modal", () => {
       this.opening = false;
@@ -152,7 +161,7 @@ export class CommandPalette {
   }
 
   choose(index) {
-    const item = this.matches[index];
+    const item = this.matches.find((_match, position) => position === index);
     if (!item) return;
     this.modal.hide();
     item.run();

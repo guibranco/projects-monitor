@@ -18,9 +18,9 @@ export function formatDuration(seconds) {
 }
 
 const DASHBOARD_FORMAT = /^(\d{2}):(\d{2}):(\d{2}) (\d{2})\/(\d{2})\/(\d{4})$/;
-const SQL_FORMAT = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?$/;
-const ISO_FORMAT =
-  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})$/;
+const SQL_FORMAT = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/;
+const ISO_START = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/;
+const ISO_ZONE = /(Z|[+-]\d{2}:\d{2})$/;
 
 /**
  * Parses the date formats the dashboard's tables use: "H:i:s d/m/Y" and
@@ -40,13 +40,11 @@ export function parseTableDate(text) {
 
   match = SQL_FORMAT.exec(value);
   if (match) {
-    const [, year, month, day, hour, minute, second] = match.map((part) =>
-      Number(part ?? 0),
-    );
+    const [, year, month, day, hour, minute, second] = match.map(Number);
     return new Date(year, month - 1, day, hour, minute, second);
   }
 
-  if (ISO_FORMAT.test(value)) {
+  if (ISO_START.test(value) && ISO_ZONE.test(value)) {
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? null : date;
   }

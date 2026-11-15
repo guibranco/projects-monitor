@@ -117,32 +117,52 @@ export class AttentionPanel {
   renderList() {
     const list = document.getElementById('attention_list');
     const clear = document.getElementById('attention_all_clear');
-    const counter = document.getElementById('counter_attention');
     if (!list || !clear) return;
 
     const items = (this.data.items || []).filter(
       (item) => this.domainFilter === null || item.domain === this.domainFilter
     );
-    const summary = this.data.summary || {};
 
-    if (counter) {
-      counter.textContent = summary.active || '';
-      counter.className = `badge rounded-pill attention-counter status-${summary.critical > 0 ? 'critical' : (summary.active > 0 ? 'warning' : 'ok')}`;
+    this.renderCounter(this.data.summary || {});
+    list.innerHTML = items.length > 0 ? items.map((item) => this.renderItem(item)).join('') : this.renderEmpty();
+    clear.innerHTML = this.renderAllClear(this.data.summary || {});
+  }
+
+  renderCounter(summary) {
+    const counter = document.getElementById('counter_attention');
+    if (!counter) return;
+
+    let status = 'ok';
+    if (summary.critical > 0) {
+      status = 'critical';
+    } else if (summary.active > 0) {
+      status = 'warning';
     }
 
-    list.innerHTML = items.length === 0
-      ? `<div class="attention-empty"><i class="bi bi-check2-circle me-2"></i>${this.domainFilter ? 'Nothing needs attention here.' : 'Nothing needs attention right now.'}</div>`
-      : items.map((item) => this.renderItem(item)).join('');
+    counter.textContent = summary.active || '';
+    counter.className = `badge rounded-pill attention-counter status-${status}`;
+  }
 
+  renderEmpty() {
+    const message = this.domainFilter ? 'Nothing needs attention here.' : 'Nothing needs attention right now.';
+    return `<div class="attention-empty"><i class="bi bi-check2-circle me-2"></i>${message}</div>`;
+  }
+
+  /**
+   * The collapsed "N other checks healthy · M snoozed" line.
+   */
+  renderAllClear(summary) {
     const parts = [`${summary.healthy ?? 0} other checks healthy`];
     if (summary.snoozed) parts.push(`${summary.snoozed} snoozed`);
     if (summary.acknowledged) parts.push(`${summary.acknowledged} acknowledged`);
+
     const failing = (this.data.sources || []).filter((source) => source.status === 'error').length;
     if (failing) parts.push(`${failing} source${failing === 1 ? '' : 's'} unreachable`);
+
     const filter = this.domainFilter
       ? ` · <button type="button" class="btn btn-link btn-sm p-0 attention-link" data-action="filter-domain" data-domain="${escapeHtml(this.domainFilter)}">show all domains</button>`
       : '';
-    clear.innerHTML = `<span class="status-dot status-ok" aria-hidden="true"></span>${parts.join(' · ')}${filter}`;
+    return `<span class="status-dot status-ok" aria-hidden="true"></span>${parts.join(' · ')}${filter}`;
   }
 
   renderItem(item) {

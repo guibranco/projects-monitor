@@ -667,11 +667,10 @@ export class DataDisplayManager {
       redTo: 1000,
     };
 
-    if (typeof response.check_hooks_date !== "undefined") {
+    const hooksLastCheck = document.getElementById("hooks_last_check");
+    if (response.check_hooks_date !== undefined && hooksLastCheck) {
       const checkHooksDate = new Date(response.check_hooks_date);
-      document.getElementById(
-        "hooks_last_check"
-      ).innerHTML = `<b>Date: </b> ${checkHooksDate.toString()}`;
+      hooksLastCheck.innerHTML = `<b>Date: </b> ${checkHooksDate.toString()}`;
     }
 
     this.chartManager.drawLineChart(response.statistics, "webhooks_statistics", optionsStatistics);

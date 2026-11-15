@@ -417,6 +417,12 @@ code {
   min-height: 300px;
 }
 
+/* ECharts draws into its container's own size; without a height the pie
+   container is 0px tall and the chart never shows. */
+.pie-chart > div {
+  height: 340px;
+}
+
 /* ===========================================
    RELEASE NOTES
    =========================================== */
@@ -602,6 +608,7 @@ code {
 table.gridjs-table {
   color: #ffffff;
   width: 100%;
+  table-layout: auto;
 }
 
 .gridjs-tbody,

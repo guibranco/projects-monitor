@@ -287,8 +287,39 @@ The login page, with basic (public) information:
 
 ### Dashboard
 
-The authenticated dashboard, with full (restricted) information:
-![Dashboard Preview](projects-monitor-dashboard.png)
+The authenticated dashboard is split into six pages. The screenshots below
+use demo data.
+
+#### Overview page
+
+Status strip, "Needs attention" list and key numbers:
+![Overview page](docs/screenshots/overview.png)
+
+#### Pipeline page
+
+Webhooks and bot processing: pending processing, state counts, idle pull
+requests, queues and brokers:
+![Pipeline page](docs/screenshots/pipeline.png)
+
+#### Errors page
+
+Application messages and error logs:
+![Errors page](docs/screenshots/errors.png)
+
+#### GitHub work page
+
+Workflow runs, triage, assigned issues and pull requests:
+![GitHub work page](docs/screenshots/github.png)
+
+#### Ops page
+
+Server health, uptime, domains, DNS and hosting:
+![Ops page](docs/screenshots/ops.png)
+
+#### Stats page
+
+GitHub, WakaTime and Postman stats, events and messages by application:
+![Stats page](docs/screenshots/stats.png)
 
 ---
 

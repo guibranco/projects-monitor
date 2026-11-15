@@ -92,7 +92,7 @@ class AttentionCollectorTest extends TestCase
     {
         $evaluators = (new AttentionSources())->getEvaluators();
         $names      = array_map(fn ($evaluator) => $evaluator->getSource(), $evaluators);
-        $domains    = array_unique(array_map(fn ($evaluator) => $evaluator->getDomain(), $evaluators));
+        $domains    = array_values(array_unique(array_map(fn ($evaluator) => $evaluator->getDomain(), $evaluators)));
 
         $this->assertCount(count($evaluators), array_unique($names));
         $this->assertEqualsCanonicalizing(["ops", "pipeline", "errors", "ci", "github", "domains"], $domains);

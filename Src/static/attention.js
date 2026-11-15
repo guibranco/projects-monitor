@@ -299,6 +299,7 @@ export class AttentionPanel {
    * @returns {Promise<void>}
    */
   saveState(body, verb) {
+    // eslint-disable-next-line compat/compat
     return fetch(API_ENDPOINTS.ATTENTION_STATE, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

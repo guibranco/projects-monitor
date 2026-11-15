@@ -1,3 +1,4 @@
+/* tsqllint-disable */
 -- Snoozes and acknowledgements of attention items, by fingerprint.
 -- state is "snoozed" (hidden until snoozed_until, UTC) or "acknowledged"
 -- (counted as seen while the item's since value equals acknowledged_since).

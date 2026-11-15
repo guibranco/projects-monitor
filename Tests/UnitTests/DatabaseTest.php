@@ -79,4 +79,62 @@ class DatabaseTest extends TestCase
     }//end testThrowsWhenTheRetryFails()
 
 
+    /**
+     * A Database that will try a server nobody listens on, with a wrong password.
+     *
+     * @return Database
+     */
+    private function createUnreachableDatabase(): Database
+    {
+        $database = $this->getMockBuilder(Database::class)->disableOriginalConstructor()->onlyMethods([])->getMock();
+        foreach (["host" => "127.0.0.1", "user" => "nobody", "password" => "wrong", "database" => "nothing"] as $name => $value) {
+            $property = new ReflectionProperty(Database::class, $name);
+            $property->setValue($database, $value);
+        }
+
+        return $database;
+
+    }//end createUnreachableDatabase()
+
+
+    /**
+     * A failed connection reports why, whether mysqli throws (the PHP 8.1+
+     * default) or only sets connect_error.
+     *
+     * @return void
+     */
+    public function testOpenConnectionReportsTheFailure(): void
+    {
+        $method = new ReflectionMethod(Database::class, "openConnection");
+
+        $this->assertNotEmpty($method->invoke($this->createUnreachableDatabase()));
+
+        $previous = mysqli_report(MYSQLI_REPORT_OFF);
+        try {
+            $this->assertNotEmpty(@$method->invoke($this->createUnreachableDatabase()));
+        } finally {
+            mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+        }
+
+        $this->assertTrue($previous);
+
+    }//end testOpenConnectionReportsTheFailure()
+
+
+    /**
+     * The pause before the retry sleeps for the given time.
+     *
+     * @return void
+     */
+    public function testPause(): void
+    {
+        $method  = new ReflectionMethod(Database::class, "pause");
+        $started = microtime(true);
+        $method->invoke($this->createUnreachableDatabase(), 0);
+
+        $this->assertLessThan(1, (microtime(true) - $started));
+
+    }//end testPause()
+
+
 }//end class

@@ -95,7 +95,11 @@ class GitHubApiProxyPresenterTest extends TestCase
      */
     public function testSummaryAndHealth(): void
     {
-        $result = $this->present([['caller' => 'guibranco', 'requests' => 5]]);
+        $caller = [
+                   'caller'   => 'guibranco',
+                   'requests' => 5,
+                  ];
+        $result = $this->present([$caller]);
 
         $this->assertSame(1240, $result['summary']['requests']);
         $this->assertSame(12, $result['summary']['errors']);
@@ -170,14 +174,26 @@ class GitHubApiProxyPresenterTest extends TestCase
                      'errors'          => 3,
                      'avg_duration_ms' => 120.26,
                      'last_seen_at'    => '2026-11-18T17:00:00Z',
-                     'user_agents'     => ['projects-monitor/2.0', 'curl/8.5'],
+                     'user_agents'     => [
+                                           'projects-monitor/2.0',
+                                           'curl/8.5',
+                                          ],
                      'client_ips'      => ['198.51.100.30'],
                     ],
-                    ['caller' => 'installation:ApiBR', 'token_kinds' => ['app_installation']],
-                    ['caller' => 'app:123456', 'token_kinds' => ['app_jwt']],
+                    [
+                     'caller'      => 'installation:ApiBR',
+                     'token_kinds' => ['app_installation'],
+                    ],
+                    [
+                     'caller'      => 'app:123456',
+                     'token_kinds' => ['app_jwt'],
+                    ],
                     ['caller' => 'token:0123456789ab'],
                     ['caller' => 'invalid:ba9876543210'],
-                    ['caller' => 'anonymous', 'token_kinds' => ['none']],
+                    [
+                     'caller'      => 'anonymous',
+                     'token_kinds' => ['none'],
+                    ],
                    ];
         $rows    = $this->present($callers)['callers'];
 

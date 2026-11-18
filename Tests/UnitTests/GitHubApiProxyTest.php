@@ -36,11 +36,12 @@ class GitHubApiProxyTest extends TestCase
         $builder->onlyMethods([]);
         $proxy = $builder->getMock();
 
-        foreach ([
-            'apiUrl'  => self::API_URL,
-            'headers' => ['Authorization: Bearer test-token'],
-            'request' => $request,
-        ] as $property => $value) {
+        $state = [
+                  'apiUrl'  => self::API_URL,
+                  'headers' => ['Authorization: Bearer test-token'],
+                  'request' => $request,
+                 ];
+        foreach ($state as $property => $value) {
             $reflection = new ReflectionProperty(GitHubApiProxy::class, $property);
             $reflection->setValue($proxy, $value);
         }
@@ -104,20 +105,50 @@ class GitHubApiProxyTest extends TestCase
 
 
     /**
+     * A 200 wrapping the value in the stats API's {since, data} envelope.
+     *
+     * @param array $value Data member.
+     *
+     * @return Response
+     */
+    private function dataResponse(array $value): Response
+    {
+        $body = [
+                 'since' => '2026-11-17T17:30:00Z',
+                 'data'  => $value,
+                ];
+
+        return $this->responseWith(200, json_encode($body));
+
+    }//end dataResponse()
+
+
+    /**
      * All endpoints the dashboard reads, answering 200.
      *
      * @return array<string, Response>
      */
     private function okResponses(): array
     {
-        $data = fn(mixed $value) => $this->responseWith(200, json_encode(['since' => '2026-11-17T17:30:00Z', 'data' => $value]));
+        $summary = [
+                    'requests'      => 3,
+                    'client_errors' => 1,
+                   ];
+        $caller  = [
+                    'caller'   => 'guibranco',
+                    'requests' => 3,
+                   ];
+        $health  = [
+                    'status'  => 'ok',
+                    'version' => '0.2.0',
+                   ];
 
         return [
-                'api/v1/summary?period=24h'                 => $data(['requests' => 3, 'client_errors' => 1]),
-                'api/v1/timeline?period=24h&bucket=hour'    => $data([]),
-                'api/v1/callers?period=24h&limit=50'        => $data([['caller' => 'guibranco', 'requests' => 3]]),
-                'api/v1/rate-limits'                        => $data([]),
-                'health'                                    => $this->responseWith(200, json_encode(['status' => 'ok', 'version' => '0.2.0'])),
+                'api/v1/summary?period=24h'              => $this->dataResponse($summary),
+                'api/v1/timeline?period=24h&bucket=hour' => $this->dataResponse([]),
+                'api/v1/callers?period=24h&limit=50'     => $this->dataResponse([$caller]),
+                'api/v1/rate-limits'                     => $this->dataResponse([]),
+                'health'                                 => $this->responseWith(200, json_encode($health)),
                ];
 
     }//end okResponses()

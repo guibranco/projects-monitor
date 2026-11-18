@@ -2,38 +2,14 @@
 
 namespace GuiBranco\ProjectsMonitor\Library;
 
-use GuiBranco\Pancake\Request;
-use GuiBranco\ProjectsMonitor\Library\Configuration;
-
 /**
  * Client for the WebhooksHandler (guibranco/WebhooksHandler) bearer-token
  * protected /broker endpoints — the C# service that forwards GitHub webhook
  * payloads to the LavinMQ brokers. Distinct from Webhooks (the PHP consumer's
  * API) and RabbitMq (the brokers' own management API).
  */
-class WebhooksHandler
+class WebhooksHandler extends BearerTokenApiClient
 {
-
-    /**
-     * Base URL of the handler, with a trailing slash.
-     *
-     * @var string
-     */
-    private $apiUrl;
-
-    /**
-     * Request headers sent on every call (bearer token, accept, user agent).
-     *
-     * @var array<int, string>
-     */
-    private $headers;
-
-    /**
-     * HTTP client.
-     *
-     * @var Request
-     */
-    private $request;
 
 
     /**
@@ -43,68 +19,21 @@ class WebhooksHandler
      */
     public function __construct()
     {
-        global $handlerApiUrl, $handlerApiToken;
-
-        $config = new Configuration();
-        $config->init();
-
-        $secretsFile = __DIR__.'/../secrets/webhooksHandler.secrets.php';
-        if (file_exists($secretsFile) === false) {
-            throw new SecretsFileNotFoundException('File not found: webhooksHandler.secrets.php');
-        }
-
-        include_once $secretsFile;
-
-        // Secrets pasted with a stray newline or space would put a control
-        // character into the URL or the Authorization header; older libcurl
-        // sends it as-is and nginx answers a bare 400 Bad Request.
-        $this->apiUrl  = rtrim(trim((string) $handlerApiUrl), '/').'/';
-        $this->headers = [
-                          'Authorization: Bearer '.trim((string) $handlerApiToken),
-                          'Accept: application/json',
-                          'Cache-Control: no-cache',
-                          constant('USER_AGENT'),
-                         ];
-        $this->request = new Request();
+        $this->initialise('webhooksHandler.secrets.php', 'handlerApiUrl', 'handlerApiToken');
 
     }//end __construct()
 
 
     /**
-     * Performs a GET against the handler and decodes the JSON body.
+     * Name used in error messages.
      *
-     * @param string $endpoint Path relative to the handler base URL.
-     *
-     * @return array
-     *
-     * @throws RequestException When the handler does not answer 200.
+     * @return string
      */
-    private function doGet(string $endpoint): array
+    protected function serviceName(): string
     {
-        $response = $this->request->get($this->apiUrl.$endpoint, $this->headers);
-        $status   = $response->getStatusCode();
+        return 'WebhooksHandler API';
 
-        if ($status === 200) {
-            $decoded = json_decode((string) $response->getBody(), true);
-            if (is_array($decoded) === false) {
-                throw new RequestException(
-                    'Request to WebhooksHandler API returned a non-JSON body: GET '.$endpoint
-                );
-            }
-
-            return $decoded;
-        }
-
-        $error = $response->getBody();
-        if ($status === -1) {
-            $error = $response->getMessage();
-        }
-
-        throw new RequestException(
-            'Request to WebhooksHandler API failed: GET '.$endpoint.' ('.$status.'): '.$error
-        );
-
-    }//end doGet()
+    }//end serviceName()
 
 
     /**

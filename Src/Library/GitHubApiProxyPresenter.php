@@ -8,13 +8,13 @@ use DateInterval;
 use DateTimeImmutable;
 use DateTimeZone;
 use Exception;
-use GuiBranco\Pancake\ShieldsIo;
 
 /**
  * Renders the github-api-proxy stats API responses for the dashboard: a
  * summary for the caption, a 24-hour requests/errors line chart (one point
  * per hour, gaps filled with zeros), the callers table and the current
- * rate-limits table. Pure formatting, no HTTP, so it is unit-testable.
+ * rate-limits table, with the HTML cells from GitHubApiProxyCells. Pure
+ * formatting, no HTTP, so it is unit-testable.
  */
 class GitHubApiProxyPresenter
 {
@@ -53,11 +53,6 @@ class GitHubApiProxyPresenter
     private const DATE_FORMAT = 'd/m/Y H:i:s';
 
     /**
-     * Longest user agent shown in the Client column.
-     */
-    private const USER_AGENT_LENGTH = 48;
-
-    /**
      * Display time zone.
      *
      * @var DateTimeZone
@@ -71,6 +66,13 @@ class GitHubApiProxyPresenter
      */
     private $now;
 
+    /**
+     * HTML cell renderer.
+     *
+     * @var GitHubApiProxyCells
+     */
+    private $cells;
+
 
     /**
      * @param DateTimeZone|null      $zone Display time zone; defaults to date.timezone,
@@ -79,8 +81,9 @@ class GitHubApiProxyPresenter
      */
     public function __construct(?DateTimeZone $zone=null, ?DateTimeImmutable $now=null)
     {
-        $this->zone = ($zone ?? new DateTimeZone(date_default_timezone_get()));
-        $this->now  = ($now ?? new DateTimeImmutable('now', new DateTimeZone('UTC')));
+        $this->zone  = ($zone ?? new DateTimeZone(date_default_timezone_get()));
+        $this->now   = ($now ?? new DateTimeImmutable('now', new DateTimeZone('UTC')));
+        $this->cells = new GitHubApiProxyCells();
 
     }//end __construct()
 
@@ -98,19 +101,17 @@ class GitHubApiProxyPresenter
      */
     public function present(array $summary, array $timeline, array $callers, array $rateLimits, array $health): array
     {
-        $shields = new ShieldsIo();
-
         $callerRows = [self::CALLERS_HEADER];
         foreach ($callers as $caller) {
             if (is_array($caller) === true) {
-                $callerRows[] = $this->presentCaller($caller, $shields);
+                $callerRows[] = $this->presentCaller($caller);
             }
         }
 
         $limitRows = [self::RATE_LIMITS_HEADER];
         foreach ($rateLimits as $limit) {
             if (is_array($limit) === true) {
-                $limitRows[] = $this->presentRateLimit($limit, $shields);
+                $limitRows[] = $this->presentRateLimit($limit);
             }
         }
 
@@ -162,7 +163,10 @@ class GitHubApiProxyPresenter
      */
     private function presentHealth(array $health): array
     {
-        $writer = is_array($health['writer'] ?? null) ? $health['writer'] : [];
+        $writer = [];
+        if (isset($health['writer']) === true && is_array($health['writer']) === true) {
+            $writer = $health['writer'];
+        }
 
         return [
                 'status'        => (string) ($health['status'] ?? 'unknown'),
@@ -210,10 +214,10 @@ class GitHubApiProxyPresenter
 
         $rows = [self::TIMELINE_HEADER];
         for ($i = 0; $i < self::TIMELINE_HOURS; $i++) {
-            $at     = $start->add(new DateInterval('PT'.$i.'H'));
-            $counts = ($byHour[$at->format('Y-m-d H')] ?? [0, 0]);
+            $hourAt = $start->add(new DateInterval('PT'.$i.'H'));
+            $counts = ($byHour[$hourAt->format('Y-m-d H')] ?? [0, 0]);
             $rows[] = [
-                       $at->setTimezone($this->zone)->format('H:i'),
+                       $hourAt->setTimezone($this->zone)->format('H:i'),
                        $counts[0],
                        $counts[1],
                       ];
@@ -227,26 +231,17 @@ class GitHubApiProxyPresenter
     /**
      * Renders one callers row.
      *
-     * @param array     $caller  One caller entry.
-     * @param ShieldsIo $shields Badge URL generator.
+     * @param array $caller One caller entry.
      *
      * @return array
      */
-    private function presentCaller(array $caller, ShieldsIo $shields): array
+    private function presentCaller(array $caller): array
     {
-        $requests = (int) ($caller['requests'] ?? 0);
-        $errors   = (int) ($caller['errors'] ?? 0);
-
-        $errorsColor = 'green';
-        if ($errors > 0) {
-            $errorsColor = 'red';
-        }
-
         return [
-                $this->callerCell((string) ($caller['caller'] ?? ''), (array) ($caller['token_kinds'] ?? [])),
-                $this->clientCell((array) ($caller['user_agents'] ?? []), (array) ($caller['client_ips'] ?? [])),
-                number_format($requests),
-                $this->badge($shields, 'errors', number_format($errors), $errorsColor, $errors.' requests answered 4xx/5xx'),
+                $this->cells->caller((string) ($caller['caller'] ?? ''), (array) ($caller['token_kinds'] ?? [])),
+                $this->cells->client((array) ($caller['user_agents'] ?? []), (array) ($caller['client_ips'] ?? [])),
+                number_format((int) ($caller['requests'] ?? 0)),
+                $this->cells->errorsBadge((int) ($caller['errors'] ?? 0)),
                 number_format((float) ($caller['avg_duration_ms'] ?? 0), 1),
                 $this->formatDate((string) ($caller['last_seen_at'] ?? '')),
                ];
@@ -257,170 +252,34 @@ class GitHubApiProxyPresenter
     /**
      * Renders one rate-limits row.
      *
-     * @param array     $limit   One rate-limit entry.
-     * @param ShieldsIo $shields Badge URL generator.
+     * @param array $limit One rate-limit entry.
      *
      * @return array
      */
-    private function presentRateLimit(array $limit, ShieldsIo $shields): array
+    private function presentRateLimit(array $limit): array
     {
-        $total     = (int) ($limit['limit'] ?? 0);
-        $remaining = (int) ($limit['remaining'] ?? 0);
-        $percent   = (float) ($limit['used_percent'] ?? 0);
-
-        $resets = '—';
-        $reset  = (string) ($limit['reset_at'] ?? '');
-        if ($reset !== '') {
-            try {
-                $resets = (new DateTimeImmutable($reset))->setTimezone($this->zone)->format('H:i:s');
-            } catch (Exception $exception) {
-                $resets = '—';
-            }
-        }
+        $total = (int) ($limit['limit'] ?? 0);
 
         return [
-                $this->callerCell((string) ($limit['caller'] ?? ''), [(string) ($limit['token_kind'] ?? '')]),
-                $this->escape((string) ($limit['resource'] ?? '')),
-                $this->badge(
-                    $shields,
-                    'used',
-                    number_format($percent, 1).'%',
-                    $this->usageColor($percent),
-                    number_format($percent, 1).'% of the '.$total.' requests per window used'
-                ),
-                number_format($remaining).' / '.number_format($total),
-                $resets,
+                $this->cells->caller((string) ($limit['caller'] ?? ''), [(string) ($limit['token_kind'] ?? '')]),
+                $this->cells->escape((string) ($limit['resource'] ?? '')),
+                $this->cells->usageBadge((float) ($limit['used_percent'] ?? 0), $total),
+                number_format((int) ($limit['remaining'] ?? 0)).' / '.number_format($total),
+                $this->formatDate((string) ($limit['reset_at'] ?? ''), 'H:i:s'),
                ];
 
     }//end presentRateLimit()
 
 
     /**
-     * Colour of the used-quota badge.
-     *
-     * @param float $percent Used percentage.
-     *
-     * @return string
-     */
-    private function usageColor(float $percent): string
-    {
-        if ($percent >= 95) {
-            return 'red';
-        }
-
-        if ($percent >= 80) {
-            return 'orange';
-        }
-
-        if ($percent >= 50) {
-            return 'yellow';
-        }
-
-        return 'green';
-
-    }//end usageColor()
-
-
-    /**
-     * Caller cell. The proxy labels callers as a GitHub login,
-     * installation:<account>, app:<id>, token:<fingerprint> (still being
-     * resolved), invalid:<fingerprint> or anonymous.
-     *
-     * @param string $caller Caller label.
-     * @param array  $kinds  Token kinds used by the caller.
-     *
-     * @return string
-     */
-    private function callerCell(string $caller, array $kinds): string
-    {
-        $kinds = array_values(array_filter(array_map('strval', $kinds), fn(string $kind) => $kind !== '' && $kind !== 'none'));
-        $note  = '';
-        if (count($kinds) > 0) {
-            $note = ' <small class="text-white-50">'.$this->escape(implode(', ', $kinds)).'</small>';
-        }
-
-        [$prefix, $value] = array_pad(explode(':', $caller, 2), 2, '');
-
-        switch ($prefix) {
-        case 'installation':
-            return $this->githubLink($value).' <small class="text-white-50">app installation</small>';
-        case 'app':
-            return 'GitHub App #'.$this->escape($value).$note;
-        case 'token':
-            return 'token <code>'.$this->escape($value).'</code> <small class="text-white-50">resolving</small>';
-        case 'invalid':
-            return 'invalid token <code>'.$this->escape($value).'</code>';
-        case 'anonymous':
-            return 'anonymous';
-        }
-
-        if ($caller === '') {
-            return '—';
-        }
-
-        return $this->githubLink($caller).$note;
-
-    }//end callerCell()
-
-
-    /**
-     * Client cell: the first user agent (shortened) and how many more were seen,
-     * with the client IPs in the tooltip.
-     *
-     * @param array $userAgents User agents seen.
-     * @param array $clientIps  Client IPs seen.
-     *
-     * @return string
-     */
-    private function clientCell(array $userAgents, array $clientIps): string
-    {
-        $userAgents = array_values(array_filter(array_map('strval', $userAgents), fn(string $ua) => $ua !== ''));
-        if (count($userAgents) === 0) {
-            return '—';
-        }
-
-        $first = $userAgents[0];
-        if (mb_strlen($first) > self::USER_AGENT_LENGTH) {
-            $first = mb_substr($first, 0, (self::USER_AGENT_LENGTH - 1)).'…';
-        }
-
-        $more = '';
-        if (count($userAgents) > 1) {
-            $more = ' <small class="text-white-50">+'.(count($userAgents) - 1).'</small>';
-        }
-
-        $title = implode("\n", array_merge($userAgents, array_map('strval', $clientIps)));
-
-        return '<span title="'.$this->escape($title).'">'.$this->escape($first).'</span>'.$more;
-
-    }//end clientCell()
-
-
-    /**
-     * Link to a GitHub account.
-     *
-     * @param string $login Account login.
-     *
-     * @return string
-     */
-    private function githubLink(string $login): string
-    {
-        $safe = $this->escape($login);
-        $url  = $this->escape('https://github.com/'.rawurlencode($login));
-
-        return '<a href="'.$url.'" target="_blank" rel="noopener noreferrer">'.$safe.'</a>';
-
-    }//end githubLink()
-
-
-    /**
      * Converts an ISO 8601 timestamp to the display time zone.
      *
-     * @param string $value Timestamp, e.g. 2026-11-18T17:02:00.123Z.
+     * @param string $value  Timestamp, e.g. 2026-11-18T17:02:00.123Z.
+     * @param string $format Output format.
      *
      * @return string The formatted time, or "—" when missing or unparseable.
      */
-    private function formatDate(string $value): string
+    private function formatDate(string $value, string $format=self::DATE_FORMAT): string
     {
         if ($value === '') {
             return '—';
@@ -432,45 +291,9 @@ class GitHubApiProxyPresenter
             return '—';
         }
 
-        return $date->setTimezone($this->zone)->format(self::DATE_FORMAT);
+        return $date->setTimezone($this->zone)->format($format);
 
     }//end formatDate()
-
-
-    /**
-     * HTML-escapes a value.
-     *
-     * @param string $value Raw text.
-     *
-     * @return string
-     */
-    private function escape(string $value): string
-    {
-        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-
-    }//end escape()
-
-
-    /**
-     * Renders one shields.io badge as an <img> tag.
-     *
-     * @param ShieldsIo $shields Badge URL generator.
-     * @param string    $label   Left-hand label.
-     * @param string    $content Right-hand content.
-     * @param string    $color   Content colour.
-     * @param string    $alt     Alt/title text.
-     *
-     * @return string
-     */
-    private function badge(ShieldsIo $shields, string $label, string $content, string $color, string $alt): string
-    {
-        $badgeUrl = $shields->generateBadgeUrl($label, $content, $color, 'for-the-badge', 'black', null);
-        $url      = $this->escape((string) $badgeUrl);
-        $safeAlt  = $this->escape($alt);
-
-        return '<img alt="'.$safeAlt.'" title="'.$safeAlt.'" src="'.$url.'" />';
-
-    }//end badge()
 
 
 }//end class

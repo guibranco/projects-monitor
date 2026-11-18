@@ -617,8 +617,17 @@ export class DataDisplayManager {
   showGitHubApiProxy(response) {
     const caption = document.getElementById("github_api_proxy_caption");
     if (caption) {
-      caption.textContent = this.gitHubApiProxyCaption(response);
-      caption.classList.toggle("text-warning", Boolean(response.health) && response.health.status !== "ok");
+      caption.textContent = response.error
+        ? `${response.error} - showing the last stats loaded, retrying every minute.`
+        : this.gitHubApiProxyCaption(response);
+      caption.classList.toggle(
+        "text-warning",
+        Boolean(response.error) || (Boolean(response.health) && response.health.status !== "ok")
+      );
+    }
+
+    if (response.error) {
+      return;
     }
 
     const counter = document.getElementById("counter_github_api_proxy");

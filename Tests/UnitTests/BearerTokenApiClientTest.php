@@ -1,5 +1,7 @@
 <?php
 
+use GuiBranco\ProjectsMonitor\Library\RequestException;
+use GuiBranco\ProjectsMonitor\Library\BearerTokenApiClient;
 use GuiBranco\ProjectsMonitor\Library\GitHubApiProxy;
 use GuiBranco\ProjectsMonitor\Library\SecretsFileNotFoundException;
 use PHPUnit\Framework\TestCase;
@@ -94,6 +96,90 @@ class BearerTokenApiClientTest extends TestCase
         }
 
     }//end testEveryInstanceLoadsTrimmedSecrets()
+
+
+    /**
+     * The proxy client gets a finite transfer timeout, so a stalled call can
+     * not hold the dashboard request open.
+     *
+     * @return void
+     */
+    public function testProxyClientHasAFiniteTimeout(): void
+    {
+        $request = $this->property(new GitHubApiProxy(), 'request');
+
+        $this->assertSame(10, $request->getTimeout());
+
+    }//end testProxyClientHasAFiniteTimeout()
+
+
+    /**
+     * URLs that may carry the bearer token: HTTPS, or HTTP on loopback.
+     *
+     * @return array<string, array{string}>
+     */
+    public static function secureUrls(): array
+    {
+        return [
+            'https'          => ['https://api.github-proxy.example.test/'],
+            'http localhost' => ['http://localhost:8081/'],
+            'http 127.x'     => ['http://127.0.0.1:8081/'],
+            'http ::1'       => ['http://[::1]:8081/'],
+        ];
+
+    }//end secureUrls()
+
+
+    /**
+     * URLs that must be refused before the token is sent.
+     *
+     * @return array<string, array{string}>
+     */
+    public static function insecureUrls(): array
+    {
+        return [
+            'http remote'    => ['http://api.github-proxy.example.test/'],
+            'http lookalike' => ['http://localhost.example.test/'],
+            'empty'          => ['/'],
+            'other scheme'   => ['ftp://api.github-proxy.example.test/'],
+        ];
+
+    }//end insecureUrls()
+
+
+    /**
+     * HTTPS and loopback HTTP URLs are accepted.
+     *
+     * @param string $url Base URL.
+     *
+     * @return void
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('secureUrls')]
+    public function testSecureUrlsAreAccepted(string $url): void
+    {
+        BearerTokenApiClient::requireSecureUrl($url, 'Test API');
+
+        $this->addToAssertionCount(1);
+
+    }//end testSecureUrlsAreAccepted()
+
+
+    /**
+     * Plain HTTP to a remote host (or no URL at all) is refused.
+     *
+     * @param string $url Base URL.
+     *
+     * @return void
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('insecureUrls')]
+    public function testInsecureUrlsAreRefused(string $url): void
+    {
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('Test API URL must use HTTPS');
+
+        BearerTokenApiClient::requireSecureUrl($url, 'Test API');
+
+    }//end testInsecureUrlsAreRefused()
 
 
     /**

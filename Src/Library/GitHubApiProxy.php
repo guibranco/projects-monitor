@@ -17,15 +17,29 @@ class GitHubApiProxy extends BearerTokenApiClient
      */
     public const PERIOD = '24h';
 
+    /**
+     * Total transfer timeout per call, in seconds; the five calls of one
+     * refresh stay well inside the dashboard's 60-second refresh.
+     */
+    private const TIMEOUT_SECONDS = 10;
+
 
     /**
-     * Loads the API URL and token from githubApiProxy.secrets.php.
+     * Loads the API URL and token from githubApiProxy.secrets.php. The URL
+     * must be HTTPS (the bearer token is the proxy's admin token).
      *
      * @throws SecretsFileNotFoundException When the secrets file is missing.
+     * @throws RequestException             When the URL is not HTTPS.
      */
     public function __construct()
     {
-        $this->initialise('githubApiProxy.secrets.php', 'githubApiProxyUrl', 'githubApiProxyToken');
+        $this->initialise(
+            'githubApiProxy.secrets.php',
+            'githubApiProxyUrl',
+            'githubApiProxyToken',
+            self::TIMEOUT_SECONDS,
+            true
+        );
 
     }//end __construct()
 

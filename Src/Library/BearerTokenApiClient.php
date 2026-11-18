@@ -55,16 +55,24 @@ abstract class BearerTokenApiClient
      * Loads the URL and token from a secrets file in Src/secrets and prepares
      * the headers and HTTP client.
      *
-     * @param string $secretsFile   File name inside Src/secrets.
-     * @param string $urlVariable   Name of the variable holding the base URL.
-     * @param string $tokenVariable Name of the variable holding the bearer token.
+     * @param string  $secretsFile    File name inside Src/secrets.
+     * @param string  $urlVariable    Name of the variable holding the base URL.
+     * @param string  $tokenVariable  Name of the variable holding the bearer token.
+     * @param integer $timeoutSeconds Total transfer timeout per request; 0 keeps Pancake's default (no limit).
+     * @param boolean $requireHttps   Refuse a plain-HTTP URL unless the host is loopback.
      *
      * @return void
      *
      * @throws SecretsFileNotFoundException When the secrets file is missing.
+     * @throws RequestException             When $requireHttps is set and the URL is not HTTPS.
      */
-    protected function initialise(string $secretsFile, string $urlVariable, string $tokenVariable): void
-    {
+    protected function initialise(
+        string $secretsFile,
+        string $urlVariable,
+        string $tokenVariable,
+        int $timeoutSeconds=0,
+        bool $requireHttps=false
+    ): void {
         $config = new Configuration();
         $config->init();
 
@@ -78,7 +86,11 @@ abstract class BearerTokenApiClient
         // Secrets pasted with a stray newline or space would put a control
         // character into the URL or the Authorization header; older libcurl
         // sends it as-is and nginx answers a bare 400 Bad Request.
-        $this->apiUrl  = rtrim(trim((string) ($secrets[$urlVariable] ?? '')), '/').'/';
+        $this->apiUrl = rtrim(trim((string) ($secrets[$urlVariable] ?? '')), '/').'/';
+        if ($requireHttps === true) {
+            self::requireSecureUrl($this->apiUrl, $this->serviceName());
+        }
+
         $this->headers = [
                           'Authorization: Bearer '.trim((string) ($secrets[$tokenVariable] ?? '')),
                           'Accept: application/json',
@@ -86,8 +98,43 @@ abstract class BearerTokenApiClient
                           constant('USER_AGENT'),
                          ];
         $this->request = new Request();
+        if ($timeoutSeconds > 0) {
+            $this->request->setTimeout($timeoutSeconds);
+        }
 
     }//end initialise()
+
+
+    /**
+     * Refuses to send a bearer token over plain HTTP: the URL must be HTTPS,
+     * except for loopback hosts (local development, same-host services).
+     *
+     * @param string $url     Base URL.
+     * @param string $service Service name for the error message.
+     *
+     * @return void
+     *
+     * @throws RequestException When the URL is not HTTPS and not loopback.
+     */
+    public static function requireSecureUrl(string $url, string $service): void
+    {
+        $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
+        $host   = strtolower(trim((string) parse_url($url, PHP_URL_HOST), '[]'));
+
+        if ($scheme === 'https' && $host !== '') {
+            return;
+        }
+
+        $loopback = ($host === 'localhost' || $host === '::1' || str_starts_with($host, '127.'));
+        if ($scheme === 'http' && $loopback === true) {
+            return;
+        }
+
+        throw new RequestException(
+            $service.' URL must use HTTPS (plain HTTP is only allowed for loopback hosts): '.$scheme.'://'.$host
+        );
+
+    }//end requireSecureUrl()
 
 
     /**

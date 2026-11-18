@@ -28,10 +28,7 @@ $pageTitle = $presenter->getPageTitle();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/svg+xml" href="../../static/brand/favicon.svg">
-    <link rel="icon" type="image/png" sizes="32x32" href="../../static/brand/favicon-32.png">
-    <link rel="apple-touch-icon" href="../../static/brand/apple-touch-icon.png">
-    <meta name="theme-color" content="#0d1117">
+    <?php $brandAssetsPath = "../../static/"; require __DIR__ . '/../../partials/brand-icons.php'; ?>
     <title><?= $pageTitle ?></title>
     <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.32.6/swagger-ui.css"
         integrity="sha384-9Q2fpS+xeS4ffJy6CagnwoUl+4ldAYhOs9pgZuEKxypVModhmZFzeMlvVsAjf7uT" crossorigin="anonymous">

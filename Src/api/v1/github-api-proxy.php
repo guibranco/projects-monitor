@@ -13,14 +13,11 @@ use GuiBranco\ProjectsMonitor\Library\LogStream;
 try {
     $data = (new GitHubApiProxy())->getDashboard();
 } catch (\Throwable $e) {
-    (new LogStream())->error(
-        "GitHub API proxy stats failed to load: {reason}",
-        [
-            "reason"    => $e->getMessage(),
-            "exception" => $e,
-        ],
-        "github-api-proxy"
-    );
+    $context = [
+        "reason"    => $e->getMessage(),
+        "exception" => $e,
+    ];
+    (new LogStream())->error("GitHub API proxy stats failed to load: {reason}", $context, "github-api-proxy");
     $data = ["error" => "GitHub API proxy unavailable"];
 }
 

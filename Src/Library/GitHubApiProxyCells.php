@@ -15,6 +15,16 @@ class GitHubApiProxyCells
 {
 
     /**
+     * Rate-limit usage badge colours, highest threshold (percent used) first.
+     */
+    private const USAGE_COLORS = [
+        95 => 'red',
+        80 => 'orange',
+        50 => 'yellow',
+    ];
+
+
+    /**
      * Longest user agent shown in the Client column.
      */
     private const USER_AGENT_LENGTH = 48;
@@ -130,12 +140,11 @@ class GitHubApiProxyCells
     public function usageBadge(float $percent, int $limit): string
     {
         $color = 'green';
-        if ($percent >= 95) {
-            $color = 'red';
-        } elseif ($percent >= 80) {
-            $color = 'orange';
-        } elseif ($percent >= 50) {
-            $color = 'yellow';
+        foreach (self::USAGE_COLORS as $threshold => $candidate) {
+            if ($percent >= $threshold) {
+                $color = $candidate;
+                break;
+            }
         }
 
         $text = number_format($percent, 1).'%';

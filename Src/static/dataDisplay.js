@@ -586,7 +586,8 @@ export class DataDisplayManager {
       return "Loading GitHub API proxy stats…";
     }
 
-    const { health, summary } = response;
+    const health = response.health;
+    const summary = response.summary;
     const format = (value) => Number(value).toLocaleString();
     const countIf = (value, text) => (value > 0 ? `${format(value)} ${text}` : null);
 

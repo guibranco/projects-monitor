@@ -1,7 +1,6 @@
 <?php
 
 use GuiBranco\ProjectsMonitor\Library\RequestException;
-use GuiBranco\ProjectsMonitor\Library\BearerTokenApiClient;
 use GuiBranco\ProjectsMonitor\Library\GitHubApiProxy;
 use GuiBranco\ProjectsMonitor\Library\SecretsFileNotFoundException;
 use PHPUnit\Framework\TestCase;
@@ -120,12 +119,14 @@ class BearerTokenApiClientTest extends TestCase
      */
     public static function secureUrls(): array
     {
-        return [
+        $urls = [
             'https'          => ['https://api.github-proxy.example.test/'],
             'http localhost' => ['http://localhost:8081/'],
             'http 127.x'     => ['http://127.0.0.1:8081/'],
             'http ::1'       => ['http://[::1]:8081/'],
         ];
+
+        return $urls;
 
     }//end secureUrls()
 
@@ -137,12 +138,14 @@ class BearerTokenApiClientTest extends TestCase
      */
     public static function insecureUrls(): array
     {
-        return [
+        $urls = [
             'http remote'    => ['http://api.github-proxy.example.test/'],
             'http lookalike' => ['http://localhost.example.test/'],
             'empty'          => ['/'],
             'other scheme'   => ['ftp://api.github-proxy.example.test/'],
         ];
+
+        return $urls;
 
     }//end insecureUrls()
 
@@ -157,7 +160,7 @@ class BearerTokenApiClientTest extends TestCase
     #[\PHPUnit\Framework\Attributes\DataProvider('secureUrls')]
     public function testSecureUrlsAreAccepted(string $url): void
     {
-        BearerTokenApiClient::requireSecureUrl($url, 'Test API');
+        (new GitHubApiProxy())->requireSecureUrl($url);
 
         $this->addToAssertionCount(1);
 
@@ -175,9 +178,9 @@ class BearerTokenApiClientTest extends TestCase
     public function testInsecureUrlsAreRefused(string $url): void
     {
         $this->expectException(RequestException::class);
-        $this->expectExceptionMessage('Test API URL must use HTTPS');
+        $this->expectExceptionMessage('GitHub API proxy URL must use HTTPS');
 
-        BearerTokenApiClient::requireSecureUrl($url, 'Test API');
+        (new GitHubApiProxy())->requireSecureUrl($url);
 
     }//end testInsecureUrlsAreRefused()
 

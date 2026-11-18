@@ -88,7 +88,7 @@ abstract class BearerTokenApiClient
         // sends it as-is and nginx answers a bare 400 Bad Request.
         $this->apiUrl = rtrim(trim((string) ($secrets[$urlVariable] ?? '')), '/').'/';
         if ($requireHttps === true) {
-            self::requireSecureUrl($this->apiUrl, $this->serviceName());
+            $this->requireSecureUrl($this->apiUrl);
         }
 
         $this->headers = [
@@ -109,14 +109,13 @@ abstract class BearerTokenApiClient
      * Refuses to send a bearer token over plain HTTP: the URL must be HTTPS,
      * except for loopback hosts (local development, same-host services).
      *
-     * @param string $url     Base URL.
-     * @param string $service Service name for the error message.
+     * @param string $url Base URL.
      *
      * @return void
      *
      * @throws RequestException When the URL is not HTTPS and not loopback.
      */
-    public static function requireSecureUrl(string $url, string $service): void
+    public function requireSecureUrl(string $url): void
     {
         $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
         $host   = strtolower(trim((string) parse_url($url, PHP_URL_HOST), '[]'));
@@ -131,7 +130,7 @@ abstract class BearerTokenApiClient
         }
 
         throw new RequestException(
-            $service.' URL must use HTTPS (plain HTTP is only allowed for loopback hosts): '.$scheme.'://'.$host
+            $this->serviceName().' URL must use HTTPS (plain HTTP is only allowed for loopback hosts): '.$scheme.'://'.$host
         );
 
     }//end requireSecureUrl()

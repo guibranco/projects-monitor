@@ -1,6 +1,6 @@
 # Projects Monitor
 
-<p align="center"><img src="Src/static/brand/logo.svg" alt="Projects Monitor logo" width="128" height="128"></p>
+![Projects Monitor logo](Src/static/brand/logo.svg)
 
 ⚙️ 🔔 A "flight control panel" for GitHub repositories, personal projects, and
 the infrastructure behind them — pull requests, issues, webhooks, health checks,

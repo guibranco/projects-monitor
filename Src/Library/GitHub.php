@@ -11,7 +11,6 @@ use FastVolt\Helper\Markdown;
 
 class GitHub
 {
-    private const GITHUB_API_URL = "https://api.github.com/";
     private const DATE_TIME_FORMAT = "H:i:s d/m/Y";
     private const ISSUE_TEXT = "issue";
     private const PR_TEXT = "pr";
@@ -22,6 +21,10 @@ class GitHub
     private const WIP_TEXT_LABEL = "WIP";
     private const WIP_SPACE_LABEL = "\"🛠 WIP\""
     ;
+
+    /** Base URL for API calls: the github-api-proxy in production (see GitHubApiUrl). */
+    private string $apiUrl;
+
     private Request $request;
 
     private array $headers;
@@ -31,7 +34,7 @@ class GitHub
         $config = new Configuration();
         $config->init();
 
-        global $gitHubToken;
+        global $gitHubToken, $gitHubApiUrl;
 
         if (!file_exists(__DIR__ . "/../secrets/gitHub.secrets.php")) {
             throw new SecretsFileNotFoundException("File not found: gitHub.secrets.php");
@@ -39,6 +42,7 @@ class GitHub
 
         require_once __DIR__ . "/../secrets/gitHub.secrets.php";
 
+        $this->apiUrl = GitHubApiUrl::resolve($gitHubApiUrl ?? null);
         $this->request = new Request();
         $this->headers = [
             "Authorization: token {$gitHubToken}",
@@ -89,7 +93,7 @@ class GitHub
                 : $result;
         }
 
-        $url = self::GITHUB_API_URL . "search/issues?q=" . urlencode(preg_replace('!\s+!', ' ', "is:open archived:false is:{$queryString}")) . "&per_page=100";
+        $url = $this->apiUrl . "search/issues?q=" . urlencode(preg_replace('!\s+!', ' ', "is:open archived:false is:{$queryString}")) . "&per_page=100";
         $response = null;
         try {
             $response = $this->requestInternal($url);
@@ -277,7 +281,7 @@ class GitHub
 
         $response = null;
         try {
-            $url = self::GITHUB_API_URL . "repos/" . $owner . "/" . $repository . "/releases/latest";
+            $url = $this->apiUrl . "repos/" . $owner . "/" . $repository . "/releases/latest";
             $response = $this->requestInternal($url);
             $response->ensureSuccessStatus();
             $body = $response->getBody();
@@ -335,7 +339,7 @@ class GitHub
         $data = array();
         $data[] = ["Resource", "Usage", "Reset"];
 
-        $response = $this->requestInternal(self::GITHUB_API_URL . "rate_limit");
+        $response = $this->requestInternal($this->apiUrl . "rate_limit");
 
         if ($response->getStatusCode() !== 200) {
             return $data;

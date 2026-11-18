@@ -74,10 +74,17 @@ jobs:
           echo "\$cPanelEmailAccount = \"${{ secrets.CPANEL_EMAIL_ACCOUNT }}\";" >> cPanel.secrets.php
       
       - name: 🔑 Generate GitHub Secrets Configuration
+        env:
+          # GitHub API calls go through github-api-proxy (pass-through host, not
+          # its stats API). Set the GH_API_BASE_URL repository variable to
+          # https://api.github.com/ to bypass the proxy.
+          GH_API_BASE_URL: ${{ vars.GH_API_BASE_URL || 'https://github-proxy.gstraccini.dev/' }}
         run: |
           cd Src/secrets
+          php_literal() { printf '%s' "$1" | sed "s/[\\\\']/\\\\&/g"; }
           echo "<?php" >> gitHub.secrets.php
           echo "\$gitHubToken = \"${{ secrets.GH_TOKEN }}\";" >> gitHub.secrets.php
+          echo "\$gitHubApiUrl = '$(php_literal "$GH_API_BASE_URL")';" >> gitHub.secrets.php
 
       - name: 🔑 Generate HealthChecks.io Configuration
         run: |

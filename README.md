@@ -116,6 +116,14 @@ The full set of integrations and their secrets files:
 | GStraccini Bot              | `gstracciniBot.secrets.php`          |
 | LogStream                   | `logStream.secrets.php`              |
 
+GitHub API calls (issues and pull requests search, releases, rate limit,
+Actions billing usage) go through github-api-proxy, so they show up in its
+stats. `gitHub.secrets.php` holds `$gitHubToken` and `$gitHubApiUrl`, the
+proxy's pass-through host (`https://github-proxy.gstraccini.dev/`); the deploy
+writes it from the `GH_API_BASE_URL` repository variable, defaulting to that
+host. Set the variable to `https://api.github.com/` to bypass the proxy; when
+`$gitHubApiUrl` is missing (local development) calls go straight to GitHub.
+
 The github-api-proxy secrets file holds `$githubApiProxyUrl` (its stats API,
 e.g. `https://api.github-proxy.gstraccini.dev/`) and `$githubApiProxyToken`
 (the proxy's `Admin--ApiToken` from Grimoire); the deploy writes it from the

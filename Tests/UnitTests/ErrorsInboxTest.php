@@ -200,4 +200,28 @@ class ErrorsInboxTest extends TestCase
     }//end testOrderAndUnreadSources()
 
 
+    /**
+     * collect() reads every source, reports the ones that fail and returns the error_log files.
+     *
+     * @return void
+     */
+    public function testCollect(): void
+    {
+        $inbox  = new ErrorsInbox();
+        $result = $inbox->collect(
+            fn () => [$this->appRow("Billing", "Invoice 1 not found", 2, "2026-11-18 10:00:00", 4)],
+            function () {
+                throw new RuntimeException("database down");
+            },
+            fn () => array_merge(["entries" => []], ["files" => [["Directory", "Size", "Creation time"]]])
+        );
+
+        $this->assertSame(1, $result["total"]);
+        $this->assertSame("database down", $result["sources"]["php"]["error"]);
+        $this->assertNull($result["sources"]["error_log"]["error"]);
+        $this->assertSame([["Directory", "Size", "Creation time"]], $result["errorLogFiles"]);
+
+    }//end testCollect()
+
+
 }//end class

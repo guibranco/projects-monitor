@@ -72,7 +72,7 @@ class AttentionNotifier
      */
     public function buildPushes(array $selected): array
     {
-        if (count($selected) === 0) {
+        if (empty($selected) === true) {
             return [];
         }
 
@@ -127,8 +127,8 @@ class AttentionNotifier
 
 
     /**
-     * A UUID (version 5 layout) derived from a name, so a push resent for the
-     * same raise carries the same idempotency key.
+     * A UUID (version 8, name-based with SHA-256) derived from a name, so a
+     * push resent for the same raise carries the same idempotency key.
      *
      * @param string $name The name.
      *
@@ -136,9 +136,9 @@ class AttentionNotifier
      */
     public function uuid(string $name): string
     {
-        $hash = sha1("projects-monitor:attention:".$name);
+        $hash = hash("sha256", "projects-monitor:attention:".$name);
 
-        $timeHi = ((hexdec(substr($hash, 12, 4)) & 0x0fff) | 0x5000);
+        $timeHi = ((hexdec(substr($hash, 12, 4)) & 0x0fff) | 0x8000);
         $clock  = ((hexdec(substr($hash, 16, 4)) & 0x3fff) | 0x8000);
 
         return sprintf("%s-%s-%04x-%04x-%s", substr($hash, 0, 8), substr($hash, 8, 4), $timeHi, $clock, substr($hash, 20, 12));

@@ -71,10 +71,47 @@ class ErrorsInbox
      */
     public function fingerprint(string $kind, string $origin, string $message): string
     {
-        $hash = sha1(sprintf("%s|%s|%s", $kind, $origin, $this->normalize($message)));
+        $hash = hash("sha256", sprintf("%s|%s|%s", $kind, $origin, $this->normalize($message)));
         return sprintf("%s:%s", $kind, substr($hash, 0, 16));
 
     }//end fingerprint()
+
+
+    /**
+     * Reads the three sources, each on its own so one that fails is reported
+     * in sources.<name>.error instead of hiding the others, and groups them.
+     *
+     * @param callable $appReader      Returns the application message rows.
+     * @param callable $phpReader      Returns the stored PHP error rows.
+     * @param callable $errorLogReader Returns ["entries" => error_log rows, "files" => the error_log files table].
+     *
+     * @return array The build() response plus errorLogFiles.
+     */
+    public function collect(callable $appReader, callable $phpReader, callable $errorLogReader): array
+    {
+        $unread  = [];
+        $results = [];
+        $readers = [
+                    self::SOURCE_APP       => $appReader,
+                    self::SOURCE_PHP       => $phpReader,
+                    self::SOURCE_ERROR_LOG => $errorLogReader,
+                   ];
+        foreach ($readers as $source => $reader) {
+            $results[$source] = [];
+            try {
+                $results[$source] = (array) $reader();
+            } catch (\Throwable $exception) {
+                $unread[$source] = $exception->getMessage();
+            }
+        }
+
+        $errorLog = $results[self::SOURCE_ERROR_LOG];
+        $response = $this->build($results[self::SOURCE_APP], $results[self::SOURCE_PHP], (array) ($errorLog["entries"] ?? []), $unread);
+        $response["errorLogFiles"] = (array) ($errorLog["files"] ?? []);
+
+        return $response;
+
+    }//end collect()
 
 
     /**

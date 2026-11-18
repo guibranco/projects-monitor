@@ -30,6 +30,7 @@ require_once __DIR__.'/../vendor/autoload.php';
 use GuiBranco\ProjectsMonitor\Library\Attention\AttentionCollector;
 use GuiBranco\ProjectsMonitor\Library\Attention\AttentionFeed;
 use GuiBranco\ProjectsMonitor\Library\Attention\AttentionNotifier;
+use GuiBranco\ProjectsMonitor\Library\Attention\AttentionPushRun;
 use GuiBranco\ProjectsMonitor\Library\Attention\AttentionSources;
 use GuiBranco\ProjectsMonitor\Library\Attention\AttentionStore;
 use GuiBranco\ProjectsMonitor\Library\Attention\AttentionThresholds;
@@ -39,13 +40,12 @@ use GuiBranco\ProjectsMonitor\Library\LogStream;
 use GuiBranco\ProjectsMonitor\Library\OneSignal;
 use GuiBranco\ProjectsMonitor\Library\PublicStats;
 
-$worker    = ["worker" => "NotifyAttention"];
 $logStream = new LogStream();
 (new Configuration())->init();
 
 $oneSignal = new OneSignal();
 if ($oneSignal->isConfigured() === false) {
-    $logStream->info("{worker} skipped: OneSignal is not configured", $worker, "worker");
+    $logStream->info("{worker} skipped: OneSignal is not configured", ["worker" => "NotifyAttention"], "worker");
     exit(0);
 }
 
@@ -53,57 +53,25 @@ try {
     $store = new AttentionStore((new Database())->getConnection());
 } catch (Throwable $exception) {
     // Without the store nothing remembers what was pushed, so every run would push again.
-    $logStream->error("{worker} cannot open the attention store: {reason}", array_merge($worker, ["reason" => $exception->getMessage()]), "worker");
+    $logStream->error("{worker} cannot open the attention store: {reason}", array_merge(["worker" => "NotifyAttention"], ["reason" => $exception->getMessage()]), "worker");
     exit(1);
 }
 
-$now        = time();
 $collector  = new AttentionCollector((new AttentionSources())->getEvaluators());
 $feed       = new AttentionFeed($store, $collector, AttentionFeed::CACHE_FILE, PublicStats::CACHE_FILE);
-$response   = $feed->getResponse(false, $now);
 $thresholds = new AttentionThresholds($store->getThresholdOverrides());
 $notifier   = new AttentionNotifier((int) $thresholds->getValue("notify.maxPushesPerRun"));
+$result     = (new AttentionPushRun($store, $oneSignal, $notifier))->run($feed->getResponse(false, time()));
 
-$items    = $response["items"];
-$selected = $notifier->select($items, $store->getNotified());
-$sent     = 0;
-$failed   = 0;
-foreach ($notifier->buildPushes($selected) as $push) {
-    try {
-        $oneSignal->send($push["heading"], $push["content"], $push["link"], $push["key"]);
-        $sent++;
-    } catch (Throwable $exception) {
-        $failed++;
-        $logStream->error("{worker} push failed: {reason}", array_merge($worker, ["reason" => $exception->getMessage()]), "worker");
-    }
-}
-
-// A failed push is retried on the next run (same idempotency key, so
-// OneSignal drops it if it did get through).
-if ($failed === 0) {
-    foreach ($selected as $item) {
-        $store->markNotified((string) $item["fingerprint"], $item["since"]);
-    }
-}
-
-// Forget pushes of items that are no longer raised, but only when every
-// source answered: an unreadable source would otherwise re-push its items.
-$unreadable = array_filter($response["sources"], fn ($source) => ($source["status"] ?? "") === "error");
-if (count($unreadable) === 0) {
-    $store->pruneNotified(array_column($items, "fingerprint"));
+foreach ($result["errors"] as $reason) {
+    $logStream->error("{worker} push failed: {reason}", array_merge(["worker" => "NotifyAttention"], ["reason" => $reason]), "worker");
 }
 
 $context = [
             "worker"   => "NotifyAttention",
-            "selected" => count($selected),
-            "sent"     => $sent,
-            "failed"   => $failed,
+            "selected" => $result["selected"],
+            "sent"     => $result["sent"],
+            "failed"   => $result["failed"],
            ];
 $logStream->info("{worker} completed: {selected} new critical items, {sent} pushes sent, {failed} failed", $context, "worker");
-
-$exitCode = 0;
-if ($failed > 0) {
-    $exitCode = 1;
-}
-
-exit($exitCode);
+exit(min(1, $result["failed"]));

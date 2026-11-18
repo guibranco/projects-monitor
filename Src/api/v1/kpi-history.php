@@ -16,35 +16,14 @@ use GuiBranco\ProjectsMonitor\Library\Attention\AttentionThresholds;
 use GuiBranco\ProjectsMonitor\Library\Database;
 use GuiBranco\ProjectsMonitor\Library\KpiHistory;
 
-$method = $_SERVER["REQUEST_METHOD"];
-if ($method !== "GET" && $method !== "POST") {
-    sendErrorResponse("Method not allowed", 405);
-}
-
 try {
     $connection = (new Database())->getConnection();
-    $overrides  = [];
-    try {
-        $overrides = (new AttentionStore($connection))->getThresholdOverrides();
-    } catch (Throwable $exception) {
-        $overrides = [];
-    }
-
-    $retention = (new AttentionThresholds($overrides))->getValue("kpi.history.retentionHours");
-    $history   = new KpiHistory($connection, $retention);
+    $thresholds = new AttentionThresholds((new AttentionStore($connection))->getThresholdOverrides());
+    $history    = new KpiHistory($connection, $thresholds->getValue("kpi.history.retentionHours"));
 } catch (Throwable $exception) {
     sendErrorResponse("KPI history unavailable", 503);
 }
 
-if ($method === "GET") {
-    echo json_encode((object) $history->get($history->parseMetrics((string) ($_GET["metrics"] ?? "")), time()));
-    exit;
-}
-
-$body    = json_decode((string) file_get_contents("php://input"), true);
-$samples = $history->filterSamples(($body["samples"] ?? null));
-if (count($samples) === 0) {
-    sendErrorResponse("No valid samples", 400);
-}
-
-echo json_encode(["recorded" => $history->record($samples, time())]);
+$answer = $history->handle($_SERVER["REQUEST_METHOD"], (string) ($_GET["metrics"] ?? ""), (string) file_get_contents("php://input"), time());
+http_response_code($answer[0]);
+echo json_encode($answer[1]);

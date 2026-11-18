@@ -53,6 +53,13 @@ class OneSignal
      */
     private Request $request;
 
+    /**
+     * Variables read from each secrets file, by path (a file is included once per request).
+     *
+     * @var array<string, array<string, mixed>>
+     */
+    private static array $secretsCache = [];
+
 
     /**
      * Reads the secrets file, when there is one.
@@ -70,24 +77,46 @@ class OneSignal
             return;
         }
 
-        $oneSignalAppId   = "";
-        $oneSignalApiKey  = "";
-        $oneSignalSegment = "";
-        $oneSignalSiteUrl = "";
-        include $path;
+        $secrets = self::readSecrets($path);
 
-        $this->appId  = trim((string) $oneSignalAppId);
-        $this->apiKey = trim((string) $oneSignalApiKey);
-        if (trim((string) $oneSignalSegment) !== "") {
-            $this->segment = trim((string) $oneSignalSegment);
+        $this->appId  = trim((string) ($secrets["oneSignalAppId"] ?? ""));
+        $this->apiKey = trim((string) ($secrets["oneSignalApiKey"] ?? ""));
+        $segment      = trim((string) ($secrets["oneSignalSegment"] ?? ""));
+        if ($segment !== "") {
+            $this->segment = $segment;
         }
 
-        $dashboardUrl = trim((string) $oneSignalSiteUrl);
+        $dashboardUrl = trim((string) ($secrets["oneSignalSiteUrl"] ?? ""));
         if ($dashboardUrl !== "") {
             $this->dashboardUrl = rtrim($dashboardUrl, "/")."/";
         }
 
     }//end __construct()
+
+
+    /**
+     * The variables a secrets file defines, read once per path.
+     *
+     * @param string $path The secrets file.
+     *
+     * @return array
+     */
+    private static function readSecrets(string $path): array
+    {
+        if (isset(self::$secretsCache[$path]) === false) {
+            self::$secretsCache[$path] = (static function (string $secretsPath): array {
+                include_once $secretsPath;
+
+                $variables = get_defined_vars();
+                unset($variables["secretsPath"]);
+
+                return $variables;
+            })($path);
+        }
+
+        return self::$secretsCache[$path];
+
+    }//end readSecrets()
 
 
     /**

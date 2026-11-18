@@ -100,6 +100,59 @@ class KpiHistory
 
 
     /**
+     * Answers a request to GET/POST /api/v1/kpi-history.
+     *
+     * @param string  $method  The HTTP method.
+     * @param string  $metrics The metrics query parameter (GET).
+     * @param string  $body    The request body (POST).
+     * @param integer $now     The current Unix time.
+     *
+     * @return array The HTTP status and the response body.
+     */
+    public function handle(string $method, string $metrics, string $body, int $now): array
+    {
+        if ($method === "GET") {
+            return $this->answer(200, (object) $this->get($this->parseMetrics($metrics), $now));
+        }
+
+        if ($method !== "POST") {
+            return $this->answer(405, ["error" => "Method not allowed"]);
+        }
+
+        $decoded = json_decode($body, true);
+        $samples = [];
+        if (is_array($decoded) === true) {
+            $samples = $this->filterSamples(($decoded["samples"] ?? null));
+        }
+
+        if (empty($samples) === true) {
+            return $this->answer(400, ["error" => "No valid samples"]);
+        }
+
+        return $this->answer(200, ["recorded" => $this->record($samples, $now)]);
+
+    }//end handle()
+
+
+    /**
+     * An HTTP status and a response body.
+     *
+     * @param integer      $status The status.
+     * @param array|object $body   The body.
+     *
+     * @return array
+     */
+    private function answer(int $status, array|object $body): array
+    {
+        return [
+                $status,
+                $body,
+               ];
+
+    }//end answer()
+
+
+    /**
      * The minute a sample is stored at, as a UTC DATETIME.
      *
      * @param integer $now The current Unix time.
@@ -163,7 +216,7 @@ class KpiHistory
     public function get(array $metrics, int $now): array
     {
         $series = array_fill_keys($metrics, []);
-        if (count($metrics) === 0) {
+        if (empty($metrics) === true) {
             return $series;
         }
 

@@ -108,7 +108,7 @@ class AttentionNotifierTest extends TestCase
 
         $this->assertSame($first, $second);
         $this->assertNotSame($first, $other);
-        $this->assertMatchesRegularExpression("/^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/", $first);
+        $this->assertMatchesRegularExpression("/^[0-9a-f]{8}-[0-9a-f]{4}-8[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/", $first);
 
     }//end testIdempotencyKeyIsAStableUuid()
 

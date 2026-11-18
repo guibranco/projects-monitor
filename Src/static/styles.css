@@ -405,6 +405,11 @@ code {
   height: 400px;
 }
 
+#github_api_proxy_timeline {
+  width: 100%;
+  height: 320px;
+}
+
 .chart-container {
   @extend .glass-card;
   padding: 20px;

@@ -159,5 +159,30 @@ require_once "partials/dashboard-head.php";
             <div id="workflow_runs" class="section-content"></div>
          </div>
       </section>
+
+      <section class="page-group">
+         <h2 class="page-group-title"><i class="bi bi-shuffle me-2"></i>GitHub API usage<small>calls through github-api-proxy, last 24 hours</small></h2>
+         <div class="full-width-section" data-section="github_api_proxy">
+            <div class="section-header">
+               <i class="bi bi-graph-up me-2"></i>GitHub API proxy <span id="counter_github_api_proxy" class="badge rounded-pill"></span>
+            </div>
+            <div class="section-content">
+               <div id="github_api_proxy_caption" class="small text-white-50 mb-2"></div>
+               <div id="github_api_proxy_timeline"></div>
+            </div>
+         </div>
+         <div class="full-width-section" data-section="github_api_proxy_callers">
+            <div class="section-header">
+               <i class="bi bi-people me-2"></i>GitHub API callers <span id="counter_github_api_proxy_callers" class="badge rounded-pill"></span>
+            </div>
+            <div id="github_api_proxy_callers" class="section-content"></div>
+         </div>
+         <div class="full-width-section" data-section="github_api_proxy_rate_limits">
+            <div class="section-header">
+               <i class="bi bi-speedometer me-2"></i>GitHub API rate limits <span id="counter_github_api_proxy_rate_limits" class="badge rounded-pill"></span>
+            </div>
+            <div id="github_api_proxy_rate_limits" class="section-content"></div>
+         </div>
+      </section>
 <?php
 require_once "partials/dashboard-foot.php";

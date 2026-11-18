@@ -112,8 +112,15 @@ The full set of integrations and their secrets files:
 | Postman                     | `postman.secrets.php`                |
 | Webhooks project            | `webhooks.secrets.php`               |
 | WebhooksHandler (broker usage) | `webhooksHandler.secrets.php`     |
+| github-api-proxy (GitHub API usage) | `githubApiProxy.secrets.php` |
 | GStraccini Bot              | `gstracciniBot.secrets.php`          |
 | LogStream                   | `logStream.secrets.php`              |
+
+The github-api-proxy secrets file holds `$githubApiProxyUrl` (its stats API,
+e.g. `https://api.github-proxy.gstraccini.dev/`) and `$githubApiProxyToken`
+(the proxy's `Admin--ApiToken` from Grimoire); the deploy writes it from the
+`GH_API_PROXY_URL` and `GH_API_PROXY_TOKEN` repository secrets. This host must
+be in the proxy's `Network:AllowedSources`.
 
 The Cloudflare API token needs **Zone → Zone → Read** and
 **Zone → Analytics → Read**. Without the analytics permission the

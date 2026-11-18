@@ -120,11 +120,11 @@ class BearerTokenApiClientTest extends TestCase
     public static function secureUrls(): array
     {
         $urls = [
-            'https'          => ['https://api.github-proxy.example.test/'],
-            'http localhost' => ['http://localhost:8081/'],
-            'http 127.x'     => ['http://127.0.0.1:8081/'],
-            'http ::1'       => ['http://[::1]:8081/'],
-        ];
+                 'https'          => ['https://api.github-proxy.example.test/'],
+                 'http localhost' => ['http://localhost:8081/'],
+                 'http 127.x'     => ['http://127.0.0.1:8081/'],
+                 'http ::1'       => ['http://[::1]:8081/'],
+                ];
 
         return $urls;
 
@@ -139,11 +139,11 @@ class BearerTokenApiClientTest extends TestCase
     public static function insecureUrls(): array
     {
         $urls = [
-            'http remote'    => ['http://api.github-proxy.example.test/'],
-            'http lookalike' => ['http://localhost.example.test/'],
-            'empty'          => ['/'],
-            'other scheme'   => ['ftp://api.github-proxy.example.test/'],
-        ];
+                 'http remote'    => ['http://api.github-proxy.example.test/'],
+                 'http lookalike' => ['http://localhost.example.test/'],
+                 'empty'          => ['/'],
+                 'other scheme'   => ['ftp://api.github-proxy.example.test/'],
+                ];
 
         return $urls;
 

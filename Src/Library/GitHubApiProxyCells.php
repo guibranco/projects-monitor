@@ -18,10 +18,10 @@ class GitHubApiProxyCells
      * Rate-limit usage badge colours, highest threshold (percent used) first.
      */
     private const USAGE_COLORS = [
-        95 => 'red',
-        80 => 'orange',
-        50 => 'yellow',
-    ];
+                                  95 => 'red',
+                                  80 => 'orange',
+                                  50 => 'yellow',
+                                 ];
 
 
     /**

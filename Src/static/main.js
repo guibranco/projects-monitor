@@ -8,6 +8,7 @@ import { CollapsibleSectionsManager } from './collapsibleSections.js'; // Add th
 import { AttentionPanel } from './attention.js';
 import { CommandPalette } from './commandPalette.js';
 import { EmptySectionsManager } from './emptySections.js';
+import { RepoFilterControl } from './repoFilter.js';
 import { formatDuration } from './timeFormat.js';
 
 class DashboardApp {
@@ -21,6 +22,7 @@ class DashboardApp {
     this.attentionPanel = new AttentionPanel(this.apiManager);
     this.commandPalette = new CommandPalette();
     this.emptySections = new EmptySectionsManager();
+    this.repoFilter = new RepoFilterControl();
 
     // Initialize state objects
     this.feedState = new FeedState();
@@ -76,6 +78,14 @@ class DashboardApp {
     window.showGStracciniJobs = this.dataDisplayManager.showGStracciniJobs.bind(this.dataDisplayManager);
 
     // Expose API functions
+    // After an action on the Errors page, redraw its single list.
+    const reloadErrorsInbox = () => {
+      if (document.body.dataset.page === "errors") {
+        this.apiManager.load(API_ENDPOINTS.ERRORS_INBOX, (data) => window.showErrorsInbox?.(data));
+      }
+    };
+    window.reloadErrorsInbox = reloadErrorsInbox;
+
     window.deleteMessageByApplication = async (application) => {
       const data = await this.apiManager.deleteMessageByApplication(application);
       this.dataDisplayManager.showMessages(data);
@@ -84,6 +94,7 @@ class DashboardApp {
     window.truncateMessages = async () => {
       const data = await this.apiManager.truncateMessages();
       this.dataDisplayManager.showMessages(data);
+      reloadErrorsInbox();
     };
 
     window.purgeQueue = async (host, vhost, queue) => {
@@ -94,6 +105,7 @@ class DashboardApp {
     window.deleteErrorLogFile = async (directory) => {
       const data = await this.apiManager.deleteErrorLogFile(directory);
       this.dataDisplayManager.showCPanel(data);
+      reloadErrorsInbox();
     };
 
     window.runWorker = async (name) => {
@@ -105,15 +117,19 @@ class DashboardApp {
     };
 
     window.showDbErrors = this.dataDisplayManager.showDbErrors.bind(this.dataDisplayManager);
+    window.showErrorsInbox = this.dataDisplayManager.showErrorsInbox.bind(this.dataDisplayManager);
+
 
     window.truncateDbErrors = async () => {
       const data = await this.apiManager.truncateDbErrors();
       this.dataDisplayManager.showDbErrors(data);
+      reloadErrorsInbox();
     };
 
     window.deleteErrorsByPath = async (path) => {
       const data = await this.apiManager.deleteErrorsByPath(path);
       this.dataDisplayManager.showDbErrors(data);
+      reloadErrorsInbox();
     };
 
     window.showWorkflowRunsManagement = this.dataDisplayManager.showWorkflowRunsManagement.bind(this.dataDisplayManager);
@@ -337,6 +353,7 @@ class DashboardApp {
         bootstrap.Modal.getInstance(modalEl)?.hide();
         _msgDetailGroup = null;
         _dispMgr.showMessages(data);
+        window.reloadErrorsInbox?.();
       });
     };
     // ── End message detail modal ────────────────────────────────────────────
@@ -512,6 +529,7 @@ class DashboardApp {
 
     this.emptySections.init();
     this.commandPalette.init();
+    this.repoFilter.init();
     this.showPageUpdated();
     setInterval(() => this.showPageUpdated(), 2 * 1000);
 

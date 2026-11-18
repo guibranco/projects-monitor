@@ -1,6 +1,7 @@
 // gridManager.js
 import { TablePageSizeState } from "./storage.js";
 import { relativeTimeHtml } from "./timeFormat.js";
+import { filterRows, getRepoFilter, onRepoFilterChange } from "./repoFilter.js";
 
 // Tables show 5 rows unless the viewer picked another size or "View all".
 const PAGE_SIZE_OPTIONS = [5, 10, 25, 50, 100];
@@ -11,6 +12,17 @@ export class GridManager {
     this.gridjs = window.gridjs;
     this.grids = new Map(); // elementId -> live Grid instance
     this.pageSizeState = new TablePageSizeState(); // elementId -> persisted page size (localStorage-backed)
+    this.lastDraws = new Map(); // elementId -> [data, options, hideColumn], to redraw when the repo filter changes
+    onRepoFilterChange(() => this.redrawAll());
+  }
+
+  /** Redraws every table still on the page, e.g. after the repo filter changed. */
+  redrawAll() {
+    for (const [elementId, args] of this.lastDraws) {
+      if (document.getElementById(elementId)) {
+        this.draw(args[0], elementId, args[1], args[2]);
+      }
+    }
   }
 
   /**
@@ -26,9 +38,22 @@ export class GridManager {
       return null;
     }
 
+    this.lastDraws.set(elementId, [data, options, hideColumn]);
+
     const headerRow = Array.isArray(data) && data.length > 0 ? data[0] : [];
-    const bodyRows =
-      Array.isArray(data) && data.length > 1 ? data.slice(1) : [];
+    const allRows = Array.isArray(data) && data.length > 1 ? data.slice(1) : [];
+    // Tables with a repository column follow the navbar's repo filter;
+    // options.repoFilter: "any" matches any cell, false opts out.
+    const filtered =
+      options.repoFilter === false
+        ? { rows: allRows, hidden: 0, applied: false }
+        : filterRows(
+            headerRow,
+            allRows,
+            getRepoFilter(),
+            options.repoFilter === "any",
+          );
+    const bodyRows = filtered.rows;
 
     // Always fully recreate, matching the old "new google.visualization.Table()
     // fresh on every redraw" semantics, instead of diffing/updateConfig.
@@ -64,6 +89,17 @@ export class GridManager {
         ? this.gridjs.html(cell)
         : cell;
     };
+
+    if (filtered.applied && filtered.hidden > 0) {
+      const note = document.createElement("div");
+      note.className = "repo-filter-note";
+      note.textContent = `${filtered.hidden} of ${allRows.length} rows hidden by the repo filter "${getRepoFilter()}"`;
+      el.appendChild(note);
+    }
+
+    if (filtered.applied && bodyRows.length === 0 && allRows.length > 0) {
+      return null;
+    }
 
     const gridData = bodyRows.map((row, i) => {
       const cells = showRowNumber ? [i + 1, ...row] : [...row];

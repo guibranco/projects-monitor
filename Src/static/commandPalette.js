@@ -4,6 +4,7 @@
 // section of this page (expanding it if it is collapsed).
 
 import { headerTitle } from "./sectionTitle.js";
+import { getRepoFilter, setRepoFilter } from "./repoFilter.js";
 
 const escapeHtml = (value) =>
   String(value ?? "")
@@ -131,6 +132,22 @@ export class CommandPalette {
     this.matches = this.items.filter((item) =>
       words.every((word) => item.label.toLowerCase().includes(word)),
     );
+    // Typed text can also become the global repo filter; a set filter can be cleared.
+    const typed = query.trim();
+    if (typed !== "" && !/\s/.test(typed)) {
+      this.matches.push({
+        label: `Filter every page by repo "${typed}"`,
+        hint: "Filter",
+        run: () => setRepoFilter(typed),
+      });
+    }
+    if (getRepoFilter() !== "") {
+      this.matches.push({
+        label: `Clear the repo filter "${getRepoFilter()}"`,
+        hint: "Filter",
+        run: () => setRepoFilter(""),
+      });
+    }
     this.selected = 0;
     this.renderList();
   }

@@ -13,5 +13,7 @@
     "domains.expiry.warningDays": 30,
     "domains.expiry.criticalDays": 10,
     "cache.attention.ttlSeconds": 60,
-    "cache.publicStats.staleSeconds": 900
+    "cache.publicStats.staleSeconds": 900,
+    "notify.maxPushesPerRun": 3,
+    "kpi.history.retentionHours": 24
 }

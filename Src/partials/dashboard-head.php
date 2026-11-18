@@ -71,6 +71,14 @@ $dashboardPage = new DashboardPage(($activePage ?? "overview"), ($pageTitle ?? "
             <?php echo $dashboardPage->renderTabs(); ?>
          </ul>
          <div class="d-flex align-items-center gap-2">
+            <div class="repo-filter" role="search">
+               <i class="bi bi-funnel" aria-hidden="true"></i>
+               <input type="search" id="repo_filter" class="repo-filter-input" placeholder="Filter repo…"
+                  aria-label="Filter every page by repository (press / to focus)" autocomplete="off" spellcheck="false"
+                  title="Filter every page by repository: owner/name or part of it (press / to focus)">
+               <button type="button" id="repo_filter_clear" class="repo-filter-clear" hidden
+                  aria-label="Clear the repo filter" title="Clear the repo filter"><i class="bi bi-x"></i></button>
+            </div>
             <button type="button" id="data_freshness" class="freshness-indicator d-none d-md-inline-flex"
                title="Click to re-check every source now">
                <span class="status-dot" aria-hidden="true"></span>Loading…

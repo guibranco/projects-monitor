@@ -73,7 +73,7 @@ class DatabaseErrorsEvaluator implements AttentionEvaluator
         }
 
         $title = sprintf("%d PHP errors in the error log (database)", $total);
-        $evaluation->addItem(new AttentionItem($this->getSource(), $this->getDomain(), $severity, $title, null, "errors.php#db_error_messages", "errors:database"));
+        $evaluation->addItem(new AttentionItem($this->getSource(), $this->getDomain(), $severity, $title, null, "errors.php#errors_inbox", "errors:database"));
 
         return $evaluation;
 

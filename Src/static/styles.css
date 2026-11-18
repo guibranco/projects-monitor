@@ -1848,6 +1848,31 @@ footer a:hover {
   color: #fff;
 }
 
+.errors-inbox-help {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+}
+
+.errors-inbox-actions {
+  display: inline-flex;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.errors-inbox-source {
+  border: 1px solid var(--panel-neutral-border);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  padding: 0 6px;
+  white-space: nowrap;
+}
+
+.errors-inbox-origin {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.8rem;
+  word-break: break-all;
+}
+
 .pp-detail {
   display: inline-block;
   margin-right: 8px;
@@ -1927,4 +1952,51 @@ footer a:hover {
 /* A group whose sections are all empty (and hidden) hides its title too. */
 body:not(.show-empty-sections) .page-group:not(:has([data-section]:not(.is-empty))) {
   display: none;
+}
+
+/* Global repo filter (navbar) */
+.repo-filter {
+  align-items: center;
+  border: 1px solid var(--panel-neutral-border);
+  border-radius: 999px;
+  display: inline-flex;
+  gap: 4px;
+  padding: 1px 4px 1px 10px;
+}
+
+.repo-filter.is-active {
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.repo-filter-input {
+  background: transparent;
+  border: 0;
+  color: #fff;
+  font-size: 0.85rem;
+  outline: none;
+  width: 9rem;
+}
+
+.repo-filter-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.repo-filter-clear {
+  background: transparent;
+  border: 0;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1;
+  padding: 0 2px;
+}
+
+.repo-filter-note {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+  margin-bottom: 4px;
+}
+
+@media (max-width: 575.98px) {
+  .repo-filter-input {
+    width: 6rem;
+  }
 }

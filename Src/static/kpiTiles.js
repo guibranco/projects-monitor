@@ -3,13 +3,49 @@
 // KPI tiles in place of the old gauges: the value, coloured only by its
 // status against the gauge's thresholds (amber from yellowFrom, red from
 // redFrom), the thresholds themselves, and a 24h sparkline with the change
-// since the oldest sample. Samples are kept in this browser's localStorage,
-// so the trend covers the time this browser had the dashboard open.
+// since the oldest sample.
+//
+// The history lives on the server (api/v1/kpi-history): every open
+// dashboard sends the values it shows (batched, at most once a minute) and
+// reads the stored samples once per page load, so the trend is the same in
+// every browser. This browser's localStorage keeps a copy, which is what the
+// sparkline falls back to when the server cannot be reached.
+
+import { API_ENDPOINTS } from "./constants.js";
 
 const HISTORY_KEY = "kpiHistory";
 const HISTORY_WINDOW_MS = 24 * 60 * 60 * 1000;
 const MIN_SAMPLE_GAP_MS = 60 * 1000;
-const MAX_SAMPLES = 288;
+const MAX_SAMPLES = 1440;
+const HISTORY_FETCH_DELAY_MS = 500;
+const UPLOAD_INTERVAL_MS = 60 * 1000;
+
+/**
+ * Merges the server's samples with this browser's, oldest first, one per
+ * minute (a server sample wins over a local one of the same minute), within
+ * the 24h window.
+ *
+ * @param {Array<{t:number,v:number}>} server - The server's samples.
+ * @param {Array<{t:number,v:number}>} local - This browser's samples.
+ * @param {number} now - The current time, in milliseconds.
+ * @returns {Array<{t:number,v:number}>}
+ */
+export function mergeSamples(server, local, now) {
+  const byMinute = new Map();
+  for (const sample of [...(local || []), ...(server || [])]) {
+    if (
+      typeof sample?.t === "number" &&
+      typeof sample?.v === "number" &&
+      now - sample.t <= HISTORY_WINDOW_MS
+    ) {
+      byMinute.set(Math.floor(sample.t / MIN_SAMPLE_GAP_MS), sample);
+    }
+  }
+
+  return [...byMinute.values()]
+    .sort((left, right) => left.t - right.t)
+    .slice(-MAX_SAMPLES);
+}
 
 const escapeHtml = (value) =>
   String(value ?? "")
@@ -67,7 +103,81 @@ export function sparklineSvg(samples) {
 export class KpiTileRenderer {
   constructor() {
     this.history = new Map();
+    this.lastRender = new Map(); // elementId -> [label, value, options]
+    this.requested = new Set(); // metrics whose server history was asked for
+    this.toRequest = new Set();
+    this.pending = new Map(); // metric -> value waiting to be uploaded
+    this.lastUploadAt = 0;
+    this.uploadTimer = null;
+    this.fetchTimer = null;
     this.loadHistory();
+  }
+
+  /**
+   * Asks the server for a tile's history, batching the tiles of one page
+   * load into one request; the tile is redrawn with it.
+   *
+   * @param {string} key - The tile's element id.
+   */
+  requestServerHistory(key) {
+    if (this.requested.has(key)) return;
+    this.requested.add(key);
+    this.toRequest.add(key);
+    if (this.fetchTimer) return;
+    this.fetchTimer = setTimeout(() => {
+      this.fetchTimer = null;
+      const metrics = [...this.toRequest];
+      this.toRequest.clear();
+      // eslint-disable-next-line compat/compat
+      fetch(
+        `${API_ENDPOINTS.KPI_HISTORY}?metrics=${encodeURIComponent(metrics.join(","))}`,
+      )
+        .then((response) => (response.ok ? response.json() : {}))
+        .then((series) => {
+          const now = Date.now();
+          for (const [metric, samples] of Object.entries(series || {})) {
+            if (!Array.isArray(samples) || samples.length === 0) continue;
+            this.history.set(
+              metric,
+              mergeSamples(samples, this.history.get(metric), now),
+            );
+            const args = this.lastRender.get(metric);
+            if (args) this.draw(metric, ...args);
+          }
+          this.saveHistory();
+        })
+        .catch(() => undefined);
+    }, HISTORY_FETCH_DELAY_MS);
+  }
+
+  /**
+   * Queues a value for the server; the queue is sent at most once a minute.
+   *
+   * @param {string} key - The tile's element id.
+   * @param {number} value - The value.
+   */
+  queueUpload(key, value) {
+    this.pending.set(key, value);
+    if (this.uploadTimer) return;
+    const wait = Math.max(
+      0,
+      this.lastUploadAt + UPLOAD_INTERVAL_MS - Date.now(),
+    );
+    this.uploadTimer = setTimeout(() => this.upload(), wait);
+  }
+
+  upload() {
+    this.uploadTimer = null;
+    if (this.pending.size === 0) return;
+    const samples = Object.fromEntries(this.pending);
+    this.pending.clear();
+    this.lastUploadAt = Date.now();
+    // eslint-disable-next-line compat/compat
+    fetch(API_ENDPOINTS.KPI_HISTORY, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ samples }),
+    }).catch(() => undefined);
   }
 
   /**
@@ -144,13 +254,35 @@ export class KpiTileRenderer {
     }
 
     const value = Number(rawValue) || 0;
+    this.record(elementId, value, Date.now());
+    this.lastRender.set(elementId, [label, value, options]);
+    this.queueUpload(elementId, value);
+    this.requestServerHistory(elementId);
+    return this.draw(elementId, label, value, options);
+  }
+
+  /**
+   * Draws a tile from its current value and the kept history.
+   *
+   * @param {string} elementId - The tile's element id.
+   * @param {string} label - What the number is.
+   * @param {number} value - The value.
+   * @param {object} options - The thresholds.
+   * @returns {HTMLElement|null}
+   */
+  draw(elementId, label, value, options) {
+    const element = document.getElementById(elementId);
+    if (!element) {
+      return null;
+    }
+
     const status = kpiStatus(value, options);
-    const samples = this.record(elementId, value, Date.now());
+    const samples = this.history.get(elementId) || [];
     const delta = samples.length > 1 ? value - samples[0].v : 0;
     let trend = "";
     if (delta !== 0) {
       const arrow = delta > 0 ? "↑" : "↓";
-      trend = `<span class="kpi-delta" title="Change over the samples kept in this browser (last 24h)">${arrow} ${Math.abs(Math.round(delta * 10) / 10)}</span>`;
+      trend = `<span class="kpi-delta" title="Change over the last 24h">${arrow} ${Math.abs(Math.round(delta * 10) / 10)}</span>`;
     }
 
     const thresholds = [];

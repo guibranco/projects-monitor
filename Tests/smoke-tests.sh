@@ -56,6 +56,36 @@ if [ "$RESULT" -ne 200 ]; then
     exit 1
 fi
 
+# The Errors page's single list must answer even when cPanel has no
+# secrets: that source is reported in sources.error_log.error instead.
+RESULT=$(curl -s -o /dev/null -w "%{http_code}" --location "http://localhost:8000/api/v1/errors-inbox")
+if [ "$RESULT" -ne 200 ]; then
+    CONTENT=$(curl --location "http://localhost:8000/api/v1/errors-inbox")
+    echo "content=$CONTENT" >>"$GITHUB_OUTPUT"
+    echo "error=true" >>"$GITHUB_OUTPUT"
+    exit 1
+fi
+
+# KPI history: a sample is stored, then read back.
+RESULT=$(curl -s -o /dev/null -w "%{http_code}" --location "http://localhost:8000/api/v1/kpi-history" \
+    --header 'Content-Type: application/json' \
+    --data '{"samples":{"smoke_test":1}}')
+if [ "$RESULT" -ne 200 ]; then
+    CONTENT=$(curl --location "http://localhost:8000/api/v1/kpi-history" \
+        --header 'Content-Type: application/json' \
+        --data '{"samples":{"smoke_test":1}}')
+    echo "content=$CONTENT" >>"$GITHUB_OUTPUT"
+    echo "error=true" >>"$GITHUB_OUTPUT"
+    exit 1
+fi
+
+RESULT=$(curl -s --location "http://localhost:8000/api/v1/kpi-history?metrics=smoke_test")
+if [[ "$RESULT" != *'"smoke_test":[{"t":'* ]]; then
+    echo "content=$RESULT" >>"$GITHUB_OUTPUT"
+    echo "error=true" >>"$GITHUB_OUTPUT"
+    exit 1
+fi
+
 RESULT=$(curl -s -o /dev/null -w "%{http_code}" --location "http://localhost:8000/api/v1/log-message")
 if [ "$RESULT" -ne 401 ]; then
     CONTENT=$(curl --location "http://localhost:8000/api/v1/log-message")

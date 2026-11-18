@@ -2,11 +2,13 @@
 import { CHART_OPTIONS } from './constants.js';
 import { ChartManager } from './charts.js';
 import { PendingProcessingTable } from './pendingProcessing.js';
+import { ErrorsInboxTable } from './errorsInbox.js';
 
 export class DataDisplayManager {
   constructor() {
     this.chartManager = new ChartManager();
     this.pendingProcessing = new PendingProcessingTable(this.chartManager, "pending_processing");
+    this.errorsInbox = new ErrorsInboxTable(this.chartManager, "errors_inbox");
     this.eventAssigned = false;
     this.eventAssignedError = false;
     this.eventAssignedQueues = false;
@@ -412,6 +414,34 @@ export class DataDisplayManager {
             }
           });
       }
+    }
+  }
+
+  /**
+   * Renders the Errors page's single list (errors-inbox): the grouped errors
+   * of every source with source chips, the error_log files list, the
+   * "Log errors" tile (entries not ingested yet) and the truncate buttons.
+   */
+  showErrorsInbox(response) {
+    this.errorsInbox.update(response);
+    this.showErrorFiles({ error_log_files: response.errorLogFiles || [] });
+
+    const pending = response.sources?.error_log?.occurrences ?? 0;
+    this.chartManager.drawGaugeChart("Log errors", pending, "gauge_chart_log_errors", {
+      min: 0,
+      max: 1000,
+      yellowFrom: 100,
+      redFrom: 500,
+    });
+
+    const truncateMessages = document.getElementById("btn_truncate_messages_grouped");
+    if (truncateMessages) {
+      truncateMessages.style.display = (response.sources?.app?.groups ?? 0) > 0 ? "" : "none";
+    }
+
+    const truncateDbErrors = document.getElementById("btn_truncate_db_errors");
+    if (truncateDbErrors) {
+      truncateDbErrors.style.display = (response.sources?.php?.groups ?? 0) > 0 ? "" : "none";
     }
   }
 

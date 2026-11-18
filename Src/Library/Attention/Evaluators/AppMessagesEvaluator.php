@@ -77,7 +77,7 @@ class AppMessagesEvaluator implements AttentionEvaluator
             }
 
             $title = sprintf("%s logged %d messages", $application, $count);
-            $evaluation->addItem(new AttentionItem($this->getSource(), $this->getDomain(), $severity, $title, null, "errors.php#messages_grouped", $fingerprint->make("messages", $application)));
+            $evaluation->addItem(new AttentionItem($this->getSource(), $this->getDomain(), $severity, $title, null, "errors.php#errors_inbox", $fingerprint->make("messages", $application)));
         }
 
         return $evaluation;

@@ -201,6 +201,29 @@ jobs:
           echo "\$githubApiProxyUrl   = '$(php_literal "$GH_API_PROXY_URL")';" >> githubApiProxy.secrets.php
           echo "\$githubApiProxyToken = '$(php_literal "$GH_API_PROXY_TOKEN")';" >> githubApiProxy.secrets.php
 
+      - name: 🔑 Generate OneSignal Configuration
+        env:
+          # The App ID is public (the dashboard's page script uses it too).
+          ONESIGNAL_APP_ID: ${{ vars.ONESIGNAL_APP_ID || '90c57079-9ef2-4719-bddf-361e6510de17' }}
+          ONESIGNAL_API_KEY: ${{ secrets.ONESIGNAL_API_KEY }}
+          ONESIGNAL_SEGMENT: ${{ vars.ONESIGNAL_SEGMENT }}
+          DASHBOARD_URL: ${{ secrets.INSTALLATION_ENDPOINT }}
+        run: |
+          # Without ONESIGNAL_API_KEY no file is written and NotifyAttention.php skips.
+          if [ -z "$ONESIGNAL_API_KEY" ]; then
+            echo "::notice::ONESIGNAL_API_KEY is not set, critical attention pushes stay off."
+            exit 0
+          fi
+          cd Src
+          mkdir -p secrets
+          cd secrets
+          php_literal() { printf '%s' "$1" | sed "s/[\\\\']/\\\\&/g"; }
+          echo "<?php" >> oneSignal.secrets.php
+          echo "\$oneSignalAppId        = '$(php_literal "$ONESIGNAL_APP_ID")';" >> oneSignal.secrets.php
+          echo "\$oneSignalApiKey       = '$(php_literal "$ONESIGNAL_API_KEY")';" >> oneSignal.secrets.php
+          echo "\$oneSignalSegment      = '$(php_literal "$ONESIGNAL_SEGMENT")';" >> oneSignal.secrets.php
+          echo "\$oneSignalSiteUrl      = '$(php_literal "$DASHBOARD_URL")';" >> oneSignal.secrets.php
+
       - name: 🔑 Generate LogStream Configuration
         env:
           LOGSTREAM_SERVER: ${{ secrets.LOGSTREAM_SERVER }}

@@ -24,6 +24,8 @@ try {
     sendErrorResponse("KPI history unavailable", 503);
 }
 
-$answer = $history->handle($_SERVER["REQUEST_METHOD"], (string) ($_GET["metrics"] ?? ""), (string) file_get_contents("php://input"), time());
+// Metric names are [A-Za-z0-9_] only (KpiHistory::parseMetrics), so htmlentities() changes nothing; it marks the input as sanitised.
+$metrics = htmlentities((string) ($_GET["metrics"] ?? ""), ENT_QUOTES);
+$answer  = $history->handle($_SERVER["REQUEST_METHOD"], $metrics, (string) file_get_contents("php://input"), time());
 http_response_code($answer[0]);
 echo json_encode($answer[1]);

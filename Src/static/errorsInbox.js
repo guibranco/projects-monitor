@@ -126,26 +126,25 @@ export class ErrorsInboxTable {
       return;
     }
 
-    if (!container.querySelector(".entity-chips")) {
-      container.innerHTML = `<div class="entity-chips" role="toolbar" aria-label="Filter by source"></div><div id="${this.elementId}_table"></div>`;
+    let chips = container.querySelector(".entity-chips");
+    if (!chips) {
+      chips = document.createElement("div");
+      chips.className = "entity-chips";
+      chips.setAttribute("role", "toolbar");
+      chips.setAttribute("aria-label", "Filter by source");
+      const table = document.createElement("div");
+      table.id = `${this.elementId}_table`;
+      container.replaceChildren(chips, table);
       container.addEventListener("click", (event) => this.onClick(event));
     }
 
     const { groups = [], sources = {}, total = 0 } = this.response;
-    const chip = (source, label, count, error) => {
-      const active = (this.filter ?? "") === source ? " active" : "";
-      const warning = error
-        ? ` <i class="bi bi-exclamation-triangle-fill text-warning" title="Could not read: ${escapeHtml(error)}"></i>`
-        : "";
-      return `<button type="button" class="entity-chip${active}" data-source="${escapeHtml(source)}" aria-pressed="${active !== ""}">${escapeHtml(label)} <span>${count}</span>${warning}</button>`;
-    };
-    container.querySelector(".entity-chips").innerHTML =
-      chip("", "All", total, null) +
-      Object.entries(sources)
-        .map(([source, entry]) =>
-          chip(source, entry.label, entry.groups, entry.error),
-        )
-        .join("");
+    chips.replaceChildren(
+      this.chip("", "All", total, null),
+      ...Object.entries(sources).map(([source, entry]) =>
+        this.chip(source, entry.label, entry.groups, entry.error),
+      ),
+    );
 
     const counter = document.getElementById(`counter_${this.elementId}`);
     if (counter) counter.textContent = total;
@@ -167,6 +166,35 @@ export class ErrorsInboxTable {
       showRowNumber: false,
       pagination: true,
     });
+  }
+
+  /**
+   * A source chip, built with DOM APIs (text only, no HTML from the response).
+   *
+   * @param {string} source - The source ("" for all).
+   * @param {string} label - What it shows.
+   * @param {number} count - Its number of groups.
+   * @param {string|null} error - Why it could not be read, if it could not.
+   * @returns {HTMLButtonElement}
+   */
+  chip(source, label, count, error) {
+    const active = (this.filter ?? "") === source;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = active ? "entity-chip active" : "entity-chip";
+    button.dataset.source = source;
+    button.setAttribute("aria-pressed", String(active));
+    const number = document.createElement("span");
+    number.textContent = String(Number(count) || 0);
+    button.append(`${label} `, number);
+    if (error) {
+      const warning = document.createElement("i");
+      warning.className = "bi bi-exclamation-triangle-fill text-warning ms-1";
+      warning.title = `Could not read: ${error}`;
+      button.append(warning);
+    }
+
+    return button;
   }
 
   /**

@@ -13,40 +13,28 @@ require_once "partials/dashboard-head.php";
          </div>
       </div>
 
-      <div class="full-width-section" data-section="messages_grouped">
+      <div class="full-width-section" data-section="errors_inbox">
          <div class="section-header">
-            <i class="bi bi-collection me-2"></i>Messages Grouped <span id="counter_messages_grouped" class="badge rounded-pill"></span>
+            <i class="bi bi-bug me-2"></i>Errors <span id="counter_errors_inbox" class="badge rounded-pill"></span>
          </div>
          <div class="section-content">
+            <p class="errors-inbox-help mb-2">Application messages, PHP errors stored in the database and
+               <code>error_log</code> entries not ingested yet, grouped by where they happen and their message
+               (numbers and ids ignored). Most recent first.</p>
             <div class="text-end mb-1">
                <button id="btn_truncate_messages_grouped" class="btn btn-warning btn-sm" style="display:none"
                   onclick="window.confirmTruncateMessages?.(() => window.truncateMessages?.())">
-                  <i class="bi bi-trash me-1"></i>Truncate All Messages</button>
-            </div>
-            <div id="messages_grouped"></div>
-         </div>
-      </div>
-
-      <div class="full-width-section" data-section="db_error_messages">
-         <div class="section-header">
-            <i class="bi bi-database-exclamation me-2"></i>Error Log (Database) <span id="counter_db_error_messages" class="badge rounded-pill"></span>
-         </div>
-         <div class="section-content">
-            <div class="text-end mb-1">
+                  <i class="bi bi-trash me-1"></i>Truncate all messages</button>
                <button id="btn_truncate_db_errors" class="btn btn-warning btn-sm" style="display:none"
                   onclick="window.confirmTruncateDbErrors?.(() => window.truncateDbErrors?.())">
-                  <i class="bi bi-trash me-1"></i>Truncate All
-               </button>
+                  <i class="bi bi-trash me-1"></i>Truncate all PHP errors</button>
             </div>
-            <div id="db_error_messages"></div>
+            <div id="errors_inbox">
+               <div class="text-muted py-3 text-center">
+                  <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Reading every source…
+               </div>
+            </div>
          </div>
-      </div>
-
-      <div class="full-width-section" data-section="error_log_messages">
-         <div class="section-header">
-            <i class="bi bi-exclamation-triangle me-2"></i>Error Log Messages <span id="counter_error_log_messages" class="badge rounded-pill"></span>
-         </div>
-         <div id="error_log_messages" class="section-content"></div>
       </div>
 
       <div class="data-lists">

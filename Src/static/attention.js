@@ -9,6 +9,11 @@
 import { API_ENDPOINTS } from "./constants.js";
 import { NotificationManager } from "./ui.js";
 import { formatDuration } from "./timeFormat.js";
+import {
+  attentionItemMatches,
+  getRepoFilter,
+  onRepoFilterChange,
+} from "./repoFilter.js";
 
 const SNOOZE_OPTIONS = [
   { label: "1 hour", minutes: 60 },
@@ -42,7 +47,11 @@ export class AttentionPanel {
     this.apiManager = apiManager;
     this.data = null;
     this.domainFilter = null;
+    this.hiddenByRepoFilter = 0;
     this.loadedAt = 0;
+    onRepoFilterChange(() => {
+      if (this.data) this.renderList();
+    });
   }
 
   /**
@@ -144,9 +153,14 @@ export class AttentionPanel {
     const clear = document.getElementById("attention_all_clear");
     if (!list || !clear) return;
 
-    const items = (this.data.items || []).filter(
+    const repoFilter = getRepoFilter();
+    const inDomain = (this.data.items || []).filter(
       (item) => this.domainFilter === null || item.domain === this.domainFilter,
     );
+    const items = inDomain.filter((item) =>
+      attentionItemMatches(item, repoFilter),
+    );
+    this.hiddenByRepoFilter = inDomain.length - items.length;
 
     this.renderCounter(this.data.summary || {});
     list.innerHTML =
@@ -192,6 +206,11 @@ export class AttentionPanel {
     ).length;
     if (failing)
       parts.push(`${failing} source${failing === 1 ? "" : "s"} unreachable`);
+
+    if (this.hiddenByRepoFilter > 0)
+      parts.push(
+        `${this.hiddenByRepoFilter} hidden by the repo filter "${escapeHtml(getRepoFilter())}"`,
+      );
 
     const filter = this.domainFilter
       ? ` · <button type="button" class="btn btn-link btn-sm p-0 attention-link" data-action="filter-domain" data-domain="${escapeHtml(this.domainFilter)}">show all domains</button>`

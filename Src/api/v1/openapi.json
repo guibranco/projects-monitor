@@ -211,6 +211,57 @@
           "total": { "type": "integer", "example": 3 }
         }
       },
+      "ErrorsInbox": {
+        "type": "object",
+        "properties": {
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "fingerprint": { "type": "string", "example": "php:3a8f7580f987adf7" },
+                "kind":        { "type": "string", "enum": ["app", "php"] },
+                "origin":      { "type": "string", "description": "The application (app) or file:line (php).", "example": "public_html/api/a.php:12" },
+                "message":     { "type": "string", "description": "A sample message (first line for PHP errors)." },
+                "count":       { "type": "integer", "example": 2 },
+                "lastSeen":    { "type": "string", "nullable": true, "example": "2026-11-18 21:43:00" },
+                "sources": {
+                  "type": "object",
+                  "description": "Occurrences by source: app, php, error_log.",
+                  "additionalProperties": { "type": "integer" }
+                },
+                "actions": {
+                  "type": "object",
+                  "properties": {
+                    "sampleIds":   { "type": "array", "items": { "type": "integer" }, "description": "Message groups, for messages/details and messages/delete-group." },
+                    "paths":       { "type": "array", "items": { "type": "string" }, "description": "error_log paths of stored errors, for errors/delete-path." },
+                    "directories": { "type": "array", "items": { "type": "string" }, "description": "Directories of error_log files, for cpanel/delete." }
+                  }
+                }
+              }
+            }
+          },
+          "sources": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "label":       { "type": "string" },
+                "groups":      { "type": "integer" },
+                "occurrences": { "type": "integer" },
+                "error":       { "type": "string", "nullable": true, "description": "Why the source could not be read." }
+              }
+            }
+          },
+          "total":       { "type": "integer", "description": "Number of groups." },
+          "occurrences": { "type": "integer" },
+          "errorLogFiles": {
+            "type": "array",
+            "description": "The error_log files table (header row first); empty when cPanel cannot be read.",
+            "items": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      },
       "MessagesData": {
         "type": "object",
         "properties": {
@@ -757,6 +808,27 @@
         }
       }
     },
+    "/api/v1/errors-inbox": {
+      "get": {
+        "summary": "Errors of every source, grouped",
+        "description": "The Errors page's single list: application messages, PHP errors stored in the database and error_log entries not ingested yet (read from cPanel), grouped by fingerprint (where the error happens plus its message with numbers, UUIDs and hexadecimal ids taken out). A PHP error keeps its fingerprint before and after ProcessErrorLogs ingests it. Most recently seen first. A source that cannot be read is reported in sources.<name>.error and the others are still returned. Also returns the error_log files table, so the page needs no separate cPanel call.",
+        "operationId": "getErrorsInbox",
+        "tags": ["Errors"],
+        "responses": {
+          "200": {
+            "description": "The grouped errors.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorsInbox" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
     "/api/v1/github": {
       "get": {
         "summary": "GitHub stats",
@@ -1079,6 +1151,96 @@
           },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/api/v1/kpi-history": {
+      "get": {
+        "summary": "KPI tile history",
+        "description": "The stored samples of the KPI tiles over kpi.history.retentionHours (24 by default), oldest first. Unknown metrics return an empty list.",
+        "operationId": "getKpiHistory",
+        "tags": ["System"],
+        "parameters": [
+          {
+            "name": "metrics",
+            "in": "query",
+            "required": true,
+            "description": "Comma-separated tile ids: letters, digits and underscores, at most 50.",
+            "schema": { "type": "string", "example": "gauge_chart_queues,gauge_chart_webhooks" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Series by metric.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "t": { "type": "integer", "description": "Unix time in milliseconds (the minute, UTC)." },
+                        "v": { "type": "number" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "503": {
+            "description": "The database is unavailable.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+          }
+        }
+      },
+      "post": {
+        "summary": "Store KPI tile values",
+        "description": "Stores the values the dashboard shows now: one sample per metric per minute (a second value in the same minute replaces the first). Deletes samples past the retention window. Invalid names and non-numeric values are ignored.",
+        "operationId": "storeKpiSamples",
+        "tags": ["System"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["samples"],
+                "properties": {
+                  "samples": {
+                    "type": "object",
+                    "maxProperties": 50,
+                    "additionalProperties": { "type": "number" },
+                    "example": { "gauge_chart_queues": 12 }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Stored.",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object", "properties": { "recorded": { "type": "integer" } } }
+              }
+            }
+          },
+          "400": {
+            "description": "No valid samples.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "503": {
+            "description": "The database is unavailable.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+          }
         }
       }
     },

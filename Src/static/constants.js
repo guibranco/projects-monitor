@@ -38,6 +38,8 @@ export const API_ENDPOINTS = {
   DNS_RECORDS: "api/v1/dns-records",
   RELEASES: "api/v1/releases",
   ERRORS: "api/v1/errors",
+  ERRORS_INBOX: "api/v1/errors-inbox",
+  KPI_HISTORY: "api/v1/kpi-history",
   ERRORS_TRUNCATE: "api/v1/errors/truncate",
   ERRORS_DELETE_PATH: "api/v1/errors/delete-path",
   GITHUB: "api/v1/github",

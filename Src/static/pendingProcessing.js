@@ -143,6 +143,7 @@ export class PendingProcessingTable {
       allowHtml: true,
       showRowNumber: false,
       pagination: true,
+      repoFilter: "any",
     });
   }
 }

@@ -115,12 +115,21 @@ The full set of integrations and their secrets files:
 | github-api-proxy (GitHub API usage) | `githubApiProxy.secrets.php` |
 | GStraccini Bot              | `gstracciniBot.secrets.php`          |
 | LogStream                   | `logStream.secrets.php`              |
+| OneSignal (critical pushes) | `oneSignal.secrets.php`              |
 
 The github-api-proxy secrets file holds `$githubApiProxyUrl` (its stats API,
 e.g. `https://api.github-proxy.gstraccini.dev/`) and `$githubApiProxyToken`
 (the proxy's `Admin--ApiToken` from Grimoire); the deploy writes it from the
 `GH_API_PROXY_URL` and `GH_API_PROXY_TOKEN` repository secrets. This host must
 be in the proxy's `Network:AllowedSources`.
+
+The OneSignal secrets file holds `$oneSignalAppId`, `$oneSignalApiKey` (the
+App API key), and optionally `$oneSignalSegment` (default `Total
+Subscriptions`) and `$oneSignalSiteUrl` (the dashboard's base URL, so a
+push opens the right page). The deploy writes it only when the
+`ONESIGNAL_API_KEY` repository secret is set (App ID from the
+`ONESIGNAL_APP_ID` variable or the one the page script uses, site URL from
+`INSTALLATION_ENDPOINT`); without it `NotifyAttention.php` does nothing.
 
 The Cloudflare API token needs **Zone → Zone → Read** and
 **Zone → Analytics → Read**. Without the analytics permission the
@@ -185,8 +194,8 @@ bash Tests/db-integrity.sh                 # checks the applied schema
 
 The dashboard is split by the question each page answers. Every page has the
 same navbar: one tab per page (with a red or amber dot when the attention feed
-has active items in that page's domains), the data freshness indicator, and a
-Ctrl+K palette to jump to any page or section.
+has active items in that page's domains), the global repo filter, the data
+freshness indicator, and a Ctrl+K palette to jump to any page or section.
 
 - **Overview** (`index.php`) — Is anything broken? Status strip, Needs
   attention, key numbers.
@@ -194,8 +203,13 @@ Ctrl+K palette to jump to any page or section.
   processing (one table with entity chips), processing state counts, idle PRs,
   queues and brokers, workers, bot jobs, feed, senders, repositories, webhook
   statistics.
-- **Errors** (`errors.php`) — What's failing in my code? Messages grouped,
-  database errors, error log messages and files, messages by application.
+- **Errors** (`errors.php`) — What's failing in my code? One list
+  (`GET /api/v1/errors-inbox`) of application messages, PHP errors stored in
+  the database and `error_log` entries not ingested yet, grouped by
+  fingerprint (where it happens plus the message with numbers and ids taken
+  out, so an error keeps its group before and after `ProcessErrorLogs` ingests
+  it) with a chip per source; plus the error log files and messages by
+  application lists for their delete actions.
 - **GitHub work** (`github.php`) — What needs me on GitHub? Needs me, Waiting on
   others, Blocked and Activity groups.
 - **Ops** (`ops.php`) — Is my infra up? Server health, Healthchecks.io,
@@ -208,8 +222,19 @@ Each page loads only its own endpoints (`LOADERS` in `Src/static/api.js`).
 Design rules applied everywhere: colour only for status, sections whose counter
 is 0 are hidden and listed in one line at the bottom of the page, tables show 5
 rows with "View all", dates show relatively with the exact time on hover, and
-the old gauges are KPI tiles with their thresholds and a 24h sparkline (built
-from the samples this browser has seen).
+the old gauges are KPI tiles with their thresholds and a 24h sparkline.
+
+- **KPI history** is kept on the server (`kpi_samples`, via
+  `GET`/`POST /api/v1/kpi-history`): every open dashboard sends the values it
+  shows, batched at most once a minute, and stores one sample per metric per
+  minute for `kpi.history.retentionHours`. Every browser draws the same trend;
+  a gap means no dashboard was open then.
+- **Repo filter**: the navbar box (or `/` to focus it, Ctrl+K "Filter every
+  page by repo", or `?repo=` in the URL) filters every page. Tables with a
+  Repository / Repo / Project column only show matching rows, with a line
+  saying how many are hidden; the Needs attention list hides workflow-run
+  items of other repositories. Tables and items that do not belong to a
+  repository are not filtered. The value is kept per browser.
 
 ### Attention feed
 
@@ -237,15 +262,22 @@ followed accounts, the GitHub API core quota and domain expiry). Each item has a
   without its secrets file is reported as `not_configured`; one that fails
   becomes a warning item of its own, so a broken integration never passes for a
   healthy one.
+- **Push notifications**: `Src/Worker/NotifyAttention.php` (cron, every 5
+  minutes) pushes **critical**, active items to the dashboard's OneSignal
+  subscribers, once per raise: an item is pushed again only when its `since`
+  changes or after it went away and came back (`attention_notifications`).
+  Warnings, snoozed and acknowledged items never push. More than
+  `notify.maxPushesPerRun` new items in one run become a single summary push.
 - **Adding a source**: write an `AttentionEvaluator` (a `fetch()` that reads, an
   `evaluate()` without I/O that decides) and list it in `AttentionSources`.
 
 ### Background workers
 
-Two CLI workers are meant to run on a cron schedule against the deployed instance (see the docblock in each file for the exact crontab line):
+Three CLI workers are meant to run on a cron schedule against the deployed instance (see the docblock in each file for the exact crontab line):
 
 - `Src/Worker/GeneratePublicStats.php` — pre-computes the public stats page every 5 minutes.
 - `Src/Worker/ProcessErrorLogs.php` — polls cPanel for `error_log` files, persists them to the `errors` table, and cleans them up.
+- `Src/Worker/NotifyAttention.php` — pushes critical attention items through OneSignal every 5 minutes (needs `oneSignal.secrets.php`).
 
 ---
 
@@ -310,7 +342,7 @@ requests, queues and brokers:
 
 #### Errors page
 
-Application messages and error logs:
+One list of errors from every source, grouped, with a chip per source:
 ![Errors page](docs/screenshots/errors.png)
 
 #### GitHub work page

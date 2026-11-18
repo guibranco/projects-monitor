@@ -254,27 +254,9 @@ class CPanel
     public function getErrorLogMessages(): array
     {
         $result = array();
-        $items = $this->searchFiles("error_log", "/");
-
-        $parser = new LogParser();
-        foreach ($items as $item) {
-            if (strpos($item->file, ".trash") !== false) {
-                continue;
-            }
-
-            $content = $this->loadContent($item->file);
-
-            if ($content === null) {
-                continue;
-            }
-
-            $errors = $parser->parse($content["contents"]);
-            foreach ($errors as $error) {
-                $date = date("H:i:s d/m/Y", strtotime($error['date']));
-                $dir = str_replace("/home/{$this->username}/", "", $content["dirname"]);
-                $file = str_replace("/home/{$this->username}/", "", $error['file']);
-                $result[] = array($date, $dir, $error['multilineError'], $file, $error['line']);
-            }
+        foreach ($this->getErrorLogEntries() as $entry) {
+            $date = date("H:i:s d/m/Y", strtotime($entry['date']));
+            $result[] = array($date, $entry['directory'], $entry['multilineError'], $entry['file'], $entry['line']);
         }
 
         if (empty($result)) {
@@ -284,6 +266,42 @@ class CPanel
         ksort($result, SORT_ASC);
         array_unshift($result, array("Date", "Directory", "Error", "File", "Line"));
         return $result;
+    }
+
+    /**
+     * The entries of every error_log file not yet ingested, as raw rows:
+     * date (as written in the file, with its zone), directory, multilineError,
+     * file and line, paths relative to the home directory.
+     *
+     * @return array
+     */
+    public function getErrorLogEntries(): array
+    {
+        $entries = array();
+        $parser = new LogParser();
+        foreach ($this->searchFiles("error_log", "/") as $item) {
+            if (strpos($item->file, ".trash") !== false) {
+                continue;
+            }
+
+            $content = $this->loadContent($item->file);
+            if ($content === null) {
+                continue;
+            }
+
+            $directory = str_replace("/home/{$this->username}/", "", $content["dirname"]);
+            foreach ($parser->parse($content["contents"]) as $error) {
+                $entries[] = array(
+                    "date" => $error['date'],
+                    "directory" => $directory,
+                    "multilineError" => $error['multilineError'],
+                    "file" => str_replace("/home/{$this->username}/", "", $error['file']),
+                    "line" => $error['line'],
+                );
+            }
+        }
+
+        return $entries;
     }
 
     /**

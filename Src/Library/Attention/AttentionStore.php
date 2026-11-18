@@ -4,8 +4,8 @@ namespace GuiBranco\ProjectsMonitor\Library\Attention;
 
 /**
  * Persists snoozes and acknowledgements of attention items, by fingerprint,
- * and reads the threshold overrides, in the attention_states and
- * attention_thresholds tables.
+ * reads the threshold overrides and remembers which items were pushed, in
+ * the attention_states, attention_thresholds and attention_notifications tables.
  */
 class AttentionStore
 {
@@ -157,6 +157,68 @@ class AttentionStore
         }
 
     }//end prune()
+
+
+    /**
+     * The items already pushed: the since value they were pushed at ("" for none), by fingerprint.
+     *
+     * @return array
+     */
+    public function getNotified(): array
+    {
+        $notified = [];
+        $result   = $this->connection->query("SELECT fingerprint, since FROM attention_notifications");
+        while (($row = $result->fetch_assoc()) !== null) {
+            $notified[$row["fingerprint"]] = (string) $row["since"];
+        }
+
+        return $notified;
+
+    }//end getNotified()
+
+
+    /**
+     * Records that an item was pushed at a since value.
+     *
+     * @param string      $fingerprint The item's fingerprint.
+     * @param string|null $since       Its since value.
+     *
+     * @return boolean
+     */
+    public function markNotified(string $fingerprint, ?string $since): bool
+    {
+        $sinceValue = (string) $since;
+        $stmt       = $this->connection->prepare("REPLACE INTO attention_notifications (fingerprint, since, notified_at) VALUES (?, ?, UTC_TIMESTAMP())");
+        $stmt->bind_param("ss", $fingerprint, $sinceValue);
+        $result = $stmt->execute();
+        $stmt->close();
+        return $result;
+
+    }//end markNotified()
+
+
+    /**
+     * Forgets the pushes of items no longer raised, so they are pushed again if they come back.
+     *
+     * @param array $fingerprints The fingerprints of every item raised now.
+     *
+     * @return void
+     */
+    public function pruneNotified(array $fingerprints): void
+    {
+        foreach (array_keys($this->getNotified()) as $fingerprint) {
+            if (in_array((string) $fingerprint, $fingerprints, true) === true) {
+                continue;
+            }
+
+            $stmt  = $this->connection->prepare("DELETE FROM attention_notifications WHERE fingerprint = ?");
+            $value = (string) $fingerprint;
+            $stmt->bind_param("s", $value);
+            $stmt->execute();
+            $stmt->close();
+        }
+
+    }//end pruneNotified()
 
 
     /**

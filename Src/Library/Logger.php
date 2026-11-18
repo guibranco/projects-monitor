@@ -296,6 +296,28 @@ class Logger
         return $data;
     }
 
+    /**
+     * The grouped messages as raw rows (no HTML), for the errors list:
+     * application, message, count, lastSeen (UTC "Y-m-d H:i:s") and sampleId.
+     *
+     * @return array
+     */
+    public function getGroupedMessageRows(): array
+    {
+        $sql = "SELECT a.name AS application, m.message, COUNT(m.id) AS `count`, ";
+        $sql .= "CONVERT_TZ(MAX(m.created_at), '-03:00', '+00:00') AS lastSeen, ";
+        $sql .= "MIN(m.id) AS sampleId ";
+        $sql .= "FROM messages m INNER JOIN applications a ON m.application_id = a.id ";
+        $sql .= "GROUP BY m.application_id, m.class, m.function, m.file, m.line, m.message, m.user_agent";
+        $result = $this->connection->query($sql);
+        $rows = [];
+        while (($row = $result->fetch_assoc()) !== null) {
+            $rows[] = $row;
+        }
+
+        return $rows;
+    }
+
     public function getMessagesByGroupSampleId(int $sampleId): array
     {
         $sql = "SELECT m2.id, a.name, m2.class, m2.function, m2.file, m2.line, m2.object, ";

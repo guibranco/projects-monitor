@@ -1,0 +1,101 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * NotifyAttention — worker that pushes critical attention items to the
+ * dashboard's OneSignal subscribers, once per raise. Warnings never push;
+ * snoozed and acknowledged items never push. It reads the same attention
+ * feed as the Overview (re-evaluating the sources when the cached snapshot
+ * is older than cache.attention.ttlSeconds).
+ *
+ * Needs Src/secrets/oneSignal.secrets.php ($oneSignalAppId, $oneSignalApiKey,
+ * optionally $oneSignalSegment and $oneSignalSiteUrl); without it the
+ * worker logs that it is not configured and exits 0.
+ *
+ * Recommended cron entry (every 5 minutes):
+ *
+ *   *\/5 * * * * php /home/<username>/public_html/Src/Worker/NotifyAttention.php \
+ *       >> /var/log/projects-monitor-notify-attention.log 2>&1
+ */
+
+declare(strict_types=1);
+
+if (PHP_SAPI !== 'cli') {
+    http_response_code(403);
+    exit(1);
+}
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use GuiBranco\ProjectsMonitor\Library\Attention\AttentionCollector;
+use GuiBranco\ProjectsMonitor\Library\Attention\AttentionFeed;
+use GuiBranco\ProjectsMonitor\Library\Attention\AttentionNotifier;
+use GuiBranco\ProjectsMonitor\Library\Attention\AttentionSources;
+use GuiBranco\ProjectsMonitor\Library\Attention\AttentionStore;
+use GuiBranco\ProjectsMonitor\Library\Attention\AttentionThresholds;
+use GuiBranco\ProjectsMonitor\Library\Configuration;
+use GuiBranco\ProjectsMonitor\Library\Database;
+use GuiBranco\ProjectsMonitor\Library\LogStream;
+use GuiBranco\ProjectsMonitor\Library\OneSignal;
+use GuiBranco\ProjectsMonitor\Library\PublicStats;
+
+$worker    = ["worker" => "NotifyAttention"];
+$logStream = new LogStream();
+(new Configuration())->init();
+
+$oneSignal = new OneSignal();
+if ($oneSignal->isConfigured() === false) {
+    $logStream->info("{worker} skipped: OneSignal is not configured", $worker, "worker");
+    exit(0);
+}
+
+try {
+    $store = new AttentionStore((new Database())->getConnection());
+} catch (Throwable $exception) {
+    // Without the store nothing remembers what was pushed, so every run would push again.
+    $logStream->error("{worker} cannot open the attention store: {reason}", $worker + ["reason" => $exception->getMessage()], "worker");
+    exit(1);
+}
+
+$now        = time();
+$collector  = new AttentionCollector((new AttentionSources())->getEvaluators());
+$feed       = new AttentionFeed($store, $collector, AttentionFeed::CACHE_FILE, PublicStats::CACHE_FILE);
+$response   = $feed->getResponse(false, $now);
+$thresholds = new AttentionThresholds($store->getThresholdOverrides());
+$notifier   = new AttentionNotifier((int) $thresholds->getValue("notify.maxPushesPerRun"));
+
+$items    = $response["items"];
+$selected = $notifier->select($items, $store->getNotified());
+$sent     = 0;
+$failed   = 0;
+foreach ($notifier->buildPushes($selected) as $push) {
+    try {
+        $oneSignal->send($push["heading"], $push["content"], $push["link"], $push["key"]);
+        $sent++;
+    } catch (Throwable $exception) {
+        $failed++;
+        $logStream->error("{worker} push failed: {reason}", $worker + ["reason" => $exception->getMessage()], "worker");
+    }
+}
+
+// A failed push is retried on the next run (same idempotency key, so
+// OneSignal drops it if it did get through).
+if ($failed === 0) {
+    foreach ($selected as $item) {
+        $store->markNotified((string) $item["fingerprint"], $item["since"]);
+    }
+}
+
+// Forget pushes of items that are no longer raised, but only when every
+// source answered: an unreadable source would otherwise re-push its items.
+$unreadable = array_filter($response["sources"], fn ($source) => ($source["status"] ?? "") === "error");
+if (count($unreadable) === 0) {
+    $store->pruneNotified(array_column($items, "fingerprint"));
+}
+
+$logStream->info(
+    "{worker} completed: {selected} new critical items, {sent} pushes sent, {failed} failed",
+    $worker + ["selected" => count($selected), "sent" => $sent, "failed" => $failed],
+    "worker"
+);
+exit($failed === 0 ? 0 : 1);

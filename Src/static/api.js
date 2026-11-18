@@ -411,12 +411,7 @@ export class ApiManager {
  */
 const LOADERS = [
   { endpoint: "APPVEYOR", every: 30, show: "showAppVeyor", pages: ["ops"] },
-  {
-    endpoint: "CPANEL",
-    every: 30,
-    show: "showCPanel",
-    pages: ["errors", "ops"],
-  },
+  { endpoint: "CPANEL", every: 30, show: "showCPanel", pages: ["ops"] },
   {
     endpoint: "MESSAGES",
     every: 30,
@@ -514,7 +509,12 @@ const LOADERS = [
     show: "showThrottledRepositories",
     pages: ["pipeline"],
   },
-  { endpoint: "ERRORS", every: 60, show: "showDbErrors", pages: ["errors"] },
+  {
+    endpoint: "ERRORS_INBOX",
+    every: 60,
+    show: "showErrorsInbox",
+    pages: ["errors"],
+  },
   {
     endpoint: "GITHUB",
     every: 60,

@@ -17,6 +17,7 @@ class GitHubApiProxy extends BearerTokenApiClient
      */
     public const PERIOD = '24h';
 
+
     /**
      * Loads the API URL and token from githubApiProxy.secrets.php.
      *

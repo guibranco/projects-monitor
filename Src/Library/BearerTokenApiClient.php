@@ -34,6 +34,14 @@ abstract class BearerTokenApiClient
      */
     protected $request;
 
+    /**
+     * Variables read from each secrets file, by path, so every client
+     * instance in a request gets them although the file is included once.
+     *
+     * @var array<string, array<string, mixed>>
+     */
+    private static $secretsCache = [];
+
 
     /**
      * Name used in error messages, e.g. "WebhooksHandler API".
@@ -83,9 +91,8 @@ abstract class BearerTokenApiClient
 
 
     /**
-     * Returns the variables a secrets file assigns. The file is included in
-     * this isolated scope on every call, so several clients (or several
-     * instances of one) can read it in the same request.
+     * Returns the variables a secrets file assigns. The file is included once,
+     * in an isolated scope, and its variables are cached for later instances.
      *
      * @param string $path Absolute path of the secrets file.
      *
@@ -93,14 +100,18 @@ abstract class BearerTokenApiClient
      */
     private static function readSecrets(string $path): array
     {
-        return (static function (string $secretsPath): array {
-            include $secretsPath;
+        if (isset(self::$secretsCache[$path]) === false) {
+            self::$secretsCache[$path] = (static function (string $secretsPath): array {
+                include_once $secretsPath;
 
-            $variables = get_defined_vars();
-            unset($variables['secretsPath']);
+                $variables = get_defined_vars();
+                unset($variables['secretsPath']);
 
-            return $variables;
-        })($path);
+                return $variables;
+            })($path);
+        }
+
+        return self::$secretsCache[$path];
 
     }//end readSecrets()
 

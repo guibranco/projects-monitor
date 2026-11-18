@@ -52,23 +52,17 @@ class GitHubApiProxyCells
         $parts  = explode(':', $caller, 2);
         $prefix = $parts[0];
         $value  = ($parts[1] ?? '');
+        $muted  = static fn(string $text): string => ' <small class="text-white-50">'.$text.'</small>';
 
-        switch ($prefix) {
-        case 'installation':
-            return $this->githubLink($value).' <small class="text-white-50">app installation</small>';
-        case 'app':
-            return 'GitHub App #'.$this->escape($value).$this->kindsNote($kinds);
-        case 'token':
-            return 'token <code>'.$this->escape($value).'</code> <small class="text-white-50">resolving</small>';
-        case 'invalid':
-            return 'invalid token <code>'.$this->escape($value).'</code>';
-        case 'anonymous':
-            return 'anonymous';
-        case '':
-            return '—';
-        default:
-            return $this->githubLink($caller).$this->kindsNote($kinds);
-        }
+        return match ($prefix) {
+            'installation' => $this->githubLink($value).$muted('app installation'),
+            'app'          => 'GitHub App #'.$this->escape($value).$this->kindsNote($kinds),
+            'token'        => 'token <code>'.$this->escape($value).'</code>'.$muted('resolving'),
+            'invalid'      => 'invalid token <code>'.$this->escape($value).'</code>',
+            'anonymous'    => 'anonymous',
+            ''             => '—',
+            default        => $this->githubLink($caller).$this->kindsNote($kinds),
+        };
 
     }//end caller()
 
@@ -85,7 +79,7 @@ class GitHubApiProxyCells
     public function client(array $userAgents, array $clientIps): string
     {
         $userAgents = array_values(array_filter(array_map('strval', $userAgents), fn(string $agent) => $agent !== ''));
-        if (count($userAgents) === 0) {
+        if (empty($userAgents) === true) {
             return '—';
         }
 
@@ -138,9 +132,9 @@ class GitHubApiProxyCells
         $color = 'green';
         if ($percent >= 95) {
             $color = 'red';
-        } else if ($percent >= 80) {
+        } elseif ($percent >= 80) {
             $color = 'orange';
-        } else if ($percent >= 50) {
+        } elseif ($percent >= 50) {
             $color = 'yellow';
         }
 
@@ -175,7 +169,7 @@ class GitHubApiProxyCells
     private function kindsNote(array $kinds): string
     {
         $kinds = array_values(array_filter(array_map('strval', $kinds), fn(string $kind) => $kind !== '' && $kind !== 'none'));
-        if (count($kinds) === 0) {
+        if (empty($kinds) === true) {
             return '';
         }
 

@@ -578,35 +578,47 @@ export class DataDisplayManager {
   }
 
   /**
+   * Caption of the github-api-proxy section: version and health, then the
+   * last 24 hours' totals; zero-valued problem counts are left out.
+   */
+  gitHubApiProxyCaption(response) {
+    if (response.loading || !response.summary || !response.health) {
+      return "Loading GitHub API proxy stats…";
+    }
+
+    const { health, summary } = response;
+    const format = (value) => Number(value).toLocaleString();
+    const countIf = (value, text) => (value > 0 ? `${format(value)} ${text}` : null);
+
+    const service = [
+      health.version ? `v${health.version}` : "version unknown",
+      health.status === "ok" ? "healthy" : health.status,
+      health.database === "ok" ? null : `database ${health.database}`,
+      countIf(health.dropped, "log rows dropped"),
+    ];
+    const totals = [
+      `${format(summary.requests)} requests`,
+      `${format(summary.callers)} ${summary.callers === 1 ? "caller" : "callers"}`,
+      `${format(summary.errors)} errors`,
+      countIf(summary.rateLimited, "rate limited"),
+      countIf(summary.upstreamFailures, "GitHub unreachable"),
+      countIf(summary.blocked, "blocked by the allow-list"),
+      `avg ${Number(summary.avgDurationMs).toLocaleString(undefined, { maximumFractionDigits: 1 })} ms`,
+    ];
+
+    return `${service.filter(Boolean).join(", ")} · last 24 hours: ${totals.filter(Boolean).join(" · ")}`;
+  }
+
+  /**
    * Draws the github-api-proxy section: a caption with the service health and
    * the last 24 hours' totals, the hourly requests/errors chart, the callers
    * table and each caller's current GitHub rate limits.
    */
   showGitHubApiProxy(response) {
     const caption = document.getElementById("github_api_proxy_caption");
-    if (caption && response.loading) {
-      caption.textContent = "Loading GitHub API proxy stats…";
-    } else if (caption && response.summary && response.health) {
-      const health = response.health;
-      const summary = response.summary;
-      const format = (value) => Number(value).toLocaleString();
-      const service = [
-        health.version ? `v${health.version}` : "version unknown",
-        health.status === "ok" ? "healthy" : health.status,
-        health.database === "ok" ? null : `database ${health.database}`,
-        health.dropped > 0 ? `${format(health.dropped)} log rows dropped` : null,
-      ].filter(Boolean).join(", ");
-      const totals = [
-        `${format(summary.requests)} requests`,
-        `${format(summary.callers)} ${summary.callers === 1 ? "caller" : "callers"}`,
-        `${format(summary.errors)} errors`,
-        summary.rateLimited > 0 ? `${format(summary.rateLimited)} rate limited` : null,
-        summary.upstreamFailures > 0 ? `${format(summary.upstreamFailures)} GitHub unreachable` : null,
-        summary.blocked > 0 ? `${format(summary.blocked)} blocked by the allow-list` : null,
-        `avg ${Number(summary.avgDurationMs).toLocaleString(undefined, { maximumFractionDigits: 1 })} ms`,
-      ].filter(Boolean).join(" · ");
-      caption.textContent = `${service} · last 24 hours: ${totals}`;
-      caption.classList.toggle("text-warning", health.status !== "ok");
+    if (caption) {
+      caption.textContent = this.gitHubApiProxyCaption(response);
+      caption.classList.toggle("text-warning", Boolean(response.health) && response.health.status !== "ok");
     }
 
     const counter = document.getElementById("counter_github_api_proxy");

@@ -21,13 +21,15 @@ use GuiBranco\Pancake\RequestException;
  */
 class GitHubActionsUsage
 {
-    private const API_URL = "https://api.github.com/";
     private const API_VERSION = "2026-03-10";
     private const CACHE_TTL_SECONDS = 1800;
     private const TOP_REPOS_LIMIT = 5;
 
     /** Shared with the config-load-failure fallback in api/v1/github.php so both stay in sync. */
     public const TABLE_HEADER = ["Account", "Plan", "Minutes", "Storage", "Reset", "Top repositories (this cycle)"];
+
+    /** Base URL for API calls: the github-api-proxy in production (see GitHubApiUrl). */
+    private string $apiUrl = GitHubApiUrl::DIRECT;
 
     private Request $request;
 
@@ -50,6 +52,7 @@ class GitHubActionsUsage
         }
 
         $this->defaultToken = $this->tokens["gitHubToken"];
+        $this->apiUrl = (new GitHubApiUrl())->resolve($this->tokens["gitHubApiUrl"] ?? null);
 
         $this->request = new Request();
         $this->config = $config ?? new GitHubBillingConfig();
@@ -297,7 +300,7 @@ class GitHubActionsUsage
     /** Fetches (or serves cached) one month's usageItems from the /settings/billing/usage/summary endpoint. */
     private function fetchSummaryUsageItems(string $pathSegment, string $account, array $headers, int $year, int $month): array
     {
-        $url = self::API_URL . "{$pathSegment}/{$account}/settings/billing/usage/summary?year={$year}&month={$month}";
+        $url = $this->apiUrl . "{$pathSegment}/{$account}/settings/billing/usage/summary?year={$year}&month={$month}";
         $cacheKey = "github_billing_summary_{$account}_{$year}_{$month}";
 
         return $this->extractUsageItems($this->fetchCachedJson($cacheKey, $url, $headers));
@@ -306,7 +309,7 @@ class GitHubActionsUsage
     /** Fetches (or serves cached) one month's per-date/SKU/repo rows from the non-summary /settings/billing/usage endpoint. */
     private function fetchUsageRows(string $pathSegment, string $account, array $headers, int $year, int $month): array
     {
-        $url = self::API_URL . "{$pathSegment}/{$account}/settings/billing/usage?year={$year}&month={$month}";
+        $url = $this->apiUrl . "{$pathSegment}/{$account}/settings/billing/usage?year={$year}&month={$month}";
         $cacheKey = "github_billing_usage_{$account}_{$year}_{$month}";
 
         return $this->extractUsageItems($this->fetchCachedJson($cacheKey, $url, $headers));

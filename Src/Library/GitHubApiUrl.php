@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace GuiBranco\ProjectsMonitor\Library;
 
 /**
@@ -17,10 +15,14 @@ namespace GuiBranco\ProjectsMonitor\Library;
  * Not to be confused with $githubApiProxyUrl (githubApiProxy.secrets.php),
  * which is the proxy's stats API read by GitHubApiProxy.
  */
-final class GitHubApiUrl
+class GitHubApiUrl
 {
-    /** GitHub's own API host, used when no proxy URL is configured. */
-    public const DIRECT = "https://api.github.com/";
+
+    /**
+     * GitHub's own API host, used when no proxy URL is configured.
+     */
+    public const DIRECT = 'https://api.github.com/';
+
 
     /**
      * Normalises the configured base URL: trims stray whitespace, adds the
@@ -33,29 +35,32 @@ final class GitHubApiUrl
      *
      * @throws RequestException When the URL is not HTTPS (plain HTTP is only allowed for loopback hosts).
      */
-    public static function resolve(mixed $configured): string
+    public function resolve(mixed $configured): string
     {
-        $url = trim((string) ($configured ?? ""));
-        if ($url === "") {
+        $url = trim((string) ($configured ?? ''));
+        if ($url === '') {
             return self::DIRECT;
         }
 
-        $url = rtrim($url, "/") . "/";
+        $url = rtrim($url, '/').'/';
 
         $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
-        $host = strtolower(trim((string) parse_url($url, PHP_URL_HOST), "[]"));
+        $host   = strtolower(trim((string) parse_url($url, PHP_URL_HOST), '[]'));
 
-        if ($scheme === "https" && $host !== "") {
+        if ($scheme === 'https' && $host !== '') {
             return $url;
         }
 
-        $loopback = $host === "localhost" || $host === "::1" || str_starts_with($host, "127.");
-        if ($scheme === "http" && $loopback) {
+        $loopback = ($host === 'localhost' || $host === '::1' || str_starts_with($host, '127.'));
+        if ($scheme === 'http' && $loopback === true) {
             return $url;
         }
 
         throw new RequestException(
-            "GitHub API URL must use HTTPS (plain HTTP is only allowed for loopback hosts): {$scheme}://{$host}"
+            'GitHub API URL must use HTTPS (plain HTTP is only allowed for loopback hosts): '.$scheme.'://'.$host
         );
-    }
-}
+
+    }//end resolve()
+
+
+}//end class

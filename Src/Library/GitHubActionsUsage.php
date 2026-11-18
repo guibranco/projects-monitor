@@ -52,7 +52,7 @@ class GitHubActionsUsage
         }
 
         $this->defaultToken = $this->tokens["gitHubToken"];
-        $this->apiUrl = GitHubApiUrl::resolve($this->tokens["gitHubApiUrl"] ?? null);
+        $this->apiUrl = (new GitHubApiUrl())->resolve($this->tokens["gitHubApiUrl"] ?? null);
 
         $this->request = new Request();
         $this->config = $config ?? new GitHubBillingConfig();

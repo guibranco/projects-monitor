@@ -22,7 +22,11 @@ class GitHub
     private const WIP_SPACE_LABEL = "\"🛠 WIP\""
     ;
 
-    /** Base URL for API calls: the github-api-proxy in production (see GitHubApiUrl). */
+    /**
+     * Base URL for API calls: the github-api-proxy in production (see GitHubApiUrl).
+     *
+     * @var string
+     */
     private string $apiUrl;
 
     private Request $request;
@@ -42,7 +46,7 @@ class GitHub
 
         require_once __DIR__ . "/../secrets/gitHub.secrets.php";
 
-        $this->apiUrl = GitHubApiUrl::resolve($gitHubApiUrl ?? null);
+        $this->apiUrl = (new GitHubApiUrl())->resolve(($gitHubApiUrl ?? null));
         $this->request = new Request();
         $this->headers = [
             "Authorization: token {$gitHubToken}",

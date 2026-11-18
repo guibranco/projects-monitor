@@ -18,7 +18,7 @@ class AttentionNotifierTest extends TestCase
      * @param string      $fingerprint Its fingerprint.
      * @param string      $severity    Its severity.
      * @param string|null $since       Since when.
-     * @param string      $state       active, snoozed or acknowledged.
+     * @param string      $state       Its state: active, snoozed or acknowledged.
      *
      * @return array
      */

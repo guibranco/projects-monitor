@@ -23,7 +23,7 @@ class KpiHistoryTest extends TestCase
         $this->assertSame([], $history->filterSamples("gauge_chart_queues"));
         $this->assertSame(
             [
-             "gauge_chart_queues" => 12.0,
+             "gauge_chart_queues"    => 12.0,
              "gauge_chart_ssh_0_cpu" => 41.5,
             ],
             $history->filterSamples(

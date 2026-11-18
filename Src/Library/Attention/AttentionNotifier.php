@@ -84,7 +84,11 @@ class AttentionNotifier
             $push = [];
 
             $push["heading"] = sprintf("%d critical items need attention", count($selected));
-            $push["content"] = implode(" · ", array_slice($titles, 0, 5)).(count($titles) > 5 ? " …" : "");
+            $push["content"] = implode(" · ", array_slice($titles, 0, 5));
+            if (count($titles) > 5) {
+                $push["content"] .= " …";
+            }
+
             $push["link"]    = "index.php";
             $push["key"]     = $this->uuid(implode("|", $keys));
 

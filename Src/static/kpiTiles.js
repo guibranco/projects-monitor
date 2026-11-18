@@ -128,6 +128,7 @@ export class KpiTileRenderer {
       this.fetchTimer = null;
       const metrics = [...this.toRequest];
       this.toRequest.clear();
+      // eslint-disable-next-line compat/compat
       fetch(
         `${API_ENDPOINTS.KPI_HISTORY}?metrics=${encodeURIComponent(metrics.join(","))}`,
       )
@@ -171,6 +172,7 @@ export class KpiTileRenderer {
     const samples = Object.fromEntries(this.pending);
     this.pending.clear();
     this.lastUploadAt = Date.now();
+    // eslint-disable-next-line compat/compat
     fetch(API_ENDPOINTS.KPI_HISTORY, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

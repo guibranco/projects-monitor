@@ -273,11 +273,13 @@ followed accounts, the GitHub API core quota and domain expiry). Each item has a
 
 ### Background workers
 
-Three CLI workers are meant to run on a cron schedule against the deployed instance (see the docblock in each file for the exact crontab line):
+Three CLI workers are meant to run on a cron schedule against the deployed
+instance (see the docblock in each file for the exact crontab line):
 
 - `Src/Worker/GeneratePublicStats.php` — pre-computes the public stats page every 5 minutes.
 - `Src/Worker/ProcessErrorLogs.php` — polls cPanel for `error_log` files, persists them to the `errors` table, and cleans them up.
-- `Src/Worker/NotifyAttention.php` — pushes critical attention items through OneSignal every 5 minutes (needs `oneSignal.secrets.php`).
+- `Src/Worker/NotifyAttention.php` — pushes critical attention items through
+  OneSignal every 5 minutes (needs `oneSignal.secrets.php`).
 
 ---
 

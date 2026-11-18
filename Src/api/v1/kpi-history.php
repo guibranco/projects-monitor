@@ -42,7 +42,7 @@ if ($method === "GET") {
 }
 
 $body    = json_decode((string) file_get_contents("php://input"), true);
-$samples = $history->filterSamples($body["samples"] ?? null);
+$samples = $history->filterSamples(($body["samples"] ?? null));
 if (count($samples) === 0) {
     sendErrorResponse("No valid samples", 400);
 }

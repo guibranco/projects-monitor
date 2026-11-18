@@ -25,7 +25,7 @@ if (PHP_SAPI !== 'cli') {
     exit(1);
 }
 
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__.'/../vendor/autoload.php';
 
 use GuiBranco\ProjectsMonitor\Library\Attention\AttentionCollector;
 use GuiBranco\ProjectsMonitor\Library\Attention\AttentionFeed;
@@ -53,7 +53,7 @@ try {
     $store = new AttentionStore((new Database())->getConnection());
 } catch (Throwable $exception) {
     // Without the store nothing remembers what was pushed, so every run would push again.
-    $logStream->error("{worker} cannot open the attention store: {reason}", $worker + ["reason" => $exception->getMessage()], "worker");
+    $logStream->error("{worker} cannot open the attention store: {reason}", array_merge($worker, ["reason" => $exception->getMessage()]), "worker");
     exit(1);
 }
 
@@ -74,7 +74,7 @@ foreach ($notifier->buildPushes($selected) as $push) {
         $sent++;
     } catch (Throwable $exception) {
         $failed++;
-        $logStream->error("{worker} push failed: {reason}", $worker + ["reason" => $exception->getMessage()], "worker");
+        $logStream->error("{worker} push failed: {reason}", array_merge($worker, ["reason" => $exception->getMessage()]), "worker");
     }
 }
 
@@ -93,9 +93,17 @@ if (count($unreadable) === 0) {
     $store->pruneNotified(array_column($items, "fingerprint"));
 }
 
-$logStream->info(
-    "{worker} completed: {selected} new critical items, {sent} pushes sent, {failed} failed",
-    $worker + ["selected" => count($selected), "sent" => $sent, "failed" => $failed],
-    "worker"
-);
-exit($failed === 0 ? 0 : 1);
+$context = [
+            "worker"   => "NotifyAttention",
+            "selected" => count($selected),
+            "sent"     => $sent,
+            "failed"   => $failed,
+           ];
+$logStream->info("{worker} completed: {selected} new critical items, {sent} pushes sent, {failed} failed", $context, "worker");
+
+$exitCode = 0;
+if ($failed > 0) {
+    $exitCode = 1;
+}
+
+exit($exitCode);

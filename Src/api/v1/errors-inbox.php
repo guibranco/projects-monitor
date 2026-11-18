@@ -22,6 +22,7 @@ $read   = function (string $source, callable $reader) use (&$unread): array {
         (new LogStream())->warning("Errors inbox could not read {source}: {reason}", ["source" => $source, "reason" => $exception->getMessage()], "errors-inbox");
         return [];
     }
+
 };
 
 $appRows = $read(ErrorsInbox::SOURCE_APP, fn () => (new Logger())->getGroupedMessageRows());

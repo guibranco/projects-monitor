@@ -43,6 +43,30 @@ class ErrorsInboxTest extends TestCase
 
 
     /**
+     * A Logger::getGroupedMessageRows() row.
+     *
+     * @param string  $application The application.
+     * @param string  $message     The message.
+     * @param integer $count       How many.
+     * @param string  $lastSeen    The latest one.
+     * @param integer $sampleId    The group's sample.
+     *
+     * @return array
+     */
+    private function appRow(string $application, string $message, int $count, string $lastSeen, int $sampleId): array
+    {
+        return [
+                "application" => $application,
+                "message"     => $message,
+                "count"       => $count,
+                "lastSeen"    => $lastSeen,
+                "sampleId"    => $sampleId,
+               ];
+
+    }//end appRow()
+
+
+    /**
      * Numbers, UUIDs and hexadecimal ids are replaced and whitespace collapsed.
      *
      * @return void
@@ -90,8 +114,8 @@ class ErrorsInboxTest extends TestCase
     {
         $result = (new ErrorsInbox())->build(
             [
-             ["application" => "Billing", "message" => "Invoice 12 not found", "count" => 3, "lastSeen" => "2026-11-18 10:00:00", "sampleId" => 7],
-             ["application" => "Billing", "message" => "Invoice 99 not found", "count" => 2, "lastSeen" => "2026-11-18 12:00:00", "sampleId" => 9],
+             $this->appRow("Billing", "Invoice 12 not found", 3, "2026-11-18 10:00:00", 7),
+             $this->appRow("Billing", "Invoice 99 not found", 2, "2026-11-18 12:00:00", 9),
             ],
             [],
             []
@@ -120,10 +144,22 @@ class ErrorsInboxTest extends TestCase
         $result = (new ErrorsInbox())->build(
             [],
             [
-             ["error_log_path" => "/home/user/public_html/api/error_log", "date" => "2026-11-18 09:00:00", "error" => "PHP Warning:  Undefined variable \$x in /home/user/public_html/api/a.php on line 12", "file" => "/home/user/public_html/api/a.php", "line" => 12],
+             [
+              "error_log_path" => "/home/user/public_html/api/error_log",
+              "date"           => "2026-11-18 09:00:00",
+              "error"          => "PHP Warning:  Undefined variable \$x in /home/user/public_html/api/a.php on line 12",
+              "file"           => "/home/user/public_html/api/a.php",
+              "line"           => 12,
+             ],
             ],
             [
-             ["date" => "18-Nov-2026 11:30:00 UTC", "directory" => "public_html/api", "multilineError" => "PHP Warning:  Undefined variable \$x in /home/user/public_html/api/a.php on line 12\nStack trace:\n#0 {main}", "file" => "public_html/api/a.php", "line" => "12"],
+             [
+              "date"           => "18-Nov-2026 11:30:00 UTC",
+              "directory"      => "public_html/api",
+              "multilineError" => "PHP Warning:  Undefined variable \$x in /home/user/public_html/api/a.php on line 12\nStack trace:\n#0 {main}",
+              "file"           => "public_html/api/a.php",
+              "line"           => "12",
+             ],
             ]
         );
 
@@ -148,9 +184,9 @@ class ErrorsInboxTest extends TestCase
     {
         $result = (new ErrorsInbox())->build(
             [
-             ["application" => "A", "message" => "old", "count" => 50, "lastSeen" => "2026-11-17 10:00:00", "sampleId" => 1],
-             ["application" => "A", "message" => "new rare", "count" => 1, "lastSeen" => "2026-11-18 10:00:00", "sampleId" => 2],
-             ["application" => "B", "message" => "new frequent", "count" => 9, "lastSeen" => "2026-11-18 10:00:00", "sampleId" => 3],
+             $this->appRow("A", "old", 50, "2026-11-17 10:00:00", 1),
+             $this->appRow("A", "new rare", 1, "2026-11-18 10:00:00", 2),
+             $this->appRow("B", "new frequent", 9, "2026-11-18 10:00:00", 3),
             ],
             [],
             [],

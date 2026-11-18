@@ -53,7 +53,7 @@ class KpiHistory
      *
      * @return array Values by metric.
      */
-    public function filterSamples($samples): array
+    public function filterSamples(mixed $samples): array
     {
         if (is_array($samples) === false) {
             return [];

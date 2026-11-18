@@ -47,10 +47,10 @@ class ErrorsInbox
     {
         $patterns = [
                      "/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i" => "{uuid}",
-                     "/\b0x[0-9a-f]+\b/i"                                                => "{hex}",
-                     "/\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{12,}\b/i"             => "{hex}",
-                     "/\d+(\.\d+)?/"                                                     => "{n}",
-                     "/\s+/"                                                             => " ",
+                     "/\b0x[0-9a-f]+\b/i"                                                  => "{hex}",
+                     "/\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{12,}\b/i"               => "{hex}",
+                     "/\d+(\.\d+)?/"                                                       => "{n}",
+                     "/\s+/"                                                               => " ",
                     ];
 
         $normalized = (string) preg_replace(array_keys($patterns), array_values($patterns), $message);
@@ -63,7 +63,7 @@ class ErrorsInbox
      * The group fingerprint: the kind of error, where it happens and its
      * normalized message, hashed.
      *
-     * @param string $kind    "app" or "php" (error_log entries are PHP errors).
+     * @param string $kind    The kind, "app" or "php" (error_log entries are PHP errors).
      * @param string $origin  The application, or the file and line.
      * @param string $message The message.
      *
@@ -80,10 +80,10 @@ class ErrorsInbox
     /**
      * Groups the three sources into one list, most recent first.
      *
-     * @param array $appRows   Logger::getGroupedMessageRows() rows: application, message, count, lastSeen, sampleId.
-     * @param array $phpRows   ErrorLog::getErrors() rows: error_log_path, date, error, file, line.
-     * @param array $logRows   CPanel::getErrorLogEntries() rows: date, directory, multilineError, file, line.
-     * @param array $unread    Sources that could not be read, by source, with the reason.
+     * @param array $appRows Logger::getGroupedMessageRows() rows: application, message, count, lastSeen, sampleId.
+     * @param array $phpRows ErrorLog::getErrors() rows: error_log_path, date, error, file, line.
+     * @param array $logRows CPanel::getErrorLogEntries() rows: date, directory, multilineError, file, line.
+     * @param array $unread  Sources that could not be read, by source, with the reason.
      *
      * @return array
      */
@@ -147,9 +147,11 @@ class ErrorsInbox
         $message     = (string) ($row["message"] ?? "");
         $group       = $this->getGroup(self::SOURCE_APP, $application, $message);
 
-        $group["count"] += (int) ($row["count"] ?? 1);
-        $group["sources"][self::SOURCE_APP] = (($group["sources"][self::SOURCE_APP] ?? 0) + (int) ($row["count"] ?? 1));
-        $group["lastSeen"] = $this->latest($group["lastSeen"], $this->toLocal($row["lastSeen"] ?? null));
+        $count = (int) ($row["count"] ?? 1);
+
+        $group["count"] += $count;
+        $group["sources"][self::SOURCE_APP] = (($group["sources"][self::SOURCE_APP] ?? 0) + $count);
+        $group["lastSeen"] = $this->latest($group["lastSeen"], $this->toLocal(($row["lastSeen"] ?? null)));
         if (isset($row["sampleId"]) === true) {
             $group["actions"]["sampleIds"][] = (int) $row["sampleId"];
         }
@@ -173,14 +175,22 @@ class ErrorsInbox
         // As ProcessErrorLogs stores them: only the first line of the error,
         // a non-numeric line as 0; paths compared relative to the home directory.
         $file   = (string) preg_replace("#^/home/[^/]+/#", "", (string) ($row["file"] ?? ""));
-        $line   = is_numeric($row["line"] ?? null) === true ? (int) $row["line"] : 0;
-        $error  = strtok(trim((string) ($row["error"] ?? "")), "\r\n");
+        $line = 0;
+        if (is_numeric(($row["line"] ?? null)) === true) {
+            $line = (int) $row["line"];
+        }
+
+        $error = strtok(trim((string) ($row["error"] ?? "")), "\r\n");
+        if ($error === false) {
+            $error = "";
+        }
+
         $origin = sprintf("%s:%d", $file, $line);
-        $group  = $this->getGroup(self::SOURCE_PHP, $origin, $error === false ? "" : $error);
+        $group  = $this->getGroup(self::SOURCE_PHP, $origin, $error);
 
         $group["count"]++;
         $group["sources"][$source] = (($group["sources"][$source] ?? 0) + 1);
-        $group["lastSeen"]         = $this->latest($group["lastSeen"], $this->toLocal($row["date"] ?? null));
+        $group["lastSeen"]         = $this->latest($group["lastSeen"], $this->toLocal(($row["date"] ?? null)));
 
         $key = "paths";
         if ($source === self::SOURCE_ERROR_LOG) {
@@ -199,7 +209,7 @@ class ErrorsInbox
     /**
      * The group of a fingerprint, new when it has not been seen yet.
      *
-     * @param string $kind    "app" or "php".
+     * @param string $kind    The kind, "app" or "php".
      * @param string $origin  The application, or the file and line.
      * @param string $message The message.
      *
@@ -293,7 +303,17 @@ class ErrorsInbox
      */
     public function compareGroups(array $left, array $right): int
     {
-        return [(string) $right["lastSeen"], $right["count"], $left["message"]] <=> [(string) $left["lastSeen"], $left["count"], $right["message"]];
+        $byDate = strcmp((string) $right["lastSeen"], (string) $left["lastSeen"]);
+        if ($byDate !== 0) {
+            return $byDate;
+        }
+
+        $byCount = ($right["count"] <=> $left["count"]);
+        if ($byCount !== 0) {
+            return $byCount;
+        }
+
+        return strcmp((string) $left["message"], (string) $right["message"]);
 
     }//end compareGroups()
 

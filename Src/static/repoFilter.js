@@ -62,16 +62,19 @@ export function filterRows(header, rows, filter, anyCell = false) {
     )
     .filter((index) => index >= 0);
 
+  const result = { rows, hidden: 0, applied: false };
   if (needle === "" || (!anyCell && columns.length === 0)) {
-    return { rows, hidden: 0, applied: false };
+    return result;
   }
 
-  const kept = rows.filter((row) => {
-    const cells = anyCell ? row : columns.map((index) => row[index]);
-    return cells.some((cell) => matchesRepo(cell, needle));
-  });
-
-  return { rows: kept, hidden: rows.length - kept.length, applied: true };
+  result.rows = rows.filter((row) =>
+    row
+      .filter((_cell, position) => anyCell || columns.includes(position))
+      .some((cell) => matchesRepo(cell, needle)),
+  );
+  result.hidden = rows.length - result.rows.length;
+  result.applied = true;
+  return result;
 }
 
 /**
@@ -102,6 +105,7 @@ export function getRepoFilter() {
 
   let value = "";
   try {
+    // eslint-disable-next-line compat/compat
     const fromUrl = new URLSearchParams(window.location.search).get("repo");
     value =
       fromUrl !== null
@@ -137,6 +141,7 @@ export function setRepoFilter(value) {
       window.localStorage.setItem(STORAGE_KEY, next);
     }
 
+    // eslint-disable-next-line compat/compat
     const url = new URL(window.location.href);
     if (next === "") {
       url.searchParams.delete("repo");

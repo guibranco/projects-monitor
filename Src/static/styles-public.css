@@ -594,3 +594,12 @@ footer a:hover {
     box-shadow: 1px 0 0 var(--bs-border-color);
   }
 }
+
+/* Brand logo in the navbar */
+.navbar-brand .brand-logo {
+  display: block;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  flex-shrink: 0;
+}

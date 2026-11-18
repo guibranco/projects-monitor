@@ -51,8 +51,7 @@ class GitHubApiUrl
             return $url;
         }
 
-        $loopback = ($host === 'localhost' || $host === '::1' || str_starts_with($host, '127.'));
-        if ($scheme === 'http' && $loopback === true) {
+        if ($scheme === 'http' && $this->isLoopback($host) === true) {
             return $url;
         }
 
@@ -61,6 +60,30 @@ class GitHubApiUrl
         );
 
     }//end resolve()
+
+
+    /**
+     * Whether a host is the local machine: localhost, ::1, or a numeric IPv4
+     * address in 127/8. "127.example.com" is a DNS name that can resolve
+     * anywhere, so it does not count.
+     *
+     * @param string $host Lower-case host, without IPv6 brackets.
+     *
+     * @return boolean
+     */
+    private function isLoopback(string $host): bool
+    {
+        if ($host === 'localhost' || $host === '::1') {
+            return true;
+        }
+
+        if (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) === false) {
+            return false;
+        }
+
+        return str_starts_with($host, '127.');
+
+    }//end isLoopback()
 
 
 }//end class

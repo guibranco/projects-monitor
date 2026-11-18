@@ -116,6 +116,7 @@ class GitHubApiUrlTest extends TestCase
                  'http remote'  => ['http://github-proxy.gstraccini.dev/'],
                  'other scheme' => ['ftp://github-proxy.gstraccini.dev/'],
                  'no scheme'    => ['github-proxy.gstraccini.dev'],
+                 '127 dns name' => ['http://127.github-proxy.example.test/'],
                 ];
 
         return $urls;

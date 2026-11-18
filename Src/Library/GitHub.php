@@ -97,7 +97,7 @@ class GitHub
                 : $result;
         }
 
-        $url = $this->apiUrl . "search/issues?q=" . urlencode(preg_replace('!\s+!', ' ', "is:open archived:false is:{$queryString}")) . "&per_page=100";
+        $url = $this->apiUrl."search/issues?q=".urlencode(preg_replace('!\s+!', ' ', "is:open archived:false is:{$queryString}"))."&per_page=100";
         $response = null;
         try {
             $response = $this->requestInternal($url);

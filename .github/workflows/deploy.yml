@@ -181,6 +181,19 @@ jobs:
           echo "\$handlerApiUrl   = '$(php_literal "$WEBHOOKS_HANDLER_API_URL")';" >> webhooksHandler.secrets.php
           echo "\$handlerApiToken = '$(php_literal "$WEBHOOKS_HANDLER_API_TOKEN")';" >> webhooksHandler.secrets.php
 
+      - name: 🔑 Generate GitHub API Proxy Configuration
+        env:
+          GH_API_PROXY_URL: ${{ secrets.GH_API_PROXY_URL }}
+          GH_API_PROXY_TOKEN: ${{ secrets.GH_API_PROXY_TOKEN }}
+        run: |
+          cd Src
+          mkdir -p secrets
+          cd secrets
+          php_literal() { printf '%s' "$1" | sed "s/[\\\\']/\\\\&/g"; }
+          echo "<?php" >> githubApiProxy.secrets.php
+          echo "\$githubApiProxyUrl   = '$(php_literal "$GH_API_PROXY_URL")';" >> githubApiProxy.secrets.php
+          echo "\$githubApiProxyToken = '$(php_literal "$GH_API_PROXY_TOKEN")';" >> githubApiProxy.secrets.php
+
       - name: 🔑 Generate LogStream Configuration
         env:
           LOGSTREAM_SERVER: ${{ secrets.LOGSTREAM_SERVER }}

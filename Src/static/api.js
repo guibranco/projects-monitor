@@ -539,6 +539,12 @@ const LOADERS = [
   { endpoint: "WIREGUARD", every: 60, show: "showWireGuard", pages: ["ops"] },
   { endpoint: "RELEASES", every: 60, show: "showReleases", pages: ["github"] },
   {
+    endpoint: "GITHUB_API_PROXY",
+    every: 60,
+    show: "showGitHubApiProxy",
+    pages: ["github"],
+  },
+  {
     endpoint: "SYSTEM_REPORT",
     every: 60,
     show: "showSystemReport",

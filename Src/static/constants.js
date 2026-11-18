@@ -31,6 +31,7 @@ export const API_ENDPOINTS = {
   BROKER_USAGE: "api/v1/broker-usage",
   CLOUDFLARE: "api/v1/cloudflare",
   THROTTLED_REPOSITORIES: "api/v1/throttled-repositories",
+  GITHUB_API_PROXY: "api/v1/github-api-proxy",
   QUEUES: "api/v1/queues",
   QUEUES_PURGE: "api/v1/queues/purge",
   DOMAINS: "api/v1/domains",

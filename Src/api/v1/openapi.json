@@ -807,6 +807,68 @@
         }
       }
     },
+    "/api/v1/github-api-proxy": {
+      "get": {
+        "summary": "GitHub API usage through github-api-proxy",
+        "description": "Calls to the GitHub API made through github-api-proxy (guibranco/github-api-proxy) over the last 24 hours, read from its bearer-protected stats API: totals and service health for the caption, requests and errors per hour (one point per hour, gaps filled with 0), callers (GitHub login, app installation, GitHub App, unresolved or invalid token, anonymous) and each caller's current GitHub rate limits, rendered as tables.",
+        "operationId": "getGitHubApiProxy",
+        "tags": ["GitHub"],
+        "responses": {
+          "200": {
+            "description": "Summary, health, timeline, callers and rate limits.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "summary": {
+                      "type": "object",
+                      "properties": {
+                        "requests": { "type": "integer", "example": 1240 },
+                        "errors": { "type": "integer", "description": "4xx and 5xx answers.", "example": 12 },
+                        "serverErrors": { "type": "integer", "example": 1 },
+                        "upstreamFailures": { "type": "integer", "description": "Calls that could not reach GitHub.", "example": 0 },
+                        "rateLimited": { "type": "integer", "example": 0 },
+                        "blocked": { "type": "integer", "description": "Calls refused by the proxy's network allow-list.", "example": 0 },
+                        "avgDurationMs": { "type": "number", "example": 182.4 },
+                        "callers": { "type": "integer", "example": 4 },
+                        "lastRequestAt": { "type": "string", "description": "Dashboard time zone, or —.", "example": "18/11/2026 17:42:10" }
+                      }
+                    },
+                    "health": {
+                      "type": "object",
+                      "properties": {
+                        "status": { "type": "string", "enum": ["ok", "degraded"], "example": "ok" },
+                        "version": { "type": "string", "example": "0.2.0" },
+                        "database": { "type": "string", "enum": ["ok", "error"], "example": "ok" },
+                        "uptimeSeconds": { "type": "integer", "example": 3600 },
+                        "dropped": { "type": "integer", "description": "Request log rows dropped since the proxy started.", "example": 0 }
+                      }
+                    },
+                    "timeline": {
+                      "type": "array",
+                      "description": "Header row [Hour, Requests, Errors] followed by 24 hourly rows, oldest first, hours in the dashboard time zone.",
+                      "items": { "type": "array", "items": {} }
+                    },
+                    "callers": {
+                      "type": "array",
+                      "description": "Header row followed by one row per caller, busiest first: Caller, Client (first user agent), Requests, Errors (badge), Avg (ms), Last seen.",
+                      "items": { "type": "array", "items": {} }
+                    },
+                    "rateLimits": {
+                      "type": "array",
+                      "description": "Header row followed by one row per caller and GitHub resource, most exhausted first: Caller, Resource, Used (badge), Remaining, Resets.",
+                      "items": { "type": "array", "items": {} }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
     "/api/v1/broker-usage": {
       "get": {
         "summary": "WebhooksHandler broker usage for the current month",

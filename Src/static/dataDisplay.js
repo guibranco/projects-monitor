@@ -578,6 +578,56 @@ export class DataDisplayManager {
   }
 
   /**
+   * Draws the github-api-proxy section: a caption with the service health and
+   * the last 24 hours' totals, the hourly requests/errors chart, the callers
+   * table and each caller's current GitHub rate limits.
+   */
+  showGitHubApiProxy(response) {
+    const caption = document.getElementById("github_api_proxy_caption");
+    if (caption && response.loading) {
+      caption.textContent = "Loading GitHub API proxy stats…";
+    } else if (caption && response.summary && response.health) {
+      const health = response.health;
+      const summary = response.summary;
+      const format = (value) => Number(value).toLocaleString();
+      const service = [
+        health.version ? `v${health.version}` : "version unknown",
+        health.status === "ok" ? "healthy" : health.status,
+        health.database === "ok" ? null : `database ${health.database}`,
+        health.dropped > 0 ? `${format(health.dropped)} log rows dropped` : null,
+      ].filter(Boolean).join(", ");
+      const totals = [
+        `${format(summary.requests)} requests`,
+        `${format(summary.callers)} ${summary.callers === 1 ? "caller" : "callers"}`,
+        `${format(summary.errors)} errors`,
+        summary.rateLimited > 0 ? `${format(summary.rateLimited)} rate limited` : null,
+        summary.upstreamFailures > 0 ? `${format(summary.upstreamFailures)} GitHub unreachable` : null,
+        summary.blocked > 0 ? `${format(summary.blocked)} blocked by the allow-list` : null,
+        `avg ${Number(summary.avgDurationMs).toLocaleString(undefined, { maximumFractionDigits: 1 })} ms`,
+      ].filter(Boolean).join(" · ");
+      caption.textContent = `${service} · last 24 hours: ${totals}`;
+      caption.classList.toggle("text-warning", health.status !== "ok");
+    }
+
+    const counter = document.getElementById("counter_github_api_proxy");
+    if (counter && response.summary) {
+      counter.textContent = Number(response.summary.requests).toLocaleString();
+    }
+
+    this.chartManager.drawLineChart(response.timeline, "github_api_proxy_timeline", {
+      legend: { position: "right" },
+      pointSize: 5,
+      series: {
+        0: { color: "#7FFF00" },
+        1: { color: "#ff5c5c" },
+      },
+      hAxis: { title: "Hour", textStyle: { fontSize: 10 } },
+    });
+    this.chartManager.drawDataTable(response.callers, "github_api_proxy_callers", CHART_OPTIONS.table);
+    this.chartManager.drawDataTable(response.rateLimits, "github_api_proxy_rate_limits", CHART_OPTIONS.table);
+  }
+
+  /**
    * Draws a data table using the provided response.
    */
   showUpTimeRobot(response) {

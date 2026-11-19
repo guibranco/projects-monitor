@@ -173,6 +173,36 @@ class WorkflowRunsPresenter
 
 
     /**
+     * Plain values to sort every run by, in the order of toTable's body rows
+     * (the cells themselves are badges): the repository (owner/repo), the
+     * workflow name and when the run was last updated.
+     *
+     * @param array $runs Rows as returned by GET /workflow-runs.
+     *
+     * @return array
+     */
+    public function toSortKeys(array $runs): array
+    {
+        $keys = [];
+
+        foreach ($runs as $run) {
+            if (is_array($run) === false) {
+                continue;
+            }
+
+            $keys[] = [
+                       'repository' => ($run['owner'] ?? '').'/'.($run['repo'] ?? ''),
+                       'workflow'   => (string) ($run['name'] ?? ''),
+                       'updated_at' => (string) ($run['updated_at'] ?? ''),
+                      ];
+        }
+
+        return $keys;
+
+    }//end toSortKeys()
+
+
+    /**
      * The outcome group of one run: running while it is not completed, then
      * by its conclusion.
      *

@@ -328,4 +328,35 @@ class WorkflowRunsPresenterTest extends TestCase
     }//end testStates()
 
 
+    /**
+     * Sort keys are plain values, aligned with the table's body rows.
+     *
+     * @return void
+     */
+    public function testSortKeys(): void
+    {
+        $presenter = new WorkflowRunsPresenter();
+        $run       = $this->getWebhooksRun();
+
+        $keys = $presenter->toSortKeys([$run, 'not a run', []]);
+
+        $this->assertSame(
+            [
+             [
+              'repository' => 'guibranco/projects-monitor',
+              'workflow'   => 'Build',
+              'updated_at' => '2026-10-20 09:05:00',
+             ],
+             [
+              'repository' => '/',
+              'workflow'   => '',
+              'updated_at' => '',
+             ],
+            ],
+            $keys
+        );
+
+    }//end testSortKeys()
+
+
 }//end class

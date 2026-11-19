@@ -20,11 +20,12 @@ export const GITHUB_API_PROXY_RANGES = new Map(
 export const DEFAULT_GITHUB_API_PROXY_RANGE = "24h";
 
 /**
- * The saved range, or the default when none (or an unknown one) is saved.
+ * The range saved by an earlier visit, or the default when none (or an
+ * unknown one) is saved or storage is unavailable.
  *
  * @returns {string}
  */
-export function getGitHubApiProxyRange() {
+function loadGitHubApiProxyRange() {
   let saved = null;
   try {
     saved = localStorage.getItem(STORAGE_KEY);
@@ -37,23 +38,40 @@ export function getGitHubApiProxyRange() {
     : DEFAULT_GITHUB_API_PROXY_RANGE;
 }
 
+// The page's selected range: read from storage once, then changed only by
+// the picker, so a failed save or another tab cannot make the requests and
+// the response guard disagree with the chip shown.
+let activeRange = loadGitHubApiProxyRange();
+
 /**
- * Saves the range for later visits.
+ * The selected range.
+ *
+ * @returns {string}
+ */
+export function getGitHubApiProxyRange() {
+  return activeRange;
+}
+
+/**
+ * Selects a range for this page and saves it for later visits; the
+ * selection holds even when saving fails.
  *
  * @param {string} range - A key of GITHUB_API_PROXY_RANGES.
- * @returns {boolean} False when storage is unavailable; the choice then
- *   lasts until the page reloads.
+ * @returns {boolean} False when the range is unknown.
  */
-function saveGitHubApiProxyRange(range) {
-  let saved = false;
+export function setGitHubApiProxyRange(range) {
+  if (!GITHUB_API_PROXY_RANGES.has(range)) {
+    return false;
+  }
+
+  activeRange = range;
   try {
     localStorage.setItem(STORAGE_KEY, range);
-    saved = true;
   } catch (error) {
     console.warn("Failed to save the GitHub API proxy range:", error);
   }
 
-  return saved;
+  return true;
 }
 
 export class GitHubApiProxyRangePicker {
@@ -85,8 +103,11 @@ export class GitHubApiProxyRangePicker {
         return;
       }
 
-      this.range = chip.dataset.range;
-      saveGitHubApiProxyRange(this.range);
+      if (!setGitHubApiProxyRange(chip.dataset.range)) {
+        return;
+      }
+
+      this.range = getGitHubApiProxyRange();
       this.render(container);
       this.onChange(this.range);
     });

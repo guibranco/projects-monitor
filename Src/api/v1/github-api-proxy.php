@@ -28,7 +28,14 @@ try {
                 "exception" => $e,
                ];
     (new ErrorReporter())->error("GitHub API proxy stats failed to load: {reason}", $context, "github-api-proxy");
-    $data = ["error" => "GitHub API proxy unavailable"];
+    // The range lets the page drop a late failure for a range no longer selected.
+    $data = [
+             "error" => "GitHub API proxy unavailable",
+             "range" => [
+                         "key"   => $range->key(),
+                         "label" => $range->label(),
+                        ],
+            ];
 }
 
 echo json_encode($data);

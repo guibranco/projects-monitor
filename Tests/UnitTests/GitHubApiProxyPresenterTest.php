@@ -1,6 +1,7 @@
 <?php
 
 use GuiBranco\ProjectsMonitor\Library\GitHubApiProxyPresenter;
+use GuiBranco\ProjectsMonitor\Library\GitHubApiProxyRange;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -77,13 +78,16 @@ class GitHubApiProxyPresenterTest extends TestCase
      *
      * @param array $callers    Callers data.
      * @param array $rateLimits Rate-limits data.
-     * @param array $timeline   Timeline data.
+     * @param array       $timeline   Timeline data.
+     * @param string|null $range      Range key; null for the default.
      *
      * @return array
      */
-    private function present(array $callers=[], array $rateLimits=[], array $timeline=[]): array
+    private function present(array $callers=[], array $rateLimits=[], array $timeline=[], ?string $range=null): array
     {
-        return $this->presenter()->present($this->summary(), $timeline, $callers, $rateLimits, $this->health());
+        $rangeObject = ($range === null) ? null : new GitHubApiProxyRange($range);
+
+        return $this->presenter()->present($this->summary(), $timeline, $callers, $rateLimits, $this->health(), $rangeObject);
 
     }//end present()
 
@@ -157,6 +161,103 @@ class GitHubApiProxyPresenterTest extends TestCase
         $this->assertSame(47, array_sum(array_column(array_slice($rows, 1), 1)));
 
     }//end testTimelineIsFilledToTwentyFourHours()
+
+
+    /**
+     * The payload names the range it covers; the default is 24 hours.
+     *
+     * @return void
+     */
+    public function testRangeIsReported(): void
+    {
+        $this->assertSame(['key' => '24h', 'label' => 'last 24 hours'], $this->present()['range']);
+        $this->assertSame(['key' => '7d', 'label' => 'last 7 days'], $this->present([], [], [], '7d')['range']);
+
+    }//end testRangeIsReported()
+
+
+    /**
+     * The 1-hour range has 60 minute points, ending at the current minute.
+     *
+     * @return void
+     */
+    public function testOneHourTimelineIsPerMinute(): void
+    {
+        $timeline = [
+                     [
+                      'bucket'   => '2026-11-18T17:30:00Z',
+                      'requests' => 5,
+                      'errors'   => 1,
+                     ],
+                     [
+                      'bucket'   => '2026-11-18T16:31:00Z',
+                      'requests' => 2,
+                      'errors'   => 0,
+                     ],
+                    ];
+        $rows     = $this->present([], [], $timeline, '1h')['timeline'];
+
+        $this->assertSame(['Minute', 'Requests', 'Errors'], $rows[0]);
+        $this->assertCount(61, $rows);
+        $this->assertSame(['13:31', 2, 0], $rows[1]);
+        $this->assertSame(['14:30', 5, 1], $rows[60]);
+
+    }//end testOneHourTimelineIsPerMinute()
+
+
+    /**
+     * The 7-day range is hourly with the date in each label.
+     *
+     * @return void
+     */
+    public function testSevenDayTimelineIsHourlyWithDates(): void
+    {
+        $timeline = [
+                     [
+                      'bucket'   => '2026-11-12T00:00:00Z',
+                      'requests' => 3,
+                      'errors'   => 0,
+                     ],
+                    ];
+        $rows     = $this->present([], [], $timeline, '7d')['timeline'];
+
+        $this->assertSame('Hour', $rows[0][0]);
+        $this->assertCount(169, $rows);
+        // Oldest point: 2026-11-11 18:00 UTC = 15:00 in São Paulo.
+        $this->assertSame('11/11 15:00', $rows[1][0]);
+        $this->assertSame('18/11 14:00', $rows[168][0]);
+        $this->assertSame(3, array_sum(array_column(array_slice($rows, 1), 1)));
+
+    }//end testSevenDayTimelineIsHourlyWithDates()
+
+
+    /**
+     * The 30-day range has one point per UTC day, ending today.
+     *
+     * @return void
+     */
+    public function testThirtyDayTimelineIsDaily(): void
+    {
+        $timeline = [
+                     [
+                      'bucket'   => '2026-11-18T00:00:00Z',
+                      'requests' => 10,
+                      'errors'   => 2,
+                     ],
+                     [
+                      'bucket'   => '2026-10-20T00:00:00Z',
+                      'requests' => 4,
+                      'errors'   => 0,
+                     ],
+                    ];
+        $rows     = $this->present([], [], $timeline, '30d')['timeline'];
+
+        $this->assertSame('Day', $rows[0][0]);
+        $this->assertCount(31, $rows);
+        $this->assertSame(['20/10', 4, 0], $rows[1]);
+        $this->assertSame(['18/11', 10, 2], $rows[30]);
+
+    }//end testThirtyDayTimelineIsDaily()
 
 
     /**

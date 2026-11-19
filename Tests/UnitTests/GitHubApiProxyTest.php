@@ -4,6 +4,7 @@ use GuiBranco\Pancake\Request;
 use GuiBranco\Pancake\Response;
 use GuiBranco\ProjectsMonitor\Library\Configuration;
 use GuiBranco\ProjectsMonitor\Library\GitHubApiProxy;
+use GuiBranco\ProjectsMonitor\Library\GitHubApiProxyRange;
 use GuiBranco\ProjectsMonitor\Library\RequestException;
 use PHPUnit\Framework\TestCase;
 
@@ -171,6 +172,28 @@ class GitHubApiProxyTest extends TestCase
         $this->assertCount(25, $result['timeline']);
 
     }//end testGetDashboardCallsEveryEndpoint()
+
+
+    /**
+     * The chosen range sets the period and timeline bucket of every stats call.
+     *
+     * @return void
+     */
+    public function testGetDashboardUsesTheRange(): void
+    {
+        $responses = [];
+        foreach ($this->okResponses() as $endpoint => $response) {
+            $endpoint = str_replace('period=24h&bucket=hour', 'period=30d&bucket=day', $endpoint);
+            $responses[str_replace('period=24h', 'period=30d', $endpoint)] = $response;
+        }
+
+        $proxy  = $this->proxyWith($this->requestMap($responses));
+        $result = $proxy->getDashboard(new GitHubApiProxyRange('30d'));
+
+        $this->assertSame('30d', $result['range']['key']);
+        $this->assertCount(31, $result['timeline']);
+
+    }//end testGetDashboardUsesTheRange()
 
 
     /**

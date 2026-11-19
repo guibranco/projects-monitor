@@ -23,6 +23,9 @@ class GitHubActionsUsageCalculator
      */
     public const DEFAULT_LINUX_BASE_PRICE = 0.006;
 
+    /** How far the usage may stray from the configured allowance before checkAllowance() reports it. */
+    public const ALLOWANCE_TOLERANCE = 0.05;
+
     /**
      * @param array<int, object> $usageItems Actions usageItems for one account/window.
      * @return array{raw: float, weighted: float}
@@ -107,13 +110,15 @@ class GitHubActionsUsageCalculator
     }
 
     /**
-     * True when any Actions minutes row carries a discount — the only case in
+     * True when any Actions minutes row carries a discount, the only case in
      * which checkAllowance() has anything to say, so callers can skip the
      * repository-visibility lookup entirely when this is false.
      *
-     * @param array<int, object> $usageRows
+     * @param array<int, object> $usageRows Non-summary usage rows of one account.
+     *
+     * @return boolean
      */
-    public static function hasDiscountedMinutes(array $usageRows): bool
+    public function hasDiscountedMinutes(array $usageRows): bool
     {
         foreach (self::filter($usageRows, "minutes") as $row) {
             if ((float) ($row->discountAmount ?? 0) > 0) {
@@ -128,93 +133,104 @@ class GitHubActionsUsageCalculator
      * Cross-checks the configured included-minutes allowance against the
      * per-repository usage rows. discountAmount alone can't be read as "the
      * allowance": public-repository minutes are free and arrive as a 100%
-     * discount too, and private-repository discount is the allowance *used so
-     * far*, which only equals the allowance once it is exhausted. So:
+     * discount too, and private-repository discount is the allowance used so
+     * far, which only equals the allowance once it is exhausted. So only rows
+     * of non-public repositories count, and the result is:
      *
-     * - only rows of non-public repositories count (public ones are free and
-     *   never draw on the allowance);
      * - "higher": private discounted minutes exceed the configured allowance,
-     *   so the real allowance must be larger — github-billing.json is stale;
-     * - "lower": the account is paying for minutes (netAmount > 0) while the
-     *   private discounted minutes are still below the configured allowance,
-     *   so the real allowance must be smaller. Once paying, the private
-     *   discount IS the real allowance, so it is reported as such.
+     *   so the real allowance must be larger and github-billing.json is stale;
+     * - "lower": the account is paying for minutes (netAmount above zero)
+     *   while the private discounted minutes are still below the configured
+     *   allowance, so the real allowance must be smaller.
      *
-     * Returns null when nothing contradicts the configured allowance —
-     * including the normal case of being part-way through it.
+     * Null when nothing contradicts the configured allowance, including the
+     * normal case of being part-way through it.
      *
-     * @param array<int, object> $usageRows Non-summary rows (carry repositoryName, discountAmount, netAmount).
-     * @param array<string, true> $publicRepositories Lower-cased public repository names, as both "name" and "owner/name".
+     * @param array<int, object>  $usageRows          Non-summary rows (repositoryName, discountAmount, netAmount).
+     * @param array<string, true> $publicRepositories Set built by publicRepositorySet().
+     * @param float               $configuredMinutes  Allowance from github-billing.json.
+     *
      * @return array{direction: string, privateIncludedMinutes: float, overage: bool}|null
      */
-    public static function checkAllowance(
-        array $usageRows,
-        array $publicRepositories,
-        float $configuredMinutes,
-        float $tolerance = 0.05,
-        float $linuxBasePrice = self::DEFAULT_LINUX_BASE_PRICE
-    ): ?array {
+    public function checkAllowance(array $usageRows, array $publicRepositories, float $configuredMinutes): ?array
+    {
         if ($configuredMinutes <= 0) {
             return null;
         }
 
-        $linuxBasePrice = self::resolveLinuxBasePrice($usageRows, $linuxBasePrice);
-        $privateIncluded = 0.0;
-        $overage = false;
+        $totals  = $this->privateAllowanceTotals($usageRows, $publicRepositories);
+        $covered = $totals["privateIncludedMinutes"];
+        if ($covered > ($configuredMinutes * (1 + self::ALLOWANCE_TOLERANCE))) {
+            $totals["direction"] = "higher";
+        }
+
+        if ($totals["overage"] === true && $covered < ($configuredMinutes * (1 - self::ALLOWANCE_TOLERANCE))) {
+            $totals["direction"] = "lower";
+        }
+
+        if (isset($totals["direction"]) === false) {
+            return null;
+        }
+
+        return $totals;
+    }
+
+    /**
+     * Linux-equivalent minutes covered by the allowance on non-public
+     * repositories, and whether any of them is paying for overage.
+     *
+     * @param array<int, object>  $usageRows          Non-summary usage rows of one account.
+     * @param array<string, true> $publicRepositories Set built by publicRepositorySet().
+     *
+     * @return array{privateIncludedMinutes: float, overage: bool}
+     */
+    private function privateAllowanceTotals(array $usageRows, array $publicRepositories): array
+    {
+        $linuxBasePrice = self::resolveLinuxBasePrice($usageRows, self::DEFAULT_LINUX_BASE_PRICE);
+        $totals         = [];
+        $totals["privateIncludedMinutes"] = 0.0;
+        $totals["overage"] = false;
 
         foreach (self::filter($usageRows, "minutes") as $row) {
-            if (isset($publicRepositories[strtolower(trim((string) ($row->repositoryName ?? "")))])) {
+            $repository = strtolower(trim((string) ($row->repositoryName ?? "")));
+            if (isset($publicRepositories[$repository]) === true) {
                 continue;
             }
 
             if ((float) ($row->netAmount ?? 0) > 0) {
-                $overage = true;
+                $totals["overage"] = true;
             }
 
-            $discountAmount = (float) ($row->discountAmount ?? 0);
-            if ($discountAmount <= 0 || $linuxBasePrice <= 0) {
-                continue;
-            }
-
-            // discount ÷ Linux base price = Linux-equivalent (weighted) minutes,
-            // the unit the allowance is expressed in.
-            $privateIncluded += $discountAmount / $linuxBasePrice;
+            // Discount divided by the Linux base price gives weighted minutes, the allowance's unit.
+            $totals["privateIncludedMinutes"] += ((float) ($row->discountAmount ?? 0) / $linuxBasePrice);
         }
 
-        $result = ["privateIncludedMinutes" => $privateIncluded, "overage" => $overage];
-
-        if ($privateIncluded > $configuredMinutes * (1 + $tolerance)) {
-            return ["direction" => "higher"] + $result;
-        }
-
-        if ($overage && $privateIncluded < $configuredMinutes * (1 - $tolerance)) {
-            return ["direction" => "lower"] + $result;
-        }
-
-        return null;
+        return $totals;
     }
 
     /**
      * Lower-cased lookup set of public repository names, keyed by both the
-     * bare name and "owner/name" — the usage endpoint has been observed
+     * bare name and "owner/name": the usage endpoint has been observed
      * returning the bare name, but its documented example uses the full name.
      *
      * @param array<int, object> $repositories Items from GET /users/{u}/repos or /orgs/{o}/repos.
+     *
      * @return array<string, true>
      */
-    public static function publicRepositorySet(array $repositories): array
+    public function publicRepositorySet(array $repositories): array
     {
         $set = [];
-
         foreach ($repositories as $repository) {
-            if (!is_object($repository) || ($repository->private ?? false) === true) {
+            if (is_object($repository) === false || ($repository->private ?? false) === true) {
                 continue;
             }
 
-            foreach ([$repository->name ?? null, $repository->full_name ?? null] as $name) {
-                if (is_string($name) && $name !== "") {
-                    $set[strtolower($name)] = true;
-                }
+            if (is_string(($repository->name ?? null)) === true) {
+                $set[strtolower($repository->name)] = true;
+            }
+
+            if (is_string(($repository->full_name ?? null)) === true) {
+                $set[strtolower($repository->full_name)] = true;
             }
         }
 

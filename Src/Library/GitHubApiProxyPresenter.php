@@ -97,14 +97,17 @@ class GitHubApiProxyPresenter
      * @param array $rateLimits `data` of GET api/v1/rate-limits.
      * @param array $health     GET /health body.
      *
-     * @return array Keys: summary, health, timeline, callers, rateLimits.
+     * @return array Keys: summary, health, timeline, callers, callerTypes
+     *               (the type of each callers row, header excluded) and rateLimits.
      */
     public function present(array $summary, array $timeline, array $callers, array $rateLimits, array $health): array
     {
-        $callerRows = [self::CALLERS_HEADER];
+        $callerRows  = [self::CALLERS_HEADER];
+        $callerTypes = [];
         foreach ($callers as $caller) {
             if (is_array($caller) === true) {
-                $callerRows[] = $this->presentCaller($caller);
+                $callerRows[]  = $this->presentCaller($caller);
+                $callerTypes[] = $this->cells->callerType((string) ($caller['caller'] ?? ''));
             }
         }
 
@@ -116,11 +119,12 @@ class GitHubApiProxyPresenter
         }
 
         return [
-                'summary'    => $this->presentSummary($summary, (count($callerRows) - 1)),
-                'health'     => $this->presentHealth($health),
-                'timeline'   => $this->presentTimeline($timeline),
-                'callers'    => $callerRows,
-                'rateLimits' => $limitRows,
+                'summary'     => $this->presentSummary($summary, (count($callerRows) - 1)),
+                'health'      => $this->presentHealth($health),
+                'timeline'    => $this->presentTimeline($timeline),
+                'callers'     => $callerRows,
+                'callerTypes' => $callerTypes,
+                'rateLimits'  => $limitRows,
                ];
 
     }//end present()

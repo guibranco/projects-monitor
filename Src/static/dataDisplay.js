@@ -3,12 +3,14 @@ import { CHART_OPTIONS } from './constants.js';
 import { ChartManager } from './charts.js';
 import { PendingProcessingTable } from './pendingProcessing.js';
 import { ErrorsInboxTable } from './errorsInbox.js';
+import { GitHubApiProxyCallersTable } from './gitHubApiProxyCallers.js';
 
 export class DataDisplayManager {
   constructor() {
     this.chartManager = new ChartManager();
     this.pendingProcessing = new PendingProcessingTable(this.chartManager, "pending_processing");
     this.errorsInbox = new ErrorsInboxTable(this.chartManager, "errors_inbox");
+    this.gitHubApiProxyCallers = new GitHubApiProxyCallersTable(this.chartManager, "github_api_proxy_callers");
     this.eventAssigned = false;
     this.eventAssignedError = false;
     this.eventAssignedQueues = false;
@@ -675,7 +677,7 @@ export class DataDisplayManager {
       },
       hAxis: { title: "Hour", textStyle: { fontSize: 10 } },
     });
-    this.chartManager.drawDataTable(response.callers, "github_api_proxy_callers", CHART_OPTIONS.table);
+    this.gitHubApiProxyCallers.update(response.callers, response.callerTypes);
     this.chartManager.drawDataTable(response.rateLimits, "github_api_proxy_rate_limits", CHART_OPTIONS.table);
   }
 

@@ -224,6 +224,50 @@ class GitHubApiProxyPresenterTest extends TestCase
 
 
     /**
+     * Every callers row gets a type for the table's filter chips, in row order.
+     *
+     * @return void
+     */
+    public function testCallerTypes(): void
+    {
+        $labels  = [
+                    'guibranco',
+                    'dependabot[bot]',
+                    'installation:ApiBR',
+                    'app:123456',
+                    'token:0123456789ab',
+                    'invalid:ba9876543210',
+                    'anonymous',
+                    '',
+                    'app',
+                    'token',
+                    'installation',
+                   ];
+        $callers = array_map(fn(string $label): array => ['caller' => $label], $labels);
+        $result  = $this->present($callers);
+
+        $this->assertSame(
+            [
+             'user',
+             'bot',
+             'installation',
+             'app',
+             'token',
+             'invalid',
+             'anonymous',
+             'unknown',
+             'user',
+             'user',
+             'user',
+            ],
+            $result['callerTypes']
+        );
+        $this->assertCount((count($result['callers']) - 1), $result['callerTypes']);
+
+    }//end testCallerTypes()
+
+
+    /**
      * Caller labels and user agents are HTML-escaped.
      *
      * @return void
@@ -297,6 +341,7 @@ class GitHubApiProxyPresenterTest extends TestCase
         $result = $this->presenter()->present([], ['oops', ['bucket' => 'nope']], ['oops'], [42], []);
 
         $this->assertCount(1, $result['callers']);
+        $this->assertSame([], $result['callerTypes']);
         $this->assertCount(1, $result['rateLimits']);
         $this->assertCount(25, $result['timeline']);
         $this->assertSame(0, $result['summary']['requests']);

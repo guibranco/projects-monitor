@@ -25,6 +25,17 @@ class GitHubApiProxyCells
 
 
     /**
+     * Caller labels whose prefix (before the colon) is their type; a label
+     * without a colon is a GitHub login, even when it reads "app" or "token".
+     */
+    private const PREFIXED_TYPES = [
+                                    'installation',
+                                    'app',
+                                    'token',
+                                    'invalid',
+                                   ];
+
+    /**
      * Longest user agent shown in the Client column.
      */
     private const USER_AGENT_LENGTH = 48;
@@ -75,6 +86,30 @@ class GitHubApiProxyCells
         };
 
     }//end caller()
+
+
+    /**
+     * Caller type, used to filter the callers table: user, bot (a login
+     * ending in [bot]), installation, app, token (still being resolved),
+     * invalid, anonymous or unknown.
+     *
+     * @param string $caller Caller label.
+     *
+     * @return string
+     */
+    public function callerType(string $caller): string
+    {
+        $prefix = strstr($caller, ':', true);
+
+        return match (true) {
+            in_array($prefix, self::PREFIXED_TYPES, true) => $prefix,
+            $caller === 'anonymous'                       => 'anonymous',
+            $caller === ''                                => 'unknown',
+            str_ends_with($caller, '[bot]')               => 'bot',
+            default                                       => 'user',
+        };
+
+    }//end callerType()
 
 
     /**

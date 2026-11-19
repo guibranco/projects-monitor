@@ -337,6 +337,15 @@ class GitHub
         return $this->getLatestReleaseDetails("guibranco", "bancosbrasileiros");
     }
 
+    /**
+     * The GitHub API rate limits as a table, plus the core resource usage.
+     *
+     * Always returns both keys: on a failed call the failure is reported
+     * (LogStream when enabled + messages table) and `data` holds only the
+     * header row while `core` is null.
+     *
+     * @return array{core: object|array|null, data: array}
+     */
     public function getApiUsage(): array
     {
         $dataCore = array();
@@ -344,13 +353,31 @@ class GitHub
         $data[] = ["Resource", "Usage", "Reset"];
 
         $response = $this->requestInternal($this->apiUrl . "rate_limit");
+        $statusCode = $response->getStatusCode();
 
-        if ($response->getStatusCode() !== 200) {
-            return $data;
+        if ($statusCode !== 200) {
+            $reason = $statusCode === -1 ? $response->getMessage() : $response->getBody();
+            (new ErrorReporter())->error(
+                "GitHub rate_limit request failed with status {status_code}: {reason}",
+                ["status_code" => $statusCode, "reason" => ErrorHandler::summarize((string) $reason)],
+                "github"
+            );
+
+            return ["core" => null, "data" => $data];
         }
 
         $body = $response->getBody();
         $json = json_decode($body);
+
+        if (!is_object($json) || !isset($json->resources) || !is_object($json->resources)) {
+            (new ErrorReporter())->error(
+                "GitHub rate_limit response has no resources: {reason}",
+                ["reason" => ErrorHandler::summarize(substr((string) $body, 0, 500))],
+                "github"
+            );
+
+            return ["core" => null, "data" => $data];
+        }
 
         foreach ($json->resources as $resource => $item) {
             if ($resource === "core") {

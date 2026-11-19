@@ -3,7 +3,10 @@
 require_once '../../vendor/autoload.php';
 
 use GuiBranco\ProjectsMonitor\Library\PublicStats;
+use GuiBranco\ProjectsMonitor\Library\ErrorHandler;
 use GuiBranco\ProjectsMonitor\Library\LogStream;
+
+(new ErrorHandler("api", (string) ($_SERVER["SCRIPT_NAME"] ?? "public-stats")))->register();
 
 (new LogStream())->debug("API request {request.method} {request.path} received", null, "api");
 header('Content-Type: application/json; charset=utf-8');

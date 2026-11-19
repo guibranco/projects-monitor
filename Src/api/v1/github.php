@@ -5,18 +5,19 @@ require_once '../../vendor/autoload.php';
 
 use GuiBranco\ProjectsMonitor\Library\GitHub;
 use GuiBranco\ProjectsMonitor\Library\GitHubActionsUsage;
-use GuiBranco\ProjectsMonitor\Library\LogStream;
+use GuiBranco\ProjectsMonitor\Library\ErrorReporter;
 
 $github = new GitHub();
+// getApiUsage() reports a failed rate_limit call itself and then returns only
+// the header row and no core usage, which the dashboard shows as unavailable.
 $apiUsage = $github->getApiUsage();
-;
 $data["api_usage"] = $apiUsage["data"];
 $data["api_usage_core"] = $apiUsage["core"];
 
 try {
     $data["accounts_usage"] = (new GitHubActionsUsage())->getAccountsUsageTable();
 } catch (\Throwable $e) {
-    (new LogStream())->error("GitHub Actions billing config failed to load: {reason}", ["reason" => $e->getMessage(), "exception" => $e], "github-billing");
+    (new ErrorReporter())->error("GitHub Actions billing config failed to load: {reason}", ["reason" => $e->getMessage(), "exception" => $e], "github-billing");
     $data["accounts_usage"] = [GitHubActionsUsage::TABLE_HEADER];
 }
 

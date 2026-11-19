@@ -26,6 +26,8 @@ use GuiBranco\ProjectsMonitor\Library\CPanel;
 use GuiBranco\ProjectsMonitor\Library\ErrorLog;
 use GuiBranco\ProjectsMonitor\Library\LogParser;
 use GuiBranco\ProjectsMonitor\Library\LogStream;
+use GuiBranco\ProjectsMonitor\Library\ErrorHandler;
+use GuiBranco\ProjectsMonitor\Library\ErrorReporter;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -61,6 +63,10 @@ function workerStarted(): void
 // ---------------------------------------------------------------------------
 
 $logStream = new LogStream();
+// Failures go to LogStream (when enabled) and the messages table; anything
+// unhandled is caught by ErrorHandler.
+$errorReporter = new ErrorReporter($logStream);
+(new ErrorHandler("worker", basename(__FILE__)))->register();
 
 $stats = ['files' => 0, 'processed' => 0, 'inserted' => 0, 'skipped' => 0, 'errors' => 0];
 
@@ -71,7 +77,7 @@ try {
 } catch (Throwable $e) {
     workerStarted();
     workerLog('FATAL: could not initialise services — ' . $e->getMessage());
-    $logStream->critical("{worker} failed to initialise services: {error}", ["worker" => "ProcessErrorLogs", "error" => $e->getMessage(), "exception" => $e], "worker");
+    $errorReporter->critical("{worker} failed to initialise services: {error}", ["worker" => "ProcessErrorLogs", "error" => $e->getMessage(), "exception" => $e], "worker");
     exit(1);
 }
 
@@ -84,7 +90,7 @@ try {
 } catch (Throwable $e) {
     workerStarted();
     workerLog('FATAL: could not query cPanel for error_log files — ' . $e->getMessage());
-    $logStream->critical("{worker} failed to query cPanel for error_log files: {error}", ["worker" => "ProcessErrorLogs", "error" => $e->getMessage(), "exception" => $e], "worker");
+    $errorReporter->critical("{worker} failed to query cPanel for error_log files: {error}", ["worker" => "ProcessErrorLogs", "error" => $e->getMessage(), "exception" => $e], "worker");
     exit(1);
 }
 
@@ -131,7 +137,7 @@ foreach ($files as $fileInfo) {
         $entries = $parser->parse($content['contents']);
     } catch (Throwable $e) {
         workerLog("  ERROR: parse failed — " . $e->getMessage() . ", deleting");
-        $logStream->error("Failed to parse error log file {path}: {error}", ["worker" => "ProcessErrorLogs", "path" => $processingPath, "error" => $e->getMessage(), "exception" => $e], "worker");
+        $errorReporter->error("Failed to parse error log file {path}: {error}", ["worker" => "ProcessErrorLogs", "path" => $processingPath, "error" => $e->getMessage(), "exception" => $e], "worker");
         $cPanel->deleteFile($processingPath);
         $stats['errors']++;
         continue;

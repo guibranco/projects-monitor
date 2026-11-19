@@ -21,10 +21,16 @@ if (PHP_SAPI !== 'cli') {
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use GuiBranco\ProjectsMonitor\Library\PublicStats;
+use GuiBranco\ProjectsMonitor\Library\ErrorHandler;
+use GuiBranco\ProjectsMonitor\Library\ErrorReporter;
 use GuiBranco\ProjectsMonitor\Library\LogStream;
 
 $startedAt = microtime(true);
 $logStream = new LogStream();
+// Failures go to LogStream (when enabled) and the messages table; anything
+// unhandled is caught by ErrorHandler.
+$errorReporter = new ErrorReporter($logStream);
+(new ErrorHandler("worker", basename(__FILE__)))->register();
 $logStream->info("{worker} worker started", ["worker" => "GeneratePublicStats"], "worker");
 
 $cacheFile = PublicStats::CACHE_FILE;
@@ -32,7 +38,7 @@ $cacheDir  = dirname($cacheFile);
 
 if (!is_dir($cacheDir) && !mkdir($cacheDir, 0755, true)) {
     fwrite(STDERR, '[' . date('Y-m-d H:i:s') . '] ERROR: could not create cache directory ' . $cacheDir . PHP_EOL);
-    $logStream->critical("{worker} could not create cache directory {path}", ["worker" => "GeneratePublicStats", "path" => $cacheDir], "worker");
+    $errorReporter->critical("{worker} could not create cache directory {path}", ["worker" => "GeneratePublicStats", "path" => $cacheDir], "worker");
     exit(1);
 }
 
@@ -41,13 +47,13 @@ $json = json_encode($data, JSON_UNESCAPED_UNICODE);
 
 if ($json === false) {
     fwrite(STDERR, '[' . date('Y-m-d H:i:s') . '] ERROR: json_encode failed — ' . json_last_error_msg() . PHP_EOL);
-    $logStream->error("{worker} failed to encode the public stats as JSON: {reason}", ["worker" => "GeneratePublicStats", "reason" => json_last_error_msg()], "worker");
+    $errorReporter->error("{worker} failed to encode the public stats as JSON: {reason}", ["worker" => "GeneratePublicStats", "reason" => json_last_error_msg()], "worker");
     exit(1);
 }
 
 if (file_put_contents($cacheFile, $json, LOCK_EX) === false) {
     fwrite(STDERR, '[' . date('Y-m-d H:i:s') . '] ERROR: could not write cache file ' . $cacheFile . PHP_EOL);
-    $logStream->error("{worker} could not write {bytes} bytes to cache file {path}", ["worker" => "GeneratePublicStats", "path" => $cacheFile, "bytes" => strlen($json)], "worker");
+    $errorReporter->error("{worker} could not write {bytes} bytes to cache file {path}", ["worker" => "GeneratePublicStats", "path" => $cacheFile, "bytes" => strlen($json)], "worker");
     exit(1);
 }
 

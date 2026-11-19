@@ -206,34 +206,26 @@ class Render
             return $counts;
         }
 
-        $now       = time();
-        $dayStart  = ($now - self::DAY_SECONDS);
-        $startTime = rawurlencode(gmdate("Y-m-d\\TH:i:s\\Z", ($now - self::WEEK_SECONDS)));
+        $now      = time();
+        $dayStart = ($now - self::DAY_SECONDS);
+        $query    = sprintf(
+            "&startTime=%s&resolutionSeconds=%d",
+            rawurlencode(gmdate("Y-m-d\\TH:i:s\\Z", ($now - self::WEEK_SECONDS))),
+            self::METRICS_RESOLUTION_SECONDS
+        );
 
         foreach (array_chunk($serviceIds, self::BATCH_SIZE) as $chunk) {
             $request = $this->createBatchRequest();
             foreach ($chunk as $serviceId) {
-                $url = sprintf(
-                    "%s/metrics/http-requests?resource=%s&startTime=%s&resolutionSeconds=%d",
-                    self::RENDER_API_URL,
-                    rawurlencode($serviceId),
-                    $startTime,
-                    self::METRICS_RESOLUTION_SECONDS
-                );
+                $url = sprintf("%s/metrics/http-requests?resource=%s%s", self::RENDER_API_URL, rawurlencode($serviceId), $query);
                 $request->addRequest($serviceId, $url, $this->headers);
             }
 
             foreach ($request->executeBatch() as $serviceId => $response) {
-                if ($response->getStatusCode() !== 200) {
-                    continue;
+                $totals = $this->getRequestTotals($response, $dayStart);
+                if ($totals !== null) {
+                    $counts[$serviceId] = $totals;
                 }
-
-                $series = json_decode($response->getBody());
-                if (is_array($series) === false) {
-                    continue;
-                }
-
-                $counts[$serviceId] = $this->sumRequests($series, $dayStart);
             }
         }
 
@@ -243,36 +235,40 @@ class Render
 
 
     /**
-     * Adds up the points of every series: all of them for the week, those
-     * from the day start onwards for the day.
+     * Adds up the points of every series of an answer: all of them for the
+     * week, those from the day start onwards for the day.
      *
-     * @param array $series   The series as GET /v1/metrics/http-requests returns them.
-     * @param int   $dayStart The Unix time 24 hours ago.
+     * @param Response $response The answer of GET /v1/metrics/http-requests.
+     * @param int      $dayStart The Unix time 24 hours ago.
      *
-     * @return array With "day" and "week".
+     * @return array|null With "day" and "week", null when the answer is not
+     *                    a 200 with a list of series.
      */
-    private function sumRequests(array $series, int $dayStart): array
+    private function getRequestTotals(Response $response, int $dayStart): ?array
     {
-        $day  = 0;
-        $week = 0;
+        $series = json_decode(($response->getBody() ?? ""));
+        if ($response->getStatusCode() !== 200 || is_array($series) === false) {
+            return null;
+        }
+
+        $totals         = [];
+        $totals["day"]  = 0;
+        $totals["week"] = 0;
         foreach ($series as $item) {
             foreach (($item->values ?? []) as $point) {
                 $value = (int) round((float) ($point->value ?? 0));
-                $week += $value;
+                $totals["week"] += $value;
 
                 $timestamp = strtotime(($point->timestamp ?? ""));
                 if ($timestamp !== false && $timestamp >= $dayStart) {
-                    $day += $value;
+                    $totals["day"] += $value;
                 }
             }
         }
 
-        return [
-            "day"  => $day,
-            "week" => $week,
-        ];
+        return $totals;
 
-    }//end sumRequests()
+    }//end getRequestTotals()
 
 
     /**
@@ -284,7 +280,7 @@ class Render
      *
      * @return string
      */
-    private function formatCount(?array $counts, string $key): string
+    private function getCountCell(?array $counts, string $key): string
     {
         if ($counts === null) {
             return "-";
@@ -292,7 +288,7 @@ class Render
 
         return number_format($counts[$key]);
 
-    }//end formatCount()
+    }//end getCountCell()
 
 
     /**
@@ -436,8 +432,8 @@ class Render
         $row[] = $badgeLink;
         $row[] = $state;
         $row[] = $this->getLastDeployment($deploy);
-        $row[] = $this->formatCount($counts, "day");
-        $row[] = $this->formatCount($counts, "week");
+        $row[] = $this->getCountCell($counts, "day");
+        $row[] = $this->getCountCell($counts, "week");
 
         return $row;
 

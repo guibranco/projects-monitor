@@ -424,16 +424,19 @@ class RenderTest extends TestCase
      */
     private function getSeries(array $points): string
     {
-        $values = [];
+        $item         = new stdClass();
+        $item->labels = [];
+        $item->values = [];
+        $item->unit   = "count";
         foreach ($points as $timestamp => $value) {
-            $values[] = [
-                "timestamp" => gmdate("Y-m-d\\TH:i:s\\Z", $timestamp),
-                "value"     => $value,
-                "unit"      => "count",
-            ];
+            $point            = new stdClass();
+            $point->timestamp = gmdate("Y-m-d\\TH:i:s\\Z", $timestamp);
+            $point->value     = $value;
+            $point->unit      = "count";
+            $item->values[]   = $point;
         }
 
-        return json_encode([["labels" => [], "values" => $values, "unit" => "count"]]);
+        return json_encode([$item]);
 
     }//end getSeries()
 
@@ -473,9 +476,9 @@ class RenderTest extends TestCase
         }
 
         $points = [];
-        $points[$now - 3 * 86400] = 1000;
-        $points[$now - 7200]      = 234.0;
-        $points[$now - 600]       = 1;
+        $points[($now - 259200)] = 1000;
+        $points[($now - 7200)]   = 234.0;
+        $points[($now - 600)]    = 1;
 
         $responses["srv-1"] = new Response(true, $this->getSeries($points), "", 200, "https://api.render.com", []);
         $responses["srv-2"] = new Response(true, "{\"message\": \"forbidden\"}", "", 403, "https://api.render.com", []);

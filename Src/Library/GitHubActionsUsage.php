@@ -24,6 +24,8 @@ class GitHubActionsUsage
     private const API_VERSION = "2026-03-10";
     private const CACHE_TTL_SECONDS = 1800;
     private const TOP_REPOS_LIMIT = 5;
+    private const PUBLIC_REPOS_PAGE_SIZE = 100;
+    private const PUBLIC_REPOS_MAX_PAGES = 20;
 
     /** Shared with the config-load-failure fallback in api/v1/github.php so both stay in sync. */
     public const TABLE_HEADER = ["Account", "Plan", "Minutes", "Storage", "Reset", "Top repositories (this cycle)"];
@@ -162,11 +164,7 @@ class GitHubActionsUsage
 
         $minutes = GitHubActionsUsageCalculator::minutes($usageItems);
         $storageGb = GitHubActionsUsageCalculator::storageGb($usageItems, $hoursElapsed);
-        $inferredMinutes = GitHubActionsUsageCalculator::inferIncludedMinutes($usageItems);
-
-        if (GitHubActionsUsageCalculator::allowanceDiverges((float) $account["minutes"], $inferredMinutes)) {
-            (new LogStream())->warning("GitHub Actions included-minutes allowance of {account} diverges from github-billing.json: configured {configuredMinutes}, inferred {inferredMinutes}", ["account" => $accountName, "configuredMinutes" => $account["minutes"], "inferredMinutes" => $inferredMinutes], "github-billing");
-        }
+        $this->warnIfAllowanceLooksStale($account, $windowedRows);
 
         $includedStorageGb = $account["storageMb"] / 1024;
 
@@ -194,6 +192,89 @@ class GitHubActionsUsage
             ],
             "topRepositories" => GitHubActionsUsageCalculator::topRepositoriesByMinutes($windowedRows, self::TOP_REPOS_LIMIT),
         ];
+    }
+
+    /**
+     * Logs a warning when the usage rows contradict the configured
+     * included-minutes allowance (see GitHubActionsUsageCalculator::checkAllowance()).
+     * Skips the check — silently — when no row carries a discount, or when the
+     * public-repository list can't be fetched: without it, free public-repo
+     * minutes would be counted as allowance and the warning would be wrong.
+     */
+    private function warnIfAllowanceLooksStale(array $account, array $usageRows): void
+    {
+        if (!GitHubActionsUsageCalculator::hasDiscountedMinutes($usageRows)) {
+            return;
+        }
+
+        $publicRepositories = $this->fetchPublicRepositories($account);
+        if ($publicRepositories === null) {
+            return;
+        }
+
+        $check = GitHubActionsUsageCalculator::checkAllowance(
+            $usageRows,
+            GitHubActionsUsageCalculator::publicRepositorySet($publicRepositories),
+            (float) $account["minutes"]
+        );
+
+        if ($check === null) {
+            return;
+        }
+
+        (new LogStream())->warning(
+            "GitHub Actions included-minutes allowance of {account} looks {direction} than github-billing.json: configured {configuredMinutes}, private-repo minutes covered by the allowance {privateIncludedMinutes} (paying for overage: {overage})",
+            [
+                "account" => $account["account"],
+                "direction" => $check["direction"],
+                "configuredMinutes" => $account["minutes"],
+                "privateIncludedMinutes" => round($check["privateIncludedMinutes"], 2),
+                "overage" => $check["overage"] ? "yes" : "no",
+            ],
+            "github-billing"
+        );
+    }
+
+    /**
+     * Network/cache seam: every public repository the account owns, or null
+     * if any page fails to load (a partial list would misclassify public
+     * repos as private). Public repos are listed by the regular repos
+     * endpoints without extra token scopes. Left protected so tests can mock it.
+     *
+     * @return array<int, object>|null
+     */
+    protected function fetchPublicRepositories(array $account): ?array
+    {
+        try {
+            $headers = $this->buildHeaders($this->resolveToken($account));
+            $accountName = $account["account"];
+            $base = $account["accountType"] === "org"
+                ? "orgs/{$accountName}/repos?type=public"
+                : "users/{$accountName}/repos?type=owner";
+
+            $repositories = [];
+            for ($page = 1; $page <= self::PUBLIC_REPOS_MAX_PAGES; $page++) {
+                $url = $this->apiUrl . "{$base}&per_page=" . self::PUBLIC_REPOS_PAGE_SIZE . "&page={$page}";
+                $batch = $this->fetchCachedJson("github_public_repos_{$accountName}_{$page}", $url, $headers);
+
+                if (!is_array($batch)) {
+                    return null;
+                }
+
+                array_push($repositories, ...$batch);
+
+                if (count($batch) < self::PUBLIC_REPOS_PAGE_SIZE) {
+                    return $repositories;
+                }
+            }
+
+            // Hit the page cap without reaching the end: the list is incomplete.
+            return null;
+        } catch (\Throwable $e) {
+            (new LogStream())->warning("Public repository list unavailable for {account}, skipping the included-minutes check: {reason}", ["account" => $account["account"], "reason" => $e->getMessage()], "github-billing");
+
+            return null;
+        }
     }
 
     /**
@@ -233,8 +314,8 @@ class GitHubActionsUsage
             // days outside the window, which would overcount. $windowedRows is
             // already date-filtered to the window, and per the API's documented
             // shape carries the same fields as summary items (product, unitType,
-            // pricePerUnit, discountAmount, ...) aside from quantity/repositoryName,
-            // so discountAmount stays available for inferIncludedMinutes() below.
+            // pricePerUnit, discountAmount, ...) aside from quantity/repositoryName.
+            // (The allowance check reads $windowedRows directly in both cases.)
             $usageItems = array_map([$this, "normalizeRow"], $windowedRows);
         }
 

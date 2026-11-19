@@ -163,31 +163,140 @@ class GitHubActionsUsageCalculatorTest extends TestCase
         $this->assertSame(0.0, GitHubActionsUsageCalculator::storageGb([], 24.0));
     }
 
-    /** discountAmount/pricePerUnit infers the included-minutes allowance from a single SKU. */
-    public function testInferIncludedMinutesFromDiscount()
+    /** A usage row (non-summary shape) for one repository, Linux-priced at $0.006 by default. */
+    private function row(string $repository, float $discountAmount, float $netAmount = 0.0, array $fields = []): object
     {
-        $items = [
-            $this->item(["pricePerUnit" => 0.008, "discountAmount" => 8.0]),
+        return (object) array_merge([
+            "product" => "actions",
+            "sku" => "Actions Linux",
+            "unitType" => "Minutes",
+            "pricePerUnit" => 0.006,
+            "quantity" => 0,
+            "discountAmount" => $discountAmount,
+            "netAmount" => $netAmount,
+            "repositoryName" => $repository,
+        ], $fields);
+    }
+
+    /** Public repositories as the repos endpoint returns them. */
+    private function publicSet(string ...$names): array
+    {
+        return GitHubActionsUsageCalculator::publicRepositorySet(array_map(
+            static fn ($name) => (object) ["name" => $name, "full_name" => "guibranco/{$name}", "private" => false],
+            $names
+        ));
+    }
+
+    /**
+     * Regression for the false "diverges" warnings: free public-repo minutes
+     * arrive as a 100% discount and must not be read as allowance. 30,000
+     * discounted public minutes + 500 private, against a 3,000 allowance,
+     * is perfectly normal.
+     */
+    public function testCheckAllowanceIgnoresPublicRepositoryDiscount()
+    {
+        $rows = [
+            $this->row("public-ci", 30000 * 0.006),
+            $this->row("private-app", 500 * 0.006),
         ];
 
-        // discountAmount / pricePerUnit = 1000 raw units, multiplier 1x for linux
-        $this->assertSame(1000.0, GitHubActionsUsageCalculator::inferIncludedMinutes($items));
+        $this->assertNull(GitHubActionsUsageCalculator::checkAllowance($rows, $this->publicSet("public-ci"), 3000.0));
     }
 
-    /** With no discountAmount signal anywhere, inference returns null rather than 0. */
-    public function testInferIncludedMinutesReturnsNullWithoutSignal()
+    /** Matching works on the full "owner/name" form too, case-insensitively. */
+    public function testCheckAllowanceMatchesFullNameCaseInsensitively()
     {
-        $items = [$this->item(["discountAmount" => 0])];
+        $rows = [$this->row("GuiBranco/Public-CI", 30000 * 0.006)];
 
-        $this->assertNull(GitHubActionsUsageCalculator::inferIncludedMinutes($items));
+        $this->assertNull(GitHubActionsUsageCalculator::checkAllowance($rows, $this->publicSet("public-ci"), 3000.0));
     }
 
-    /** allowanceDiverges() flags a >5% gap, tolerates a smaller one, and never fires with no inferred value. */
-    public function testAllowanceDivergesBeyondTolerance()
+    /** Part-way through the allowance with no overage is the normal state, not a divergence. */
+    public function testCheckAllowanceUnderAllowanceWithoutOverageIsNull()
     {
-        $this->assertTrue(GitHubActionsUsageCalculator::allowanceDiverges(2000.0, 2200.0));
-        $this->assertFalse(GitHubActionsUsageCalculator::allowanceDiverges(2000.0, 2050.0));
-        $this->assertFalse(GitHubActionsUsageCalculator::allowanceDiverges(2000.0, null));
+        $rows = [$this->row("private-app", 1200 * 0.006)];
+
+        $this->assertNull(GitHubActionsUsageCalculator::checkAllowance($rows, [], 3000.0));
+    }
+
+    /** More private minutes covered than configured means the real allowance is larger. */
+    public function testCheckAllowanceFlagsHigherWhenPrivateDiscountExceedsConfigured()
+    {
+        $rows = [$this->row("private-app", 3500 * 0.006)];
+
+        $check = GitHubActionsUsageCalculator::checkAllowance($rows, [], 3000.0);
+
+        $this->assertSame("higher", $check["direction"]);
+        $this->assertEqualsWithDelta(3500.0, $check["privateIncludedMinutes"], 0.001);
+        $this->assertFalse($check["overage"]);
+    }
+
+    /** Paying for overage while covered minutes are below the configured figure means the real allowance is smaller. */
+    public function testCheckAllowanceFlagsLowerWhenPayingBeforeConfiguredIsUsed()
+    {
+        $rows = [
+            $this->row("private-app", 2000 * 0.006, 100 * 0.006),
+        ];
+
+        $check = GitHubActionsUsageCalculator::checkAllowance($rows, [], 3000.0);
+
+        $this->assertSame("lower", $check["direction"]);
+        $this->assertEqualsWithDelta(2000.0, $check["privateIncludedMinutes"], 0.001);
+        $this->assertTrue($check["overage"]);
+    }
+
+    /** Overage with the allowance fully used at exactly the configured figure is consistent. */
+    public function testCheckAllowanceOverageAtConfiguredAllowanceIsNull()
+    {
+        $rows = [
+            $this->row("private-a", 1800 * 0.006, 50 * 0.006),
+            $this->row("private-b", 1200 * 0.006),
+        ];
+
+        $this->assertNull(GitHubActionsUsageCalculator::checkAllowance($rows, [], 3000.0));
+    }
+
+    /** Windows minutes draw on the allowance at 2x: discount ÷ Linux price yields weighted minutes. */
+    public function testCheckAllowanceWeightsNonLinuxSkusByPrice()
+    {
+        $rows = [
+            $this->row("private-app", 1000 * 0.006),
+            $this->row("private-app", 1000 * 0.012, 0.0, ["sku" => "Actions Windows", "pricePerUnit" => 0.012]),
+        ];
+
+        // 1000 linux + 1000 windows × 2 = 3000 weighted — exactly the allowance.
+        $this->assertNull(GitHubActionsUsageCalculator::checkAllowance($rows, [], 3000.0));
+
+        $check = GitHubActionsUsageCalculator::checkAllowance($rows, [], 2000.0);
+        $this->assertSame("higher", $check["direction"]);
+        $this->assertEqualsWithDelta(3000.0, $check["privateIncludedMinutes"], 0.001);
+    }
+
+    /** Within tolerance (5%) in either direction is not reported. */
+    public function testCheckAllowanceToleratesSmallGaps()
+    {
+        $this->assertNull(GitHubActionsUsageCalculator::checkAllowance([$this->row("p", 3100 * 0.006)], [], 3000.0));
+        $this->assertNull(GitHubActionsUsageCalculator::checkAllowance([$this->row("p", 2900 * 0.006, 1.0)], [], 3000.0));
+    }
+
+    /** hasDiscountedMinutes() lets callers skip the visibility lookup when there is nothing to check. */
+    public function testHasDiscountedMinutes()
+    {
+        $this->assertFalse(GitHubActionsUsageCalculator::hasDiscountedMinutes([$this->row("p", 0.0)]));
+        $this->assertFalse(GitHubActionsUsageCalculator::hasDiscountedMinutes([$this->row("p", 5.0, 0.0, ["product" => "packages"])]));
+        $this->assertTrue(GitHubActionsUsageCalculator::hasDiscountedMinutes([$this->row("p", 5.0)]));
+    }
+
+    /** publicRepositorySet() skips private repos and indexes both name forms. */
+    public function testPublicRepositorySet()
+    {
+        $set = GitHubActionsUsageCalculator::publicRepositorySet([
+            (object) ["name" => "Open", "full_name" => "guibranco/Open", "private" => false],
+            (object) ["name" => "secret", "full_name" => "guibranco/secret", "private" => true],
+            "not-an-object",
+        ]);
+
+        $this->assertSame(["open" => true, "guibranco/open" => true], $set);
     }
 
     /** Repositories are ranked by weighted minutes descending, non-Actions/non-minutes rows excluded. */

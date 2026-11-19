@@ -20,10 +20,11 @@ class DashboardPageTest extends TestCase
     {
         $html = (new DashboardPage("ops", "Ops"))->renderTabs();
 
-        $this->assertSame(6, substr_count($html, "class=\"nav-item\""));
+        $this->assertSame(7, substr_count($html, "class=\"nav-item\""));
         $this->assertSame(1, substr_count($html, "aria-current=\"page\""));
         $this->assertStringContainsString("page-tab active\" aria-current=\"page\" href=\"ops.php\" data-domains=\"ops domains\"", $html);
         $this->assertStringContainsString("href=\"github.php\" data-domains=\"ci github\"", $html);
+        $this->assertStringContainsString("href=\"workflow-runs.php\" data-domains=\"ci\"", $html);
 
     }//end testRenderTabs()
 

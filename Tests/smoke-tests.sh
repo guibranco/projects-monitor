@@ -10,7 +10,7 @@ fi
 
 # Every dashboard page answers (with --location, an anonymous request ends
 # on the login page).
-for PAGE in pipeline errors github ops stats; do
+for PAGE in pipeline errors github workflow-runs ops stats; do
     RESULT=$(curl -s -o /dev/null -w "%{http_code}" --location "http://localhost:8000/$PAGE.php")
     if [ "$RESULT" -ne 200 ]; then
         CONTENT=$(curl --location "http://localhost:8000/$PAGE.php")

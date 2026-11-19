@@ -2,8 +2,13 @@
 
 require_once '../../vendor/autoload.php';
 
+use GuiBranco\ProjectsMonitor\Library\ErrorHandler;
 use GuiBranco\ProjectsMonitor\Library\Logger;
 use GuiBranco\ProjectsMonitor\Library\LogStream;
+
+// Anything an endpoint does not handle (uncaught exceptions, PHP warnings,
+// fatal errors) is reported to LogStream (when enabled) and the messages table.
+(new ErrorHandler("api", (string) ($_SERVER["SCRIPT_NAME"] ?? "api")))->register();
 
 if (headers_sent($file, $line)) {
     error_log("Headers already sent in $file:$line");

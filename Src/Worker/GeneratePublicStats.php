@@ -29,7 +29,8 @@ $startedAt = microtime(true);
 $logStream = new LogStream();
 // Failures go to LogStream (when enabled) and the messages table; anything
 // unhandled is caught by ErrorHandler.
-$errorReporter = new ErrorReporter($logStream);
+$errorReporter = new ErrorReporter();
+$errorReporter->setLogStream($logStream);
 (new ErrorHandler("worker", basename(__FILE__)))->register();
 $logStream->info("{worker} worker started", ["worker" => "GeneratePublicStats"], "worker");
 

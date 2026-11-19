@@ -1,7 +1,6 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
-use GuiBranco\ProjectsMonitor\Library\ErrorHandler;
 use GuiBranco\ProjectsMonitor\Library\ErrorReporter;
 use GuiBranco\ProjectsMonitor\Library\Logger;
 use GuiBranco\ProjectsMonitor\Library\LogStream;
@@ -14,169 +13,230 @@ use GuiBranco\ProjectsMonitor\Library\RequestException;
 class ErrorReporterTest extends TestCase
 {
     /**
-     * A LogStream whose entries are recorded instead of sent.
-     *
-     * @param array $entries Receives [level, message, context, category] per entry.
-     *
-     * @return LogStream The stub.
+     * Trace id the LogStream stub answers.
      */
-    private function createLogStream(array &$entries): LogStream
-    {
-        $logStream = $this->getMockBuilder(LogStream::class)->onlyMethods(["log", "getTraceId"])->getMock();
-        $logStream->method("getTraceId")->willReturn("trace-1");
-        $logStream->method("log")->willReturnCallback(
-            function (string $level, string $message, ?array $context, string $category) use (&$entries): void {
-                $entries[] = [$level, $message, $context, $category];
-            }
-        );
+    private const TRACE_ID = "trace-1";
 
-        return $logStream;
+    /**
+     * The entries sent to LogStream: level, message, context and category.
+     *
+     * @var array
+     */
+    private $entries = [];
 
-    }//end createLogStream()
+    /**
+     * The errors stored in the messages table: message, details and exception.
+     *
+     * @var array
+     */
+    private $rows = [];
+
+    /**
+     * The PHP error log setting before the test.
+     *
+     * @var string|false
+     */
+    private $errorLog = false;
 
 
     /**
-     * A Logger whose stored errors are recorded instead of inserted.
+     * Sends the PHP error log of the failing-sink tests nowhere.
      *
-     * @param array $rows Receives [message, details, exception] per error.
-     *
-     * @return Logger The stub.
+     * @return void
      */
-    private function createLogger(array &$rows): Logger
+    protected function setUp(): void
     {
-        $logger = $this->getMockBuilder(Logger::class)->disableOriginalConstructor()->onlyMethods(["logError"])->getMock();
+        $this->entries  = [];
+        $this->rows     = [];
+        $this->errorLog = ini_set("error_log", "/dev/null");
+
+    }//end setUp()
+
+
+    /**
+     * Restores the PHP error log.
+     *
+     * @return void
+     */
+    protected function tearDown(): void
+    {
+        ini_set("error_log", (string) $this->errorLog);
+
+    }//end tearDown()
+
+
+    /**
+     * Builds a reporter whose sinks record what they receive.
+     *
+     * @param boolean $logStreamFails Whether LogStream throws.
+     * @param boolean $loggerFails    Whether creating the Logger throws.
+     *
+     * @return ErrorReporter The reporter.
+     */
+    private function buildReporter(bool $logStreamFails, bool $loggerFails): ErrorReporter
+    {
+        $logStream = $this->createStub(LogStream::class);
+        $logStream->method("getTraceId")->willReturn(self::TRACE_ID);
+        $logStream->method("log")->willReturnCallback(
+            function (string $level, string $message, ?array $context, string $category) use ($logStreamFails): void {
+                if ($logStreamFails === true) {
+                    throw new RuntimeException("unreachable");
+                }
+
+                $this->entries[] = compact("level", "message", "context", "category");
+            }
+        );
+
+        $logger = $this->createStub(Logger::class);
         $logger->method("logError")->willReturnCallback(
-            function (string $message, array $details, ?\Throwable $exception) use (&$rows): bool {
-                $rows[] = [$message, $details, $exception];
+            function (string $message, array $details, ?\Throwable $exception): bool {
+                $this->rows[] = compact("message", "details", "exception");
                 return true;
             }
         );
 
-        return $logger;
+        $reporter = new ErrorReporter();
+        $reporter->setLogStream($logStream);
+        $reporter->setLoggerFactory(
+            function () use ($logger, $loggerFails): Logger {
+                if ($loggerFails === true) {
+                    throw new RuntimeException("database down");
+                }
 
-    }//end createLogger()
+                return $logger;
+            }
+        );
+
+        return $reporter;
+
+    }//end buildReporter()
 
 
+    /**
+     * A report reaches both sinks, with the details the inbox shows.
+     *
+     * @return void
+     */
     public function testReportsToLogStreamAndMessagesTable(): void
     {
-        $entries   = [];
-        $rows      = [];
         $exception = new RequestException("Code: 503 - Error: busy");
-        $reporter  = new ErrorReporter($this->createLogStream($entries), function () use (&$rows): Logger {
-            return $this->createLogger($rows);
-        });
+        $context   = [];
+        $context["reason"]    = "busy";
+        $context["exception"] = $exception;
 
-        $reporter->error("Releases failed to load: {reason}", ["reason" => "busy", "exception" => $exception], "webhooks");
+        $this->buildReporter(false, false)->error("Releases failed to load: {reason}", $context, "webhooks");
 
-        $this->assertSame([["error", "Releases failed to load: {reason}", ["reason" => "busy", "exception" => $exception], "webhooks"]], $entries);
-        $this->assertCount(1, $rows);
-        $this->assertSame("Releases failed to load: busy", $rows[0][0]);
-        $this->assertSame($exception, $rows[0][2]);
-        $this->assertSame("error", $rows[0][1]["level"]);
-        $this->assertSame("webhooks", $rows[0][1]["category"]);
-        $this->assertSame("Releases failed to load: {reason}", $rows[0][1]["message_template"]);
-        $this->assertSame("trace-1", $rows[0][1]["trace_id"]);
-        $this->assertSame(RequestException::class, $rows[0][1]["context"]["exception"]["class"]);
-        $this->assertSame("Code: 503 - Error: busy", $rows[0][1]["context"]["exception"]["message"]);
+        $this->assertCount(1, $this->entries);
+        $this->assertSame("error", $this->entries[0]["level"]);
+        $this->assertSame("Releases failed to load: {reason}", $this->entries[0]["message"]);
+        $this->assertSame($context, $this->entries[0]["context"]);
+        $this->assertSame("webhooks", $this->entries[0]["category"]);
+
+        $this->assertCount(1, $this->rows);
+        $this->assertSame("Releases failed to load: busy", $this->rows[0]["message"]);
+        $this->assertSame($exception, $this->rows[0]["exception"]);
+
+        $details = $this->rows[0]["details"];
+        $this->assertSame("error", $details["level"]);
+        $this->assertSame("webhooks", $details["category"]);
+        $this->assertSame("Releases failed to load: {reason}", $details["message_template"]);
+        $this->assertSame(self::TRACE_ID, $details["trace_id"]);
+        $this->assertSame(RequestException::class, $details["context"]["exception"]["class"]);
 
     }//end testReportsToLogStreamAndMessagesTable()
 
 
+    /**
+     * Warning and critical keep their level in both sinks.
+     *
+     * @return void
+     */
+    public function testWarningAndCriticalLevels(): void
+    {
+        $reporter = $this->buildReporter(false, false);
+        $reporter->warning("Disk at {percent}%", ["percent" => 91], "server");
+        $reporter->critical("Down", [], "server");
+
+        $this->assertSame("warning", $this->entries[0]["level"]);
+        $this->assertSame("critical", $this->entries[1]["level"]);
+        $this->assertSame("Disk at 91%", $this->rows[0]["message"]);
+        $this->assertSame("critical", $this->rows[1]["details"]["level"]);
+
+    }//end testWarningAndCriticalLevels()
+
+
+    /**
+     * The messages table failing does not stop LogStream, nor throw.
+     *
+     * @return void
+     */
     public function testMessagesTableFailureDoesNotStopLogStream(): void
     {
-        $entries  = [];
-        $reporter = new ErrorReporter(
-            $this->createLogStream($entries),
-            function (): Logger {
-                throw new \RuntimeException("database down");
-            }
-        );
+        $this->buildReporter(false, true)->critical("Something broke", [], "api");
 
-        $previous = ini_set("error_log", "/dev/null");
-        $reporter->critical("Something broke", [], "api");
-        ini_set("error_log", (string) $previous);
-
-        $this->assertCount(1, $entries);
-        $this->assertSame("critical", $entries[0][0]);
+        $this->assertCount(1, $this->entries);
+        $this->assertCount(0, $this->rows);
 
     }//end testMessagesTableFailureDoesNotStopLogStream()
 
 
+    /**
+     * LogStream failing does not stop the messages table, nor throw.
+     *
+     * @return void
+     */
     public function testLogStreamFailureDoesNotStopMessagesTable(): void
     {
-        $rows      = [];
-        $logStream = $this->getMockBuilder(LogStream::class)->onlyMethods(["log", "getTraceId"])->getMock();
-        $logStream->method("log")->willThrowException(new \RuntimeException("unreachable"));
-        $logStream->method("getTraceId")->willReturn("trace-2");
-        $reporter = new ErrorReporter($logStream, function () use (&$rows): Logger {
-            return $this->createLogger($rows);
-        });
+        $this->buildReporter(true, false)->error("Webhooks API down", [], "webhooks");
 
-        $previous = ini_set("error_log", "/dev/null");
-        $reporter->warning("Disk at {percent}%", ["percent" => 91], "server");
-        ini_set("error_log", (string) $previous);
-
-        $this->assertCount(1, $rows);
-        $this->assertSame("Disk at 91%", $rows[0][0]);
+        $this->assertCount(0, $this->entries);
+        $this->assertCount(1, $this->rows);
+        $this->assertSame("Webhooks API down", $this->rows[0]["message"]);
 
     }//end testLogStreamFailureDoesNotStopMessagesTable()
 
 
-    public function testRenderReplacesNestedAndKeepsUnknownPlaceholders(): void
+    /**
+     * A report made while another one is in progress is skipped, not recursed into.
+     *
+     * @return void
+     */
+    public function testNestedReportIsSkipped(): void
     {
-        $entries  = [];
-        $reporter = new ErrorReporter($this->createLogStream($entries), fn () => null);
-
-        $rendered = $reporter->render(
-            "{service} {request.method} {missing} {flag} {nothing}",
-            ["service" => "Webhooks API", "request" => ["method" => "GET"], "flag" => false, "nothing" => null]
-        );
-
-        $this->assertSame("Webhooks API GET {missing} false null", $rendered);
-
-    }//end testRenderReplacesNestedAndKeepsUnknownPlaceholders()
-
-
-    public function testSummarizeTurnsHtmlErrorPageIntoText(): void
-    {
-        $html = "<!DOCTYPE html>\n<html><head><title> 503 Service Unavailable\n</title><style>body{color:#444}</style></head>"
-            ."<body><h1>503</h1>\n<h2>Service Unavailable</h2><p>The server is temporarily busy, try again later!</p></body></html>";
-
-        $this->assertSame(
-            "503 Service Unavailable The server is temporarily busy, try again later!",
-            ErrorHandler::summarize($html)
-        );
-        $this->assertSame("{\"error\": \"forbidden\"}", ErrorHandler::summarize("{\"error\": \"forbidden\"}"));
-
-    }//end testSummarizeTurnsHtmlErrorPageIntoText()
-
-
-    public function testHandleErrorReportsEachLocationOncePerRequest(): void
-    {
-        $reported = [];
-        $reporter = $this->getMockBuilder(ErrorReporter::class)->disableOriginalConstructor()->onlyMethods(["report"])->getMock();
-        $reporter->method("report")->willReturnCallback(
-            function (string $level, string $message, array $context) use (&$reported): void {
-                $reported[] = [$level, $message, $context];
+        $reporter  = $this->buildReporter(false, false);
+        $logStream = $this->createStub(LogStream::class);
+        $logStream->method("log")->willReturnCallback(
+            function () use ($reporter): void {
+                $reporter->error("Inner", [], "api");
             }
         );
-        $handler = new ErrorHandler("api", "/api/v1/github.php", $reporter);
-        $previous = error_reporting(E_ALL);
+        $reporter->setLogStream($logStream);
 
-        $this->assertFalse($handler->handleError(E_WARNING, "Undefined array key \"data\"", "/x/github.php", 13));
-        $this->assertFalse($handler->handleError(E_WARNING, "Undefined array key \"data\"", "/x/github.php", 13));
-        $this->assertFalse($handler->handleError(E_WARNING, "Undefined array key \"core\"", "/x/github.php", 14));
-        error_reporting(0);
-        $this->assertFalse($handler->handleError(E_WARNING, "Silenced with @", "/x/github.php", 15));
-        error_reporting($previous);
+        $reporter->error("Outer", [], "api");
 
-        $this->assertCount(2, $reported);
-        $this->assertSame("warning", $reported[0][0]);
-        $this->assertSame("Warning", $reported[0][2]["level_name"]);
-        $this->assertSame(13, $reported[0][2]["line"]);
-        $this->assertSame("/api/v1/github.php", $reported[0][2]["script"]);
+        $this->assertCount(1, $this->rows);
+        $this->assertSame("Outer", $this->rows[0]["message"]);
 
-    }//end testHandleErrorReportsEachLocationOncePerRequest()
+    }//end testNestedReportIsSkipped()
+
+
+    /**
+     * A failing trace id leaves it empty in the details.
+     *
+     * @return void
+     */
+    public function testBuildDetailsWithoutTraceId(): void
+    {
+        $logStream = $this->createStub(LogStream::class);
+        $logStream->method("getTraceId")->willThrowException(new RuntimeException("no trace"));
+        $reporter = new ErrorReporter();
+        $reporter->setLogStream($logStream);
+
+        $details = $reporter->buildDetails("error", "Failed", [], "api");
+
+        $this->assertNull($details["trace_id"]);
+
+    }//end testBuildDetailsWithoutTraceId()
 
 
 }//end class

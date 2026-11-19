@@ -233,7 +233,7 @@ class Logger
             ];
         }
 
-        $skip = [self::class, ErrorReporter::class, ErrorHandler::class];
+        $skip = [self::class, ErrorReporter::class, ErrorHandler::class, ErrorText::class];
         $location = ["class" => "none", "function" => "none", "file" => "none", "line" => 0, "type" => "none"];
 
         foreach ($frames as $index => $frame) {

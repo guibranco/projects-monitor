@@ -75,7 +75,7 @@ class Webhooks
         }
 
         $error = $response->getStatusCode() == -1 ? $response->getMessage() : $response->getBody();
-        $error = ErrorHandler::summarize((string) $error);
+        $error = (new ErrorText())->summarize((string) $error);
         throw new RequestException("Webhooks API {$method} {$endpoint} failed. Code: {$response->getStatusCode()} - Error: {$error}");
     }
 

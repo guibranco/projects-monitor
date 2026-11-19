@@ -355,28 +355,32 @@ class GitHub
         $response = $this->requestInternal($this->apiUrl . "rate_limit");
         $statusCode = $response->getStatusCode();
 
-        if ($statusCode !== 200) {
-            $reason = $statusCode === -1 ? $response->getMessage() : $response->getBody();
-            (new ErrorReporter())->error(
-                "GitHub rate_limit request failed with status {status_code}: {reason}",
-                ["status_code" => $statusCode, "reason" => ErrorHandler::summarize((string) $reason)],
-                "github"
-            );
+        $failure = [];
+        $failure["core"] = null;
+        $failure["data"] = $data;
 
-            return ["core" => null, "data" => $data];
+        if ($statusCode !== 200) {
+            $context = [];
+            $context["status_code"] = $statusCode;
+            $context["reason"] = (new ErrorText())->summarize((string) $response->getBody());
+            if ($statusCode === -1) {
+                $context["reason"] = (string) $response->getMessage();
+            }
+
+            (new ErrorReporter())->error("GitHub rate_limit request failed with status {status_code}: {reason}", $context, "github");
+
+            return $failure;
         }
 
         $body = $response->getBody();
         $json = json_decode($body);
 
-        if (!is_object($json) || !isset($json->resources) || !is_object($json->resources)) {
-            (new ErrorReporter())->error(
-                "GitHub rate_limit response has no resources: {reason}",
-                ["reason" => ErrorHandler::summarize(substr((string) $body, 0, 500))],
-                "github"
-            );
+        if (is_object($json) === false || isset($json->resources) === false || is_object($json->resources) === false) {
+            $context = [];
+            $context["reason"] = (new ErrorText())->summarize(substr((string) $body, 0, 500));
+            (new ErrorReporter())->error("GitHub rate_limit response has no resources: {reason}", $context, "github");
 
-            return ["core" => null, "data" => $data];
+            return $failure;
         }
 
         foreach ($json->resources as $resource => $item) {

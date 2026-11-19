@@ -65,7 +65,8 @@ function workerStarted(): void
 $logStream = new LogStream();
 // Failures go to LogStream (when enabled) and the messages table; anything
 // unhandled is caught by ErrorHandler.
-$errorReporter = new ErrorReporter($logStream);
+$errorReporter = new ErrorReporter();
+$errorReporter->setLogStream($logStream);
 (new ErrorHandler("worker", basename(__FILE__)))->register();
 
 $stats = ['files' => 0, 'processed' => 0, 'inserted' => 0, 'skipped' => 0, 'errors' => 0];

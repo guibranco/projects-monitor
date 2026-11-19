@@ -400,7 +400,7 @@ class DashboardApp {
       queues: JSON.parse('{"queues":[],"total":0}'),
       broker_usage: { period: "", messageCost: 3, brokers: [], total: 0, usage: 0, limit: 0, percent: 0, maxPercent: 0 },
       throttled_repositories: { loading: true, enabled: false, permitsPerMinute: 0, burstSize: 0, drainPerMinute: 0, repositories: [["Repository", "Installation", "Throttled", "Last throttled"]], total: 0, throttled: 0 },
-      github_api_proxy: { loading: true, timeline: [["Hour", "Requests", "Errors"], ["00:00", 0, 0]], callers: [["Caller", "Client", "Requests", "Errors", "Avg (ms)", "Last seen"]], rateLimits: [["Caller", "Resource", "Used", "Remaining", "Resets"]], routes: [["Method", "Route", "Requests", "Errors", "Avg (ms)", "Max (ms)", "Callers"]], requests: [["Time", "Caller", "Method", "URL", "Status", "Duration (ms)", "Size"]] },
+      github_api_proxy: { loading: true, timeline: [["Hour", "Requests", "Errors"], ["00:00", 0, 0]], callers: [["Caller", "Client", "Requests", "Errors", "Avg (ms)", "Last seen"]], rateLimits: [["Caller", "Resource", "Used", "Remaining", "Resets"]], routes: [["Method", "Route", "Requests", "Errors", "Avg (ms)", "Max (ms)", "Callers"]], requests: [["Caller", "Token", "Method", "Route", "Status", "Requests", "Last request", "Avg (ms)", "Size"]] },
       webhooks: JSON.parse(
         '{"senders":[],"events":[["Event","Hits"]],"feed":[],"repositories":[],"total":0,"statistics":[["Date","Table #1"],["01/01",0]],"statistics_github":[["Date","Table #1"],["01/01",0]],"branches":[], "pull_requests":[], "workflow_runs":[], "total_workflow_runs":0, "installations":0, "installation_repositories": [], "installation_repositories_count": 0}'
       ),

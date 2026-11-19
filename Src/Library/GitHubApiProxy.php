@@ -81,7 +81,7 @@ class GitHubApiProxy extends BearerTokenApiClient
      * plus each caller's current GitHub rate limits and the service's
      * health (version, database, allow-list); and, rendered by
      * GitHubApiProxyTrafficPresenter, the range's busiest routes and its
-     * latest 50 requests with their URLs.
+     * requests grouped by token, route and status (top 50).
      *
      * @param GitHubApiProxyRange|null $range Time range; defaults to the last 24 hours.
      *
@@ -99,7 +99,7 @@ class GitHubApiProxy extends BearerTokenApiClient
         $callers    = $this->getData('api/v1/callers?'.$period.'&limit=50');
         $rateLimits = $this->getData('api/v1/rate-limits');
         $routes     = $this->getData('api/v1/routes?'.$period.'&limit=50');
-        $requests   = $this->getData('api/v1/requests?'.$period.'&limit=50');
+        $requests   = $this->getData('api/v1/route-usage?'.$period.'&limit=50');
         $health     = $this->doGet('health');
 
         $presenter = new GitHubApiProxyPresenter();

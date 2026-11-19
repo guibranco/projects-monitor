@@ -8,8 +8,8 @@ use Exception;
 
 /**
  * Formats the GitHub API proxy's traffic for the dashboard: the busiest
- * routes (api/v1/routes) and the latest requests with their full URL
- * (api/v1/requests). Every value from the proxy is HTML-escaped.
+ * routes (api/v1/routes) and the requests per token, route and status
+ * (api/v1/route-usage). Every value from the proxy is HTML-escaped.
  */
 final class GitHubApiProxyTrafficPresenter
 {
@@ -24,12 +24,14 @@ final class GitHubApiProxyTrafficPresenter
                                  ];
 
     public const REQUESTS_HEADER = [
-                                    'Time',
                                     'Caller',
+                                    'Token',
                                     'Method',
-                                    'URL',
+                                    'Route',
                                     'Status',
-                                    'Duration (ms)',
+                                    'Requests',
+                                    'Last request',
+                                    'Avg (ms)',
                                     'Size',
                                    ];
 
@@ -53,12 +55,6 @@ final class GitHubApiProxyTrafficPresenter
                                     'PATCH'  => 'text-bg-warning',
                                     'DELETE' => 'text-bg-danger',
                                    ];
-
-    /**
-     * Longest URL shown in full; longer ones are cut, with the full URL in
-     * the cell's tooltip.
-     */
-    private const URL_LENGTH = 90;
 
     private const SIZE_UNITS = [
                                 'B',
@@ -98,7 +94,7 @@ final class GitHubApiProxyTrafficPresenter
      * Builds the traffic tables.
      *
      * @param array $routes   `data` of GET api/v1/routes.
-     * @param array $requests `data` of GET api/v1/requests (newest first).
+     * @param array $requests `data` of GET api/v1/route-usage (busiest first).
      *
      * @return array Keys: routes and requests, each a header row followed by one row per entry.
      */
@@ -149,29 +145,46 @@ final class GitHubApiProxyTrafficPresenter
 
 
     /**
-     * Renders one requests row.
+     * Renders one requests row: a token's calls to one route with one status.
      *
-     * @param array $request One request entry.
+     * @param array $usage One route-usage entry.
      *
      * @return array
      */
-    private function presentRequest(array $request): array
+    private function presentRequest(array $usage): array
     {
         return [
-                $this->formatTime((string) ($request['requested_at'] ?? '')),
-                $this->cells->caller((string) ($request['caller'] ?? ''), [(string) ($request['token_kind'] ?? '')]),
-                $this->methodBadge((string) ($request['method'] ?? '')),
-                $this->url(
-                    (string) ($request['path'] ?? ''),
-                    (string) ($request['query'] ?? ''),
-                    (string) ($request['graphql_operation'] ?? '')
-                ),
-                $this->statusBadge((int) ($request['status'] ?? 0), (string) ($request['error'] ?? '')),
-                number_format((int) ($request['duration_ms'] ?? 0)),
-                $this->size((int) ($request['response_bytes'] ?? 0)),
+                $this->cells->caller((string) ($usage['caller'] ?? ''), [(string) ($usage['token_kind'] ?? '')]),
+                $this->token((string) ($usage['token_fingerprint'] ?? '')),
+                $this->methodBadge((string) ($usage['method'] ?? '')),
+                '<code>'.$this->cells->escape((string) ($usage['route'] ?? '')).'</code>',
+                $this->statusBadge((int) ($usage['status'] ?? 0), ''),
+                number_format((int) ($usage['requests'] ?? 0)),
+                $this->formatTime((string) ($usage['last_request_at'] ?? '')),
+                number_format((float) ($usage['avg_duration_ms'] ?? 0), 1),
+                $this->size((int) ($usage['response_bytes'] ?? 0)),
                ];
 
     }//end presentRequest()
+
+
+    /**
+     * Token fingerprint (first 12 characters of its hash), or "—" for
+     * requests sent without a token.
+     *
+     * @param string $fingerprint Token fingerprint.
+     *
+     * @return string
+     */
+    private function token(string $fingerprint): string
+    {
+        if ($fingerprint === '') {
+            return '—';
+        }
+
+        return '<code>'.$this->cells->escape($fingerprint).'</code>';
+
+    }//end token()
 
 
     /**
@@ -189,38 +202,6 @@ final class GitHubApiProxyTrafficPresenter
         return '<span class="badge '.$class.'">'.$this->cells->escape($method).'</span>';
 
     }//end methodBadge()
-
-
-    /**
-     * The requested URL (path and query string), cut to URL_LENGTH with the
-     * full URL in the tooltip; GraphQL calls show their operation name.
-     *
-     * @param string $path      Request path, e.g. /repos/guibranco/pancake/pulls.
-     * @param string $query     Query string without the "?".
-     * @param string $operation GraphQL operation name, if any.
-     *
-     * @return string
-     */
-    private function url(string $path, string $query, string $operation): string
-    {
-        $url = $path;
-        if ($query !== '') {
-            $url .= '?'.$query;
-        }
-
-        $shown = $url;
-        if (mb_strlen($url) > self::URL_LENGTH) {
-            $shown = mb_substr($url, 0, (self::URL_LENGTH - 1)).'…';
-        }
-
-        $cell = '<code title="'.$this->cells->escape($url).'">'.$this->cells->escape($shown).'</code>';
-        if ($operation !== '') {
-            $cell .= ' <span class="text-white-50 small">'.$this->cells->escape($operation).'</span>';
-        }
-
-        return $cell;
-
-    }//end url()
 
 
     /**

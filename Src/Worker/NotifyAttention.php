@@ -45,7 +45,8 @@ use GuiBranco\ProjectsMonitor\Library\ErrorReporter;
 $logStream = new LogStream();
 // Failures go to LogStream (when enabled) and the messages table; anything
 // unhandled is caught by ErrorHandler.
-$errorReporter = new ErrorReporter($logStream);
+$errorReporter = new ErrorReporter();
+$errorReporter->setLogStream($logStream);
 (new ErrorHandler("worker", basename(__FILE__)))->register();
 (new Configuration())->init();
 

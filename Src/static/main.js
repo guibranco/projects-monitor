@@ -10,6 +10,7 @@ import { CommandPalette } from './commandPalette.js';
 import { EmptySectionsManager } from './emptySections.js';
 import { RepoFilterControl } from './repoFilter.js';
 import { formatDuration } from './timeFormat.js';
+import { WorkflowRunsPage } from './workflowRunsPage.js';
 
 class DashboardApp {
   constructor() {
@@ -135,6 +136,12 @@ class DashboardApp {
     window.showWorkflowRunsManagement = this.dataDisplayManager.showWorkflowRunsManagement.bind(this.dataDisplayManager);
 
     const reloadWorkflowRuns = () => {
+      // The Workflow runs page reloads through its own refresh, which keeps
+      // the page, filters and countdown.
+      if (this.workflowRunsPage) {
+        this.workflowRunsPage.refresh();
+        return;
+      }
       this.apiManager.load(API_ENDPOINTS.WORKFLOW_RUNS, (data) => window.showWorkflowRunsManagement?.(data));
     };
 
@@ -516,6 +523,17 @@ class DashboardApp {
 
     // The "Needs attention" block refreshes on its own 30s timer.
     this.attentionPanel.init();
+
+    // The Workflow runs page refreshes on its own, configurable timer.
+    if (this.page === 'workflows') {
+      this.workflowRunsPage = new WorkflowRunsPage(
+        this.apiManager,
+        this.dataDisplayManager.chartManager,
+        () => { this.dataLoader.lastLoadedAt = Date.now(); }
+      );
+      window.workflowRunsPage = this.workflowRunsPage;
+      this.workflowRunsPage.init();
+    }
 
     // Each page loads only the endpoints of its own sections.
     for (const every of this.dataLoader.getIntervals()) {

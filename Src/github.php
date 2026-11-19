@@ -19,6 +19,10 @@ require_once "partials/dashboard-head.php";
          <div class="full-width-section" data-section="workflow_runs_management">
             <div class="section-header">
                <i class="bi bi-gear-wide-connected me-2"></i>Workflow Runs <span id="counter_workflow_runs_management" class="badge rounded-pill"></span>
+               <a href="workflow-runs.php" class="btn btn-sm btn-nav-action ms-2" title="All workflow runs, with filters and a pausable refresh"
+                  onclick="event.stopPropagation()">
+                  <i class="bi bi-list-ul"></i>
+               </a>
             </div>
             <div id="workflow_runs_management" class="section-content"></div>
          </div>
@@ -151,12 +155,6 @@ require_once "partials/dashboard-head.php";
             <div id="latest_release" class="section-content"></div>
          </div>
          </div>
-         </div>
-         <div class="full-width-section" data-section="workflow_runs">
-            <div class="section-header">
-               <i class="bi bi-gear me-2"></i>Workflow Runs (webhooks) <span id="counter_workflow_runs" class="badge rounded-pill"></span>
-            </div>
-            <div id="workflow_runs" class="section-content"></div>
          </div>
       </section>
 

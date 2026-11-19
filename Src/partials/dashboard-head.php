@@ -3,7 +3,7 @@
  * Shared top of every dashboard page: session check, <head>, the navbar
  * with the page tabs, the freshness indicator and the Ctrl+K palette
  * button, and the settings panel. Set $pageTitle and $activePage
- * (overview, pipeline, errors, github, ops or stats) before including it.
+ * (overview, pipeline, errors, github, workflows, ops or stats) before including it.
  */
 
 require_once "session.php";

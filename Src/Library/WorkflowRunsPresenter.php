@@ -40,6 +40,25 @@ class WorkflowRunsPresenter
                                           'action_required',
                                          ];
 
+    /**
+     * Outcome groups the Workflow Runs page filters by.
+     */
+    public const STATE_RUNNING   = 'running';
+    public const STATE_FAILED    = 'failed';
+    public const STATE_CANCELLED = 'cancelled';
+    public const STATE_SUCCESS   = 'success';
+    public const STATE_OTHER     = 'other';
+
+    /**
+     * Conclusions grouped as failed.
+     */
+    private const FAILED_CONCLUSIONS = [
+                                        'failure',
+                                        'timed_out',
+                                        'startup_failure',
+                                        'action_required',
+                                       ];
+
     private const NAME_MAX_LENGTH = 50;
 
     private const DEFAULT_ICON = '⭕';
@@ -126,6 +145,64 @@ class WorkflowRunsPresenter
         return $rows;
 
     }//end toTable()
+
+
+    /**
+     * The outcome group of every run, in the order of toTable's body rows
+     * (the header row has no state), so the page can filter rows by outcome.
+     *
+     * @param array $runs Rows as returned by GET /workflow-runs.
+     *
+     * @return array
+     */
+    public function toStates(array $runs): array
+    {
+        $states = [];
+
+        foreach ($runs as $run) {
+            if (is_array($run) === false) {
+                continue;
+            }
+
+            $states[] = $this->getState($run);
+        }
+
+        return $states;
+
+    }//end toStates()
+
+
+    /**
+     * The outcome group of one run: running while it is not completed, then
+     * by its conclusion.
+     *
+     * @param array $run One run as returned by the webhooks API.
+     *
+     * @return string
+     */
+    public function getState(array $run): string
+    {
+        $status = (string) ($run['status'] ?? '');
+        if ($status !== '' && $status !== 'completed') {
+            return self::STATE_RUNNING;
+        }
+
+        $conclusion = $this->getConclusion($run);
+        if ($conclusion === 'success') {
+            return self::STATE_SUCCESS;
+        }
+
+        if ($conclusion === 'cancelled') {
+            return self::STATE_CANCELLED;
+        }
+
+        if (in_array($conclusion, self::FAILED_CONCLUSIONS, true) === true) {
+            return self::STATE_FAILED;
+        }
+
+        return self::STATE_OTHER;
+
+    }//end getState()
 
 
     /**

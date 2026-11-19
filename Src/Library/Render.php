@@ -8,7 +8,8 @@ use GuiBranco\Pancake\ShieldsIo;
 
 /**
  * The Render tile: every service of the account with the state of its latest
- * deploy, overridden by the service's suspended flag.
+ * deploy, overridden by the service's suspended flag, and the HTTP requests
+ * each web service served in the last 24 hours and 7 days.
  */
 class Render
 {
@@ -21,6 +22,14 @@ class Render
     private const STATE_SUSPENDED = "SUSPENDED";
 
     private const STATE_UNKNOWN = "UNKNOWN";
+
+    private const SERVICE_TYPE_WEB = "web_service";
+
+    private const DAY_SECONDS = 86400;
+
+    private const WEEK_SECONDS = 604800;
+
+    private const METRICS_RESOLUTION_SECONDS = 3600;
 
     /**
      * The HTTP client of the API.
@@ -181,6 +190,112 @@ class Render
 
 
     /**
+     * The HTTP requests served by each web service in the last 24 hours and
+     * in the last 7 days (the metrics retention of a Hobby workspace), from
+     * one hourly series per service requested in parallel batches. A
+     * service whose request failed is left out.
+     *
+     * @param array $serviceIds The IDs of the web services.
+     *
+     * @return array Counts keyed by service ID, each with "day" and "week".
+     */
+    protected function fetchRequestCounts(array $serviceIds): array
+    {
+        $counts = [];
+        if (empty($serviceIds) === true) {
+            return $counts;
+        }
+
+        $now       = time();
+        $dayStart  = ($now - self::DAY_SECONDS);
+        $startTime = rawurlencode(gmdate("Y-m-d\\TH:i:s\\Z", ($now - self::WEEK_SECONDS)));
+
+        foreach (array_chunk($serviceIds, self::BATCH_SIZE) as $chunk) {
+            $request = $this->createBatchRequest();
+            foreach ($chunk as $serviceId) {
+                $url = sprintf(
+                    "%s/metrics/http-requests?resource=%s&startTime=%s&resolutionSeconds=%d",
+                    self::RENDER_API_URL,
+                    rawurlencode($serviceId),
+                    $startTime,
+                    self::METRICS_RESOLUTION_SECONDS
+                );
+                $request->addRequest($serviceId, $url, $this->headers);
+            }
+
+            foreach ($request->executeBatch() as $serviceId => $response) {
+                if ($response->getStatusCode() !== 200) {
+                    continue;
+                }
+
+                $series = json_decode($response->getBody());
+                if (is_array($series) === false) {
+                    continue;
+                }
+
+                $counts[$serviceId] = $this->sumRequests($series, $dayStart);
+            }
+        }
+
+        return $counts;
+
+    }//end fetchRequestCounts()
+
+
+    /**
+     * Adds up the points of every series: all of them for the week, those
+     * from the day start onwards for the day.
+     *
+     * @param array $series   The series as GET /v1/metrics/http-requests returns them.
+     * @param int   $dayStart The Unix time 24 hours ago.
+     *
+     * @return array With "day" and "week".
+     */
+    private function sumRequests(array $series, int $dayStart): array
+    {
+        $day  = 0;
+        $week = 0;
+        foreach ($series as $item) {
+            foreach (($item->values ?? []) as $point) {
+                $value = (int) round((float) ($point->value ?? 0));
+                $week += $value;
+
+                $timestamp = strtotime(($point->timestamp ?? ""));
+                if ($timestamp !== false && $timestamp >= $dayStart) {
+                    $day += $value;
+                }
+            }
+        }
+
+        return [
+            "day"  => $day,
+            "week" => $week,
+        ];
+
+    }//end sumRequests()
+
+
+    /**
+     * A request count as shown in the table: "-" for services that serve
+     * no HTTP traffic or whose metrics could not be read.
+     *
+     * @param array|null $counts The counts of a service.
+     * @param string     $key    "day" or "week".
+     *
+     * @return string
+     */
+    private function formatCount(?array $counts, string $key): string
+    {
+        if ($counts === null) {
+            return "-";
+        }
+
+        return number_format($counts[$key]);
+
+    }//end formatCount()
+
+
+    /**
      * The URL of a service: the public URL of a web service or static site,
      * falling back to its page on the dashboard (background workers, cron
      * jobs and private services have no public URL).
@@ -293,16 +408,18 @@ class Render
 
 
     /**
-     * The row of a service: its badge, linked to its URL, its state and
-     * the date of its latest deploy.
+     * The row of a service: its badge, linked to its URL, its state, the
+     * date of its latest deploy and the HTTP requests it served in the last
+     * 24 hours and 7 days.
      *
      * @param object      $service A service as the API lists it.
      * @param object|null $deploy  Its latest deploy.
+     * @param array|null  $counts  Its request counts, null when it has none.
      * @param ShieldsIo   $shields The badge builder.
      *
      * @return array
      */
-    private function getRow($service, $deploy, ShieldsIo $shields): array
+    private function getRow($service, $deploy, ?array $counts, ShieldsIo $shields): array
     {
         $state  = $this->getState($service, $deploy);
         $status = $this->mapStatus($state);
@@ -319,6 +436,8 @@ class Render
         $row[] = $badgeLink;
         $row[] = $state;
         $row[] = $this->getLastDeployment($deploy);
+        $row[] = $this->formatCount($counts, "day");
+        $row[] = $this->formatCount($counts, "week");
 
         return $row;
 
@@ -338,16 +457,23 @@ class Render
         usort($services, fn ($first, $second) => strcasecmp($first->name, $second->name));
 
         $deploys = $this->fetchLatestDeploys(array_map(fn ($service) => $service->id, $services));
+        $webIds  = array_map(
+            fn ($service) => $service->id,
+            array_filter($services, fn ($service) => ($service->type ?? null) === self::SERVICE_TYPE_WEB)
+        );
+        $counts  = $this->fetchRequestCounts(array_values($webIds));
         $shields = new ShieldsIo();
 
         $header   = [];
         $header[] = "Service";
         $header[] = "Status";
         $header[] = "Last Deployment";
+        $header[] = "Requests (24h)";
+        $header[] = "Requests (7d)";
         $result   = [$header];
 
         foreach ($services as $service) {
-            $result[] = $this->getRow($service, ($deploys[$service->id] ?? null), $shields);
+            $result[] = $this->getRow($service, ($deploys[$service->id] ?? null), ($counts[$service->id] ?? null), $shields);
         }
 
         return $result;

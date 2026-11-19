@@ -11,8 +11,9 @@ use Exception;
 
 /**
  * Renders the github-api-proxy stats API responses for the dashboard: a
- * summary for the caption, a 24-hour requests/errors line chart (one point
- * per hour, gaps filled with zeros), the callers table and the current
+ * summary for the caption, a requests/errors line chart over the chosen
+ * GitHubApiProxyRange (one point per minute, hour or day, gaps filled
+ * with zeros), the callers table and the current
  * rate-limits table, with the HTML cells from GitHubApiProxyCells. Pure
  * formatting, no HTTP, so it is unit-testable.
  */
@@ -43,9 +44,26 @@ class GitHubApiProxyPresenter
                                    ];
 
     /**
-     * Hourly points on the timeline (the stats API is queried for 24h).
+     * Per bucket: DateInterval spec (with a %d count), UTC key format of a
+     * point, and the timeline's first column title.
      */
-    private const TIMELINE_HOURS = 24;
+    private const BUCKET_STEPS = [
+                                  'minute' => 'PT%dM',
+                                  'hour'   => 'PT%dH',
+                                  'day'    => 'P%dD',
+                                 ];
+
+    private const BUCKET_KEYS = [
+                                 'minute' => 'Y-m-d H:i',
+                                 'hour'   => 'Y-m-d H',
+                                 'day'    => 'Y-m-d',
+                                ];
+
+    private const BUCKET_TITLES = [
+                                   'minute' => 'Minute',
+                                   'hour'   => 'Hour',
+                                   'day'    => 'Day',
+                                  ];
 
     /**
      * Display format of full dates, in the dashboard's time zone.
@@ -91,17 +109,27 @@ class GitHubApiProxyPresenter
     /**
      * Builds the dashboard payload.
      *
-     * @param array $summary    `data` of GET api/v1/summary.
-     * @param array $timeline   `data` of GET api/v1/timeline (hour buckets).
-     * @param array $callers    `data` of GET api/v1/callers.
-     * @param array $rateLimits `data` of GET api/v1/rate-limits.
-     * @param array $health     GET /health body.
+     * @param array                    $summary    `data` of GET api/v1/summary.
+     * @param array                    $timeline   `data` of GET api/v1/timeline (the range's buckets).
+     * @param array                    $callers    `data` of GET api/v1/callers.
+     * @param array                    $rateLimits `data` of GET api/v1/rate-limits.
+     * @param array                    $health     GET /health body.
+     * @param GitHubApiProxyRange|null $range      Range the stats were queried for; defaults to 24h.
      *
-     * @return array Keys: summary, health, timeline, callers, callerTypes
-     *               (the type of each callers row, header excluded) and rateLimits.
+     * @return array Keys: range (key and label), summary, health, timeline,
+     *               callers, callerTypes (the type of each callers row,
+     *               header excluded) and rateLimits.
      */
-    public function present(array $summary, array $timeline, array $callers, array $rateLimits, array $health): array
-    {
+    public function present(
+        array $summary,
+        array $timeline,
+        array $callers,
+        array $rateLimits,
+        array $health,
+        ?GitHubApiProxyRange $range=null
+    ): array {
+        $range = ($range ?? new GitHubApiProxyRange());
+
         $callerRows  = [self::CALLERS_HEADER];
         $callerTypes = [];
         foreach ($callers as $caller) {
@@ -119,9 +147,13 @@ class GitHubApiProxyPresenter
         }
 
         return [
+                'range'       => [
+                                  'key'   => $range->key(),
+                                  'label' => $range->label(),
+                                 ],
                 'summary'     => $this->presentSummary($summary, (count($callerRows) - 1)),
                 'health'      => $this->presentHealth($health),
-                'timeline'    => $this->presentTimeline($timeline),
+                'timeline'    => $this->presentTimeline($timeline, $range),
                 'callers'     => $callerRows,
                 'callerTypes' => $callerTypes,
                 'rateLimits'  => $limitRows,
@@ -184,52 +216,112 @@ class GitHubApiProxyPresenter
 
 
     /**
-     * One point per hour for the last 24 hours, oldest first; hours with no
-     * requests (absent from the API, which only returns non-empty buckets) are 0.
+     * One point per bucket of the range, ending at the current one, oldest
+     * first; buckets with no requests (absent from the API, which only
+     * returns non-empty buckets) are 0.
      *
-     * @param array $timeline Timeline buckets.
+     * @param array               $timeline Timeline buckets.
+     * @param GitHubApiProxyRange $range    Range, giving the bucket and point count.
      *
      * @return array Header row, then [label, requests, errors] rows.
      */
-    private function presentTimeline(array $timeline): array
+    private function presentTimeline(array $timeline, GitHubApiProxyRange $range): array
     {
-        $byHour = [];
+        $utc    = new DateTimeZone('UTC');
+        $bucket = $range->bucket();
+        $step   = self::BUCKET_STEPS[$bucket];
+        $keyFmt = self::BUCKET_KEYS[$bucket];
+
+        $byBucket = [];
         foreach ($timeline as $point) {
             if (is_array($point) === false || isset($point['bucket']) === false) {
                 continue;
             }
 
             try {
-                $bucket = new DateTimeImmutable((string) $point['bucket']);
+                $bucketAt = new DateTimeImmutable((string) $point['bucket']);
             } catch (Exception $exception) {
                 continue;
             }
 
-            $key          = $bucket->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H');
-            $byHour[$key] = [
-                             (int) ($point['requests'] ?? 0),
-                             (int) ($point['errors'] ?? 0),
-                            ];
+            $key            = $bucketAt->setTimezone($utc)->format($keyFmt);
+            $byBucket[$key] = [
+                               (int) ($point['requests'] ?? 0),
+                               (int) ($point['errors'] ?? 0),
+                              ];
         }
 
-        $utc   = new DateTimeZone('UTC');
-        $hour  = $this->now->setTimezone($utc)->setTime((int) $this->now->setTimezone($utc)->format('H'), 0);
-        $start = $hour->sub(new DateInterval('PT'.(self::TIMELINE_HOURS - 1).'H'));
+        $points = $range->points();
+        $start  = $this->bucketStart($bucket)->sub(new DateInterval(sprintf($step, ($points - 1))));
 
-        $rows = [self::TIMELINE_HEADER];
-        for ($i = 0; $i < self::TIMELINE_HOURS; $i++) {
-            $hourAt = $start->add(new DateInterval('PT'.$i.'H'));
-            $counts = ($byHour[$hourAt->format('Y-m-d H')] ?? [0, 0]);
-            $rows[] = [
-                       $hourAt->setTimezone($this->zone)->format('H:i'),
-                       $counts[0],
-                       $counts[1],
-                      ];
+        $header    = self::TIMELINE_HEADER;
+        $header[0] = self::BUCKET_TITLES[$bucket];
+        $rows      = [$header];
+        for ($i = 0; $i < $points; $i++) {
+            $bucketAt = $start->add(new DateInterval(sprintf($step, $i)));
+            $counts   = ($byBucket[$bucketAt->format($keyFmt)] ?? [0, 0]);
+            $rows[]   = [
+                         $this->bucketLabel($bucketAt, $bucket, $points),
+                         $counts[0],
+                         $counts[1],
+                        ];
         }
 
         return $rows;
 
     }//end presentTimeline()
+
+
+    /**
+     * Start of the bucket the current time falls in, in UTC (the proxy
+     * buckets by UTC minute, hour and day).
+     *
+     * @param string $bucket minute, hour or day.
+     *
+     * @return DateTimeImmutable
+     */
+    private function bucketStart(string $bucket): DateTimeImmutable
+    {
+        $now  = $this->now->setTimezone(new DateTimeZone('UTC'));
+        $hour = (int) $now->format('H');
+        if ($bucket === 'day') {
+            return $now->setTime(0, 0);
+        }
+
+        if ($bucket === 'hour') {
+            return $now->setTime($hour, 0);
+        }
+
+        return $now->setTime($hour, (int) $now->format('i'));
+
+    }//end bucketStart()
+
+
+    /**
+     * Axis label of one timeline point. Minutes and hours are shown in the
+     * dashboard's time zone (with the date once the range spans days); days
+     * are UTC days, so they keep their UTC date.
+     *
+     * @param DateTimeImmutable $bucketAt Bucket start, UTC.
+     * @param string            $bucket   minute, hour or day.
+     * @param integer           $points   Number of points in the range.
+     *
+     * @return string
+     */
+    private function bucketLabel(DateTimeImmutable $bucketAt, string $bucket, int $points): string
+    {
+        if ($bucket === 'day') {
+            return $bucketAt->format('d/m');
+        }
+
+        $local = $bucketAt->setTimezone($this->zone);
+        if ($bucket === 'hour' && $points > 24) {
+            return $local->format('d/m H:i');
+        }
+
+        return $local->format('H:i');
+
+    }//end bucketLabel()
 
 
     /**

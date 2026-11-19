@@ -23,14 +23,19 @@ class RenderTest extends TestCase
      * @param string      $name      The service name.
      * @param string      $suspended "suspended" or "not_suspended".
      * @param string|null $url       The public URL, or null for services without one.
+     * @param string|null $type      The service type, null when not listed.
      *
      * @return object
      */
-    private function getService(string $serviceId, string $name, string $suspended, ?string $url): object
+    private function getService(string $serviceId, string $name, string $suspended, ?string $url, ?string $type=null): object
     {
         $service = new stdClass();
 
         $service->id             = $serviceId;
+        if ($type !== null) {
+            $service->type = $type;
+        }
+
         $service->name           = $name;
         $service->suspended      = $suspended;
         $service->dashboardUrl   = "https://dashboard.render.com/web/{$serviceId}";
@@ -132,7 +137,7 @@ class RenderTest extends TestCase
         $rows = $this->getRender($services, $deploys)->getServices();
 
         $this->assertCount(6, $rows);
-        $this->assertEquals(["Service", "Status", "Last Deployment"], $rows[0]);
+        $this->assertEquals(["Service", "Status", "Last Deployment", "Requests (24h)", "Requests (7d)"], $rows[0]);
 
         $states = array_map(fn ($row) => $row[1], array_slice($rows, 1));
         $this->assertEquals(["LIVE", "BUILD_FAILED", "UNKNOWN", "SUSPENDED", "BUILD_IN_PROGRESS"], $states);
@@ -265,7 +270,7 @@ class RenderTest extends TestCase
         $this->setPrivateProperty($render, 'request', $request);
         $this->setPrivateProperty($render, 'headers', []);
 
-        $this->assertEquals([["Service", "Status", "Last Deployment"]], $render->getServices());
+        $this->assertEquals([["Service", "Status", "Last Deployment", "Requests (24h)", "Requests (7d)"]], $render->getServices());
 
     }//end testStopsOnAnUnexpectedBody()
 
@@ -408,6 +413,117 @@ class RenderTest extends TestCase
         new Render();
 
     }//end testRequiresTheSecretsFile()
+
+
+    /**
+     * A series as GET /v1/metrics/http-requests returns it.
+     *
+     * @param array $points Request count keyed by Unix time.
+     *
+     * @return string
+     */
+    private function getSeries(array $points): string
+    {
+        $item         = new stdClass();
+        $item->labels = [];
+        $item->values = [];
+        $item->unit   = "count";
+        foreach ($points as $timestamp => $value) {
+            $point            = new stdClass();
+            $point->timestamp = gmdate("Y-m-d\\TH:i:s\\Z", $timestamp);
+            $point->value     = $value;
+            $point->unit      = "count";
+            $item->values[]   = $point;
+        }
+
+        return json_encode([$item]);
+
+    }//end getSeries()
+
+
+    /**
+     * The request counts of web services are requested in batches of ten
+     * over the last 7 days at an hourly resolution; the day column sums
+     * the points of the last 24 hours, the week column every point. Other
+     * service types and failed requests show "-".
+     *
+     * @return void
+     */
+    public function testShowsTheRequestsOfEveryWebService(): void
+    {
+        $builder = $this->getMockBuilder(Render::class);
+        $builder->disableOriginalConstructor();
+        $builder->onlyMethods(['fetchServices', 'fetchLatestDeploys', 'createBatchRequest']);
+
+        $render = $builder->getMock();
+
+        $services = [];
+        for ($index = 1; $index <= 11; $index++) {
+            $services[] = $this->getService("srv-{$index}", sprintf("web-%02d", $index), "not_suspended", null, "web_service");
+        }
+
+        $services[] = $this->getService("crn-1", "zz-cron", "not_suspended", null, "cron_job");
+
+        $render->method('fetchServices')->willReturn($services);
+        $render->method('fetchLatestDeploys')->willReturn([]);
+
+        $now   = time();
+        $empty = new Response(true, "[]", "", 200, "https://api.render.com", []);
+
+        $responses = [];
+        foreach (array_slice($services, 0, 11) as $service) {
+            $responses[$service->id] = $empty;
+        }
+
+        $points = [];
+        $points[($now - 259200)] = 1000;
+        $points[($now - 7200)]   = 234.0;
+        $points[($now - 600)]    = 1;
+
+        $responses["srv-1"] = new Response(true, $this->getSeries($points), "", 200, "https://api.render.com", []);
+        $responses["srv-2"] = new Response(true, "{\"message\": \"forbidden\"}", "", 403, "https://api.render.com", []);
+        $responses["srv-3"] = new Response(true, "{\"unexpected\": true}", "", 200, "https://api.render.com", []);
+
+        $added   = [];
+        $batches = [];
+        $factory = function () use (&$added, &$batches, $responses) {
+            $request = $this->createMock(Request::class);
+            $keys    = [];
+            $request->method('addRequest')->willReturnCallback(
+                function (string $key, string $url) use (&$keys, &$added) {
+                    $keys[]  = $key;
+                    $added[] = $url;
+                }
+            );
+            $request->method('executeBatch')->willReturnCallback(
+                function () use (&$keys, &$batches, $responses) {
+                    $batches[] = count($keys);
+                    return array_intersect_key($responses, array_flip($keys));
+                }
+            );
+
+            return $request;
+        };
+
+        $render->method('createBatchRequest')->willReturnCallback($factory);
+        $this->setPrivateProperty($render, 'headers', []);
+
+        $rows = $render->getServices();
+
+        $this->assertEquals([10, 1], $batches);
+        $this->assertStringStartsWith("https://api.render.com/v1/metrics/http-requests?resource=srv-1&startTime=", $added[0]);
+        $this->assertStringEndsWith("&resolutionSeconds=3600", $added[0]);
+        foreach ($added as $url) {
+            $this->assertStringNotContainsString("crn-1", $url);
+        }
+
+        $this->assertEquals(["235", "1,235"], array_slice($rows[1], 3));
+        $this->assertEquals(["-", "-"], array_slice($rows[2], 3));
+        $this->assertEquals(["-", "-"], array_slice($rows[3], 3));
+        $this->assertEquals(["0", "0"], array_slice($rows[4], 3));
+        $this->assertEquals(["-", "-"], array_slice($rows[12], 3));
+
+    }//end testShowsTheRequestsOfEveryWebService()
 
 
 }//end class

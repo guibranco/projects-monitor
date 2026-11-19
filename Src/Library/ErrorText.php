@@ -84,23 +84,24 @@ class ErrorText
      */
     public function normalize(mixed $value, int $depth): mixed
     {
+        $result = $value;
         if ($value instanceof \Throwable) {
-            return $this->describeThrowable($value);
+            $result = $this->describeThrowable($value);
         }
 
         if (is_array($value) === true) {
-            return $this->normalizeArray($value, $depth);
+            $result = $this->normalizeArray($value, $depth);
         }
 
-        if (is_object($value) === true && ($value instanceof \JsonSerializable) === false) {
-            return sprintf("[object %s]", get_class($value));
+        if (is_object($value) === true && ($value instanceof \Throwable) === false && ($value instanceof \JsonSerializable) === false) {
+            $result = sprintf("[object %s]", get_class($value));
         }
 
         if (is_resource($value) === true) {
-            return "[resource]";
+            $result = "[resource]";
         }
 
-        return $value;
+        return $result;
 
     }//end normalize()
 
@@ -180,20 +181,21 @@ class ErrorText
      */
     private function stringify(mixed $value): string
     {
+        $text = null;
         if ($value instanceof \Throwable) {
-            return sprintf("%s: %s", get_class($value), $value->getMessage());
+            $text = sprintf("%s: %s", get_class($value), $value->getMessage());
         }
 
-        if (is_bool($value) === true) {
-            return var_export($value, true);
+        if (is_bool($value) === true || $value === null) {
+            $text = strtolower(var_export($value, true));
         }
 
-        if ($value === null) {
-            return "null";
+        if ($text === null && (is_scalar($value) === true || $value instanceof \Stringable)) {
+            $text = (string) $value;
         }
 
-        if (is_scalar($value) === true || $value instanceof \Stringable) {
-            return (string) $value;
+        if ($text !== null) {
+            return $text;
         }
 
         $encoded = json_encode($this->normalize($value, 0), (JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_SLASHES));

@@ -11,6 +11,7 @@ import { EmptySectionsManager } from './emptySections.js';
 import { RepoFilterControl } from './repoFilter.js';
 import { formatDuration } from './timeFormat.js';
 import { WorkflowRunsPage } from './workflowRunsPage.js';
+import { GitHubApiProxyRangePicker } from './gitHubApiProxyRange.js';
 
 class DashboardApp {
   constructor() {
@@ -534,6 +535,13 @@ class DashboardApp {
       window.workflowRunsPage = this.workflowRunsPage;
       this.workflowRunsPage.init();
     }
+
+    // The GitHub API proxy section reloads at once when its range changes.
+    this.gitHubApiProxyRange = new GitHubApiProxyRangePicker(
+      'github_api_proxy_range',
+      () => this.dataLoader.loadEndpoint('GITHUB_API_PROXY')
+    );
+    this.gitHubApiProxyRange.init();
 
     // Each page loads only the endpoints of its own sections.
     for (const every of this.dataLoader.getIntervals()) {

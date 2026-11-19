@@ -1,5 +1,6 @@
 // api.js
 import { API_ENDPOINTS } from './constants.js';
+import { getGitHubApiProxyRange } from "./gitHubApiProxyRange.js";
 import { NotificationManager } from './ui.js';
 
 export class ApiManager {
@@ -611,12 +612,35 @@ export class DataLoader {
   }
 
   /**
-   * The URL of an endpoint; the webhooks one carries the feed filter.
+   * Loads one endpoint of the current page now, outside its timer (e.g.
+   * after a section's options change).
+   *
+   * @param {string} endpoint - A key of API_ENDPOINTS.
+   */
+  loadEndpoint(endpoint) {
+    const loader = this.getLoaders().find((item) => item.endpoint === endpoint);
+    if (!loader) {
+      return;
+    }
+
+    this.apiManager.load(this.getUrl(loader.endpoint), (data) => {
+      window[loader.show]?.(data);
+      this.lastLoadedAt = Date.now();
+    });
+  }
+
+  /**
+   * The URL of an endpoint; the webhooks one carries the feed filter and
+   * the GitHub API proxy one its time range.
    *
    * @param {string} endpoint - A key of API_ENDPOINTS.
    * @returns {string}
    */
   getUrl(endpoint) {
+    if (endpoint === "GITHUB_API_PROXY") {
+      return `${API_ENDPOINTS.GITHUB_API_PROXY}?range=${encodeURIComponent(getGitHubApiProxyRange())}`;
+    }
+
     if (endpoint !== "WEBHOOKS") {
       return new Map(Object.entries(API_ENDPOINTS)).get(endpoint);
     }

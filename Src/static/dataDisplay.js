@@ -4,6 +4,7 @@ import { ChartManager } from './charts.js';
 import { PendingProcessingTable } from './pendingProcessing.js';
 import { ErrorsInboxTable } from './errorsInbox.js';
 import { GitHubApiProxyCallersTable } from './gitHubApiProxyCallers.js';
+import { getGitHubApiProxyRange } from './gitHubApiProxyRange.js';
 
 export class DataDisplayManager {
   constructor() {
@@ -611,7 +612,7 @@ export class DataDisplayManager {
 
   /**
    * Caption of the github-api-proxy section: version and health, then the
-   * last 24 hours' totals; zero-valued problem counts are left out.
+   * chosen range's totals; zero-valued problem counts are left out.
    */
   gitHubApiProxyCaption(response) {
     if (response.loading || !response.summary || !response.health) {
@@ -639,15 +640,21 @@ export class DataDisplayManager {
       `avg ${Number(summary.avgDurationMs).toLocaleString(undefined, { maximumFractionDigits: 1 })} ms`,
     ];
 
-    return `${service.filter(Boolean).join(", ")} · last 24 hours: ${totals.filter(Boolean).join(" · ")}`;
+    const period = response.range?.label ?? "last 24 hours";
+    return `${service.filter(Boolean).join(", ")} · ${period}: ${totals.filter(Boolean).join(" · ")}`;
   }
 
   /**
    * Draws the github-api-proxy section: a caption with the service health and
-   * the last 24 hours' totals, the hourly requests/errors chart, the callers
-   * table and each caller's current GitHub rate limits.
+   * the chosen range's totals, the requests/errors chart, the callers table
+   * and each caller's current GitHub rate limits.
    */
   showGitHubApiProxy(response) {
+    // A slow answer for a range that is no longer selected is dropped.
+    if (response.range && response.range.key !== getGitHubApiProxyRange()) {
+      return;
+    }
+
     const caption = document.getElementById("github_api_proxy_caption");
     if (caption) {
       caption.textContent = response.error
@@ -675,7 +682,7 @@ export class DataDisplayManager {
         0: { color: "#7FFF00" },
         1: { color: "#ff5c5c" },
       },
-      hAxis: { title: "Hour", textStyle: { fontSize: 10 } },
+      hAxis: { title: response.timeline?.[0]?.[0] ?? "Hour", textStyle: { fontSize: 10 } },
     });
     this.gitHubApiProxyCallers.update(response.callers, response.callerTypes);
     this.chartManager.drawDataTable(response.rateLimits, "github_api_proxy_rate_limits", CHART_OPTIONS.table);

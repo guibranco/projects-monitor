@@ -13,11 +13,6 @@ class GitHubApiProxy extends BearerTokenApiClient
 {
 
     /**
-     * Period the dashboard summarises.
-     */
-    public const PERIOD = '24h';
-
-    /**
      * Total transfer timeout per call, in seconds; the five calls of one
      * refresh stay well inside the dashboard's 60-second refresh.
      */
@@ -81,27 +76,30 @@ class GitHubApiProxy extends BearerTokenApiClient
 
     /**
      * Everything the dashboard shows for the proxy, rendered by
-     * GitHubApiProxyPresenter: the last 24 hours' totals, hourly timeline and
-     * callers, plus each caller's current GitHub rate limits and the
-     * service's health (version, database, allow-list).
+     * GitHubApiProxyPresenter: the range's totals, timeline and callers,
+     * plus each caller's current GitHub rate limits and the service's
+     * health (version, database, allow-list).
+     *
+     * @param GitHubApiProxyRange|null $range Time range; defaults to the last 24 hours.
      *
      * @return array
      *
      * @throws RequestException When any stats call fails.
      */
-    public function getDashboard(): array
+    public function getDashboard(?GitHubApiProxyRange $range=null): array
     {
-        $period = 'period='.self::PERIOD;
+        $range  = ($range ?? new GitHubApiProxyRange());
+        $period = 'period='.$range->period();
 
         $summary    = $this->getData('api/v1/summary?'.$period);
-        $timeline   = $this->getData('api/v1/timeline?'.$period.'&bucket=hour');
+        $timeline   = $this->getData('api/v1/timeline?'.$period.'&bucket='.$range->bucket());
         $callers    = $this->getData('api/v1/callers?'.$period.'&limit=50');
         $rateLimits = $this->getData('api/v1/rate-limits');
         $health     = $this->doGet('health');
 
         $presenter = new GitHubApiProxyPresenter();
 
-        return $presenter->present($summary, $timeline, $callers, $rateLimits, $health);
+        return $presenter->present($summary, $timeline, $callers, $rateLimits, $health, $range);
 
     }//end getDashboard()
 

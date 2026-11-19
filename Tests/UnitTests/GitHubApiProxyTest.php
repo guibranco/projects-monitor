@@ -143,12 +143,24 @@ class GitHubApiProxyTest extends TestCase
                     'status'  => 'ok',
                     'version' => '0.2.0',
                    ];
+        $route   = [
+                    'method'   => 'GET',
+                    'route'    => '/repos/{owner}/{repo}',
+                    'requests' => 3,
+                   ];
+        $request = [
+                    'method' => 'GET',
+                    'path'   => '/repos/guibranco/pancake',
+                    'status' => 200,
+                   ];
 
         return [
                 'api/v1/summary?period=24h'              => $this->dataResponse($summary),
                 'api/v1/timeline?period=24h&bucket=hour' => $this->dataResponse([]),
                 'api/v1/callers?period=24h&limit=50'     => $this->dataResponse([$caller]),
                 'api/v1/rate-limits'                     => $this->dataResponse([]),
+                'api/v1/routes?period=24h&limit=50'      => $this->dataResponse([$route]),
+                'api/v1/requests?period=24h&limit=50'    => $this->dataResponse([$request]),
                 'health'                                 => $this->responseWith(200, json_encode($health)),
                ];
 
@@ -170,6 +182,8 @@ class GitHubApiProxyTest extends TestCase
         $this->assertSame('0.2.0', $result['health']['version']);
         $this->assertCount(2, $result['callers']);
         $this->assertCount(25, $result['timeline']);
+        $this->assertCount(2, $result['routes']);
+        $this->assertCount(2, $result['requests']);
 
     }//end testGetDashboardCallsEveryEndpoint()
 

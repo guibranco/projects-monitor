@@ -887,7 +887,7 @@
         "tags": ["GitHub"],
         "responses": {
           "200": {
-            "description": "Summary, health, timeline, callers and rate limits.",
+            "description": "Summary, health, timeline, callers, rate limits, routes and recent requests.",
             "content": {
               "application/json": {
                 "schema": {
@@ -930,6 +930,16 @@
                     "rateLimits": {
                       "type": "array",
                       "description": "Header row followed by one row per caller and GitHub resource, most exhausted first: Caller, Resource, Used (badge), Remaining, Resets.",
+                      "items": { "type": "array", "items": {} }
+                    },
+                    "routes": {
+                      "type": "array",
+                      "description": "Header row followed by one row per method and route template, busiest first: Method (badge), Route, Requests, Errors (badge), Avg (ms), Max (ms), Callers.",
+                      "items": { "type": "array", "items": {} }
+                    },
+                    "requests": {
+                      "type": "array",
+                      "description": "Header row followed by the range's latest 50 requests, newest first: Time, Caller, Method (badge), URL (path and query string, GraphQL operation name), Status (badge), Duration (ms), Size.",
                       "items": { "type": "array", "items": {} }
                     }
                   }

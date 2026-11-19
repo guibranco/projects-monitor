@@ -30,7 +30,10 @@ jobs:
       - name: 📦 Install PHP dependencies
         uses: "php-actions/composer@8a65f0d3c6a1d17ca4800491a40b5756a4c164f3" # v6
         with:
-          php_extensions: sockets
+          # Pinned: "latest" moved to an image without mbstring, which
+          # php-amqplib and fastvolt/markdown require.
+          php_version: "8.4"
+          php_extensions: mbstring sockets
           dev: no
           progress: yes
           working_dir: "./Src/"

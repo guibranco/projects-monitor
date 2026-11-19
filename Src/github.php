@@ -176,6 +176,18 @@ require_once "partials/dashboard-head.php";
             </div>
             <div id="github_api_proxy_callers" class="section-content"></div>
          </div>
+         <div class="full-width-section" data-section="github_api_proxy_routes">
+            <div class="section-header">
+               <i class="bi bi-signpost-split me-2"></i>GitHub API routes <span id="counter_github_api_proxy_routes" class="badge rounded-pill"></span>
+            </div>
+            <div id="github_api_proxy_routes" class="section-content"></div>
+         </div>
+         <div class="full-width-section" data-section="github_api_proxy_requests">
+            <div class="section-header">
+               <i class="bi bi-link-45deg me-2"></i>GitHub API requests <span id="counter_github_api_proxy_requests" class="badge rounded-pill"></span>
+            </div>
+            <div id="github_api_proxy_requests" class="section-content"></div>
+         </div>
          <div class="full-width-section" data-section="github_api_proxy_rate_limits">
             <div class="section-header">
                <i class="bi bi-speedometer me-2"></i>GitHub API rate limits <span id="counter_github_api_proxy_rate_limits" class="badge rounded-pill"></span>

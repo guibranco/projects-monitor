@@ -18,6 +18,13 @@ class GitHubApiProxyTest extends TestCase
 
     private const API_URL = 'https://api.github-proxy.example.test/';
 
+    /**
+     * Endpoints requested through requestMap(), in call order.
+     *
+     * @var string[]
+     */
+    private array $calledEndpoints = [];
+
 
     /**
      * Builds a GitHubApiProxy whose constructor (secrets file, real Request)
@@ -95,6 +102,7 @@ class GitHubApiProxyTest extends TestCase
                 $this->assertSame(['Authorization: Bearer test-token'], $headers);
                 $endpoint = substr($url, strlen(self::API_URL));
                 $this->assertArrayHasKey($endpoint, $responses, 'Unexpected call: '.$endpoint);
+                $this->calledEndpoints[] = $endpoint;
 
                 return $responses[$endpoint];
             }
@@ -186,6 +194,12 @@ class GitHubApiProxyTest extends TestCase
         $this->assertCount(25, $result['timeline']);
         $this->assertCount(2, $result['routes']);
         $this->assertCount(2, $result['requests']);
+
+        $expected = array_keys($this->okResponses());
+        $called   = $this->calledEndpoints;
+        sort($expected);
+        sort($called);
+        $this->assertSame($expected, $called, 'Each endpoint is called exactly once.');
 
     }//end testGetDashboardCallsEveryEndpoint()
 

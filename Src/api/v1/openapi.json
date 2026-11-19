@@ -887,7 +887,7 @@
         "tags": ["GitHub"],
         "responses": {
           "200": {
-            "description": "Summary, health, timeline, callers, rate limits, routes and recent requests.",
+            "description": "Summary, health, timeline, callers, rate limits, routes and requests grouped by token, route and status.",
             "content": {
               "application/json": {
                 "schema": {
@@ -939,7 +939,7 @@
                     },
                     "requests": {
                       "type": "array",
-                      "description": "Header row followed by the range's latest 50 requests, newest first: Time, Caller, Method (badge), URL (path and query string, GraphQL operation name), Status (badge), Duration (ms), Size.",
+                      "description": "Header row followed by up to 50 rows of the range's requests grouped by token, method, route template and status, busiest first: Caller, Token (fingerprint, or \u2014 without a token), Method (badge), Route, Status (badge), Requests, Last request (dashboard time zone), Avg (ms), Size (total response size).",
                       "items": { "type": "array", "items": {} }
                     }
                   }

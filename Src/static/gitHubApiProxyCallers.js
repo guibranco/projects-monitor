@@ -30,8 +30,7 @@ export class GitHubApiProxyCallersTable {
     this.chartManager = chartManager;
     this.elementId = elementId;
     this.header = [];
-    this.rows = [];
-    this.types = [];
+    this.callers = [];
     this.filter = null;
   }
 
@@ -43,9 +42,12 @@ export class GitHubApiProxyCallersTable {
    */
   update(table, types) {
     const [header = [], ...rows] = Array.isArray(table) ? table : [];
+    const typeList = Array.isArray(types) ? types : [];
     this.header = header;
-    this.rows = rows;
-    this.types = rows.map((_, index) => (Array.isArray(types) ? types[index] : null) ?? "unknown");
+    this.callers = rows.map((row, index) => ({
+      row,
+      type: typeList.at(index) ?? "unknown",
+    }));
     this.render();
   }
 
@@ -56,7 +58,7 @@ export class GitHubApiProxyCallersTable {
    */
   counts() {
     const counts = new Map();
-    for (const type of this.types) {
+    for (const { type } of this.callers) {
       counts.set(type, (counts.get(type) ?? 0) + 1);
     }
 
@@ -76,15 +78,17 @@ export class GitHubApiProxyCallersTable {
     }
 
     container.innerHTML = `<div class="entity-chips" role="toolbar" aria-label="Filter callers by type"></div><div id="${this.elementId}_table"></div>`;
-    container.querySelector(".entity-chips").addEventListener("click", (event) => {
-      const chip = event.target.closest("[data-type]");
-      if (!chip) {
-        return;
-      }
+    container
+      .querySelector(".entity-chips")
+      .addEventListener("click", (event) => {
+        const chip = event.target.closest("[data-type]");
+        if (!chip) {
+          return;
+        }
 
-      this.filter = chip.dataset.type === "" ? null : chip.dataset.type;
-      this.render();
-    });
+        this.filter = chip.dataset.type === "" ? null : chip.dataset.type;
+        this.render();
+      });
   }
 
   render() {
@@ -96,7 +100,10 @@ export class GitHubApiProxyCallersTable {
     this.ensureLayout(container);
 
     const counts = this.counts();
-    if (this.filter !== null && !counts.some(([type]) => type === this.filter)) {
+    if (
+      this.filter !== null &&
+      !counts.some(([type]) => type === this.filter)
+    ) {
       this.filter = null;
     }
 
@@ -105,15 +112,26 @@ export class GitHubApiProxyCallersTable {
       return `<button type="button" class="entity-chip${active ? " active" : ""}" data-type="${type}" aria-pressed="${active}">${label} <span>${count}</span></button>`;
     };
     container.querySelector(".entity-chips").innerHTML =
-      chip("", "All", this.rows.length) +
-      counts.map(([type, count]) => chip(type, TYPES.get(type) ?? type, count)).join("");
+      chip("", "All", this.callers.length) +
+      counts
+        .map(([type, count]) => chip(type, TYPES.get(type) ?? type, count))
+        .join("");
 
-    const rows = this.rows.filter((_, index) => this.filter === null || this.types[index] === this.filter);
-    this.chartManager.drawDataTable([this.header, ...rows], `${this.elementId}_table`, CHART_OPTIONS.table);
+    const rows = this.callers
+      .filter(({ type }) => this.filter === null || type === this.filter)
+      .map(({ row }) => row);
+    this.chartManager.drawDataTable(
+      [this.header, ...rows],
+      `${this.elementId}_table`,
+      CHART_OPTIONS.table,
+    );
 
     const counter = document.getElementById(`counter_${this.elementId}`);
     if (counter) {
-      counter.textContent = this.filter === null ? String(this.rows.length) : `${rows.length}/${this.rows.length}`;
+      counter.textContent =
+        this.filter === null
+          ? String(this.callers.length)
+          : `${rows.length}/${this.callers.length}`;
     }
   }
 }

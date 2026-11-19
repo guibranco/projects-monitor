@@ -37,13 +37,23 @@ export function getGitHubApiProxyRange() {
     : DEFAULT_GITHUB_API_PROXY_RANGE;
 }
 
+/**
+ * Saves the range for later visits.
+ *
+ * @param {string} range - A key of GITHUB_API_PROXY_RANGES.
+ * @returns {boolean} False when storage is unavailable; the choice then
+ *   lasts until the page reloads.
+ */
 function saveGitHubApiProxyRange(range) {
+  let saved = false;
   try {
     localStorage.setItem(STORAGE_KEY, range);
+    saved = true;
   } catch (error) {
-    // Storage unavailable: the choice lasts until the page reloads.
     console.warn("Failed to save the GitHub API proxy range:", error);
   }
+
+  return saved;
 }
 
 export class GitHubApiProxyRangePicker {

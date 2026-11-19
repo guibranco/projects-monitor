@@ -8,7 +8,7 @@ use GuiBranco\ProjectsMonitor\Library\GitHubActionsUsage;
 use GuiBranco\ProjectsMonitor\Library\ErrorReporter;
 
 $github = new GitHub();
-// getApiUsage() reports a failed rate_limit call itself and then returns only
+// The getApiUsage() call reports a failed rate_limit call itself and then returns only
 // the header row and no core usage, which the dashboard shows as unavailable.
 $apiUsage = $github->getApiUsage();
 $data["api_usage"] = $apiUsage["data"];

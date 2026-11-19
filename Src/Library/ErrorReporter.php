@@ -28,12 +28,7 @@ class ErrorReporter
     private const MAX_MESSAGE_LENGTH = 1000;
 
     /**
-     * Longest rendered placeholder value.
-     */
-    private const MAX_VALUE_LENGTH = 300;
-
-    /**
-     * The LogStream client wrapper.
+     * The LogStream wrapper.
      *
      * @var LogStream
      */
@@ -47,6 +42,13 @@ class ErrorReporter
     private $loggerFactory;
 
     /**
+     * Formats messages and details.
+     *
+     * @var ErrorText
+     */
+    private $errorText;
+
+    /**
      * Whether a report is in progress, so a failing sink cannot recurse.
      *
      * @var boolean
@@ -55,15 +57,45 @@ class ErrorReporter
 
 
     /**
-     * @param LogStream|null $logStream     The LogStream wrapper.
-     * @param callable|null  $loggerFactory Returns the Logger for the messages table.
+     * Creates a reporter that sends to LogStream and to the messages table.
      */
-    public function __construct(?LogStream $logStream=null, ?callable $loggerFactory=null)
+    public function __construct()
     {
-        $this->logStream     = $logStream ?? new LogStream();
-        $this->loggerFactory = $loggerFactory ?? static fn (): Logger => new Logger();
+        $this->logStream     = new LogStream();
+        $this->loggerFactory = function (): Logger {
+            return new Logger();
+        };
+        $this->errorText     = new ErrorText();
 
     }//end __construct()
+
+
+    /**
+     * Replaces the LogStream wrapper.
+     *
+     * @param LogStream $logStream The LogStream wrapper.
+     *
+     * @return void
+     */
+    public function setLogStream(LogStream $logStream): void
+    {
+        $this->logStream = $logStream;
+
+    }//end setLogStream()
+
+
+    /**
+     * Replaces how the Logger of the messages table is created.
+     *
+     * @param callable $loggerFactory Returns the Logger.
+     *
+     * @return void
+     */
+    public function setLoggerFactory(callable $loggerFactory): void
+    {
+        $this->loggerFactory = $loggerFactory;
+
+    }//end setLoggerFactory()
 
 
     /**
@@ -75,7 +107,7 @@ class ErrorReporter
      *
      * @return void
      */
-    public function warning(string $message, array $context=[], string $category=""): void
+    public function warning(string $message, array $context, string $category): void
     {
         $this->report("warning", $message, $context, $category);
 
@@ -91,7 +123,7 @@ class ErrorReporter
      *
      * @return void
      */
-    public function error(string $message, array $context=[], string $category=""): void
+    public function error(string $message, array $context, string $category): void
     {
         $this->report("error", $message, $context, $category);
 
@@ -107,7 +139,7 @@ class ErrorReporter
      *
      * @return void
      */
-    public function critical(string $message, array $context=[], string $category=""): void
+    public function critical(string $message, array $context, string $category): void
     {
         $this->report("critical", $message, $context, $category);
 
@@ -124,65 +156,23 @@ class ErrorReporter
      *
      * @return void
      */
-    public function report(string $level, string $message, array $context=[], string $category=""): void
+    public function report(string $level, string $message, array $context, string $category): void
     {
         if (self::$reporting === true) {
-            error_log(sprintf("ErrorReporter: nested report skipped: %s", $this->render($message, $context)));
+            error_log(sprintf("ErrorReporter: nested report skipped: %s", $this->errorText->render($message, $context)));
             return;
         }
 
         self::$reporting = true;
 
         try {
-            try {
-                $this->logStream->log($level, $message, $context, $category);
-            } catch (\Throwable $exception) {
-                error_log(sprintf("ErrorReporter: LogStream failed: %s", $exception->getMessage()));
-            }
-
-            try {
-                $rendered = $this->truncate($this->render($message, $context), self::MAX_MESSAGE_LENGTH);
-                $details  = $this->buildDetails($level, $message, $context, $category);
-                $logger   = ($this->loggerFactory)();
-                $logger->logError($rendered, $details, $this->findException($context));
-            } catch (\Throwable $exception) {
-                error_log(sprintf("ErrorReporter: messages table failed: %s", $exception->getMessage()));
-            }
+            $this->sendToLogStream($level, $message, $context, $category);
+            $this->sendToMessages($level, $message, $context, $category);
         } finally {
             self::$reporting = false;
         }
 
     }//end report()
-
-
-    /**
-     * Renders the `{name}` placeholders of a message template (dotted names reach nested arrays).
-     *
-     * @param string $message The message template.
-     * @param array  $context The values.
-     *
-     * @return string The rendered message; unknown placeholders are kept as they are.
-     */
-    public function render(string $message, array $context): string
-    {
-        return preg_replace_callback(
-            '/\{([A-Za-z0-9_.]+)\}/',
-            function (array $matches) use ($context): string {
-                $value = $context;
-                foreach (explode(".", $matches[1]) as $key) {
-                    if (is_array($value) === false || array_key_exists($key, $value) === false) {
-                        return $matches[0];
-                    }
-
-                    $value = $value[$key];
-                }
-
-                return $this->truncate($this->stringify($value), self::MAX_VALUE_LENGTH);
-            },
-            $message
-        );
-
-    }//end render()
 
 
     /**
@@ -198,17 +188,16 @@ class ErrorReporter
      */
     public function buildDetails(string $level, string $message, array $context, string $category): array
     {
-        $details = [
-                    "level"            => $level,
-                    "category"         => $category,
-                    "message_template" => $message,
-                    "context"          => $this->normalize($context),
-                   ];
+        $details                     = [];
+        $details["level"]            = $level;
+        $details["category"]         = $category;
+        $details["message_template"] = $message;
+        $details["context"]          = $this->errorText->normalize($context, 0);
 
         try {
             $details["trace_id"] = $this->logStream->getTraceId();
         } catch (\Throwable $exception) {
-            // The trace id is a convenience; never let it stop the report.
+            $details["trace_id"] = null;
         }
 
         return $details;
@@ -217,133 +206,76 @@ class ErrorReporter
 
 
     /**
-     * The Throwable under the `exception` key, if any.
+     * Sends the entry to LogStream; a failure goes to the PHP error log.
+     *
+     * @param string $level    The level.
+     * @param string $message  The message template.
+     * @param array  $context  The context.
+     * @param string $category The category.
+     *
+     * @return void
+     */
+    private function sendToLogStream(string $level, string $message, array $context, string $category): void
+    {
+        try {
+            $this->logStream->log($level, $message, $context, $category);
+        } catch (\Throwable $exception) {
+            error_log(sprintf("ErrorReporter: LogStream failed: %s", $exception->getMessage()));
+        }
+
+    }//end sendToLogStream()
+
+
+    /**
+     * Stores the entry in the messages table; a failure goes to the PHP error log.
+     *
+     * @param string $level    The level.
+     * @param string $message  The message template.
+     * @param array  $context  The context.
+     * @param string $category The category.
+     *
+     * @return void
+     */
+    private function sendToMessages(string $level, string $message, array $context, string $category): void
+    {
+        $exception = null;
+        if (isset($context["exception"]) === true && $context["exception"] instanceof \Throwable) {
+            $exception = $context["exception"];
+        }
+
+        try {
+            $rendered = $this->errorText->truncate($this->errorText->render($message, $context), self::MAX_MESSAGE_LENGTH);
+            $details  = $this->buildDetails($level, $message, $context, $category);
+            $logger   = call_user_func($this->loggerFactory);
+            $logger->logError($rendered, $details, $exception, $this->findOrigin($context));
+        } catch (\Throwable $failure) {
+            error_log(sprintf("ErrorReporter: messages table failed: %s", $failure->getMessage()));
+        }
+
+    }//end sendToMessages()
+
+
+    /**
+     * Where a PHP error happened, from the `file` and `line` of the context
+     * (set by ErrorHandler for warnings and fatal errors).
      *
      * @param array $context The context.
      *
-     * @return \Throwable|null The Throwable.
+     * @return array|null The file and line, or null when the context has none.
      */
-    private function findException(array $context): ?\Throwable
+    private function findOrigin(array $context): ?array
     {
-        $exception = $context["exception"] ?? null;
-
-        return $exception instanceof \Throwable ? $exception : null;
-
-    }//end findException()
-
-
-    /**
-     * Makes the context JSON friendly: Throwables become arrays, objects their class.
-     *
-     * @param mixed $value The value.
-     * @param int   $depth The current depth.
-     *
-     * @return mixed The normalised value.
-     */
-    private function normalize(mixed $value, int $depth=0): mixed
-    {
-        if ($value instanceof \Throwable) {
-            return $this->describeThrowable($value);
+        if (isset($context["file"], $context["line"]) === false || is_string($context["file"]) === false) {
+            return null;
         }
 
-        if (is_array($value) === true) {
-            if ($depth >= 5) {
-                return "[array]";
-            }
+        $origin         = [];
+        $origin["file"] = $context["file"];
+        $origin["line"] = (int) $context["line"];
 
-            $normalized = [];
-            foreach ($value as $key => $item) {
-                $normalized[$key] = $this->normalize($item, ($depth + 1));
-            }
+        return $origin;
 
-            return $normalized;
-        }
-
-        if (is_object($value) === true) {
-            return $value instanceof \JsonSerializable ? $value : sprintf("[object %s]", get_class($value));
-        }
-
-        if (is_resource($value) === true) {
-            return "[resource]";
-        }
-
-        return $value;
-
-    }//end normalize()
-
-
-    /**
-     * Summarises a Throwable and its previous ones.
-     *
-     * @param \Throwable $exception The Throwable.
-     *
-     * @return array The summary.
-     */
-    private function describeThrowable(\Throwable $exception): array
-    {
-        $description = [
-                        "class"   => get_class($exception),
-                        "message" => $exception->getMessage(),
-                        "code"    => $exception->getCode(),
-                        "file"    => $exception->getFile(),
-                        "line"    => $exception->getLine(),
-                        "trace"   => $exception->getTraceAsString(),
-                       ];
-
-        if ($exception->getPrevious() !== null) {
-            $description["previous"] = $this->describeThrowable($exception->getPrevious());
-        }
-
-        return $description;
-
-    }//end describeThrowable()
-
-
-    /**
-     * A placeholder value as text.
-     *
-     * @param mixed $value The value.
-     *
-     * @return string The text.
-     */
-    private function stringify(mixed $value): string
-    {
-        if ($value instanceof \Throwable) {
-            return sprintf("%s: %s", get_class($value), $value->getMessage());
-        }
-
-        if (is_bool($value) === true) {
-            return $value === true ? "true" : "false";
-        }
-
-        if ($value === null) {
-            return "null";
-        }
-
-        if (is_scalar($value) === true || $value instanceof \Stringable) {
-            return (string) $value;
-        }
-
-        $encoded = json_encode($this->normalize($value), JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_SLASHES);
-
-        return $encoded === false ? "[unencodable]" : $encoded;
-
-    }//end stringify()
-
-
-    /**
-     * Cuts a text to a length.
-     *
-     * @param string $value  The text.
-     * @param int    $length The length.
-     *
-     * @return string The text, with an ellipsis when cut.
-     */
-    private function truncate(string $value, int $length): string
-    {
-        return (new LogContext())->truncate($value, $length);
-
-    }//end truncate()
+    }//end findOrigin()
 
 
 }//end class

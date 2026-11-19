@@ -158,13 +158,17 @@ class Logger
      * @param string          $message   The rendered message.
      * @param array           $details   Extra data, stored as JSON in `details`.
      * @param \Throwable|null $exception The exception being reported, if any.
+     * @param array|null      $origin    Where a PHP error happened (file and line), when there is no exception.
      *
      * @return bool Whether the message was stored.
      */
-    public function logError(string $message, array $details = [], ?\Throwable $exception = null): bool
+    public function logError(string $message, array $details = [], ?\Throwable $exception = null, ?array $origin = null): bool
     {
         $headers = $this->getRequestHeaders();
         $location = $this->resolveErrorLocation($exception, debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 8));
+        if ($exception === null && $origin !== null) {
+            $location = $this->resolveOriginLocation($origin);
+        }
 
         $stmt = $this->connection->prepare($this->getInsert());
         if ($stmt === false) {
@@ -233,7 +237,7 @@ class Logger
             ];
         }
 
-        $skip = [self::class, ErrorReporter::class, ErrorHandler::class];
+        $skip = [self::class, ErrorReporter::class, ErrorHandler::class, ErrorText::class];
         $location = ["class" => "none", "function" => "none", "file" => "none", "line" => 0, "type" => "none"];
 
         foreach ($frames as $index => $frame) {
@@ -261,6 +265,24 @@ class Logger
         }
 
         return $location;
+    }
+
+    /**
+     * The location of a PHP error (warning or fatal error) from its file and line.
+     *
+     * @param array $origin The file and line.
+     *
+     * @return array{class: string, function: string, file: string, line: int, type: string}
+     */
+    public function resolveOriginLocation(array $origin): array
+    {
+        return [
+            "class" => "none",
+            "function" => "none",
+            "file" => (string) ($origin["file"] ?? "none"),
+            "line" => (int) ($origin["line"] ?? 0),
+            "type" => "php-error",
+        ];
     }
 
     public function saveMessage($applicationId)

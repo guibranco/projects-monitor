@@ -459,4 +459,30 @@ class LoggerTest extends TestCase
         $this->assertSame(19, $location['line']);
         $this->assertSame('{main}', $location['function']);
     }
+
+    public function testLogErrorStoresPhpErrorOrigin(): void
+    {
+        $captured = $this->captureInsert();
+        $logger = $this->loggerWithHeaders([]);
+
+        $this->assertTrue($logger->logError('PHP Warning', [], null, ['file' => '/x/github.php', 'line' => 13]));
+
+        $values = $captured['values'];
+        $this->assertSame('none', $values[1]);
+        $this->assertSame('/x/github.php', $values[3]);
+        $this->assertSame(13, $values[4]);
+        $this->assertSame('php-error', $values[6]);
+    }
+
+    public function testLogErrorPrefersExceptionOverOrigin(): void
+    {
+        $captured = $this->captureInsert();
+        $logger = $this->loggerWithHeaders([]);
+        $exception = new RuntimeException('boom');
+
+        $this->assertTrue($logger->logError('Failed', [], $exception, ['file' => '/x/other.php', 'line' => 1]));
+
+        $this->assertSame(__FILE__, $captured['values'][3]);
+        $this->assertSame($exception->getLine(), $captured['values'][4]);
+    }
 }

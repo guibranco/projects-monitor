@@ -5,7 +5,9 @@ namespace GuiBranco\ProjectsMonitor\Library;
 /**
  * Last-resort reporting for whatever a script does not handle itself:
  *
- * - uncaught exceptions: reported as critical, then a JSON 500 (web) or exit 1 (CLI);
+ * - uncaught exceptions: on the web, reported as critical then a JSON 500;
+ *   on the CLI, left to PHP (standard log line, exit code 255) and reported
+ *   from the shutdown function, so cron and health checks still see the failure;
  * - PHP warnings (e.g. "Undefined array key"): reported once per location and request;
  * - fatal errors that end the script: reported from a shutdown function.
  *
@@ -53,7 +55,6 @@ class ErrorHandler
      */
     private $category;
 
-
     /**
      * The running script, e.g. /api/v1/releases.php.
      *
@@ -61,23 +62,46 @@ class ErrorHandler
      */
     private $script;
 
+    /**
+     * Whether handleException already reported the uncaught exception.
+     *
+     * @var boolean
+     */
+    private $exceptionReported = false;
+
 
     /**
-     * @param string             $category The category of the reports.
-     * @param string             $script   The running script (SCRIPT_NAME or argv[0]).
-     * @param ErrorReporter|null $reporter The reporter.
+     * Creates the handler.
+     *
+     * @param string $category The category of the reports.
+     * @param string $script   The running script (SCRIPT_NAME or the worker file).
      */
-    public function __construct(string $category="api", string $script="unknown", ?ErrorReporter $reporter=null)
+    public function __construct(string $category, string $script)
     {
         $this->category = $category;
         $this->script   = $script;
-        $this->reporter = $reporter ?? new ErrorReporter();
+        $this->reporter = new ErrorReporter();
 
     }//end __construct()
 
 
     /**
-     * Registers the exception, error and shutdown handlers (once per process).
+     * Replaces the reporter.
+     *
+     * @param ErrorReporter $reporter The reporter.
+     *
+     * @return void
+     */
+    public function setReporter(ErrorReporter $reporter): void
+    {
+        $this->reporter = $reporter;
+
+    }//end setReporter()
+
+
+    /**
+     * Registers the error and shutdown handlers, plus the exception handler
+     * on the web (once per process).
      *
      * @return void
      */
@@ -88,7 +112,10 @@ class ErrorHandler
         }
 
         self::$registered = true;
-        set_exception_handler([$this, "handleException"]);
+        if (PHP_SAPI !== "cli") {
+            set_exception_handler([$this, "handleException"]);
+        }
+
         set_error_handler([$this, "handleError"], self::REPORTED_LEVELS);
         register_shutdown_function([$this, "handleShutdown"]);
 
@@ -96,7 +123,7 @@ class ErrorHandler
 
 
     /**
-     * Reports an uncaught exception and ends the request with a JSON 500.
+     * Reports an uncaught exception and answers web requests with a JSON 500.
      *
      * @param \Throwable $exception The exception.
      *
@@ -104,30 +131,25 @@ class ErrorHandler
      */
     public function handleException(\Throwable $exception): void
     {
+        $reason  = (new ErrorText())->summarize($exception->getMessage());
+        $context = [];
+        $context["exception_class"] = get_class($exception);
+        $context["script"]          = $this->script;
+        $context["reason"]          = $reason;
+        $context["exception"]       = $exception;
+        $this->reporter->critical("Unhandled {exception_class} in {script}: {reason}", $context, $this->category);
+        $this->exceptionReported = true;
+
         error_log(sprintf("PHP Fatal error:  Uncaught %s", (string) $exception));
-
-        $this->reporter->critical(
-            "Unhandled {exception_class} in {script}: {reason}",
-            [
-             "exception_class" => get_class($exception),
-             "script"          => $this->getScript(),
-             "reason"          => self::summarize($exception->getMessage()),
-             "exception"       => $exception,
-            ],
-            $this->category
-        );
-
-        if (PHP_SAPI === "cli") {
-            fwrite(STDERR, sprintf("%s: %s\n", get_class($exception), self::summarize($exception->getMessage())));
-            exit(1);
-        }
-
         if (headers_sent() === false) {
             http_response_code(500);
             header("Content-Type: application/json; charset=UTF-8");
         }
 
-        echo json_encode(["error" => "Internal error", "trace_id" => (new LogStream())->getTraceId()]);
+        $response = [];
+        $response["error"]    = "Internal error";
+        $response["trace_id"] = (new LogStream())->getTraceId();
+        echo json_encode($response);
 
     }//end handleException()
 
@@ -135,17 +157,17 @@ class ErrorHandler
     /**
      * Reports a PHP warning, then lets PHP handle it as usual (error log).
      *
-     * @param int    $level   The error level.
-     * @param string $message The error message.
-     * @param string $file    The file.
-     * @param int    $line    The line.
+     * @param integer $level   The error level.
+     * @param string  $message The error message.
+     * @param string  $file    The file.
+     * @param integer $line    The line.
      *
-     * @return bool Always false, so PHP's standard handler still runs.
+     * @return boolean Always false, so PHP's standard handler still runs.
      */
-    public function handleError(int $level, string $message, string $file="", int $line=0): bool
+    public function handleError(int $level, string $message, string $file, int $line): bool
     {
+        // Warnings silenced with @ are not reported.
         if ((error_reporting() & $level) === 0) {
-            // Silenced with @.
             return false;
         }
 
@@ -156,17 +178,13 @@ class ErrorHandler
 
         self::$reported[$key] = true;
 
-        $this->reporter->warning(
-            "PHP {level_name} in {file}:{line}: {reason}",
-            [
-             "level_name" => self::getLevelName($level),
-             "file"       => $file,
-             "line"       => $line,
-             "reason"     => $message,
-             "script"     => $this->getScript(),
-            ],
-            $this->category
-        );
+        $context = [];
+        $context["level_name"] = $this->getLevelName($level);
+        $context["file"]       = $file;
+        $context["line"]       = $line;
+        $context["reason"]     = $message;
+        $context["script"]     = $this->script;
+        $this->reporter->warning("PHP {level_name} in {file}:{line}: {reason}", $context, $this->category);
 
         return false;
 
@@ -180,60 +198,50 @@ class ErrorHandler
      */
     public function handleShutdown(): void
     {
-        $error = error_get_last();
-        if ($error === null || ($error["type"] & self::FATAL_LEVELS) === 0) {
-            return;
-        }
-
-        // Uncaught exceptions are reported by handleException.
-        if (str_starts_with($error["message"], "Uncaught ") === true) {
-            return;
-        }
-
-        $this->reporter->critical(
-            "PHP {level_name} in {file}:{line}: {reason}",
-            [
-             "level_name" => self::getLevelName($error["type"]),
-             "file"       => $error["file"],
-             "line"       => $error["line"],
-             "reason"     => self::summarize($error["message"]),
-             "script"     => $this->getScript(),
-            ],
-            $this->category
-        );
+        $this->reportFatal(error_get_last());
 
     }//end handleShutdown()
 
 
     /**
-     * Turns an error text into one readable line: an HTML error page
-     * (e.g. a proxy's 503 page) becomes its text, whitespace is collapsed.
+     * Reports an error_get_last() entry when it is a fatal error.
      *
-     * @param string $message The message.
+     * @param array|null $error The entry: type, message, file and line.
      *
-     * @return string The summary.
+     * @return void
      */
-    public static function summarize(string $message): string
+    public function reportFatal(?array $error): void
     {
-        if (preg_match('/<(html|body|!doctype)\b/i', $message) === 1) {
-            $message = preg_replace('/<(style|script|head)\b[^>]*>.*?<\/\1>/is', " ", $message) ?? $message;
-            $message = preg_replace('/<[^>]*>/', " ", $message) ?? $message;
-            $message = html_entity_decode($message, (ENT_QUOTES | ENT_HTML5), "UTF-8");
+        if ($error === null || ($error["type"] & self::FATAL_LEVELS) === 0) {
+            return;
         }
 
-        return trim((preg_replace('/\s+/u', " ", $message) ?? $message));
+        // On the web, handleException already reported the uncaught exception.
+        if ($this->exceptionReported === true && str_starts_with($error["message"], "Uncaught ") === true) {
+            return;
+        }
 
-    }//end summarize()
+        $context = [];
+        $context["level_name"] = $this->getLevelName($error["type"]);
+        $context["file"]       = $error["file"];
+        $context["line"]       = $error["line"];
+        $message = explode("\nStack trace:", $error["message"], 2);
+        $context["reason"]        = (new ErrorText())->summarize($message[0]);
+        $context["error_message"] = $error["message"];
+        $context["script"]     = $this->script;
+        $this->reporter->critical("PHP {level_name} in {file}:{line}: {reason}", $context, $this->category);
+
+    }//end reportFatal()
 
 
     /**
      * The name of a PHP error level.
      *
-     * @param int $level The level.
+     * @param integer $level The level.
      *
      * @return string The name, e.g. "Warning".
      */
-    public static function getLevelName(int $level): string
+    public function getLevelName(int $level): string
     {
         return match ($level) {
             E_WARNING, E_USER_WARNING => "Warning",
@@ -246,18 +254,6 @@ class ErrorHandler
         };
 
     }//end getLevelName()
-
-
-    /**
-     * The running script, for the reports.
-     *
-     * @return string The script name.
-     */
-    private function getScript(): string
-    {
-        return $this->script;
-
-    }//end getScript()
 
 
 }//end class

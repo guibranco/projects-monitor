@@ -487,4 +487,263 @@ class GitHubActionsUsageTest extends TestCase
         $this->assertSame("unavailable", $results[0]["status"]);
         $this->assertStringContainsString("timeout", $results[0]["reason"]);
     }
+
+
+    /**
+     * A usage-data mock that also replaces the public-repository seam.
+     *
+     * @param GitHubBillingConfig $config Fixture-backed billing config.
+     *
+     * @return GitHubActionsUsage
+     */
+    private function mockUsageWithPublicRepos(GitHubBillingConfig $config)
+    {
+        $usage = $this->getMockBuilder(GitHubActionsUsage::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(["fetchUsageData", "fetchPublicRepositories"])
+            ->getMock();
+
+        $this->setPrivateProperty($usage, "config", $config);
+
+        return $usage;
+    }
+
+
+    /**
+     * One non-summary usage row for a repository carrying the given discount.
+     *
+     * @param string $repository     Repository name as the usage endpoint returns it.
+     * @param float  $discountAmount Dollars covered by the allowance.
+     *
+     * @return object
+     */
+    private function discountedRow(string $repository, float $discountAmount): object
+    {
+        $row = new stdClass();
+        $row->product        = "actions";
+        $row->sku            = "Actions Linux";
+        $row->unitType       = "Minutes";
+        $row->pricePerUnit   = 0.006;
+        $row->quantity       = 100;
+        $row->discountAmount = $discountAmount;
+        $row->netAmount      = 0;
+        $row->repositoryName = $repository;
+
+        return $row;
+    }
+
+
+    /**
+     * Without any discounted minutes there is nothing to check, so repository visibility is never fetched.
+     *
+     * @return void
+     */
+    public function testAllowanceCheckSkipsVisibilityLookupWithoutDiscount()
+    {
+        $usage = $this->mockUsageWithPublicRepos($this->buildConfig([$this->accountEntry("noDiscountAcct", "user")]));
+        $usage->method("fetchUsageData")->willReturn(["usageItems" => [$this->usageItem(100)], "usageRows" => [$this->discountedRow("demo", 0.0)]]);
+        $usage->expects($this->never())->method("fetchPublicRepositories");
+
+        $this->assertSame("ok", $usage->getAllAccountsUsage()[0]["status"]);
+    }
+
+
+    /**
+     * Discounted minutes trigger one visibility lookup; a failed lookup (null) skips the check without degrading the account.
+     *
+     * @return void
+     */
+    public function testAllowanceCheckToleratesUnavailablePublicRepositoryList()
+    {
+        $usage = $this->mockUsageWithPublicRepos($this->buildConfig([$this->accountEntry("discountAcct", "user")]));
+        $usage->method("fetchUsageData")->willReturn(["usageItems" => [$this->usageItem(100)], "usageRows" => [$this->discountedRow("demo", 30.0)]]);
+        $usage->expects($this->once())->method("fetchPublicRepositories")->willReturn(null);
+
+        $this->assertSame("ok", $usage->getAllAccountsUsage()[0]["status"]);
+    }
+
+
+    /**
+     * Invokes the protected public-repositories seam for real.
+     *
+     * @param GitHubActionsUsage $usage   Instance with a mocked Request.
+     * @param array              $account Resolved account from the config.
+     *
+     * @return array|null
+     */
+    private function invokeFetchPublicRepositories(GitHubActionsUsage $usage, array $account): ?array
+    {
+        $method = new ReflectionMethod(GitHubActionsUsage::class, "fetchPublicRepositories");
+        $method->setAccessible(true); // NOSONAR
+
+        return $method->invoke($usage, $account);
+    }
+
+
+    /**
+     * Tracks the public-repos cache files of an account for cleanup.
+     *
+     * @param string  $account Account name in the cache key.
+     * @param integer $pages   Number of pages fetched.
+     *
+     * @return void
+     */
+    private function trackPublicReposCache(string $account, int $pages): void
+    {
+        for ($page = 1; $page <= $pages; $page++) {
+            $this->cacheFilesToClean[] = sprintf("%s/../../Src/cache/github_public_repos_%s_%d.json", __DIR__, $account, $page);
+        }
+    }
+
+
+    /**
+     * A JSON list of public repositories, as the repos endpoint returns it.
+     *
+     * @param integer $count How many repositories to list.
+     *
+     * @return string
+     */
+    private function publicReposBody(int $count): string
+    {
+        $repositories = [];
+        for ($index = 1; $index <= $count; $index++) {
+            $repository = new stdClass();
+            $repository->name      = "repo-{$index}";
+            $repository->full_name = "owner/repo-{$index}";
+            $repository->private   = false;
+            $repositories[]        = $repository;
+        }
+
+        return json_encode($repositories);
+    }
+
+
+    /**
+     * Users are listed via /users/{u}/repos?type=owner, paginating until a short page.
+     *
+     * @return void
+     */
+    public function testFetchPublicRepositoriesPaginatesForUsers()
+    {
+        $account = "publicReposUserAcct";
+        $this->trackPublicReposCache($account, 2);
+        $urls = [];
+
+        $recordUrl = function ($url) use (&$urls) {
+            $urls[] = $url;
+
+            return true;
+        };
+
+        $request = $this->mockRequest();
+        $request->expects($this->exactly(2))->method("get")
+            ->with($this->callback($recordUrl))
+            ->willReturnOnConsecutiveCalls(new Response(true, $this->publicReposBody(100), "", 200, "url", []), new Response(true, $this->publicReposBody(3), "", 200, "url", []));
+
+        $config = $this->buildConfig([$this->accountEntry($account, "user")]);
+        $usage  = $this->usageWithRealFetch($config, $request);
+        $repositories = $this->invokeFetchPublicRepositories($usage, $config->getAccounts()[0]);
+
+        $this->assertCount(103, $repositories);
+        $this->assertCount(2, $urls);
+        $this->assertStringContainsString("users/{$account}/repos?type=owner&per_page=100&page=1", $urls[0]);
+        $this->assertStringContainsString("page=2", $urls[1]);
+    }
+
+
+    /**
+     * Orgs are listed via /orgs/{o}/repos?type=public.
+     *
+     * @return void
+     */
+    public function testFetchPublicRepositoriesUsesOrgEndpointForOrgs()
+    {
+        $account = "publicReposOrgAcct";
+        $this->trackPublicReposCache($account, 1);
+        $urls = [];
+
+        $request = $this->mockRequest();
+        $request->method("get")->willReturnCallback(
+            function ($url) use (&$urls) {
+                $urls[] = $url;
+
+                return new Response(true, $this->publicReposBody(1), "", 200, $url, []);
+            }
+        );
+
+        $config = $this->buildConfig([$this->accountEntry($account, "org")]);
+        $usage  = $this->usageWithRealFetch($config, $request);
+
+        $this->assertCount(1, $this->invokeFetchPublicRepositories($usage, $config->getAccounts()[0]));
+        $this->assertStringContainsString("orgs/{$account}/repos?type=public", $urls[0]);
+    }
+
+
+    /**
+     * Every incomplete-list case yields null, never a partial list that would
+     * misclassify public repos as private: a failed request, a failure before
+     * any request (an undefined token secret) and a page that is not a list.
+     *
+     * @return void
+     */
+    public function testFetchPublicRepositoriesReturnsNullOnFailure()
+    {
+        $this->trackPublicReposCache("publicReposFailAcct", 1);
+        $this->trackPublicReposCache("publicReposObjectAcct", 1);
+
+        $failing = $this->mockRequest();
+        $failing->method("get")->willThrowException(new RequestException("503 Service Unavailable"));
+        $notList = $this->mockRequest();
+        $notList->method("get")->willReturn(new Response(true, "{\"message\":\"Not Found\"}", "", 200, "url", []));
+
+        $config = $this->buildConfig([$this->accountEntry("publicReposFailAcct", "user"), $this->accountEntry("publicReposNoTokenAcct", "user", "gitHubTokenUndefined"), $this->accountEntry("publicReposObjectAcct", "org")]);
+        $accounts = $config->getAccounts();
+
+        $this->assertNull($this->invokeFetchPublicRepositories($this->usageWithRealFetch($config, $failing), $accounts[0]));
+        $this->assertNull($this->invokeFetchPublicRepositories($this->usageWithRealFetch($config, $failing), $accounts[1]));
+        $this->assertNull($this->invokeFetchPublicRepositories($this->usageWithRealFetch($config, $notList), $accounts[2]));
+    }
+
+
+    /**
+     * Private discounted minutes above the configured allowance reach the warning without degrading the account.
+     *
+     * @return void
+     */
+    public function testAllowanceCheckWarnsWhenPrivateUsageExceedsConfigured()
+    {
+        $usage = $this->mockUsageWithPublicRepos($this->buildConfig([$this->accountEntry("overAllowanceAcct", "user")]));
+        $usage->method("fetchUsageData")->willReturn(["usageItems" => [$this->usageItem(100)], "usageRows" => [$this->discountedRow("private-app", 30.0)]]);
+        $usage->expects($this->once())->method("fetchPublicRepositories")->willReturn([]);
+
+        $this->assertSame("ok", $usage->getAllAccountsUsage()[0]["status"]);
+    }
+
+
+    /**
+     * Reaching the page cap without a short page means the list is incomplete, so it yields null.
+     *
+     * @return void
+     */
+    public function testFetchPublicRepositoriesReturnsNullAtPageCap()
+    {
+        $account = "publicReposCapAcct";
+        $this->trackPublicReposCache($account, 20);
+        $calls = 0;
+
+        $request = $this->mockRequest();
+        $request->method("get")->willReturnCallback(
+            function ($url) use (&$calls) {
+                $calls++;
+
+                return new Response(true, $this->publicReposBody(100), "", 200, $url, []);
+            }
+        );
+
+        $config = $this->buildConfig([$this->accountEntry($account, "user")]);
+        $usage  = $this->usageWithRealFetch($config, $request);
+
+        $this->assertNull($this->invokeFetchPublicRepositories($usage, $config->getAccounts()[0]));
+        $this->assertSame(20, $calls);
+    }
 }

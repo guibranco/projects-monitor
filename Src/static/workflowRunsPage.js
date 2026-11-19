@@ -22,6 +22,18 @@ export const DEFAULT_PAGE_SIZE = 25;
 
 const STORAGE_INTERVAL = "workflowRunsRefreshInterval";
 const STORAGE_PAGE_SIZE = "workflowRunsPageSize";
+const STORAGE_SORT = "workflowRunsSort";
+
+// Orderings offered by the "Sort by" picker, in display order.
+export const SORTS = [
+  { key: "newest", label: "Newest first" },
+  { key: "oldest", label: "Oldest first" },
+  { key: "repository", label: "Repository (A–Z)" },
+  { key: "repository_desc", label: "Repository (Z–A)" },
+  { key: "workflow", label: "Workflow name (A–Z)" },
+  { key: "workflow_desc", label: "Workflow name (Z–A)" },
+];
+export const DEFAULT_SORT = "newest";
 
 // Outcome chips, in display order; keys match WorkflowRunsPresenter::STATE_*.
 export const STATES = [
@@ -58,6 +70,68 @@ export function normalizePageSize(value) {
   if (value === "all") return "all";
   const size = Number.parseInt(value, 10);
   return PAGE_SIZES.includes(size) ? size : DEFAULT_PAGE_SIZE;
+}
+
+/**
+ * A stored ordering, or the default when missing or not offered.
+ *
+ * @param {*} value - The stored value.
+ * @returns {string}
+ */
+export function normalizeSort(value) {
+  return SORTS.some((sort) => sort.key === value) ? value : DEFAULT_SORT;
+}
+
+const textOrder = new Intl.Collator(undefined, {
+  sensitivity: "base",
+  numeric: true,
+});
+
+/**
+ * Compares two "YYYY-MM-DD HH:MM:SS" times, newest first; a run without
+ * a time goes last.
+ *
+ * @param {string} first - One time.
+ * @param {string} second - The other.
+ * @returns {number}
+ */
+function newestFirst(first, second) {
+  if (first === second) return 0;
+  if (first === "") return 1;
+  if (second === "") return -1;
+  return first < second ? 1 : -1;
+}
+
+/**
+ * Orders two rows by their sort keys ({ repository, workflow, updatedAt }).
+ * Ties fall back to the newest run first, so a repository's or workflow's
+ * runs read from the latest down.
+ *
+ * @param {object} first - One row's sort keys.
+ * @param {object} second - The other's.
+ * @param {string} sort - One of SORTS' keys.
+ * @returns {number}
+ */
+export function compareRuns(first, second, sort) {
+  const newest = newestFirst(first.updatedAt, second.updatedAt);
+  const repository = textOrder.compare(first.repository, second.repository);
+  const workflow = textOrder.compare(first.workflow, second.workflow);
+
+  switch (sort) {
+    case "oldest":
+      if (first.updatedAt === "" || second.updatedAt === "") return newest;
+      return -newest || repository;
+    case "repository":
+      return repository || workflow || newest;
+    case "repository_desc":
+      return -repository || workflow || newest;
+    case "workflow":
+      return workflow || repository || newest;
+    case "workflow_desc":
+      return -workflow || repository || newest;
+    default:
+      return newest || repository;
+  }
 }
 
 /**
@@ -110,6 +184,21 @@ export function formatCountdown(seconds) {
   return rest === 0 ? `${minutes}m` : `${minutes}m ${rest}s`;
 }
 
+/**
+ * One row's sort keys from the API (plain strings, never undefined).
+ *
+ * @param {*} keys - The row's sort_keys entry.
+ * @returns {{repository: string, workflow: string, updatedAt: string}}
+ */
+function toSortKeys(keys) {
+  const result = {
+    repository: String(keys?.repository ?? ""),
+    workflow: String(keys?.workflow ?? ""),
+    updatedAt: String(keys?.updated_at ?? ""),
+  };
+  return result;
+}
+
 const readStorage = (key) => {
   try {
     return window.localStorage.getItem(key);
@@ -139,6 +228,7 @@ export class WorkflowRunsPage {
 
     this.interval = normalizeInterval(readStorage(STORAGE_INTERVAL));
     this.pageSize = normalizePageSize(readStorage(STORAGE_PAGE_SIZE));
+    this.sort = normalizeSort(readStorage(STORAGE_SORT));
     this.paused = false;
     this.remaining = 0;
     this.loading = false;
@@ -146,7 +236,7 @@ export class WorkflowRunsPage {
     this.ticker = null;
 
     this.header = [];
-    this.rows = []; // { cells, state, text }
+    this.rows = []; // { cells, state, text, keys }
     this.total = 0;
     this.state = "";
     this.query = "";
@@ -167,6 +257,7 @@ export class WorkflowRunsPage {
       summary: document.getElementById("wr_summary"),
       pages: document.getElementById("wr_pages"),
       pageSize: document.getElementById("wr_page_size"),
+      sort: document.getElementById("wr_sort"),
       counter: document.getElementById("wr_counter"),
     };
 
@@ -183,6 +274,15 @@ export class WorkflowRunsPage {
 
     interval.value = String(this.interval);
     pageSize.value = String(this.pageSize);
+
+    const sortPicker = this.elements.sort;
+    sortPicker.value = this.sort;
+    sortPicker.addEventListener("change", () => {
+      this.sort = normalizeSort(sortPicker.value);
+      writeStorage(STORAGE_SORT, this.sort);
+      this.page = 0;
+      this.render();
+    });
 
     pause.addEventListener("click", () => this.setPaused(!this.paused));
     refreshNow.addEventListener("click", () => {
@@ -359,6 +459,7 @@ export class WorkflowRunsPage {
   update(data) {
     const table = Array.isArray(data?.workflow_runs) ? data.workflow_runs : [];
     const states = Array.isArray(data?.states) ? data.states : [];
+    const sortKeys = Array.isArray(data?.sort_keys) ? data.sort_keys : [];
     this.header = table[0] ?? [];
     const actionsColumn = this.header.findIndex((name) =>
       ACTIONS_COLUMN.test(String(name)),
@@ -366,6 +467,7 @@ export class WorkflowRunsPage {
     this.rows = table.slice(1).map((cells, index) => ({
       cells,
       state: String(states.at(index) ?? "other"),
+      keys: toSortKeys(sortKeys.at(index)),
       text: cells
         .filter((_cell, position) => position !== actionsColumn)
         .map(cellText)
@@ -412,9 +514,9 @@ export class WorkflowRunsPage {
       ? `${hiddenByRepo} of ${this.rows.length} runs hidden by the repo filter "${repoFilter}"`
       : "";
 
-    const visible = this.state
-      ? searched.filter((row) => row.state === this.state)
-      : searched;
+    const visible = searched
+      .filter((row) => this.state === "" || row.state === this.state)
+      .sort((first, second) => compareRuns(first.keys, second.keys, this.sort));
 
     const size =
       this.pageSize === "all" ? Math.max(visible.length, 1) : this.pageSize;

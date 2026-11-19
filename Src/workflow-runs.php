@@ -29,6 +29,15 @@ require_once "partials/dashboard-head.php";
                </div>
                <div class="wr-toolbar-group">
                   <fieldset id="wr_states" class="entity-chips wr-states" aria-label="Filter by outcome"></fieldset>
+                  <label class="wr-label" for="wr_sort">Sort by</label>
+                  <select id="wr_sort" class="form-select form-select-sm wr-select" aria-label="Sort workflow runs">
+                     <option value="newest" selected>Newest first</option>
+                     <option value="oldest">Oldest first</option>
+                     <option value="repository">Repository (A–Z)</option>
+                     <option value="repository_desc">Repository (Z–A)</option>
+                     <option value="workflow">Workflow name (A–Z)</option>
+                     <option value="workflow_desc">Workflow name (Z–A)</option>
+                  </select>
                   <input type="search" id="wr_search" class="form-control form-control-sm wr-search"
                      placeholder="Search runs…" aria-label="Search workflow runs" autocomplete="off" spellcheck="false">
                </div>

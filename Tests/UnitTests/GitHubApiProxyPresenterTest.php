@@ -239,6 +239,9 @@ class GitHubApiProxyPresenterTest extends TestCase
                     'invalid:ba9876543210',
                     'anonymous',
                     '',
+                    'app',
+                    'token',
+                    'installation',
                    ];
         $callers = array_map(fn(string $label): array => ['caller' => $label], $labels);
         $result  = $this->present($callers);
@@ -253,6 +256,9 @@ class GitHubApiProxyPresenterTest extends TestCase
              'invalid',
              'anonymous',
              'unknown',
+             'user',
+             'user',
+             'user',
             ],
             $result['callerTypes']
         );

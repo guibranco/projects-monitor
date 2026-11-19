@@ -107,6 +107,13 @@ export class GitHubApiProxyCallersTable {
       this.filter = null;
     }
 
+    // Rebuilding the chips drops keyboard focus; put it back on the same chip.
+    const focused = document.activeElement?.closest?.(
+      ".entity-chips [data-type]",
+    );
+    const focusedType =
+      focused && container.contains(focused) ? focused.dataset.type : null;
+
     const chip = (type, label, count) => {
       const active = (this.filter ?? "") === type;
       return `<button type="button" class="entity-chip${active ? " active" : ""}" data-type="${type}" aria-pressed="${active}">${label} <span>${count}</span></button>`;
@@ -116,6 +123,11 @@ export class GitHubApiProxyCallersTable {
       counts
         .map(([type, count]) => chip(type, TYPES.get(type) ?? type, count))
         .join("");
+    if (focusedType !== null) {
+      container
+        .querySelector(`.entity-chips [data-type="${CSS.escape(focusedType)}"]`)
+        ?.focus();
+    }
 
     const rows = this.callers
       .filter(({ type }) => this.filter === null || type === this.filter)

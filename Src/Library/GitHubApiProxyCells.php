@@ -25,14 +25,14 @@ class GitHubApiProxyCells
 
 
     /**
-     * Caller labels whose prefix (before the colon) is their type.
+     * Caller labels whose prefix (before the colon) is their type; a label
+     * without a colon is a GitHub login, even when it reads "app" or "token".
      */
     private const PREFIXED_TYPES = [
                                     'installation',
                                     'app',
                                     'token',
                                     'invalid',
-                                    'anonymous',
                                    ];
 
     /**
@@ -99,10 +99,11 @@ class GitHubApiProxyCells
      */
     public function callerType(string $caller): string
     {
-        $prefix = explode(':', $caller, 2)[0];
+        $prefix = strstr($caller, ':', true);
 
         return match (true) {
             in_array($prefix, self::PREFIXED_TYPES, true) => $prefix,
+            $caller === 'anonymous'                       => 'anonymous',
             $caller === ''                                => 'unknown',
             str_ends_with($caller, '[bot]')               => 'bot',
             default                                       => 'user',

@@ -28,7 +28,7 @@ require_once "partials/dashboard-head.php";
                   <span id="wr_countdown" class="wr-countdown" aria-live="polite"></span>
                </div>
                <div class="wr-toolbar-group">
-                  <div id="wr_states" class="entity-chips wr-states" role="group" aria-label="Filter by outcome"></div>
+                  <fieldset id="wr_states" class="entity-chips wr-states" aria-label="Filter by outcome"></fieldset>
                   <input type="search" id="wr_search" class="form-control form-control-sm wr-search"
                      placeholder="Search runs…" aria-label="Search workflow runs" autocomplete="off" spellcheck="false">
                </div>

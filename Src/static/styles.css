@@ -2021,7 +2021,10 @@ body:not(.show-empty-sections) .page-group:not(:has([data-section]:not(.is-empty
 }
 
 .wr-states {
-  margin-bottom: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
 }
 
 .wr-label {

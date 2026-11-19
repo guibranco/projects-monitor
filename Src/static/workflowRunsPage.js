@@ -185,7 +185,9 @@ export class WorkflowRunsPage {
     pageSize.value = String(this.pageSize);
 
     pause.addEventListener("click", () => this.setPaused(!this.paused));
-    refreshNow.addEventListener("click", () => this.refresh());
+    refreshNow.addEventListener("click", () => {
+      void this.refresh();
+    });
     interval.addEventListener("change", () => {
       this.interval = normalizeInterval(interval.value);
       writeStorage(STORAGE_INTERVAL, this.interval);
@@ -260,12 +262,12 @@ export class WorkflowRunsPage {
     // Coming back to a hidden tab whose refresh came due refreshes at once.
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden && !this.paused && this.remaining <= 0) {
-        this.refresh();
+        void this.refresh();
       }
     });
 
     this.ticker = setInterval(() => this.tick(), 1000);
-    this.refresh();
+    void this.refresh();
   }
 
   /** One second of the countdown; refreshes when it reaches zero. */
@@ -280,7 +282,7 @@ export class WorkflowRunsPage {
 
     this.remaining -= 1;
     if (this.remaining <= 0) {
-      this.refresh();
+      void this.refresh();
       return;
     }
 
@@ -305,7 +307,7 @@ export class WorkflowRunsPage {
       ? '<i class="bi bi-play-fill"></i><span class="ms-1">Resume</span>'
       : '<i class="bi bi-pause-fill"></i><span class="ms-1">Pause</span>';
     if (!paused && this.remaining <= 0) {
-      this.refresh();
+      void this.refresh();
       return;
     }
     this.renderCountdown();
@@ -505,10 +507,14 @@ export class WorkflowRunsPage {
   renderPager(start, shown, total, pageCount) {
     const summary = this.elements.summary;
     const pages = this.elements.pages;
-    summary.textContent =
-      total === 0
-        ? "No runs"
-        : `Showing ${start + 1}–${start + shown} of ${total}${total === this.rows.length ? "" : ` (${this.rows.length} loaded)`}`;
+    let text = "No runs";
+    if (total > 0) {
+      text = `Showing ${start + 1}–${start + shown} of ${total}`;
+      if (total !== this.rows.length) {
+        text += ` (${this.rows.length} loaded)`;
+      }
+    }
+    summary.textContent = text;
 
     if (pageCount <= 1) {
       pages.replaceChildren();

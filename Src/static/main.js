@@ -139,7 +139,7 @@ class DashboardApp {
       // The Workflow runs page reloads through its own refresh, which keeps
       // the page, filters and countdown.
       if (this.workflowRunsPage) {
-        this.workflowRunsPage.refresh();
+        void this.workflowRunsPage.refresh();
         return;
       }
       this.apiManager.load(API_ENDPOINTS.WORKFLOW_RUNS, (data) => window.showWorkflowRunsManagement?.(data));

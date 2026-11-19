@@ -188,19 +188,16 @@ class WorkflowRunsPresenter
         }
 
         $conclusion = $this->getConclusion($run);
+        $state      = self::STATE_OTHER;
         if ($conclusion === 'success') {
-            return self::STATE_SUCCESS;
+            $state = self::STATE_SUCCESS;
+        } elseif ($conclusion === 'cancelled') {
+            $state = self::STATE_CANCELLED;
+        } else if (in_array($conclusion, self::FAILED_CONCLUSIONS, true) === true) {
+            $state = self::STATE_FAILED;
         }
 
-        if ($conclusion === 'cancelled') {
-            return self::STATE_CANCELLED;
-        }
-
-        if (in_array($conclusion, self::FAILED_CONCLUSIONS, true) === true) {
-            return self::STATE_FAILED;
-        }
-
-        return self::STATE_OTHER;
+        return $state;
 
     }//end getState()
 

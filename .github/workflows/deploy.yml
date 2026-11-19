@@ -83,7 +83,7 @@ jobs:
           cd Src/secrets
           php_literal() { printf '%s' "$1" | sed "s/[\\\\']/\\\\&/g"; }
           echo "<?php" >> gitHub.secrets.php
-          echo "\$gitHubToken = \"${{ secrets.GH_TOKEN }}\";" >> gitHub.secrets.php
+          echo "\$gitHubToken = \"${{ secrets.GH_API_TOKEN }}\";" >> gitHub.secrets.php
           echo "\$gitHubApiUrl = '$(php_literal "$GH_API_BASE_URL")';" >> gitHub.secrets.php
 
       - name: 🔑 Generate HealthChecks.io Configuration

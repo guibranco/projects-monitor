@@ -43,7 +43,9 @@ const ACTIONS_COLUMN = /^actions$/i;
  */
 export function normalizeInterval(value) {
   const seconds = Number.parseInt(value, 10);
-  return REFRESH_INTERVALS.includes(seconds) ? seconds : DEFAULT_REFRESH_INTERVAL;
+  return REFRESH_INTERVALS.includes(seconds)
+    ? seconds
+    : DEFAULT_REFRESH_INTERVAL;
 }
 
 /**
@@ -168,8 +170,16 @@ export class WorkflowRunsPage {
       counter: document.getElementById("wr_counter"),
     };
 
-    const { pause, refreshNow, interval, states, search, pages, pageSize, table } =
-      this.elements;
+    const {
+      pause,
+      refreshNow,
+      interval,
+      states,
+      search,
+      pages,
+      pageSize,
+      table,
+    } = this.elements;
 
     interval.value = String(this.interval);
     pageSize.value = String(this.pageSize);
@@ -215,7 +225,10 @@ export class WorkflowRunsPage {
       if (!button || button.disabled) return;
       this.page = Number.parseInt(button.dataset.page, 10) || 0;
       this.render();
-      this.elements.table.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
+      this.elements.table.scrollIntoView?.({
+        block: "nearest",
+        behavior: "smooth",
+      });
     });
 
     table.addEventListener("click", (event) => {
@@ -228,7 +241,9 @@ export class WorkflowRunsPage {
         return;
       }
 
-      const remove = event.target.closest('[data-action="delete-workflow-run"]');
+      const remove = event.target.closest(
+        '[data-action="delete-workflow-run"]',
+      );
       if (remove) {
         const { workflowRunId } = remove.dataset;
         window.confirmDeleteWorkflowRun?.(workflowRunId, () =>
@@ -283,7 +298,9 @@ export class WorkflowRunsPage {
     const { pause } = this.elements;
     pause.setAttribute("aria-pressed", String(paused));
     pause.classList.toggle("active", paused);
-    pause.title = paused ? "Resume the automatic refresh" : "Pause the automatic refresh";
+    pause.title = paused
+      ? "Resume the automatic refresh"
+      : "Pause the automatic refresh";
     pause.innerHTML = paused
       ? '<i class="bi bi-play-fill"></i><span class="ms-1">Resume</span>'
       : '<i class="bi bi-pause-fill"></i><span class="ms-1">Pause</span>';
@@ -301,6 +318,7 @@ export class WorkflowRunsPage {
     this.renderCountdown();
 
     try {
+      // eslint-disable-next-line compat/compat
       const response = await fetch(API_ENDPOINTS.WORKFLOW_RUNS, {
         credentials: "same-origin",
         cache: "no-store",
@@ -340,12 +358,14 @@ export class WorkflowRunsPage {
     const table = Array.isArray(data?.workflow_runs) ? data.workflow_runs : [];
     const states = Array.isArray(data?.states) ? data.states : [];
     this.header = table[0] ?? [];
-    const searchable = this.header.map((name) => !ACTIONS_COLUMN.test(String(name)));
+    const actionsColumn = this.header.findIndex((name) =>
+      ACTIONS_COLUMN.test(String(name)),
+    );
     this.rows = table.slice(1).map((cells, index) => ({
       cells,
-      state: String(states[index] ?? "other"),
+      state: String(states.at(index) ?? "other"),
       text: cells
-        .filter((_cell, position) => searchable[position])
+        .filter((_cell, position) => position !== actionsColumn)
         .map(cellText)
         .join(" "),
     }));
@@ -373,7 +393,8 @@ export class WorkflowRunsPage {
     const { rows: searched, hiddenByRepo, repoFilter } = this.searchedRows();
 
     this.renderStates(searched);
-    if (this.elements.counter) this.elements.counter.textContent = String(this.total);
+    if (this.elements.counter)
+      this.elements.counter.textContent = String(this.total);
 
     const { note } = this.elements;
     note.hidden = hiddenByRepo === 0;
@@ -385,7 +406,8 @@ export class WorkflowRunsPage {
       ? searched.filter((row) => row.state === this.state)
       : searched;
 
-    const size = this.pageSize === "all" ? Math.max(visible.length, 1) : this.pageSize;
+    const size =
+      this.pageSize === "all" ? Math.max(visible.length, 1) : this.pageSize;
     const pageCount = Math.max(1, Math.ceil(visible.length / size));
     this.page = Math.min(Math.max(0, this.page), pageCount - 1);
     const start = this.page * size;
@@ -402,23 +424,26 @@ export class WorkflowRunsPage {
    */
   renderStates(rows) {
     const counts = new Map();
-    for (const row of rows) counts.set(row.state, (counts.get(row.state) ?? 0) + 1);
+    for (const row of rows)
+      counts.set(row.state, (counts.get(row.state) ?? 0) + 1);
 
     this.elements.states.replaceChildren(
-      ...STATES.filter(({ key }) => key === "" || counts.has(key) || key === this.state).map(
-        ({ key, label }) => {
-          const active = this.state === key;
-          const button = document.createElement("button");
-          button.type = "button";
-          button.className = `entity-chip wr-state-${key || "all"}${active ? " active" : ""}`;
-          button.dataset.state = key;
-          button.setAttribute("aria-pressed", String(active));
-          const number = document.createElement("span");
-          number.textContent = String(key === "" ? rows.length : counts.get(key) ?? 0);
-          button.append(`${label} `, number);
-          return button;
-        },
-      ),
+      ...STATES.filter(
+        ({ key }) => key === "" || counts.has(key) || key === this.state,
+      ).map(({ key, label }) => {
+        const active = this.state === key;
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `entity-chip wr-state-${key || "all"}${active ? " active" : ""}`;
+        button.dataset.state = key;
+        button.setAttribute("aria-pressed", String(active));
+        const number = document.createElement("span");
+        number.textContent = String(
+          key === "" ? rows.length : (counts.get(key) ?? 0),
+        );
+        button.append(`${label} `, number);
+        return button;
+      }),
     );
   }
 
@@ -444,9 +469,17 @@ export class WorkflowRunsPage {
     }
 
     this.chartManager.drawDataTable(
-      [["#", ...this.header], ...slice.map((row, i) => [start + i + 1, ...row.cells])],
+      [
+        ["#", ...this.header],
+        ...slice.map((row, i) => [start + i + 1, ...row.cells]),
+      ],
       "wr_table",
-      { allowHtml: true, showRowNumber: false, pagination: false, repoFilter: false },
+      {
+        allowHtml: true,
+        showRowNumber: false,
+        pagination: false,
+        repoFilter: false,
+      },
     );
   }
 
@@ -484,8 +517,18 @@ export class WorkflowRunsPage {
 
     const last = pageCount - 1;
     const items = [
-      button(0, '<i class="bi bi-chevron-double-left"></i>', "First page", this.page === 0),
-      button(this.page - 1, '<i class="bi bi-chevron-left"></i>', "Previous page", this.page === 0),
+      button(
+        0,
+        '<i class="bi bi-chevron-double-left"></i>',
+        "First page",
+        this.page === 0,
+      ),
+      button(
+        this.page - 1,
+        '<i class="bi bi-chevron-left"></i>',
+        "Previous page",
+        this.page === 0,
+      ),
       ...pageWindow(this.page, pageCount).map((page) => {
         if (page === null) {
           const gap = document.createElement("span");
@@ -493,10 +536,26 @@ export class WorkflowRunsPage {
           gap.textContent = "…";
           return gap;
         }
-        return button(page, String(page + 1), `Page ${page + 1}`, false, page === this.page);
+        return button(
+          page,
+          String(page + 1),
+          `Page ${page + 1}`,
+          false,
+          page === this.page,
+        );
       }),
-      button(this.page + 1, '<i class="bi bi-chevron-right"></i>', "Next page", this.page === last),
-      button(last, '<i class="bi bi-chevron-double-right"></i>', "Last page", this.page === last),
+      button(
+        this.page + 1,
+        '<i class="bi bi-chevron-right"></i>',
+        "Next page",
+        this.page === last,
+      ),
+      button(
+        last,
+        '<i class="bi bi-chevron-double-right"></i>',
+        "Last page",
+        this.page === last,
+      ),
     ];
     pages.replaceChildren(...items);
   }

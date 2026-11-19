@@ -234,7 +234,7 @@ export class WorkflowRunsPage {
     table.addEventListener("click", (event) => {
       const retry = event.target.closest('[data-action="retry-workflow-run"]');
       if (retry) {
-        const { workflowRunId } = retry.dataset;
+        const workflowRunId = retry.dataset.workflowRunId;
         window.confirmRetryWorkflowRun?.(workflowRunId, () =>
           window.retryWorkflowRun?.(workflowRunId),
         );
@@ -245,7 +245,7 @@ export class WorkflowRunsPage {
         '[data-action="delete-workflow-run"]',
       );
       if (remove) {
-        const { workflowRunId } = remove.dataset;
+        const workflowRunId = remove.dataset.workflowRunId;
         window.confirmDeleteWorkflowRun?.(workflowRunId, () =>
           window.deleteWorkflowRun?.(workflowRunId),
         );
@@ -295,7 +295,7 @@ export class WorkflowRunsPage {
    */
   setPaused(paused) {
     this.paused = paused;
-    const { pause } = this.elements;
+    const pause = this.elements.pause;
     pause.setAttribute("aria-pressed", String(paused));
     pause.classList.toggle("active", paused);
     pause.title = paused
@@ -385,18 +385,25 @@ export class WorkflowRunsPage {
     const rows = this.rows.filter(
       (row) => kept.has(row.cells) && matchesSearch(row.text, this.query),
     );
-    return { rows, hiddenByRepo: filtered.hidden, repoFilter };
+    return {
+      rows: rows,
+      hiddenByRepo: filtered.hidden,
+      repoFilter: repoFilter,
+    };
   }
 
   render() {
     if (!this.elements) return;
-    const { rows: searched, hiddenByRepo, repoFilter } = this.searchedRows();
+    const result = this.searchedRows();
+    const searched = result.rows;
+    const hiddenByRepo = result.hiddenByRepo;
+    const repoFilter = result.repoFilter;
 
     this.renderStates(searched);
     if (this.elements.counter)
       this.elements.counter.textContent = String(this.total);
 
-    const { note } = this.elements;
+    const note = this.elements.note;
     note.hidden = hiddenByRepo === 0;
     note.textContent = hiddenByRepo
       ? `${hiddenByRepo} of ${this.rows.length} runs hidden by the repo filter "${repoFilter}"`
@@ -429,8 +436,11 @@ export class WorkflowRunsPage {
 
     this.elements.states.replaceChildren(
       ...STATES.filter(
-        ({ key }) => key === "" || counts.has(key) || key === this.state,
-      ).map(({ key, label }) => {
+        (entry) =>
+          entry.key === "" || counts.has(entry.key) || entry.key === this.state,
+      ).map((entry) => {
+        const key = entry.key;
+        const label = entry.label;
         const active = this.state === key;
         const button = document.createElement("button");
         button.type = "button";
@@ -454,7 +464,7 @@ export class WorkflowRunsPage {
    * @param {number} start - Index of its first row.
    */
   renderTable(slice, start) {
-    const { table } = this.elements;
+    const table = this.elements.table;
     if (this.header.length === 0) {
       table.innerHTML = this.failed
         ? '<p class="text-muted text-center py-3 mb-0">Could not load the workflow runs.</p>'
@@ -492,7 +502,8 @@ export class WorkflowRunsPage {
    * @param {number} pageCount - Number of pages.
    */
   renderPager(start, shown, total, pageCount) {
-    const { summary, pages } = this.elements;
+    const summary = this.elements.summary;
+    const pages = this.elements.pages;
     summary.textContent =
       total === 0
         ? "No runs"
@@ -561,7 +572,7 @@ export class WorkflowRunsPage {
   }
 
   renderCountdown() {
-    const { countdown } = this.elements ?? {};
+    const countdown = this.elements?.countdown;
     if (!countdown) return;
     countdown.classList.toggle("text-warning", this.failed);
     if (this.loading) {

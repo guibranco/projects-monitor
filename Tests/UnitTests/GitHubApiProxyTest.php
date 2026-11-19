@@ -149,9 +149,11 @@ class GitHubApiProxyTest extends TestCase
                     'requests' => 3,
                    ];
         $request = [
-                    'method' => 'GET',
-                    'path'   => '/repos/guibranco/pancake',
-                    'status' => 200,
+                    'caller'   => 'guibranco',
+                    'method'   => 'GET',
+                    'route'    => '/repos/{owner}/{repo}',
+                    'status'   => 200,
+                    'requests' => 3,
                    ];
 
         return [
@@ -160,7 +162,7 @@ class GitHubApiProxyTest extends TestCase
                 'api/v1/callers?period=24h&limit=50'     => $this->dataResponse([$caller]),
                 'api/v1/rate-limits'                     => $this->dataResponse([]),
                 'api/v1/routes?period=24h&limit=50'      => $this->dataResponse([$route]),
-                'api/v1/requests?period=24h&limit=50'    => $this->dataResponse([$request]),
+                'api/v1/route-usage?period=24h&limit=50' => $this->dataResponse([$request]),
                 'health'                                 => $this->responseWith(200, json_encode($health)),
                ];
 

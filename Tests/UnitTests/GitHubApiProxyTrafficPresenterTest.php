@@ -7,7 +7,7 @@ use GuiBranco\ProjectsMonitor\Library\GitHubApiProxyTrafficPresenter;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Routes and requests tables of the GitHub API proxy section.
+ * Routes and requests (route usage) tables of the GitHub API proxy section.
  */
 final class GitHubApiProxyTrafficPresenterTest extends TestCase
 {
@@ -17,7 +17,7 @@ final class GitHubApiProxyTrafficPresenterTest extends TestCase
      * Presents the given routes and requests in Europe/Lisbon (UTC in November).
      *
      * @param array $routes   Routes data.
-     * @param array $requests Requests data.
+     * @param array $requests Route usage data.
      *
      * @return array
      */
@@ -31,7 +31,7 @@ final class GitHubApiProxyTrafficPresenterTest extends TestCase
 
 
     /**
-     * One request with the given fields over a plain GET.
+     * One route-usage entry with the given fields over a plain GET.
      *
      * @param array $fields Fields to set.
      *
@@ -41,13 +41,15 @@ final class GitHubApiProxyTrafficPresenterTest extends TestCase
     {
         $request = array_merge(
             [
-             'requested_at' => '2026-11-19T17:02:03.456Z',
-             'caller'       => 'guibranco',
-             'token_kind'   => 'pat',
-             'method'       => 'GET',
-             'path'         => '/repos/guibranco/pancake',
-             'status'       => 200,
-             'duration_ms'  => 123,
+             'caller'            => 'guibranco',
+             'token_kind'        => 'pat',
+             'token_fingerprint' => '3f2a9c1b7d0e',
+             'method'            => 'GET',
+             'route'             => '/repos/{owner}/{repo}/pulls',
+             'status'            => 200,
+             'requests'          => 4321,
+             'last_request_at'   => '2026-11-19T17:02:03.456Z',
+             'avg_duration_ms'   => 123.45,
             ],
             $fields
         );
@@ -107,52 +109,50 @@ final class GitHubApiProxyTrafficPresenterTest extends TestCase
 
 
     /**
-     * The request time is shown in the display time zone.
+     * Each row is one token's calls to one route with one status: count,
+     * last request time (display time zone) and average duration.
      *
      * @return void
      */
-    public function testRequestTimeUsesTheDisplayZone(): void
+    public function testRouteUsageColumns(): void
     {
-        $this->assertSame('19/11/2026 17:02:03', $this->requestRow([])[0]);
-        $this->assertSame('—', $this->requestRow(['requested_at' => 'not a date'])[0]);
+        $row = $this->requestRow([]);
 
-    }//end testRequestTimeUsesTheDisplayZone()
+        $this->assertStringContainsString('guibranco', $row[0]);
+        $this->assertSame('<code>3f2a9c1b7d0e</code>', $row[1]);
+        $this->assertSame('<span class="badge text-bg-primary">GET</span>', $row[2]);
+        $this->assertSame('<code>/repos/{owner}/{repo}/pulls</code>', $row[3]);
+        $this->assertSame('4,321', $row[5]);
+        $this->assertSame('19/11/2026 17:02:03', $row[6]);
+        $this->assertSame('123.5', $row[7]);
+
+    }//end testRouteUsageColumns()
 
 
     /**
-     * The URL column has the path and query string; long URLs are cut with
-     * the full URL in the tooltip; GraphQL calls show their operation.
+     * Requests without a token have no fingerprint; a bad last time is "—".
      *
      * @return void
      */
-    public function testUrlColumn(): void
+    public function testMissingTokenAndTime(): void
     {
-        $this->assertSame(
-            '<code title="/repos/guibranco/pancake?per_page=100&amp;page=2">/repos/guibranco/pancake?per_page=100&amp;page=2</code>',
-            $this->requestRow(['query' => 'per_page=100&page=2'])[3]
-        );
-
-        $long = '/repos/guibranco/projects-monitor/contents/'.str_repeat('a', 100);
-        $cell = $this->requestRow(['path' => $long])[3];
-        $this->assertStringContainsString('title="'.$long.'"', $cell);
-        $this->assertStringContainsString('…</code>', $cell);
-        $this->assertStringNotContainsString('>'.$long.'<', $cell);
-
-        $graphql = $this->requestRow(
+        $row = $this->requestRow(
             [
-             'method'            => 'POST',
-             'path'              => '/graphql',
-             'graphql_operation' => 'ViewerRepos',
+             'caller'            => 'anonymous',
+             'token_fingerprint' => null,
+             'last_request_at'   => 'not a date',
             ]
         );
-        $this->assertSame('<span class="badge text-bg-success">POST</span>', $graphql[2]);
-        $this->assertStringContainsString('ViewerRepos', $graphql[3]);
 
-    }//end testUrlColumn()
+        $this->assertSame('anonymous', $row[0]);
+        $this->assertSame('—', $row[1]);
+        $this->assertSame('—', $row[6]);
+
+    }//end testMissingTokenAndTime()
 
 
     /**
-     * Status badges are coloured by class; a proxy error shows its message.
+     * Status badges are coloured by class; 0 (GitHub not reached) is an error.
      *
      * @return void
      */
@@ -163,24 +163,24 @@ final class GitHubApiProxyTrafficPresenterTest extends TestCase
         $this->assertSame('<span class="badge text-bg-warning">404</span>', $this->requestRow(['status' => 404])[4]);
         $this->assertSame('<span class="badge text-bg-danger">502</span>', $this->requestRow(['status' => 502])[4]);
         $this->assertSame(
-            '<span class="badge text-bg-danger" title="dial tcp: i/o timeout">error</span>',
-            $this->requestRow(['status' => 0, 'error' => 'dial tcp: i/o timeout'])[4]
+            '<span class="badge text-bg-danger">error</span>',
+            $this->requestRow(['status' => 0])[4]
         );
 
     }//end testStatusBadges()
 
 
     /**
-     * Response sizes use the largest fitting unit.
+     * Total response sizes use the largest fitting unit.
      *
      * @return void
      */
     public function testSizes(): void
     {
-        $this->assertSame("0\u{a0}B", $this->requestRow([])[6]);
-        $this->assertSame("512\u{a0}B", $this->requestRow(['response_bytes' => 512])[6]);
-        $this->assertSame("1.5\u{a0}KB", $this->requestRow(['response_bytes' => 1536])[6]);
-        $this->assertSame("2.0\u{a0}MB", $this->requestRow(['response_bytes' => 2097152])[6]);
+        $this->assertSame("0\u{a0}B", $this->requestRow([])[8]);
+        $this->assertSame("512\u{a0}B", $this->requestRow(['response_bytes' => 512])[8]);
+        $this->assertSame("1.5\u{a0}KB", $this->requestRow(['response_bytes' => 1536])[8]);
+        $this->assertSame("2.0\u{a0}MB", $this->requestRow(['response_bytes' => 2097152])[8]);
 
     }//end testSizes()
 
@@ -203,11 +203,11 @@ final class GitHubApiProxyTrafficPresenterTest extends TestCase
 
         $row = $this->requestRow(
             [
-             'path'              => '/'.$xss,
-             'query'             => 'q="><img src=x>',
-             'graphql_operation' => $xss,
-             'status'            => 0,
-             'error'             => '"><script>',
+             'caller'            => 'token:"><img src=x>',
+             'token_fingerprint' => '"><script>',
+             'method'            => $xss,
+             'route'             => '/'.$xss,
+             'last_request_at'   => $xss,
             ]
         );
         $html = implode('', $row);

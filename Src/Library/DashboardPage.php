@@ -10,12 +10,13 @@ namespace GuiBranco\ProjectsMonitor\Library;
 class DashboardPage
 {
     public const PAGES = [
-                          "overview" => "index.php|Overview|bi-speedometer|",
-                          "pipeline" => "pipeline.php|Pipeline|bi-diagram-3|pipeline",
-                          "errors"   => "errors.php|Errors|bi-bug|errors",
-                          "github"   => "github.php|GitHub work|bi-github|ci github",
-                          "ops"      => "ops.php|Ops|bi-hdd-rack|ops domains",
-                          "stats"    => "stats.php|Stats|bi-graph-up|",
+                          "overview"  => "index.php|Overview|bi-speedometer|",
+                          "pipeline"  => "pipeline.php|Pipeline|bi-diagram-3|pipeline",
+                          "errors"    => "errors.php|Errors|bi-bug|errors",
+                          "github"    => "github.php|GitHub work|bi-github|ci github",
+                          "workflows" => "workflow-runs.php|Workflow runs|bi-gear-wide-connected|ci",
+                          "ops"       => "ops.php|Ops|bi-hdd-rack|ops domains",
+                          "stats"     => "stats.php|Stats|bi-graph-up|",
                          ];
 
     /**

@@ -790,7 +790,6 @@ export class DataDisplayManager {
     );
     this.chartManager.drawDataTable(response.branches, "branches", CHART_OPTIONS.table);
     this.chartManager.drawDataTable(response.pull_requests, "pull_requests", CHART_OPTIONS.table);
-    this.chartManager.drawDataTable(response.workflow_runs, "workflow_runs", CHART_OPTIONS.table);
     this.chartManager.drawDataTable(response.feed, "feed", CHART_OPTIONS.table, 6);
     this.chartManager.drawPieChart(response.events, "pie_chart_1", optionsEvents);
     this.chartManager.drawGaugeChart(

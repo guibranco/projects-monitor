@@ -265,6 +265,7 @@ class Webhooks
 
         return [
             "workflow_runs" => $presenter->toTable($runs),
+            "states"        => $presenter->toStates($runs),
             "total"         => count($runs),
         ];
     }

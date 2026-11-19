@@ -2009,3 +2009,149 @@ body:not(.show-empty-sections) .page-group:not(:has([data-section]:not(.is-empty
   border-radius: 7px;
   flex-shrink: 0;
 }
+
+/* ===========================================
+   WORKFLOW RUNS PAGE (workflow-runs.php)
+   =========================================== */
+.wr-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px 16px;
+  margin-bottom: 10px;
+}
+
+.wr-toolbar-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.wr-states {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.wr-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, .65);
+  margin: 0;
+}
+
+.wr-select,
+.wr-search {
+  background-color: rgba(0, 0, 0, .2);
+  color: var(--text-primary);
+  border: 1px solid var(--glass-border-light);
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.wr-select {
+  width: auto;
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+
+.wr-select option {
+  background: #1a1e2e;
+  color: var(--text-primary);
+}
+
+.wr-search {
+  width: 14rem;
+}
+
+.wr-search::placeholder {
+  color: rgba(255, 255, 255, .45);
+}
+
+.wr-search:focus,
+.wr-select:focus {
+  background-color: rgba(0, 0, 0, .3);
+  color: var(--text-primary);
+  border-color: var(--glass-border);
+  box-shadow: none;
+}
+
+#wr_pause.active {
+  background: var(--status-warning);
+  border-color: var(--status-warning);
+  color: #0d1117;
+}
+
+.wr-countdown {
+  font-size: 12px;
+  color: rgba(255, 255, 255, .65);
+  font-variant-numeric: tabular-nums;
+  min-width: 9rem;
+}
+
+.wr-pager {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px 16px;
+  margin-top: 10px;
+}
+
+.wr-summary {
+  font-size: 12px;
+  color: rgba(255, 255, 255, .65);
+  font-variant-numeric: tabular-nums;
+}
+
+#wr_pages {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.wr-page {
+  min-width: 2rem;
+  background: var(--glass-bg-light);
+  border: 1px solid var(--glass-border-light);
+  color: rgba(255, 255, 255, .85);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.wr-page:hover:not(:disabled) {
+  background: var(--accent-hover-gradient);
+  color: #fff;
+}
+
+.wr-page.active {
+  background: #323a4b;
+  border-color: var(--glass-border);
+  color: #fff;
+  font-weight: 700;
+}
+
+.wr-page-gap {
+  color: rgba(255, 255, 255, .45);
+  padding: 0 2px;
+}
+
+.entity-chip.wr-state-failed span {
+  color: var(--status-critical);
+}
+
+.entity-chip.wr-state-running span {
+  color: var(--status-warning);
+}
+
+@media (max-width: 575.98px) {
+  .wr-search {
+    width: 100%;
+  }
+}

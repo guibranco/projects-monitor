@@ -294,4 +294,38 @@ class WorkflowRunsPresenterTest extends TestCase
     }//end testEscapesValues()
 
 
+    /**
+     * Each run falls in one outcome group, aligned with the table's body rows.
+     *
+     * @return void
+     */
+    public function testStates(): void
+    {
+        $presenter = new WorkflowRunsPresenter();
+        $run       = $this->getWebhooksRun();
+
+        $this->assertSame(WorkflowRunsPresenter::STATE_FAILED, $presenter->getState($run));
+
+        $run['conclusion'] = 'timed_out';
+        $this->assertSame(WorkflowRunsPresenter::STATE_FAILED, $presenter->getState($run));
+
+        $run['conclusion'] = 'success';
+        $this->assertSame(WorkflowRunsPresenter::STATE_SUCCESS, $presenter->getState($run));
+
+        $run['conclusion'] = 'cancelled';
+        $this->assertSame(WorkflowRunsPresenter::STATE_CANCELLED, $presenter->getState($run));
+
+        $run['conclusion'] = 'skipped';
+        $this->assertSame(WorkflowRunsPresenter::STATE_OTHER, $presenter->getState($run));
+
+        $run['status']     = 'in_progress';
+        $run['conclusion'] = null;
+        $this->assertSame(WorkflowRunsPresenter::STATE_RUNNING, $presenter->getState($run));
+
+        $states = $presenter->toStates([$this->getWebhooksRun(), 'not a run', $run]);
+        $this->assertSame([WorkflowRunsPresenter::STATE_FAILED, WorkflowRunsPresenter::STATE_RUNNING], $states);
+
+    }//end testStates()
+
+
 }//end class

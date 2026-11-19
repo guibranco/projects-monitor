@@ -77,18 +77,46 @@ export class GitHubApiProxyCallersTable {
       return;
     }
 
-    container.innerHTML = `<div class="entity-chips" role="toolbar" aria-label="Filter callers by type"></div><div id="${this.elementId}_table"></div>`;
-    container
-      .querySelector(".entity-chips")
-      .addEventListener("click", (event) => {
-        const chip = event.target.closest("[data-type]");
-        if (!chip) {
-          return;
-        }
+    // Built with DOM APIs, so no value is ever parsed as HTML.
+    const chips = document.createElement("div");
+    chips.className = "entity-chips";
+    chips.setAttribute("role", "toolbar");
+    chips.setAttribute("aria-label", "Filter callers by type");
+    const table = document.createElement("div");
+    table.id = `${this.elementId}_table`;
+    container.replaceChildren(chips, table);
 
-        this.filter = chip.dataset.type === "" ? null : chip.dataset.type;
-        this.render();
-      });
+    chips.addEventListener("click", (event) => {
+      const chip = event.target.closest("[data-type]");
+      if (!chip) {
+        return;
+      }
+
+      this.filter = chip.dataset.type === "" ? null : chip.dataset.type;
+      this.render();
+    });
+  }
+
+  /**
+   * One filter chip: the label as text plus the count in a badge.
+   *
+   * @param {string} type - Caller type ("" for All).
+   * @param {string} label - Text shown on the chip.
+   * @param {number} count - Callers of that type.
+   * @returns {HTMLButtonElement}
+   */
+  chipButton(type, label, count) {
+    const active = (this.filter ?? "") === type;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = active ? "entity-chip active" : "entity-chip";
+    button.dataset.type = type;
+    button.setAttribute("aria-pressed", String(active));
+
+    const badge = document.createElement("span");
+    badge.textContent = String(count);
+    button.append(`${label} `, badge);
+    return button;
   }
 
   render() {
@@ -114,22 +142,19 @@ export class GitHubApiProxyCallersTable {
     const focusedType =
       focused && container.contains(focused) ? focused.dataset.type : null;
 
-    const chip = (type, label, count) => {
-      const active = (this.filter ?? "") === type;
-      return `<button type="button" class="entity-chip${active ? " active" : ""}" data-type="${type}" aria-pressed="${active}">${label} <span>${count}</span></button>`;
-    };
-    container.querySelector(".entity-chips").innerHTML =
-      chip("", "All", this.callers.length) +
-      counts
-        .map(([type, count]) => chip(type, TYPES.get(type) ?? type, count))
-        .join("");
+    const buttons = [
+      this.chipButton("", "All", this.callers.length),
+      ...counts.map(([type, count]) =>
+        this.chipButton(type, TYPES.get(type) ?? type, count),
+      ),
+    ];
+    container.querySelector(".entity-chips").replaceChildren(...buttons);
     if (focusedType !== null) {
       // The focused type may have disappeared on refresh: fall back to All.
-      const chips = container.querySelector(".entity-chips");
-      const replacement = chips.querySelector(
-        `[data-type="${CSS.escape(focusedType)}"]`,
+      const replacement = buttons.find(
+        (button) => button.dataset.type === focusedType,
       );
-      (replacement ?? chips.querySelector('[data-type=""]'))?.focus();
+      (replacement ?? buttons[0]).focus();
     }
 
     const rows = this.callers

@@ -67,8 +67,18 @@ final class GitHubApiProxyTrafficPresenter
                                 'GB',
                                ];
 
+    /**
+     * Time zone the request times are shown in.
+     *
+     * @var DateTimeZone
+     */
     private DateTimeZone $zone;
 
+    /**
+     * Shared cell renderer (caller, errors badge, escaping).
+     *
+     * @var GitHubApiProxyCells
+     */
     private GitHubApiProxyCells $cells;
 
 

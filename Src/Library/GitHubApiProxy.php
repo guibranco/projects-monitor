@@ -105,8 +105,9 @@ class GitHubApiProxy extends BearerTokenApiClient
         $presenter = new GitHubApiProxyPresenter();
         $traffic   = new GitHubApiProxyTrafficPresenter();
 
-        return ($presenter->present($summary, $timeline, $callers, $rateLimits, $health, $range)
-            + $traffic->present($routes, $requests));
+        $dashboard = $presenter->present($summary, $timeline, $callers, $rateLimits, $health, $range);
+
+        return array_merge($dashboard, $traffic->present($routes, $requests));
 
     }//end getDashboard()
 

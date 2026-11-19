@@ -385,11 +385,12 @@ export class WorkflowRunsPage {
     const rows = this.rows.filter(
       (row) => kept.has(row.cells) && matchesSearch(row.text, this.query),
     );
-    return {
+    const result = {
       rows: rows,
       hiddenByRepo: filtered.hidden,
       repoFilter: repoFilter,
     };
+    return result;
   }
 
   render() {

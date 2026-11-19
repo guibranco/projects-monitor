@@ -686,6 +686,8 @@ export class DataDisplayManager {
     });
     this.gitHubApiProxyCallers.update(response.callers, response.callerTypes);
     this.chartManager.drawDataTable(response.rateLimits, "github_api_proxy_rate_limits", CHART_OPTIONS.table);
+    this.chartManager.drawDataTable(response.routes ?? [], "github_api_proxy_routes", CHART_OPTIONS.table);
+    this.chartManager.drawDataTable(response.requests ?? [], "github_api_proxy_requests", CHART_OPTIONS.table);
   }
 
   /**

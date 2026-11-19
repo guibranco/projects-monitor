@@ -13,10 +13,11 @@ class GitHubApiProxy extends BearerTokenApiClient
 {
 
     /**
-     * Total transfer timeout per call, in seconds; the five calls of one
-     * refresh stay well inside the dashboard's 60-second refresh.
+     * Total transfer timeout per call, in seconds; even if all seven calls
+     * of one refresh ran to the limit, they would end inside the
+     * dashboard's 60-second refresh.
      */
-    private const TIMEOUT_SECONDS = 10;
+    private const TIMEOUT_SECONDS = 8;
 
 
     /**
@@ -78,7 +79,9 @@ class GitHubApiProxy extends BearerTokenApiClient
      * Everything the dashboard shows for the proxy, rendered by
      * GitHubApiProxyPresenter: the range's totals, timeline and callers,
      * plus each caller's current GitHub rate limits and the service's
-     * health (version, database, allow-list).
+     * health (version, database, allow-list); and, rendered by
+     * GitHubApiProxyTrafficPresenter, the range's busiest routes and its
+     * latest 50 requests with their URLs.
      *
      * @param GitHubApiProxyRange|null $range Time range; defaults to the last 24 hours.
      *
@@ -95,11 +98,15 @@ class GitHubApiProxy extends BearerTokenApiClient
         $timeline   = $this->getData('api/v1/timeline?'.$period.'&bucket='.$range->bucket());
         $callers    = $this->getData('api/v1/callers?'.$period.'&limit=50');
         $rateLimits = $this->getData('api/v1/rate-limits');
+        $routes     = $this->getData('api/v1/routes?'.$period.'&limit=50');
+        $requests   = $this->getData('api/v1/requests?'.$period.'&limit=50');
         $health     = $this->doGet('health');
 
         $presenter = new GitHubApiProxyPresenter();
+        $traffic   = new GitHubApiProxyTrafficPresenter();
 
-        return $presenter->present($summary, $timeline, $callers, $rateLimits, $health, $range);
+        return ($presenter->present($summary, $timeline, $callers, $rateLimits, $health, $range)
+            + $traffic->present($routes, $requests));
 
     }//end getDashboard()
 

@@ -410,6 +410,14 @@ code {
   height: 320px;
 }
 
+/* Long request URLs and route templates wrap anywhere, so the requests
+   table fits its section instead of scrolling the last columns away. */
+#github_api_proxy_requests code,
+#github_api_proxy_routes code {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .chart-container {
   @extend .glass-card;
   padding: 20px;

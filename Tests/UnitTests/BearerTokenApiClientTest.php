@@ -107,7 +107,7 @@ class BearerTokenApiClientTest extends TestCase
     {
         $request = $this->property(new GitHubApiProxy(), 'request');
 
-        $this->assertSame(10, $request->getTimeout());
+        $this->assertSame(8, $request->getTimeout());
 
     }//end testProxyClientHasAFiniteTimeout()
 

@@ -33,10 +33,13 @@ $configuration = new Configuration();
 
 <head>
    <title>Projects Monitor | Releases</title>
+   <link rel="icon" type="image/svg+xml" href="static/brand/favicon.svg">
+   <link rel="icon" type="image/png" sizes="32x32" href="static/brand/favicon-32.png">
+   <link rel="apple-touch-icon" href="static/brand/apple-touch-icon.png">
+   <meta name="theme-color" content="#0d1117">
    <meta charset="utf-8">
    <meta http-equiv="X-UA-Compatible" content="IE=edge">
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-   <?php require __DIR__ . '/partials/brand-icons.php'; ?>
    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
       integrity="sha512-dPXYcDub/aeb08c63jRq/k6GaKccl256JQy/AnOq7CAnEZ9FzSL9wSbcZkMp4R26vBsMLFYH4kQ67/bbV8XaCQ=="

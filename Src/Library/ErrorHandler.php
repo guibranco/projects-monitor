@@ -226,7 +226,8 @@ class ErrorHandler
         $context["file"]       = $error["file"];
         $context["line"]       = $error["line"];
         $message = explode("\nStack trace:", $error["message"], 2);
-        $context["reason"]     = (new ErrorText())->summarize($message[0]);
+        $context["reason"]        = (new ErrorText())->summarize($message[0]);
+        $context["error_message"] = $error["message"];
         $context["script"]     = $this->script;
         $this->reporter->critical("PHP {level_name} in {file}:{line}: {reason}", $context, $this->category);
 

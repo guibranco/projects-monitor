@@ -89,8 +89,8 @@ class ErrorReporterTest extends TestCase
 
         $logger = $this->createStub(Logger::class);
         $logger->method("logError")->willReturnCallback(
-            function (string $message, array $details, ?\Throwable $exception): bool {
-                $this->rows[] = compact("message", "details", "exception");
+            function (string $message, array $details, ?\Throwable $exception, ?array $origin): bool {
+                $this->rows[] = compact("message", "details", "exception", "origin");
                 return true;
             }
         );
@@ -163,6 +163,29 @@ class ErrorReporterTest extends TestCase
         $this->assertSame("critical", $this->rows[1]["details"]["level"]);
 
     }//end testWarningAndCriticalLevels()
+
+
+    /**
+     * A PHP error's file and line go to the messages table as its origin; other reports have none.
+     *
+     * @return void
+     */
+    public function testPassesPhpErrorOrigin(): void
+    {
+        $context           = [];
+        $context["file"]   = "/x/github.php";
+        $context["line"]   = 13;
+        $context["reason"] = "Undefined array key";
+
+        $reporter = $this->buildReporter(false, false);
+        $reporter->warning("PHP Warning in {file}:{line}: {reason}", $context, "api");
+        $reporter->error("No location", [], "api");
+
+        $this->assertSame("/x/github.php", $this->rows[0]["origin"]["file"]);
+        $this->assertSame(13, $this->rows[0]["origin"]["line"]);
+        $this->assertNull($this->rows[1]["origin"]);
+
+    }//end testPassesPhpErrorOrigin()
 
 
     /**

@@ -95,10 +95,13 @@ class ErrorHandlerTest extends TestCase
         $handler  = $this->buildHandler();
         $previous = error_reporting(E_ALL);
 
-        $this->assertFalse($handler->handleError(E_WARNING, "Undefined array key \"data\"", "/x/github.php", 13));
-        $this->assertFalse($handler->handleError(E_WARNING, "Undefined array key \"data\"", "/x/github.php", 13));
-        $this->assertFalse($handler->handleError(E_WARNING, "Undefined array key \"core\"", "/x/github.php", 14));
-        error_reporting($previous);
+        try {
+            $this->assertFalse($handler->handleError(E_WARNING, "Undefined array key \"data\"", "/x/github.php", 13));
+            $this->assertFalse($handler->handleError(E_WARNING, "Undefined array key \"data\"", "/x/github.php", 13));
+            $this->assertFalse($handler->handleError(E_WARNING, "Undefined array key \"core\"", "/x/github.php", 14));
+        } finally {
+            error_reporting($previous);
+        }
 
         $this->assertCount(2, $this->reports);
         $this->assertSame("warning", $this->reports[0]["level"]);
@@ -120,8 +123,11 @@ class ErrorHandlerTest extends TestCase
         $handler  = $this->buildHandler();
         $previous = error_reporting(0);
 
-        $this->assertFalse($handler->handleError(E_WARNING, "Silenced", "/x/silenced.php", 1));
-        error_reporting($previous);
+        try {
+            $this->assertFalse($handler->handleError(E_WARNING, "Silenced", "/x/silenced.php", 1));
+        } finally {
+            error_reporting($previous);
+        }
 
         $this->assertCount(0, $this->reports);
 
@@ -199,6 +205,7 @@ class ErrorHandlerTest extends TestCase
         $this->assertSame("Fatal error", $this->reports[0]["context"]["level_name"]);
         $this->assertSame("Allowed memory size exhausted", $this->reports[0]["context"]["reason"]);
         $this->assertSame("Uncaught RequestException: busy in /x/Webhooks.php:78", $this->reports[1]["context"]["reason"]);
+        $this->assertSame($uncaught["message"], $this->reports[1]["context"]["error_message"]);
 
     }//end testReportFatal()
 

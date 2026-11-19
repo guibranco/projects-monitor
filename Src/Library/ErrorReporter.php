@@ -247,12 +247,35 @@ class ErrorReporter
             $rendered = $this->errorText->truncate($this->errorText->render($message, $context), self::MAX_MESSAGE_LENGTH);
             $details  = $this->buildDetails($level, $message, $context, $category);
             $logger   = call_user_func($this->loggerFactory);
-            $logger->logError($rendered, $details, $exception);
+            $logger->logError($rendered, $details, $exception, $this->findOrigin($context));
         } catch (\Throwable $failure) {
             error_log(sprintf("ErrorReporter: messages table failed: %s", $failure->getMessage()));
         }
 
     }//end sendToMessages()
+
+
+    /**
+     * Where a PHP error happened, from the `file` and `line` of the context
+     * (set by ErrorHandler for warnings and fatal errors).
+     *
+     * @param array $context The context.
+     *
+     * @return array|null The file and line, or null when the context has none.
+     */
+    private function findOrigin(array $context): ?array
+    {
+        if (isset($context["file"], $context["line"]) === false || is_string($context["file"]) === false) {
+            return null;
+        }
+
+        $origin         = [];
+        $origin["file"] = $context["file"];
+        $origin["line"] = (int) $context["line"];
+
+        return $origin;
+
+    }//end findOrigin()
 
 
 }//end class

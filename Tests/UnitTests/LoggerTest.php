@@ -404,4 +404,85 @@ class LoggerTest extends TestCase
 
         $this->logger->deleteMessagesByGroupSampleId(1);
     }
+
+    // -------------------------------------------------------------------------
+    // logError / resolveErrorLocation
+    // -------------------------------------------------------------------------
+
+    public function testLogErrorStoresExceptionLocationAndDetails(): void
+    {
+        $captured = $this->captureInsert();
+        $logger = $this->loggerWithHeaders(['REMOTE_ADDR' => '203.0.113.7', 'User-Agent' => 'agent']);
+        $exception = new RuntimeException('boom');
+
+        $this->assertTrue($logger->logError('Releases failed: boom', ['level' => 'error'], $exception));
+
+        $values = $captured['values'];
+        $this->assertSame('isssissssssss', $captured['types']);
+        $this->assertSame(RuntimeException::class, $values[1]);
+        $this->assertSame(__FILE__, $values[3]);
+        $this->assertSame($exception->getLine(), $values[4]);
+        $this->assertSame('exception', $values[6]);
+        $this->assertSame('Releases failed: boom', $values[8]);
+        $this->assertSame('{"level":"error"}', $values[9]);
+        $this->assertSame('agent', $values[11]);
+        $this->assertSame('203.0.113.7', $values[12]);
+    }
+
+    public function testResolveErrorLocationSkipsReportingFrames(): void
+    {
+        $frames = [
+            ['file' => '/Src/Library/ErrorReporter.php', 'line' => 140, 'function' => 'logError', 'class' => Logger::class, 'type' => '->'],
+            ['file' => '/Src/Library/ErrorReporter.php', 'line' => 90, 'function' => 'report', 'class' => 'GuiBranco\\ProjectsMonitor\\Library\\ErrorReporter', 'type' => '->'],
+            ['file' => '/Src/Library/GitHub.php', 'line' => 352, 'function' => 'error', 'class' => 'GuiBranco\\ProjectsMonitor\\Library\\ErrorReporter', 'type' => '->'],
+            ['file' => '/Src/api/v1/github.php', 'line' => 13, 'function' => 'getApiUsage', 'class' => 'GuiBranco\\ProjectsMonitor\\Library\\GitHub', 'type' => '->'],
+        ];
+
+        $location = $this->logger->resolveErrorLocation(null, $frames);
+
+        $this->assertSame('/Src/Library/GitHub.php', $location['file']);
+        $this->assertSame(352, $location['line']);
+        $this->assertSame('GuiBranco\\ProjectsMonitor\\Library\\GitHub', $location['class']);
+        $this->assertSame('getApiUsage', $location['function']);
+    }
+
+    public function testResolveErrorLocationAtScriptTopLevel(): void
+    {
+        $frames = [
+            ['file' => '/Src/Library/ErrorReporter.php', 'line' => 140, 'function' => 'logError', 'class' => Logger::class, 'type' => '->'],
+            ['file' => '/Src/api/v1/github.php', 'line' => 19, 'function' => 'error', 'class' => 'GuiBranco\\ProjectsMonitor\\Library\\ErrorReporter', 'type' => '->'],
+        ];
+
+        $location = $this->logger->resolveErrorLocation(null, $frames);
+
+        $this->assertSame('/Src/api/v1/github.php', $location['file']);
+        $this->assertSame(19, $location['line']);
+        $this->assertSame('{main}', $location['function']);
+    }
+
+    public function testLogErrorStoresPhpErrorOrigin(): void
+    {
+        $captured = $this->captureInsert();
+        $logger = $this->loggerWithHeaders([]);
+
+        $this->assertTrue($logger->logError('PHP Warning', [], null, ['file' => '/x/github.php', 'line' => 13]));
+
+        $values = $captured['values'];
+        $this->assertSame('none', $values[1]);
+        $this->assertSame('/x/github.php', $values[3]);
+        $this->assertSame(13, $values[4]);
+        $this->assertSame('php-error', $values[6]);
+    }
+
+    public function testLogErrorPrefersExceptionOverOrigin(): void
+    {
+        $captured = $this->captureInsert();
+        $logger = $this->loggerWithHeaders([]);
+        $exception = new RuntimeException('boom');
+
+        $this->assertTrue($logger->logError('Failed', [], $exception, ['file' => '/x/other.php', 'line' => 1]));
+
+        $this->assertSame(__FILE__, $captured['values'][3]);
+        $this->assertSame($exception->getLine(), $captured['values'][4]);
+    }
 }

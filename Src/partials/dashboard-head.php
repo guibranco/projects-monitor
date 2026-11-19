@@ -38,6 +38,10 @@ $dashboardPage = new DashboardPage(($activePage ?? "overview"), ($pageTitle ?? "
    <meta charset="utf-8">
    <meta http-equiv="X-UA-Compatible" content="IE=edge">
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <link rel="icon" type="image/svg+xml" href="static/brand/favicon.svg">
+   <link rel="icon" type="image/png" sizes="32x32" href="static/brand/favicon-32.png">
+   <link rel="apple-touch-icon" href="static/brand/apple-touch-icon.png">
+   <meta name="theme-color" content="#0d1117">
    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
       integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
       crossorigin="anonymous">
@@ -64,7 +68,7 @@ $dashboardPage = new DashboardPage(($activePage ?? "overview"), ($pageTitle ?? "
    <nav class="navbar navbar-dark fixed-top" id="main-navbar">
       <div class="container-fluid px-4 gap-2">
          <a class="navbar-brand d-flex align-items-center gap-2" href="index.php">
-            <i class="bi bi-activity fs-5"></i>
+            <img src="static/brand/logo.svg" alt="" width="28" height="28" class="brand-logo">
             <span class="fw-bold d-none d-sm-inline">Projects Monitor</span>
          </a>
          <ul class="page-tabs nav me-auto">

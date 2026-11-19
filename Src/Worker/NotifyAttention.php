@@ -39,8 +39,15 @@ use GuiBranco\ProjectsMonitor\Library\Database;
 use GuiBranco\ProjectsMonitor\Library\LogStream;
 use GuiBranco\ProjectsMonitor\Library\OneSignal;
 use GuiBranco\ProjectsMonitor\Library\PublicStats;
+use GuiBranco\ProjectsMonitor\Library\ErrorHandler;
+use GuiBranco\ProjectsMonitor\Library\ErrorReporter;
 
 $logStream = new LogStream();
+// Failures go to LogStream (when enabled) and the messages table; anything
+// unhandled is caught by ErrorHandler.
+$errorReporter = new ErrorReporter();
+$errorReporter->setLogStream($logStream);
+(new ErrorHandler("worker", basename(__FILE__)))->register();
 (new Configuration())->init();
 
 $oneSignal = new OneSignal();
@@ -53,7 +60,7 @@ try {
     $store = new AttentionStore((new Database())->getConnection());
 } catch (Throwable $exception) {
     // Without the store nothing remembers what was pushed, so every run would push again.
-    $logStream->error("{worker} cannot open the attention store: {reason}", array_merge(["worker" => "NotifyAttention"], ["reason" => $exception->getMessage()]), "worker");
+    $errorReporter->error("{worker} cannot open the attention store: {reason}", array_merge(["worker" => "NotifyAttention"], ["reason" => $exception->getMessage()]), "worker");
     exit(1);
 }
 
@@ -64,7 +71,7 @@ $notifier   = new AttentionNotifier((int) $thresholds->getValue("notify.maxPushe
 $result     = (new AttentionPushRun($store, $oneSignal, $notifier))->run($feed->getResponse(false, time()));
 
 foreach ($result["errors"] as $reason) {
-    $logStream->error("{worker} push failed: {reason}", array_merge(["worker" => "NotifyAttention"], ["reason" => $reason]), "worker");
+    $errorReporter->error("{worker} push failed: {reason}", array_merge(["worker" => "NotifyAttention"], ["reason" => $reason]), "worker");
 }
 
 $context = [

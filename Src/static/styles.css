@@ -2001,6 +2001,15 @@ body:not(.show-empty-sections) .page-group:not(:has([data-section]:not(.is-empty
   }
 }
 
+/* Brand logo in the navbar */
+.navbar-brand .brand-logo {
+  display: block;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  flex-shrink: 0;
+}
+
 /* ===========================================
    WORKFLOW RUNS PAGE (workflow-runs.php)
    =========================================== */

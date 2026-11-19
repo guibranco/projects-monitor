@@ -1,5 +1,7 @@
 # Projects Monitor
 
+![Projects Monitor logo](Src/static/brand/logo.svg)
+
 ⚙️ 🔔 A "flight control panel" for GitHub repositories, personal projects, and
 the infrastructure behind them — pull requests, issues, webhooks, health checks,
 DNS, queues, and error logs, in one authenticated dashboard that opens on what
@@ -324,6 +326,13 @@ retrieval, details, deletion), and `public-stats`.
 ## Deployment
 
 `deploy.yml` builds a versioned release (via [GitVersion](https://gitversion.net/), GitHubFlow), writes each integration's secrets file from GitHub Actions secrets, zips `Src/` into `deploy.zip`, and ships it over FTP. `install.php` unpacks the zip on the target server and removes itself. The workflow runs on every push to `main`.
+
+### Branding
+
+The logo lives in [`Src/static/brand/`](Src/static/brand/): `logo.svg` (navbar
+and README), `favicon.svg` / `favicon-32.png` / `apple-touch-icon.png` (browser
+icons), and `logo-512.png` — a 512×512 PNG for places that need a raster image,
+such as the Projects Monitor GitHub App's display picture.
 
 ---
 

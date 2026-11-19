@@ -337,6 +337,15 @@ class GitHub
         return $this->getLatestReleaseDetails("guibranco", "bancosbrasileiros");
     }
 
+    /**
+     * The GitHub API rate limits as a table, plus the core resource usage.
+     *
+     * Always returns both keys: on a failed call the failure is reported
+     * (LogStream when enabled + messages table) and `data` holds only the
+     * header row while `core` is null.
+     *
+     * @return array{core: object|array|null, data: array}
+     */
     public function getApiUsage(): array
     {
         $dataCore = array();
@@ -344,13 +353,35 @@ class GitHub
         $data[] = ["Resource", "Usage", "Reset"];
 
         $response = $this->requestInternal($this->apiUrl . "rate_limit");
+        $statusCode = $response->getStatusCode();
 
-        if ($response->getStatusCode() !== 200) {
-            return $data;
+        $failure = [];
+        $failure["core"] = null;
+        $failure["data"] = $data;
+
+        if ($statusCode !== 200) {
+            $context = [];
+            $context["status_code"] = $statusCode;
+            $context["reason"] = (new ErrorText())->summarize((string) $response->getBody());
+            if ($statusCode === -1) {
+                $context["reason"] = (string) $response->getMessage();
+            }
+
+            (new ErrorReporter())->error("GitHub rate_limit request failed with status {status_code}: {reason}", $context, "github");
+
+            return $failure;
         }
 
         $body = $response->getBody();
         $json = json_decode($body);
+
+        if (is_object($json) === false || isset($json->resources) === false || is_object($json->resources) === false) {
+            $context = [];
+            $context["reason"] = (new ErrorText())->summarize(substr((string) $body, 0, 500));
+            (new ErrorReporter())->error("GitHub rate_limit response has no resources: {reason}", $context, "github");
+
+            return $failure;
+        }
 
         foreach ($json->resources as $resource => $item) {
             if ($resource === "core") {

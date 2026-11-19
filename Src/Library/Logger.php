@@ -148,6 +148,143 @@ class Logger
         return $result;
     }
 
+    /**
+     * Stores an error of this application in the messages table.
+     *
+     * The location (class, function, file, line) is the one of the exception
+     * when there is one, otherwise the first caller outside ErrorReporter, so
+     * that messages of the same failure group together in the inbox.
+     *
+     * @param string          $message   The rendered message.
+     * @param array           $details   Extra data, stored as JSON in `details`.
+     * @param \Throwable|null $exception The exception being reported, if any.
+     * @param array|null      $origin    Where a PHP error happened (file and line), when there is no exception.
+     *
+     * @return bool Whether the message was stored.
+     */
+    public function logError(string $message, array $details = [], ?\Throwable $exception = null, ?array $origin = null): bool
+    {
+        $headers = $this->getRequestHeaders();
+        $location = $this->resolveErrorLocation($exception, debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 8));
+        if ($exception === null && $origin !== null) {
+            $location = $this->resolveOriginLocation($origin);
+        }
+
+        $stmt = $this->connection->prepare($this->getInsert());
+        if ($stmt === false) {
+            error_log("Prepare failed: " . $this->connection->error);
+            return false;
+        }
+
+        $appId = $this->applicationId;
+        $class = $location["class"];
+        $function = $location["function"];
+        $file = $location["file"];
+        $line = $location["line"];
+        $object = "none";
+        $type = $location["type"];
+        $args = "none";
+        $message = $message !== "" ? $message : "none";
+        $encodedDetails = json_encode($details, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_SLASHES | JSON_PARTIAL_OUTPUT_ON_ERROR);
+        $detailsText = $encodedDetails === false ? json_last_error_msg() : $encodedDetails;
+        $correlationId = isset($headers["X-Correlation-Id"]) ? $headers["X-Correlation-Id"] : "none";
+        $userAgent = isset($headers["User-Agent"]) ? $headers["User-Agent"] : "none";
+        $ipAddress = $this->getClientIpAddress($headers);
+
+        $stmt->bind_param(
+            "isssissssssss",
+            $appId,
+            $class,
+            $function,
+            $file,
+            $line,
+            $object,
+            $type,
+            $args,
+            $message,
+            $detailsText,
+            $correlationId,
+            $userAgent,
+            $ipAddress
+        );
+
+        $result = $stmt->execute();
+        $stmt->close();
+
+        return $result;
+    }
+
+    /**
+     * Where an error happened: the exception's throw site, otherwise the first
+     * stack frame outside the reporting classes.
+     *
+     * @param \Throwable|null $exception The exception, if any.
+     * @param array           $frames    A debug_backtrace() of the reporting call.
+     *
+     * @return array{class: string, function: string, file: string, line: int, type: string}
+     */
+    public function resolveErrorLocation(?\Throwable $exception, array $frames): array
+    {
+        if ($exception !== null) {
+            $origin = $exception->getTrace()[0] ?? [];
+
+            return [
+                "class" => get_class($exception),
+                "function" => isset($origin["class"]) ? $origin["class"] . ($origin["type"] ?? "::") . ($origin["function"] ?? "") : ($origin["function"] ?? "none"),
+                "file" => $exception->getFile(),
+                "line" => $exception->getLine(),
+                "type" => "exception",
+            ];
+        }
+
+        $skip = [self::class, ErrorReporter::class, ErrorHandler::class, ErrorText::class];
+        $location = ["class" => "none", "function" => "none", "file" => "none", "line" => 0, "type" => "none"];
+
+        foreach ($frames as $index => $frame) {
+            if (in_array($frame["class"] ?? "", $skip, true)) {
+                continue;
+            }
+
+            // The frame that called into the reporting classes holds the call site.
+            $callSite = $frames[$index - 1] ?? $frame;
+            $location["file"] = $callSite["file"] ?? "none";
+            $location["line"] = (int) ($callSite["line"] ?? 0);
+            $location["class"] = $frame["class"] ?? "none";
+            $location["function"] = $frame["function"] ?? "none";
+            $location["type"] = $frame["type"] ?? "none";
+
+            return $location;
+        }
+
+        // Reported from the top level of a script: the outermost frame holds the call site.
+        $outermost = end($frames);
+        if ($outermost !== false) {
+            $location["file"] = $outermost["file"] ?? "none";
+            $location["line"] = (int) ($outermost["line"] ?? 0);
+            $location["function"] = "{main}";
+        }
+
+        return $location;
+    }
+
+    /**
+     * The location of a PHP error (warning or fatal error) from its file and line.
+     *
+     * @param array $origin The file and line.
+     *
+     * @return array{class: string, function: string, file: string, line: int, type: string}
+     */
+    public function resolveOriginLocation(array $origin): array
+    {
+        return [
+            "class" => "none",
+            "function" => "none",
+            "file" => (string) ($origin["file"] ?? "none"),
+            "line" => (int) ($origin["line"] ?? 0),
+            "type" => "php-error",
+        ];
+    }
+
     public function saveMessage($applicationId)
     {
         $config = new Configuration();

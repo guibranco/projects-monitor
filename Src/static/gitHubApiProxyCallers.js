@@ -124,9 +124,12 @@ export class GitHubApiProxyCallersTable {
         .map(([type, count]) => chip(type, TYPES.get(type) ?? type, count))
         .join("");
     if (focusedType !== null) {
-      container
-        .querySelector(`.entity-chips [data-type="${CSS.escape(focusedType)}"]`)
-        ?.focus();
+      // The focused type may have disappeared on refresh: fall back to All.
+      const chips = container.querySelector(".entity-chips");
+      const replacement = chips.querySelector(
+        `[data-type="${CSS.escape(focusedType)}"]`,
+      );
+      (replacement ?? chips.querySelector('[data-type=""]'))?.focus();
     }
 
     const rows = this.callers

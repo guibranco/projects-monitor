@@ -266,6 +266,7 @@ class Webhooks
         return [
             "workflow_runs" => $presenter->toTable($runs),
             "states"        => $presenter->toStates($runs),
+            "sort_keys"     => $presenter->toSortKeys($runs),
             "total"         => count($runs),
         ];
     }

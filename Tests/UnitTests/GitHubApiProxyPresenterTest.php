@@ -85,7 +85,10 @@ class GitHubApiProxyPresenterTest extends TestCase
      */
     private function present(array $callers=[], array $rateLimits=[], array $timeline=[], ?string $range=null): array
     {
-        $rangeObject = ($range === null) ? null : new GitHubApiProxyRange($range);
+        $rangeObject = null;
+        if ($range !== null) {
+            $rangeObject = new GitHubApiProxyRange($range);
+        }
 
         return $this->presenter()->present($this->summary(), $timeline, $callers, $rateLimits, $this->health(), $rangeObject);
 

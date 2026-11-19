@@ -25,19 +25,24 @@ export const DEFAULT_GITHUB_API_PROXY_RANGE = "24h";
  * @returns {string}
  */
 export function getGitHubApiProxyRange() {
+  let saved = null;
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return GITHUB_API_PROXY_RANGES.has(saved) ? saved : DEFAULT_GITHUB_API_PROXY_RANGE;
-  } catch {
-    return DEFAULT_GITHUB_API_PROXY_RANGE;
+    saved = localStorage.getItem(STORAGE_KEY);
+  } catch (error) {
+    console.warn("Failed to load the GitHub API proxy range:", error);
   }
+
+  return GITHUB_API_PROXY_RANGES.has(saved)
+    ? saved
+    : DEFAULT_GITHUB_API_PROXY_RANGE;
 }
 
 function saveGitHubApiProxyRange(range) {
   try {
     localStorage.setItem(STORAGE_KEY, range);
-  } catch {
+  } catch (error) {
     // Storage unavailable: the choice lasts until the page reloads.
+    console.warn("Failed to save the GitHub API proxy range:", error);
   }
 }
 

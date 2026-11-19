@@ -1,6 +1,6 @@
 // api.js
 import { API_ENDPOINTS } from './constants.js';
-import { getGitHubApiProxyRange } from './gitHubApiProxyRange.js';
+import { getGitHubApiProxyRange } from "./gitHubApiProxyRange.js";
 import { NotificationManager } from './ui.js';
 
 export class ApiManager {

@@ -239,15 +239,16 @@ class GitHubApiProxyPresenter
             }
 
             try {
-                $at = new DateTimeImmutable((string) $point['bucket']);
+                $bucketAt = new DateTimeImmutable((string) $point['bucket']);
             } catch (Exception $exception) {
                 continue;
             }
 
-            $byBucket[$at->setTimezone($utc)->format($keyFmt)] = [
-                                                                  (int) ($point['requests'] ?? 0),
-                                                                  (int) ($point['errors'] ?? 0),
-                                                                 ];
+            $key            = $bucketAt->setTimezone($utc)->format($keyFmt);
+            $byBucket[$key] = [
+                               (int) ($point['requests'] ?? 0),
+                               (int) ($point['errors'] ?? 0),
+                              ];
         }
 
         $points = $range->points();
@@ -257,13 +258,13 @@ class GitHubApiProxyPresenter
         $header[0] = self::BUCKET_TITLES[$bucket];
         $rows      = [$header];
         for ($i = 0; $i < $points; $i++) {
-            $at     = $start->add(new DateInterval(sprintf($step, $i)));
-            $counts = ($byBucket[$at->format($keyFmt)] ?? [0, 0]);
-            $rows[] = [
-                       $this->bucketLabel($at, $bucket, $points),
-                       $counts[0],
-                       $counts[1],
-                      ];
+            $bucketAt = $start->add(new DateInterval(sprintf($step, $i)));
+            $counts   = ($byBucket[$bucketAt->format($keyFmt)] ?? [0, 0]);
+            $rows[]   = [
+                         $this->bucketLabel($bucketAt, $bucket, $points),
+                         $counts[0],
+                         $counts[1],
+                        ];
         }
 
         return $rows;
@@ -281,17 +282,17 @@ class GitHubApiProxyPresenter
      */
     private function bucketStart(string $bucket): DateTimeImmutable
     {
-        $now = $this->now->setTimezone(new DateTimeZone('UTC'));
-        $h   = (int) $now->format('H');
+        $now  = $this->now->setTimezone(new DateTimeZone('UTC'));
+        $hour = (int) $now->format('H');
         if ($bucket === 'day') {
             return $now->setTime(0, 0);
         }
 
         if ($bucket === 'hour') {
-            return $now->setTime($h, 0);
+            return $now->setTime($hour, 0);
         }
 
-        return $now->setTime($h, (int) $now->format('i'));
+        return $now->setTime($hour, (int) $now->format('i'));
 
     }//end bucketStart()
 
@@ -301,19 +302,19 @@ class GitHubApiProxyPresenter
      * dashboard's time zone (with the date once the range spans days); days
      * are UTC days, so they keep their UTC date.
      *
-     * @param DateTimeImmutable $at     Bucket start, UTC.
-     * @param string            $bucket minute, hour or day.
-     * @param integer           $points Number of points in the range.
+     * @param DateTimeImmutable $bucketAt Bucket start, UTC.
+     * @param string            $bucket   minute, hour or day.
+     * @param integer           $points   Number of points in the range.
      *
      * @return string
      */
-    private function bucketLabel(DateTimeImmutable $at, string $bucket, int $points): string
+    private function bucketLabel(DateTimeImmutable $bucketAt, string $bucket, int $points): string
     {
         if ($bucket === 'day') {
-            return $at->format('d/m');
+            return $bucketAt->format('d/m');
         }
 
-        $local = $at->setTimezone($this->zone);
+        $local = $bucketAt->setTimezone($this->zone);
         if ($bucket === 'hour' && $points > 24) {
             return $local->format('d/m H:i');
         }

@@ -66,21 +66,12 @@ class GitHubApiProxyRange
     public function __construct(?string $key=null)
     {
         $key       = trim((string) $key);
-        $this->key = (isset(self::RANGES[$key]) === true) ? $key : self::DEFAULT;
+        $this->key = self::DEFAULT;
+        if (isset(self::RANGES[$key]) === true) {
+            $this->key = $key;
+        }
 
     }//end __construct()
-
-
-    /**
-     * Every range key, in display order.
-     *
-     * @return string[]
-     */
-    public static function keys(): array
-    {
-        return array_keys(self::RANGES);
-
-    }//end keys()
 
 
     /**

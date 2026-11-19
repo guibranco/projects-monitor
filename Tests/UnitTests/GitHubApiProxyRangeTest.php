@@ -18,20 +18,39 @@ class GitHubApiProxyRangeTest extends TestCase
     public function testRangesMapToPeriodAndBucket(): void
     {
         $expected = [
-                     '1h'  => ['1h', 'minute', 60],
-                     '24h' => ['24h', 'hour', 24],
-                     '7d'  => ['7d', 'hour', 168],
-                     '30d' => ['30d', 'day', 30],
-                     '90d' => ['90d', 'day', 90],
+                     '1h'  => [
+                               'period' => '1h',
+                               'bucket' => 'minute',
+                               'points' => 60,
+                              ],
+                     '24h' => [
+                               'period' => '24h',
+                               'bucket' => 'hour',
+                               'points' => 24,
+                              ],
+                     '7d'  => [
+                               'period' => '7d',
+                               'bucket' => 'hour',
+                               'points' => 168,
+                              ],
+                     '30d' => [
+                               'period' => '30d',
+                               'bucket' => 'day',
+                               'points' => 30,
+                              ],
+                     '90d' => [
+                               'period' => '90d',
+                               'bucket' => 'day',
+                               'points' => 90,
+                              ],
                     ];
 
-        $this->assertSame(array_keys($expected), GitHubApiProxyRange::keys());
-        foreach ($expected as $key => [$period, $bucket, $points]) {
+        foreach ($expected as $key => $values) {
             $range = new GitHubApiProxyRange($key);
             $this->assertSame($key, $range->key());
-            $this->assertSame($period, $range->period());
-            $this->assertSame($bucket, $range->bucket());
-            $this->assertSame($points, $range->points());
+            $this->assertSame($values['period'], $range->period());
+            $this->assertSame($values['bucket'], $range->bucket());
+            $this->assertSame($values['points'], $range->points());
         }
 
     }//end testRangesMapToPeriodAndBucket()

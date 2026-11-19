@@ -13,7 +13,12 @@ use GuiBranco\ProjectsMonitor\Library\ErrorReporter;
 // would show the session-expired modal), so the section can say the proxy
 // is unavailable instead of staying on "Loading…".
 // ?range=1h|24h|7d|30d|90d; anything else falls back to 24h.
-$range = new GitHubApiProxyRange(isset($_GET["range"]) === true ? (string) $_GET["range"] : null);
+$rangeKey = null;
+if (isset($_GET["range"]) === true) {
+    $rangeKey = (string) $_GET["range"];
+}
+
+$range = new GitHubApiProxyRange($rangeKey);
 
 try {
     $data = (new GitHubApiProxy())->getDashboard($range);

@@ -184,6 +184,23 @@ class IdlePullRequestsFeedTest extends TestCase
 
 
     /**
+     * A request's filter is kept when it is "all" or "mine" and falls back
+     * to "mine" when missing, unknown or not a string.
+     *
+     * @return void
+     */
+    public function testNormalizeFilter(): void
+    {
+        $this->assertSame('all', IdlePullRequestsFeed::normalizeFilter('all'));
+        $this->assertSame('mine', IdlePullRequestsFeed::normalizeFilter('mine'));
+        $this->assertSame('mine', IdlePullRequestsFeed::normalizeFilter(null));
+        $this->assertSame('mine', IdlePullRequestsFeed::normalizeFilter('ALL'));
+        $this->assertSame('mine', IdlePullRequestsFeed::normalizeFilter(['all']));
+
+    }//end testNormalizeFilter()
+
+
+    /**
      * When HealthChecks.io cannot be read, the rows still come through
      * without a projection and the worker says nothing is known.
      *

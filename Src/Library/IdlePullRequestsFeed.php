@@ -83,6 +83,26 @@ class IdlePullRequestsFeed
 
 
     /**
+     * The filter a request asked for, as fetch() takes it: "all" or "mine",
+     * with anything else (missing, unknown, not a string) falling back to
+     * "mine".
+     *
+     * @param mixed $value The raw value, e.g. the query string's filter.
+     *
+     * @return string One of FILTERS.
+     */
+    public static function normalizeFilter($value): string
+    {
+        if (in_array($value, self::FILTERS, true) === true) {
+            return $value;
+        }
+
+        return self::FILTER_MINE;
+
+    }//end normalizeFilter()
+
+
+    /**
      * The feed: the rows with an expectedRetryAt each, how many rows of
      * other accounts were left out, and the worker. With the "mine" filter
      * (the default, and any unknown value) only the own accounts' rows are

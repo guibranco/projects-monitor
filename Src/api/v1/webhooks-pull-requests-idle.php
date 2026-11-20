@@ -5,11 +5,6 @@ require_once '../../vendor/autoload.php';
 
 use GuiBranco\ProjectsMonitor\Library\IdlePullRequestsFeed;
 
-$filter = IdlePullRequestsFeed::FILTER_MINE;
-if (isset($_GET["filter"]) === true && in_array($_GET["filter"], IdlePullRequestsFeed::FILTERS, true) === true) {
-    $filter = $_GET["filter"];
-}
-
 $feed = new IdlePullRequestsFeed();
-$data = $feed->fetch($filter);
+$data = $feed->fetch(IdlePullRequestsFeed::normalizeFilter($_GET["filter"] ?? null));
 echo json_encode($data);

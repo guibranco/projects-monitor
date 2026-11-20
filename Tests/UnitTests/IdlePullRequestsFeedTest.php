@@ -103,12 +103,12 @@ class IdlePullRequestsFeedTest extends TestCase
         $feed = (new IdlePullRequestsFeed($this->getWebhooks([$this->getRow()]), $healthChecks))->fetch();
 
         $this->assertSame('2026-10-23 11:05:12', $feed['worker']['lastRunAt']);
-        $this->assertSame('2026-10-23 12:05:12', $feed['worker']['nextRunAt']);
+        $this->assertSame('2026-10-23 11:15:12', $feed['worker']['nextRunAt']);
         $this->assertSame('Webhooks - Idle Pull Requests', $feed['worker']['check']);
         $this->assertSame('up', $feed['worker']['checkStatus']);
         $this->assertCount(1, $feed['items']);
         $this->assertSame(0, $feed['hidden']);
-        $this->assertSame('2026-10-23 12:05:12', $feed['items'][0]['expectedRetryAt']);
+        $this->assertSame('2026-10-23 11:15:12', $feed['items'][0]['expectedRetryAt']);
         $this->assertSame('DUE', $feed['items'][0]['idleStatus']);
 
     }//end testProjectsFromTheWorkerCheck()
@@ -117,7 +117,7 @@ class IdlePullRequestsFeedTest extends TestCase
     /**
      * Other accounts' rows are left out, but only after the forecast: the
      * hidden repository is quieter, so it takes the next run and the own
-     * row is projected an hour later, exactly as the worker will do.
+     * row is projected a run later, exactly as the worker will do.
      *
      * @return void
      */
@@ -133,8 +133,8 @@ class IdlePullRequestsFeedTest extends TestCase
 
         $this->assertSame(1, $feed['hidden']);
         $this->assertSame(['guibranco', 'ApiBR'], array_column($feed['items'], 'repositoryOwner'));
-        $this->assertSame('2026-10-23 13:05:12', $feed['items'][0]['expectedRetryAt']);
-        $this->assertSame('2026-10-23 14:05:12', $feed['items'][1]['expectedRetryAt']);
+        $this->assertSame('2026-10-23 11:25:12', $feed['items'][0]['expectedRetryAt']);
+        $this->assertSame('2026-10-23 11:35:12', $feed['items'][1]['expectedRetryAt']);
 
     }//end testHidesOtherAccountsAfterForecasting()
 
@@ -157,8 +157,8 @@ class IdlePullRequestsFeedTest extends TestCase
 
         $this->assertSame(0, $feed['hidden']);
         $this->assertSame(['octocat', 'guibranco', 'ApiBR'], array_column($feed['items'], 'repositoryOwner'));
-        $this->assertSame('2026-10-23 12:05:12', $feed['items'][0]['expectedRetryAt']);
-        $this->assertSame('2026-10-23 13:05:12', $feed['items'][1]['expectedRetryAt']);
+        $this->assertSame('2026-10-23 11:15:12', $feed['items'][0]['expectedRetryAt']);
+        $this->assertSame('2026-10-23 11:25:12', $feed['items'][1]['expectedRetryAt']);
 
     }//end testAllFilterKeepsOtherAccounts()
 
@@ -261,7 +261,7 @@ class IdlePullRequestsFeedTest extends TestCase
         $feed = (new IdlePullRequestsFeed($this->getWebhooks(null), $healthChecks))->fetch();
 
         $this->assertSame([], $feed['items']);
-        $this->assertSame(3600, $feed['worker']['intervalSeconds']);
+        $this->assertSame(600, $feed['worker']['intervalSeconds']);
 
     }//end testANonListResponseIsAnEmptyFeed()
 

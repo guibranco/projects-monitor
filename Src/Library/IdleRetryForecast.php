@@ -10,24 +10,28 @@ use Exception;
  * Projects when the webhooks idle-pull-requests worker will give each Idle
  * Pull Request its next Idle Retry, from the worker's last run.
  *
- * The worker (webhooks ADR-0010) is a daemon that sleeps an hour after each
- * run, and each run retries exactly one pull request: the first DUE row of
- * GET /pull-requests/idle, whose order is round-robin across repositories
- * (repositoryIdleRank, then the repository's last pull request update, then
- * updatedAt). The forecast replays that rule run by run: a WAITING row joins
- * the candidates once its waitingUntil has passed, a retried repository's
- * last update jumps to that run so it goes to the back of the line, and a
- * GAVE_UP row is never retried. It is a projection, not a promise: a daemon
- * restart or an API-triggered run adds a run, and any new activity on a
- * repository reshuffles the queue.
+ * The worker (webhooks ADR-0010) is a daemon that sleeps 10 minutes after
+ * each run, and each run retries exactly one pull request: the first DUE row
+ * of GET /pull-requests/idle, whose order (webhooks Sql/0046) is round-robin
+ * by owner, then repository: ownerLastIdleRetry, then
+ * repositoryLastIdleRetry (never retried first, then the oldest), then
+ * idleRetryCount, repositoryIdleRank, the repository's last pull request
+ * update and updatedAt. The forecast replays that rule run by run: a WAITING
+ * row joins the candidates once its waitingUntil has passed; a retry stamps
+ * its run as the owner's and the repository's last Idle Retry (and the
+ * repository's last update), so both go to the back of the line; a GAVE_UP
+ * row is never retried. It is a projection, not a promise: a daemon restart
+ * or an API-triggered run adds a run, and any new activity on a repository
+ * reshuffles the queue.
  */
 class IdleRetryForecast
 {
 
     /**
-     * Seconds between two runs of the worker (its daemon_sleep_seconds).
+     * Seconds between two runs of the worker (its daemon sleep, 600 s since
+     * webhooks #1627).
      */
-    public const RUN_INTERVAL_SECONDS = 3600;
+    public const RUN_INTERVAL_SECONDS = 600;
 
     /**
      * The webhooks application's date.timezone. Its API's timestamps carry
@@ -147,8 +151,8 @@ class IdleRetryForecast
 
     /**
      * Replays the worker run by run: at each run the first DUE row in the
-     * API's order gets the retry, and its repository's last update becomes
-     * that run.
+     * API's order gets the retry, and that run becomes its owner's and its
+     * repository's last Idle Retry and its repository's last update.
      *
      * @param array $rows Rows as returned by GET /pull-requests/idle.
      *
@@ -161,20 +165,26 @@ class IdleRetryForecast
             return $expected;
         }
 
-        $queue    = $this->getQueue($rows);
-        $activity = $this->getActivity($rows);
-        $runAt    = ($this->lastRunAt + $this->intervalSeconds);
-        $retries  = 0;
+        $queue   = $this->getQueue($rows);
+        $state   = $this->getState($rows);
+        $runAt   = ($this->lastRunAt + $this->intervalSeconds);
+        $retries = 0;
 
         while ($queue !== [] && $retries < self::MAX_RETRIES) {
             $runAt  = $this->firstRunWithSomethingDue($queue, $runAt);
-            $picked = $this->pick($queue, $activity, $runAt);
+            $picked = $this->pick($queue, $state, $runAt);
             if ($picked === null) {
                 break;
             }
 
             $expected[$picked] = $runAt;
-            $activity[$queue[$picked]['repository']] = $runAt;
+
+            $owner      = $queue[$picked]['owner'];
+            $repository = $queue[$picked]['repository'];
+
+            $state['ownerLastRetry'][$owner]           = $runAt;
+            $state['repositoryLastRetry'][$repository] = $runAt;
+            $state['activity'][$repository]            = $runAt;
             unset($queue[$picked]);
 
             $runAt = ($runAt + $this->intervalSeconds);
@@ -210,8 +220,11 @@ class IdleRetryForecast
 
             $entry = [];
 
+            $entry['owner']      = $this->getOwner($row);
             $entry['repository'] = $this->getRepository($row);
             $entry['dueAt']      = $dueAt;
+            $entry['retryCount'] = ((int) ($row['idleRetryCount'] ?? 0));
+            $entry['rank']       = ((int) ($row['repositoryIdleRank'] ?? 0));
             $entry['updatedAt']  = ((int) $this->toTimestamp(($row['updatedAt'] ?? null)));
 
             $queue[$index] = $entry;
@@ -247,33 +260,45 @@ class IdleRetryForecast
 
 
     /**
-     * Each repository's last pull request update, the API's tie-breaker
-     * between repositories (the quietest one goes first).
+     * The round-robin keys the API orders by, per owner and repository: when
+     * any of the owner's (ownerLastRetry) and of the repository's
+     * (repositoryLastRetry) pull requests last got an Idle Retry, null when
+     * none ever did, and the repository's last pull request update
+     * (activity, 0 when unknown).
      *
      * @param array $rows Rows as returned by GET /pull-requests/idle.
      *
-     * @return array Repository => unix timestamp (0 when unknown).
+     * @return array {ownerLastRetry: array, repositoryLastRetry: array, activity: array}
      */
-    private function getActivity(array $rows): array
+    private function getState(array $rows): array
     {
-        $activity = [];
+        $state = [
+                  'ownerLastRetry'      => [],
+                  'repositoryLastRetry' => [],
+                  'activity'            => [],
+                 ];
 
         foreach ($rows as $row) {
             if (is_array($row) === false) {
                 continue;
             }
 
+            $owner      = $this->getOwner($row);
             $repository = $this->getRepository($row);
-            if (isset($activity[$repository]) === true) {
-                continue;
+
+            if (array_key_exists($owner, $state['ownerLastRetry']) === false) {
+                $state['ownerLastRetry'][$owner] = $this->toTimestamp(($row['ownerLastIdleRetry'] ?? null));
             }
 
-            $activity[$repository] = ((int) $this->toTimestamp(($row['repositoryLastPullRequestUpdate'] ?? null)));
+            if (array_key_exists($repository, $state['activity']) === false) {
+                $state['repositoryLastRetry'][$repository] = $this->toTimestamp(($row['repositoryLastIdleRetry'] ?? null));
+                $state['activity'][$repository]            = ((int) $this->toTimestamp(($row['repositoryLastPullRequestUpdate'] ?? null)));
+            }
         }
 
-        return $activity;
+        return $state;
 
-    }//end getActivity()
+    }//end getState()
 
 
     /**
@@ -300,16 +325,15 @@ class IdleRetryForecast
 
     /**
      * The row the worker retries at $runAt: the first DUE row in the API's
-     * order, which is the oldest due row of the repository quiet the longest
-     * (ties broken by the row's own updatedAt).
+     * order.
      *
-     * @param array   $queue    The rows still waiting for a retry.
-     * @param array   $activity Each repository's last pull request update.
-     * @param integer $runAt    The run.
+     * @param array   $queue The rows still waiting for a retry.
+     * @param array   $state The round-robin keys (see getState()).
+     * @param integer $runAt The run.
      *
      * @return integer|null The index of the row, null when none is due.
      */
-    private function pick(array $queue, array $activity, int $runAt): ?int
+    private function pick(array $queue, array $state, int $runAt): ?int
     {
         $picked = null;
 
@@ -318,7 +342,7 @@ class IdleRetryForecast
                 continue;
             }
 
-            if ($picked === null || $this->precedes($entry, $queue[$picked], $activity) === true) {
+            if ($picked === null || $this->precedes($entry, $queue[$picked], $state) === true) {
                 $picked = $index;
             }
         }
@@ -329,27 +353,89 @@ class IdleRetryForecast
 
 
     /**
-     * Whether $candidate comes before $current in the API's order: the
-     * repository updated the longest ago first, then the older row.
+     * Whether $candidate comes before $current in the API's order (webhooks
+     * Sql/0046): the owner retried longest ago (never first), then the
+     * repository retried longest ago (never first), then the least retried
+     * pull request, its rank in the repository, the repository quiet the
+     * longest and the older pull request.
      *
      * @param array $candidate A due queue entry.
      * @param array $current   The due queue entry leading so far.
-     * @param array $activity  Each repository's last pull request update.
+     * @param array $state     The round-robin keys (see getState()).
      *
      * @return boolean
      */
-    private function precedes(array $candidate, array $current, array $activity): bool
+    private function precedes(array $candidate, array $current, array $state): bool
     {
-        $candidateActivity = ($activity[$candidate['repository']] ?? 0);
-        $currentActivity   = ($activity[$current['repository']] ?? 0);
+        $keys = [
+                 [
+                  $this->nullsFirst(($state['ownerLastRetry'][$candidate['owner']] ?? null)),
+                  $this->nullsFirst(($state['ownerLastRetry'][$current['owner']] ?? null)),
+                 ],
+                 [
+                  $this->nullsFirst(($state['repositoryLastRetry'][$candidate['repository']] ?? null)),
+                  $this->nullsFirst(($state['repositoryLastRetry'][$current['repository']] ?? null)),
+                 ],
+                 [
+                  $candidate['retryCount'],
+                  $current['retryCount'],
+                 ],
+                 [
+                  $candidate['rank'],
+                  $current['rank'],
+                 ],
+                 [
+                  ($state['activity'][$candidate['repository']] ?? 0),
+                  ($state['activity'][$current['repository']] ?? 0),
+                 ],
+                 [
+                  $candidate['updatedAt'],
+                  $current['updatedAt'],
+                 ],
+                ];
 
-        if ($candidateActivity !== $currentActivity) {
-            return ($candidateActivity < $currentActivity);
+        foreach ($keys as $pair) {
+            if ($pair[0] !== $pair[1]) {
+                return ($pair[0] < $pair[1]);
+            }
         }
 
-        return ($candidate['updatedAt'] < $current['updatedAt']);
+        return false;
 
     }//end precedes()
+
+
+    /**
+     * A last-retry timestamp as a sort key where never (null) sorts first,
+     * as the API's "IS NOT NULL" ordering does.
+     *
+     * @param integer|null $timestamp The unix timestamp, null for never.
+     *
+     * @return integer
+     */
+    private function nullsFirst(?int $timestamp): int
+    {
+        if ($timestamp === null) {
+            return PHP_INT_MIN;
+        }
+
+        return $timestamp;
+
+    }//end nullsFirst()
+
+
+    /**
+     * The row's owner.
+     *
+     * @param array $row One row as returned by GET /pull-requests/idle.
+     *
+     * @return string
+     */
+    private function getOwner(array $row): string
+    {
+        return (string) ($row['repositoryOwner'] ?? '');
+
+    }//end getOwner()
 
 
     /**

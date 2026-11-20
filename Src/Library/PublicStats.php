@@ -228,11 +228,12 @@ class PublicStats
      * repositories are redacted: owner, name, number and title are nulled
      * (the login page shows a "Private repository" placeholder with no
      * links), while the sender, timestamps, retry count, backoff status and
-     * the ordering keys (the repository's idle rank and its last pull
-     * request update) and the projected retry time stay visible, none of
-     * which names the repository.
+     * the ordering keys (when the owner and the repository last got an Idle
+     * Retry, the repository's idle rank and its last pull request update),
+     * the pull request's last Idle Retry and the projected retry time stay
+     * visible, none of which names the repository.
      * A row whose visibility is unknown is treated as private. Rows keep the
-     * API's round-robin order, so the first DUE row is still the worker's
+     * API's round-robin order (by owner, then repository), so the first DUE row is still the worker's
      * next Idle Retry. Field names are kept identical to the webhooks API so
      * the public and authenticated renderers read the same shape. Entries
      * that are not rows are skipped. A payload that is not a list at all (a malformed 200
@@ -266,10 +267,14 @@ class PublicStats
                 'idleStatus'        => $item['idleStatus'] ?? null,
             ];
 
-            // The API's ordering keys and the retry projection: they name no
-            // repository, so private rows keep them.
+            // The API's ordering keys, the pull request's last Idle Retry and
+            // the retry projection: they name no repository, so private rows
+            // keep them.
+            $row['ownerLastIdleRetry']              = ($item['ownerLastIdleRetry'] ?? null);
+            $row['repositoryLastIdleRetry']         = ($item['repositoryLastIdleRetry'] ?? null);
             $row['repositoryIdleRank']              = (int) ($item['repositoryIdleRank'] ?? 0);
             $row['repositoryLastPullRequestUpdate'] = ($item['repositoryLastPullRequestUpdate'] ?? null);
+            $row['idleRetryDate']                   = ($item['idleRetryDate'] ?? null);
             $row['expectedRetryAt']                 = ($item['expectedRetryAt'] ?? null);
 
             $summary[] = $private ? array_merge($row, self::REDACTED_IDLE_FIELDS) : $row;

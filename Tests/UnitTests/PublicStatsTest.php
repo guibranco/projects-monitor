@@ -49,6 +49,9 @@ class PublicStatsTest extends TestCase
         $row['repositoryPrivate']               = false;
         $row['repositoryLastPullRequestUpdate'] = '2026-10-19 09:30:00';
         $row['repositoryIdleRank']              = '2';
+        $row['ownerLastIdleRetry']              = '2026-10-22 14:00:00';
+        $row['repositoryLastIdleRetry']         = '2026-10-21 09:00:00';
+        $row['idleRetryDate']                   = '2026-10-18 06:00:00';
         $row['expectedRetryAt']                 = '2026-10-23 13:05:12';
 
         $row['senderLogin']    = 'dependabot[bot]';
@@ -77,12 +80,15 @@ class PublicStatsTest extends TestCase
         $summary = $this->summarize([$this->webhooksRow()]);
 
         $this->assertCount(1, $summary);
-        $this->assertCount(13, $summary[0]);
+        $this->assertCount(16, $summary[0]);
         $this->assertFalse($summary[0]['repositoryPrivate']);
         $this->assertSame('guibranco', $summary[0]['repositoryOwner']);
         $this->assertSame('projects-monitor', $summary[0]['repositoryName']);
         $this->assertSame(2, $summary[0]['repositoryIdleRank']);
         $this->assertSame('2026-10-19 09:30:00', $summary[0]['repositoryLastPullRequestUpdate']);
+        $this->assertSame('2026-10-22 14:00:00', $summary[0]['ownerLastIdleRetry']);
+        $this->assertSame('2026-10-21 09:00:00', $summary[0]['repositoryLastIdleRetry']);
+        $this->assertSame('2026-10-18 06:00:00', $summary[0]['idleRetryDate']);
         $this->assertSame('2026-10-23 13:05:12', $summary[0]['expectedRetryAt']);
         $this->assertSame(1206, $summary[0]['number']);
         $this->assertSame('feat: add "IDLE" state handling', $summary[0]['title']);
@@ -109,7 +115,7 @@ class PublicStatsTest extends TestCase
 
         $summary = $this->summarize([$row]);
 
-        $this->assertCount(13, $summary[0]);
+        $this->assertCount(16, $summary[0]);
         $this->assertTrue($summary[0]['repositoryPrivate']);
         $this->assertNull($summary[0]['repositoryOwner']);
         $this->assertNull($summary[0]['repositoryName']);
@@ -117,6 +123,9 @@ class PublicStatsTest extends TestCase
         $this->assertNull($summary[0]['title']);
         $this->assertSame(2, $summary[0]['repositoryIdleRank']);
         $this->assertSame('2026-10-19 09:30:00', $summary[0]['repositoryLastPullRequestUpdate']);
+        $this->assertSame('2026-10-22 14:00:00', $summary[0]['ownerLastIdleRetry']);
+        $this->assertSame('2026-10-21 09:00:00', $summary[0]['repositoryLastIdleRetry']);
+        $this->assertSame('2026-10-18 06:00:00', $summary[0]['idleRetryDate']);
         $this->assertSame('2026-10-23 13:05:12', $summary[0]['expectedRetryAt']);
         $this->assertSame('dependabot[bot]', $summary[0]['senderLogin']);
         $this->assertSame('2026-10-17 17:51:21', $summary[0]['updatedAt']);
@@ -231,6 +240,7 @@ class PublicStatsTest extends TestCase
         unset($row['title'], $row['senderLogin'], $row['updatedAt']);
         unset($row['idleRetryCount'], $row['idleStatus']);
         unset($row['repositoryIdleRank'], $row['repositoryLastPullRequestUpdate'], $row['expectedRetryAt']);
+        unset($row['ownerLastIdleRetry'], $row['repositoryLastIdleRetry'], $row['idleRetryDate']);
 
         $summary = $this->summarize([$row]);
 
@@ -243,6 +253,9 @@ class PublicStatsTest extends TestCase
         $this->assertSame(0, $summary[0]['repositoryIdleRank']);
         $this->assertNull($summary[0]['repositoryLastPullRequestUpdate']);
         $this->assertNull($summary[0]['expectedRetryAt']);
+        $this->assertNull($summary[0]['ownerLastIdleRetry']);
+        $this->assertNull($summary[0]['repositoryLastIdleRetry']);
+        $this->assertNull($summary[0]['idleRetryDate']);
 
     }//end testDefaultsMissingFields()
 

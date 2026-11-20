@@ -1006,33 +1006,44 @@ export class DataDisplayManager {
    * Badge for an Idle Pull Request's backoff status (webhooks ADR-0010):
    * DUE is in line for an Idle Retry, WAITING is inside its backoff window,
    * GAVE_UP hit the 10-retry cap. The first DUE row of the list is the one
-   * the hourly idle-pull-requests worker retries next and is marked as such.
+   * the idle-pull-requests worker (every 10 minutes) retries next and is
+   * marked as such.
    */
   #idleStatusBadge(status, isNext = false) {
     const cls = { DUE: "bg-warning text-dark", WAITING: "bg-info text-dark", GAVE_UP: "bg-danger" }[status] ?? "bg-secondary";
     const next = isNext
-      ? ' <span class="badge bg-primary" title="Next Idle Retry: the hourly idle-pull-requests worker takes the first DUE row">next</span>'
+      ? ' <span class="badge bg-primary" title="Next Idle Retry: every 10 minutes, the idle-pull-requests worker takes the first DUE row">next</span>'
       : "";
     return `<span class="badge ${cls}">${this.#escHtml(status)}</span>${next}`;
   }
 
   /**
-   * The pull request's position among its repository's idle ones, the
-   * webhooks API's first ordering key: 1 is the repository's oldest DUE pull
-   * request, then its other DUE ones by age, then WAITING, then GAVE_UP.
-   * Every repository's rank 1 is listed before any repository's rank 2, so
-   * consecutive Idle Retries go to different repositories.
+   * The pull request's position among its repository's idle ones: 1 is the
+   * repository's least retried DUE pull request (oldest among equals), then
+   * its other DUE ones, then WAITING, then GAVE_UP. An ordering key after
+   * the owner's and repository's last Idle Retry and the retry count.
    */
   #idleRankCell(item) {
     const rank = Number(item.repositoryIdleRank ?? 0);
     if (!Number.isInteger(rank) || rank < 1) return "—";
-    return `<span title="Position among the repository's idle pull requests (DUE by age, then WAITING, then GAVE_UP)">${rank}</span>`;
+    return `<span title="Position among the repository's idle pull requests (DUE by retries and age, then WAITING, then GAVE_UP)">${rank}</span>`;
+  }
+
+  /**
+   * A last Idle Retry timestamp (the owner's, the repository's or the pull
+   * request's own), "never" when the worker has not retried it yet: never
+   * retried owners and repositories go first in the round-robin.
+   */
+  #idleLastRetryCell(value, title) {
+    if (!value)
+      return `<span class="text-muted" title="${this.#escHtml(title)}">never</span>`;
+    return `<span title="${this.#escHtml(title)}">${this.#escHtml(value)}</span>`;
   }
 
   /**
    * When anything last happened to any of the repository's pull requests,
-   * idle or not: the webhooks API's second ordering key, so among equal
-   * ranks the repository that has been quiet the longest comes first.
+   * idle or not: an ordering key after the rank, so among otherwise equal
+   * rows the repository that has been quiet the longest comes first.
    */
   #idleRepositoryActivityCell(item) {
     const value = item.repositoryLastPullRequestUpdate;
@@ -1064,7 +1075,7 @@ export class DataDisplayManager {
   /**
    * The Idle Retry worker's last and next run, above the table: the API
    * projects them from the worker's HealthChecks.io check (its last ping is
-   * the end of its last run; it sleeps an hour between runs). A daemon
+   * the end of its last run; it sleeps 10 minutes between runs). A daemon
    * restart or an API-triggered run adds a run, which shifts everything.
    * The table shows the dashboard's own accounts only; the worker still
    * serves every repository, so the hidden rows are counted here.
@@ -1074,12 +1085,15 @@ export class DataDisplayManager {
     if (!el) return;
 
     const hiddenCount = Number(hidden ?? 0);
-    const others = hiddenCount > 0
-      ? ` <span class="text-muted">· ${hiddenCount} idle pull request${hiddenCount === 1 ? "" : "s"} of other accounts not shown (the worker still serves them)</span>`
-      : "";
+    const others =
+      hiddenCount > 0
+        ? ` <span class="text-muted">· ${hiddenCount} idle pull request${hiddenCount === 1 ? "" : "s"} of other accounts not shown (the worker still serves them)</span>`
+        : "";
 
     if (!worker?.lastRunAt) {
-      const why = worker?.check ? "its check has not pinged yet" : "no HealthChecks.io check matched";
+      const why = worker?.check
+        ? "its check has not pinged yet"
+        : "no HealthChecks.io check matched";
       el.innerHTML = `<i class="bi bi-hourglass-split me-1"></i>Idle Retry worker: last run unknown (${why}), so no retry is projected.${others}`;
       return;
     }
@@ -1089,8 +1103,9 @@ export class DataDisplayManager {
       status = ` · HealthChecks.io reports it <strong>${this.#escHtml(worker.checkStatus)}</strong>`;
     }
 
-    el.innerHTML = `<i class="bi bi-hourglass-split me-1"></i>Idle Retry worker: last run <strong>${this.#escHtml(worker.lastRunAt)}</strong>, next run <strong>${this.#escHtml(worker.nextRunAt)}</strong>`
-      + ` — one retry per run, every ${Math.round(Number(worker.intervalSeconds ?? 3600) / 60)} min; a daemon restart or an API-triggered run adds a run and shifts the projection${status}.${others}`;
+    el.innerHTML =
+      `<i class="bi bi-hourglass-split me-1"></i>Idle Retry worker: last run <strong>${this.#escHtml(worker.lastRunAt)}</strong>, next run <strong>${this.#escHtml(worker.nextRunAt)}</strong>` +
+      ` — one retry per run, every ${Math.round(Number(worker.intervalSeconds ?? 600) / 60)} min, round-robin by owner then repository; a daemon restart or an API-triggered run adds a run and shifts the projection${status}.${others}`;
   }
 
   /**
@@ -1109,10 +1124,12 @@ export class DataDisplayManager {
   /**
    * Renders Idle Pull Requests from webhooks GET /pull-requests/idle: open,
    * already processed by the bot and untouched for at least a day, in the
-   * API's round-robin order across repositories (by Rank, then by the
-   * repository's last pull request update, then by Updated At), which the
-   * table keeps. The first DUE row is the next one the webhooks hourly
-   * idle-pull-requests worker gives an Idle Retry (marks IDLE); a WAITING
+   * API's round-robin order (webhooks Sql/0046), which the table keeps: by
+   * Status, then the owner's last Idle Retry, the repository's last Idle
+   * Retry (never retried first), Retries, Rank, the repository's last pull
+   * request update and Updated At; the columns after Status follow that
+   * order. The first DUE row is the next one the webhooks idle-pull-requests
+   * worker (every 10 minutes) gives an Idle Retry (marks IDLE); a WAITING
    * row's "Waiting Until" is when its backoff window ends, and "Expected
    * Retry" is the run the API projects for each row (see #renderIdleWorker).
    * The sidebar's Idle Pull Requests switch picks only the dashboard's own
@@ -1121,21 +1138,62 @@ export class DataDisplayManager {
   showWebhookPullRequestsIdle(response) {
     const items = Array.isArray(response?.items) ? response.items : [];
     this.#renderIdleWorker(response?.worker, response?.hidden);
-    const nextRetry = this.#nextIdleRetry(items, response?.worker, response?.hidden);
+    const nextRetry = this.#nextIdleRetry(
+      items,
+      response?.worker,
+      response?.hidden,
+    );
     this.#renderList(items, "pr_idle", "No idle pull requests.", [
       { label: "#Seq", render: (i) => i.sequence },
       { label: "Repository", render: (i) => this.#idleRepositoryCell(i) },
-      { label: "Rank", render: (i) => this.#idleRankCell(i) },
-      { label: "PR", render: (i) => `<a href="https://github.com/${this.#escHtml(i.repositoryOwner)}/${this.#escHtml(i.repositoryName)}/pull/${i.number}" target="_blank" rel="noopener noreferrer">#${i.number}</a>` },
+      {
+        label: "PR",
+        render: (i) =>
+          `<a href="https://github.com/${this.#escHtml(i.repositoryOwner)}/${this.#escHtml(i.repositoryName)}/pull/${i.number}" target="_blank" rel="noopener noreferrer">#${i.number}</a>`,
+      },
       { label: "Title", render: (i) => this.#fmt(i.title) },
       { label: "Sender", render: (i) => this.#fmt(i.senderLogin) },
+      {
+        label: "Status",
+        render: (i) => this.#idleStatusBadge(i.idleStatus, i === nextRetry),
+      },
+      {
+        label: "Owner Last Retry",
+        render: (i) =>
+          this.#idleLastRetryCell(
+            i.ownerLastIdleRetry,
+            "When any of the owner's pull requests last got an Idle Retry",
+          ),
+      },
+      {
+        label: "Repo Last Retry",
+        render: (i) =>
+          this.#idleLastRetryCell(
+            i.repositoryLastIdleRetry,
+            "When any of the repository's pull requests last got an Idle Retry",
+          ),
+      },
+      {
+        label: "Retries",
+        render: (i) => `${Number(i.idleRetryCount ?? 0)}/10`,
+      },
+      { label: "Rank", render: (i) => this.#idleRankCell(i) },
+      {
+        label: "Repo Last PR Update",
+        render: (i) => this.#idleRepositoryActivityCell(i),
+      },
       { label: "Updated At", render: (i) => this.#fmt(i.updatedAt) },
-      { label: "Repo Last PR Update", render: (i) => this.#idleRepositoryActivityCell(i) },
+      {
+        label: "Last Retry",
+        render: (i) =>
+          this.#idleLastRetryCell(
+            i.idleRetryDate,
+            "When this pull request last got an Idle Retry (real activity does not reset it)",
+          ),
+      },
       { label: "Processing Date", render: (i) => this.#fmt(i.processingDate) },
       { label: "Waiting Until", render: (i) => this.#fmt(i.waitingUntil) },
       { label: "Expected Retry", render: (i) => this.#fmt(i.expectedRetryAt) },
-      { label: "Retries", render: (i) => `${Number(i.idleRetryCount ?? 0)}/10` },
-      { label: "Status", render: (i) => this.#idleStatusBadge(i.idleStatus, i === nextRetry) },
     ]);
   }
 

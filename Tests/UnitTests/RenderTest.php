@@ -444,8 +444,9 @@ class RenderTest extends TestCase
     /**
      * The request counts of web services are requested in batches of ten
      * over the last 7 days at an hourly resolution; the day column sums
-     * the points of the last 24 hours, the week column every point. Other
-     * service types and failed requests show "-".
+     * the points of the last 24 hours, the week column every point, rounded
+     * once at the end. Other service types, failed requests and answers
+     * with no data points show "-".
      *
      * @return void
      */
@@ -477,8 +478,9 @@ class RenderTest extends TestCase
 
         $points = [];
         $points[($now - 259200)] = 1000;
-        $points[($now - 7200)]   = 234.0;
-        $points[($now - 600)]    = 1;
+        $points[($now - 7200)]   = 234.4;
+        $points[($now - 3600)]   = 0.4;
+        $points[($now - 600)]    = 0.4;
 
         $responses["srv-1"] = new Response(true, $this->getSeries($points), "", 200, "https://api.render.com", []);
         $responses["srv-2"] = new Response(true, "{\"message\": \"forbidden\"}", "", 403, "https://api.render.com", []);
@@ -520,7 +522,7 @@ class RenderTest extends TestCase
         $this->assertEquals(["235", "1,235"], array_slice($rows[1], 3));
         $this->assertEquals(["-", "-"], array_slice($rows[2], 3));
         $this->assertEquals(["-", "-"], array_slice($rows[3], 3));
-        $this->assertEquals(["0", "0"], array_slice($rows[4], 3));
+        $this->assertEquals(["-", "-"], array_slice($rows[4], 3));
         $this->assertEquals(["-", "-"], array_slice($rows[12], 3));
 
     }//end testShowsTheRequestsOfEveryWebService()

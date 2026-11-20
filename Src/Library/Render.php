@@ -236,13 +236,22 @@ class Render
 
     /**
      * Adds up the points of every series of an answer: all of them for the
-     * week, those from the day start onwards for the day.
+     * week, those from the day start onwards for the day. Points are added
+     * as they come and rounded once at the end, so fractional values are
+     * not lost.
+     *
+     * Render can answer 200 with no series at all, even for a web service
+     * that is serving traffic (seen on a Hobby workspace, where CPU and
+     * bandwidth metrics come back but HTTP requests do not). That is "no
+     * data", not "zero requests", so it is reported as null and shown as
+     * "-".
      *
      * @param Response $response The answer of GET /v1/metrics/http-requests.
      * @param int      $dayStart The Unix time 24 hours ago.
      *
      * @return array|null With "day" and "week", null when the answer is not
-     *                    a 200 with a list of series.
+     *                    a 200 with a list of series holding at least one
+     *                    point.
      */
     private function getRequestTotals(Response $response, int $dayStart): ?array
     {
@@ -251,20 +260,29 @@ class Render
             return null;
         }
 
-        $totals         = [];
-        $totals["day"]  = 0;
-        $totals["week"] = 0;
+        $day    = 0.0;
+        $week   = 0.0;
+        $points = 0;
         foreach ($series as $item) {
             foreach (($item->values ?? []) as $point) {
-                $value = (int) round((float) ($point->value ?? 0));
-                $totals["week"] += $value;
+                $value = (float) ($point->value ?? 0);
+                $week += $value;
+                $points++;
 
                 $timestamp = strtotime(($point->timestamp ?? ""));
                 if ($timestamp !== false && $timestamp >= $dayStart) {
-                    $totals["day"] += $value;
+                    $day += $value;
                 }
             }
         }
+
+        if ($points === 0) {
+            return null;
+        }
+
+        $totals         = [];
+        $totals["day"]  = (int) round($day);
+        $totals["week"] = (int) round($week);
 
         return $totals;
 
@@ -273,7 +291,8 @@ class Render
 
     /**
      * A request count as shown in the table: "-" for services that serve
-     * no HTTP traffic or whose metrics could not be read.
+     * no HTTP traffic, whose metrics could not be read or for which Render
+     * returned no data points.
      *
      * @param array|null $counts The counts of a service.
      * @param string     $key    "day" or "week".

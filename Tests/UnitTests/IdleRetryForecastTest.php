@@ -6,9 +6,10 @@ use GuiBranco\ProjectsMonitor\Library\IdleRetryForecast;
 /**
  * Tests the Idle Retry forecast: the worker's next run from its last one,
  * and each idle pull request's projected retry, replaying the webhooks
- * worker's rule (one retry per hourly run, the first DUE row in round-robin
- * order across repositories, a retried repository going to the back of the
- * line, WAITING rows joining once their backoff ends, GAVE_UP rows never).
+ * worker's rule (one retry per 10-minute run, the first DUE row in the
+ * API's round-robin order by owner and then repository, a retried owner and
+ * repository going to the back of the line, WAITING rows joining once their
+ * backoff ends, GAVE_UP rows never).
  *
  * The last run is given as HealthChecks.io reports it, in UTC; the webhooks
  * API's timestamps are in Europe/Dublin, which is UTC+1 on 23 October 2026
@@ -65,7 +66,7 @@ class IdleRetryForecastTest extends TestCase
 
 
     /**
-     * The next run is the last one plus an hour, both in the webhooks zone.
+     * The next run is the last one plus 10 minutes, both in the webhooks zone.
      *
      * @return void
      */
@@ -75,8 +76,8 @@ class IdleRetryForecastTest extends TestCase
         $worker   = $forecast->describeWorker();
 
         $this->assertSame('2026-10-23 11:05:12', $worker['lastRunAt']);
-        $this->assertSame('2026-10-23 12:05:12', $worker['nextRunAt']);
-        $this->assertSame(3600, $worker['intervalSeconds']);
+        $this->assertSame('2026-10-23 11:15:12', $worker['nextRunAt']);
+        $this->assertSame(600, $worker['intervalSeconds']);
         $this->assertSame('Europe/Dublin', $worker['timeZone']);
 
     }//end testDescribesTheWorkerInTheWebhooksZone()
@@ -108,9 +109,9 @@ class IdleRetryForecastTest extends TestCase
 
 
     /**
-     * One retry per run, round-robin: after repository A's first row is
-     * retried at the next run, A's last update is that run, so repository C
-     * (quiet since the 18th) goes before A's second row.
+     * One retry per run, round-robin: nothing was ever retried, so the
+     * quietest repository (A) goes first; that run is then A's last Idle
+     * Retry, so repository C (never retried) goes before A's second row.
      *
      * @return void
      */
@@ -124,9 +125,9 @@ class IdleRetryForecastTest extends TestCase
 
         $expected = $this->getExpected((new IdleRetryForecast(self::LAST_RUN))->apply($rows));
 
-        $this->assertSame('2026-10-23 12:05:12', $expected[0]);
-        $this->assertSame('2026-10-23 13:05:12', $expected[1]);
-        $this->assertSame('2026-10-23 14:05:12', $expected[2]);
+        $this->assertSame('2026-10-23 11:15:12', $expected[0]);
+        $this->assertSame('2026-10-23 11:25:12', $expected[1]);
+        $this->assertSame('2026-10-23 11:35:12', $expected[2]);
 
     }//end testRetriesRoundRobinAcrossRepositories()
 
@@ -146,16 +147,16 @@ class IdleRetryForecastTest extends TestCase
 
         $expected = $this->getExpected((new IdleRetryForecast(self::LAST_RUN))->apply($rows));
 
-        $this->assertSame('2026-10-23 13:05:12', $expected[0]);
-        $this->assertSame('2026-10-23 12:05:12', $expected[1]);
+        $this->assertSame('2026-10-23 11:25:12', $expected[0]);
+        $this->assertSame('2026-10-23 11:15:12', $expected[1]);
 
     }//end testBreaksTiesByTheOlderPullRequest()
 
 
     /**
      * A WAITING row joins the queue at the first run after its backoff ends
-     * and, its repository being the quietest, goes ahead of a DUE row of a
-     * repository that was just retried.
+     * and, its repository never having been retried, goes ahead of a DUE row
+     * of a repository that was just retried.
      *
      * @return void
      */
@@ -167,13 +168,13 @@ class IdleRetryForecastTest extends TestCase
         $rows[] = $this->getRow('guibranco/b', 'WAITING', '2026-10-15 09:12:03', '2026-10-01 00:00:00');
         $rows[] = $this->getRow('guibranco/a', 'DUE', '2026-10-07 12:00:00', '2026-10-10 08:30:00');
 
-        $rows[1]['waitingUntil'] = '2026-10-23 12:30:00';
+        $rows[1]['waitingUntil'] = '2026-10-23 11:20:00';
 
         $expected = $this->getExpected((new IdleRetryForecast(self::LAST_RUN))->apply($rows));
 
-        $this->assertSame('2026-10-23 12:05:12', $expected[0]);
-        $this->assertSame('2026-10-23 13:05:12', $expected[1]);
-        $this->assertSame('2026-10-23 14:05:12', $expected[2]);
+        $this->assertSame('2026-10-23 11:15:12', $expected[0]);
+        $this->assertSame('2026-10-23 11:25:12', $expected[1]);
+        $this->assertSame('2026-10-23 11:35:12', $expected[2]);
 
     }//end testAWaitingRowJoinsOnceItsBackoffEnds()
 
@@ -219,7 +220,7 @@ class IdleRetryForecastTest extends TestCase
         $this->assertNull($expected[0]);
         $this->assertNull($expected[1]);
         $this->assertNull($expected[2]);
-        $this->assertSame('2026-10-23 12:05:12', $expected[3]);
+        $this->assertSame('2026-10-23 11:15:12', $expected[3]);
 
     }//end testRowsThatNeverGetARetry()
 
@@ -245,6 +246,98 @@ class IdleRetryForecastTest extends TestCase
         $this->assertSame(1, (new IdleRetryForecast(self::LAST_RUN, 0))->describeWorker()['intervalSeconds']);
 
     }//end testHonoursTheInterval()
+
+
+    /**
+     * The owner retried longest ago goes first, whatever its repositories'
+     * activity: B was never retried, A was this morning, so B's row goes
+     * first although A's repository has been quiet longer.
+     *
+     * @return void
+     */
+    public function testTheOwnerRetriedLongestAgoGoesFirst(): void
+    {
+        $rows = [];
+
+        $rows[] = $this->getRow('owner-a/x', 'DUE', '2026-10-05 17:51:21', '2026-10-01 00:00:00');
+        $rows[] = $this->getRow('owner-b/y', 'DUE', '2026-10-05 17:51:21', '2026-10-20 00:00:00');
+
+        $rows[0]['ownerLastIdleRetry']      = '2026-10-23 09:00:00';
+        $rows[0]['repositoryLastIdleRetry'] = '2026-10-23 09:00:00';
+
+        $expected = $this->getExpected((new IdleRetryForecast(self::LAST_RUN))->apply($rows));
+
+        $this->assertSame('2026-10-23 11:25:12', $expected[0]);
+        $this->assertSame('2026-10-23 11:15:12', $expected[1]);
+
+    }//end testTheOwnerRetriedLongestAgoGoesFirst()
+
+
+    /**
+     * Owners alternate before repositories: owner A's two repositories are
+     * the quietest, but once A's first one is retried, owner B goes next and
+     * only then A's other repository.
+     *
+     * @return void
+     */
+    public function testRotatesOwnersBeforeRepositories(): void
+    {
+        $rows = [];
+
+        $rows[] = $this->getRow('owner-a/x', 'DUE', '2026-10-05 17:51:21', '2026-10-01 00:00:00');
+        $rows[] = $this->getRow('owner-a/z', 'DUE', '2026-10-05 17:51:21', '2026-10-02 00:00:00');
+        $rows[] = $this->getRow('owner-b/y', 'DUE', '2026-10-05 17:51:21', '2026-10-20 00:00:00');
+
+        $expected = $this->getExpected((new IdleRetryForecast(self::LAST_RUN))->apply($rows));
+
+        $this->assertSame('2026-10-23 11:15:12', $expected[0]);
+        $this->assertSame('2026-10-23 11:35:12', $expected[1]);
+        $this->assertSame('2026-10-23 11:25:12', $expected[2]);
+
+    }//end testRotatesOwnersBeforeRepositories()
+
+
+    /**
+     * Inside one owner, the repository retried longest ago goes first, and
+     * inside one repository the least retried pull request, then the lower
+     * rank.
+     *
+     * @return void
+     */
+    public function testOrdersRepositoriesThenRetryCountThenRank(): void
+    {
+        $rows = [];
+
+        $rows[] = $this->getRow('guibranco/a', 'DUE', '2026-10-01 00:00:00', '2026-10-01 00:00:00');
+        $rows[] = $this->getRow('guibranco/b', 'DUE', '2026-10-05 00:00:00', '2026-10-20 00:00:00');
+        $rows[] = $this->getRow('guibranco/b', 'DUE', '2026-10-01 00:00:00', '2026-10-20 00:00:00');
+        $rows[] = $this->getRow('guibranco/b', 'DUE', '2026-10-01 00:00:00', '2026-10-20 00:00:00');
+
+        foreach (array_keys($rows) as $index) {
+            $rows[$index]['ownerLastIdleRetry'] = '2026-10-22 10:00:00';
+        }
+
+        $rows[0]['repositoryLastIdleRetry'] = '2026-10-22 10:00:00';
+        $rows[1]['repositoryLastIdleRetry'] = '2026-10-21 10:00:00';
+        $rows[2]['repositoryLastIdleRetry'] = '2026-10-21 10:00:00';
+        $rows[3]['repositoryLastIdleRetry'] = '2026-10-21 10:00:00';
+
+        $rows[1]['idleRetryCount'] = 0;
+        $rows[2]['idleRetryCount'] = 2;
+        $rows[3]['idleRetryCount'] = 2;
+
+        $rows[1]['repositoryIdleRank'] = 1;
+        $rows[2]['repositoryIdleRank'] = 3;
+        $rows[3]['repositoryIdleRank'] = 2;
+
+        $expected = $this->getExpected((new IdleRetryForecast(self::LAST_RUN))->apply($rows));
+
+        $this->assertSame('2026-10-23 11:25:12', $expected[0]);
+        $this->assertSame('2026-10-23 11:15:12', $expected[1]);
+        $this->assertSame('2026-10-23 11:45:12', $expected[2]);
+        $this->assertSame('2026-10-23 11:35:12', $expected[3]);
+
+    }//end testOrdersRepositoriesThenRetryCountThenRank()
 
 
 }//end class

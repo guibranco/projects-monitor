@@ -745,18 +745,18 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
             GAVE_UP: { badge: 'bg-danger',            text: 'Gave up' },
         };
 
-        // The rows come in the webhooks API's round-robin order across
-        // repositories, and the first DUE one is the next Idle Retry.
+        // The rows come in the webhooks API's round-robin order, by owner and
+        // then repository, and the first DUE one is the next Idle Retry.
         function idleStatusBadge(status, isNext = false) {
             const cfg = IDLE_STATUS_CONFIG[status] ?? { badge: 'bg-secondary', text: status || 'Unknown' };
             const next = isNext
-                ? ' <span class="badge bg-primary status-badge" title="Next Idle Retry: the hourly worker takes the first due pull request">next</span>'
+                ? ' <span class="badge bg-primary status-badge" title="Next Idle Retry: every 10 minutes, the worker takes the first due pull request">next</span>'
                 : '';
             return `<span class="badge ${cfg.badge} status-badge">${escHtml(cfg.text)}</span>${next}`;
         }
 
         // The Idle Retry worker's next run (its last HealthChecks.io ping plus
-        // the hour it sleeps), when the cache knows it; a daemon restart or an
+        // the 10 minutes it sleeps), when the cache knows it; a daemon restart or an
         // API-triggered run adds a run, so it is a projection.
         function idleWorkerSummary(worker) {
             if (!worker?.nextRunAt) {
@@ -788,6 +788,11 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
             } else if (Number(worker?.hiddenRows ?? 0) === 0) {
                 nextRetry = items.find(pr => pr?.idleStatus === 'DUE');
             }
+            // A last Idle Retry timestamp, "never" when the worker has not
+            // retried it yet (never retried owners and repositories go first).
+            const lastRetryCell = (value, title) => value
+                ? `<td title="${escHtml(title)}">${escHtml(value)}</td>`
+                : `<td class="text-muted" title="${escHtml(title)}">never</td>`;
             const rows = items.map(pr => {
                 // Private repositories are already redacted in the cached payload
                 // (owner, name, number and title come back null); only an explicit
@@ -814,16 +819,19 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                     : `<td class="pr-title" title="${escHtml(title)}">${escHtml(title)}</td>`;
                 return `<tr>
                     <td>${repoCell}</td>
-                    <td class="text-end">${rankCell}</td>
                     <td>${prCell}</td>
                     ${titleCell}
                     <td>${escHtml(pr.senderLogin ?? '—')}</td>
-                    <td>${escHtml(pr.updatedAt ?? '—')}</td>
+                    <td>${idleStatusBadge(pr.idleStatus, pr === nextRetry)}</td>
+                    ${lastRetryCell(pr.ownerLastIdleRetry, "When any of the owner's pull requests last got an Idle Retry")}
+                    ${lastRetryCell(pr.repositoryLastIdleRetry, "When any of the repository's pull requests last got an Idle Retry")}
+                    <td class="text-end"><span class="${retries > 0 ? 'state-count non-zero' : 'state-count'}">${retries}/10</span></td>
+                    <td class="text-end">${rankCell}</td>
                     <td title="Most recent update to any of the repository's pull requests">${escHtml(pr.repositoryLastPullRequestUpdate ?? '—')}</td>
+                    <td>${escHtml(pr.updatedAt ?? '—')}</td>
+                    ${lastRetryCell(pr.idleRetryDate, 'When this pull request last got an Idle Retry')}
                     <td>${escHtml(pr.waitingUntil ?? '—')}</td>
                     <td title="The run projected to give this pull request its next Idle Retry">${escHtml(pr.expectedRetryAt ?? '—')}</td>
-                    <td class="text-end"><span class="${retries > 0 ? 'state-count non-zero' : 'state-count'}">${retries}/10</span></td>
-                    <td class="text-end">${idleStatusBadge(pr.idleStatus, pr === nextRetry)}</td>
                 </tr>`;
             }).join('');
             replaceTableHtml(el, `
@@ -832,16 +840,19 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                         <thead>
                             <tr>
                                 <th>Repository</th>
-                                <th class="text-end" title="Position among the repository's idle pull requests">Rank</th>
                                 <th>PR</th>
                                 <th>Title</th>
                                 <th>Sender</th>
-                                <th>Updated At</th>
+                                <th>Status</th>
+                                <th title="When any of the owner's pull requests last got an Idle Retry">Owner Last Retry</th>
+                                <th title="When any of the repository's pull requests last got an Idle Retry">Repo Last Retry</th>
+                                <th class="text-end">Retries</th>
+                                <th class="text-end" title="Position among the repository's idle pull requests">Rank</th>
                                 <th title="Most recent update to any of the repository's pull requests">Repo Last PR Update</th>
+                                <th>Updated At</th>
+                                <th title="When this pull request last got an Idle Retry">Last Retry</th>
                                 <th>Waiting Until</th>
                                 <th title="The run projected to give the pull request its next Idle Retry">Expected Retry</th>
-                                <th class="text-end">Retries</th>
-                                <th class="text-end">Status</th>
                             </tr>
                         </thead>
                         <tbody>${rows}</tbody>

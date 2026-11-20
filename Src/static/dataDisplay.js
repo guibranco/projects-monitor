@@ -1084,28 +1084,53 @@ export class DataDisplayManager {
     const el = document.getElementById("pr_idle_worker");
     if (!el) return;
 
-    const hiddenCount = Number(hidden ?? 0);
-    const others =
-      hiddenCount > 0
-        ? ` <span class="text-muted">· ${hiddenCount} idle pull request${hiddenCount === 1 ? "" : "s"} of other accounts not shown (the worker still serves them)</span>`
-        : "";
+    const icon = document.createElement("i");
+    icon.className = "bi bi-hourglass-split me-1";
+    const parts = [icon];
 
     if (!worker?.lastRunAt) {
       const why = worker?.check
         ? "its check has not pinged yet"
         : "no HealthChecks.io check matched";
-      el.innerHTML = `<i class="bi bi-hourglass-split me-1"></i>Idle Retry worker: last run unknown (${why}), so no retry is projected.${others}`;
-      return;
+      parts.push(
+        `Idle Retry worker: last run unknown (${why}), so no retry is projected.`,
+      );
+    } else {
+      const minutes = Math.round(Number(worker.intervalSeconds ?? 600) / 60);
+      parts.push(
+        "Idle Retry worker: last run ",
+        this.#strong(worker.lastRunAt),
+        ", next run ",
+        this.#strong(worker.nextRunAt),
+        ` — one retry per run, every ${minutes} min, round-robin by owner then repository; a daemon restart or an API-triggered run adds a run and shifts the projection`,
+      );
+      if (worker.checkStatus && worker.checkStatus !== "up") {
+        parts.push(
+          " · HealthChecks.io reports it ",
+          this.#strong(worker.checkStatus),
+        );
+      }
+      parts.push(".");
     }
 
-    let status = "";
-    if (worker.checkStatus && worker.checkStatus !== "up") {
-      status = ` · HealthChecks.io reports it <strong>${this.#escHtml(worker.checkStatus)}</strong>`;
+    const hiddenCount = Number(hidden ?? 0);
+    if (hiddenCount > 0) {
+      const others = document.createElement("span");
+      others.className = "text-muted";
+      others.textContent = `· ${hiddenCount} idle pull request${hiddenCount === 1 ? "" : "s"} of other accounts not shown (the worker still serves them)`;
+      parts.push(" ", others);
     }
 
-    el.innerHTML =
-      `<i class="bi bi-hourglass-split me-1"></i>Idle Retry worker: last run <strong>${this.#escHtml(worker.lastRunAt)}</strong>, next run <strong>${this.#escHtml(worker.nextRunAt)}</strong>` +
-      ` — one retry per run, every ${Math.round(Number(worker.intervalSeconds ?? 600) / 60)} min, round-robin by owner then repository; a daemon restart or an API-triggered run adds a run and shifts the projection${status}.${others}`;
+    el.replaceChildren(...parts);
+  }
+
+  /**
+   * A <strong> element holding $text as plain text (never parsed as HTML).
+   */
+  #strong(text) {
+    const strong = document.createElement("strong");
+    strong.textContent = String(text ?? "");
+    return strong;
   }
 
   /**

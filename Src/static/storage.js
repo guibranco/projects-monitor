@@ -27,8 +27,18 @@ export class OptionsBoxState {
 
 }
 
+/**
+ * An "all" / "mine" filter persisted in localStorage: the feed's by default,
+ * or another section's under its own key and default.
+ */
 export class FeedState {
-  constructor() {
+  /**
+   * @param {string} storageKey - The localStorage key the filter is kept under.
+   * @param {string} defaultFilter - The filter when none (or an invalid one) is stored.
+   */
+  constructor(storageKey = STORAGE_KEYS.FEED_FILTER, defaultFilter = FEED_FILTERS.ALL) {
+    this.storageKey = storageKey;
+    this.defaultFilter = defaultFilter;
     this._filter = this.loadFeedFilter();
   }
 
@@ -46,19 +56,19 @@ export class FeedState {
 
   loadFeedFilter() {
     try {
-      const storedFilter = localStorage.getItem(STORAGE_KEYS.FEED_FILTER);
+      const storedFilter = localStorage.getItem(this.storageKey);
       return Object.values(FEED_FILTERS).includes(storedFilter)
         ? storedFilter
-        : FEED_FILTERS.ALL;
+        : this.defaultFilter;
     } catch (e) {
       console.error("Failed to load feed filter:", e);
-      return FEED_FILTERS.ALL;
+      return this.defaultFilter;
     }
   }
 
   saveFeedFilter(value) {
     try {
-      localStorage.setItem(STORAGE_KEYS.FEED_FILTER, value);
+      localStorage.setItem(this.storageKey, value);
     } catch (e) {
       console.error("Failed to save feed filter:", e);
     }

@@ -1115,7 +1115,8 @@ export class DataDisplayManager {
    * idle-pull-requests worker gives an Idle Retry (marks IDLE); a WAITING
    * row's "Waiting Until" is when its backoff window ends, and "Expected
    * Retry" is the run the API projects for each row (see #renderIdleWorker).
-   * Only the dashboard's own accounts' repositories are listed.
+   * The sidebar's Idle Pull Requests switch picks only the dashboard's own
+   * accounts' repositories (the default) or every repository the bot serves.
    */
   showWebhookPullRequestsIdle(response) {
     const items = Array.isArray(response?.items) ? response.items : [];

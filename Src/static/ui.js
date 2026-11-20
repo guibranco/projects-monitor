@@ -90,8 +90,9 @@ function showConfirm({ title, content, onConfirm }) {
 }
 
 export class UIManager {
-  constructor(feedState) {
+  constructor(feedState, idlePullRequestsState = null) {
     this.feedState = feedState;
+    this.idlePullRequestsState = idlePullRequestsState;
     this.eventAssigned = false;
     this.eventAssignedError = false;
   }
@@ -120,6 +121,27 @@ export class UIManager {
 
     toggle.checked = this.feedState.filter === FEED_FILTERS.MINE;
     toggle.addEventListener("change", () => this.updateFeedPreference(toggle));
+  }
+
+  /**
+   * The sidebar's Idle Pull Requests switch (checked: only mine). Present
+   * only on the page with that section; a change reloads the section now
+   * instead of waiting for its next refresh.
+   *
+   * @param {() => void} onChange - Called after the filter changes.
+   */
+  initIdlePullRequestsToggle(onChange) {
+    const toggle = document.getElementById("idlePullRequestsToggle");
+
+    if (!toggle || !this.idlePullRequestsState) {
+      return;
+    }
+
+    toggle.checked = this.idlePullRequestsState.filter === FEED_FILTERS.MINE;
+    toggle.addEventListener("change", () => {
+      this.idlePullRequestsState.filter = toggle.checked ? FEED_FILTERS.MINE : FEED_FILTERS.ALL;
+      onChange?.();
+    });
   }
 
   confirmDelete(application, onConfirm) {

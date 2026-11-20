@@ -630,8 +630,9 @@ export class DataLoader {
   }
 
   /**
-   * The URL of an endpoint; the webhooks one carries the feed filter and
-   * the GitHub API proxy one its time range.
+   * The URL of an endpoint; the webhooks one carries the feed filter, the
+   * idle pull requests one its own all/mine filter and the GitHub API proxy
+   * one its time range.
    *
    * @param {string} endpoint - A key of API_ENDPOINTS.
    * @returns {string}
@@ -639,6 +640,11 @@ export class DataLoader {
   getUrl(endpoint) {
     if (endpoint === "GITHUB_API_PROXY") {
       return `${API_ENDPOINTS.GITHUB_API_PROXY}?range=${encodeURIComponent(getGitHubApiProxyRange())}`;
+    }
+
+    if (endpoint === "WEBHOOKS_PR_IDLE") {
+      const idleState = window.idlePullRequestsState || { filter: "mine" };
+      return `${API_ENDPOINTS.WEBHOOKS_PR_IDLE}?filter=${encodeURIComponent(idleState.filter)}`;
     }
 
     if (endpoint !== "WEBHOOKS") {

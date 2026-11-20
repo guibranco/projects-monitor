@@ -1,7 +1,7 @@
 // main.js
 import { OptionsBoxState, FeedState } from './storage.js';
 import { ApiManager, DataLoader } from './api.js';
-import { API_ENDPOINTS } from './constants.js';
+import { API_ENDPOINTS, STORAGE_KEYS, FEED_FILTERS } from './constants.js';
 import { UIManager, GitHubStatsManager, CookieManager } from './ui.js';
 import { DataDisplayManager } from './dataDisplay.js';
 import { CollapsibleSectionsManager } from './collapsibleSections.js'; // Add this import
@@ -28,7 +28,8 @@ class DashboardApp {
 
     // Initialize state objects
     this.feedState = new FeedState();
-    this.uiManager = new UIManager(this.feedState);
+    this.idlePullRequestsState = new FeedState(STORAGE_KEYS.IDLE_PULL_REQUESTS_FILTER, FEED_FILTERS.MINE);
+    this.uiManager = new UIManager(this.feedState, this.idlePullRequestsState);
 
     // Expose necessary objects to global scope for backwards compatibility
     this.exposeGlobals();
@@ -45,6 +46,7 @@ class DashboardApp {
   exposeGlobals() {
     // Expose state objects
     window.feedState = this.feedState;
+    window.idlePullRequestsState = this.idlePullRequestsState;
 
     // Expose display functions for API callbacks
     window.showAppVeyor = this.dataDisplayManager.showAppVeyor.bind(this.dataDisplayManager);
@@ -437,6 +439,7 @@ class DashboardApp {
     CookieManager.set("offset", offset, 10);
 
     this.uiManager.initFeedToggle();
+    this.uiManager.initIdlePullRequestsToggle(() => this.dataLoader.loadEndpoint("WEBHOOKS_PR_IDLE"));
 
     // Initialize collapsible sections
     this.collapsibleSectionsManager.init();

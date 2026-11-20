@@ -124,6 +124,16 @@ $dashboardPage = new DashboardPage(($activePage ?? "overview"), ($pageTitle ?? "
                <i class="bi bi-rss me-1"></i> Show All / Only mine
             </label>
          </div>
+<?php if ($dashboardPage->getActivePage() === 'pipeline') : ?>
+         <hr class="settings-divider">
+         <h6 class="settings-section-label">Idle Pull Requests</h6>
+         <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="idlePullRequestsToggle">
+            <label class="form-check-label" for="idlePullRequestsToggle">
+               <i class="bi bi-hourglass-split me-1"></i> Show All / Only mine
+            </label>
+         </div>
+<?php endif; ?>
          <hr class="settings-divider">
          <h6 class="settings-section-label">Sections</h6>
          <div class="d-grid gap-2">

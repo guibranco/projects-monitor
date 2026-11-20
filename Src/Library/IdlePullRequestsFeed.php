@@ -24,6 +24,24 @@ class IdlePullRequestsFeed
 {
 
     /**
+     * Every followed and non-followed account's rows.
+     */
+    public const FILTER_ALL = 'all';
+
+    /**
+     * Only the own accounts' rows (GitHubAccounts), the default.
+     */
+    public const FILTER_MINE = 'mine';
+
+    /**
+     * The filters fetch() accepts.
+     */
+    public const FILTERS = [
+                            self::FILTER_ALL,
+                            self::FILTER_MINE,
+                           ];
+
+    /**
      * The webhooks API client.
      *
      * @var Webhooks|null
@@ -65,12 +83,36 @@ class IdlePullRequestsFeed
 
 
     /**
-     * The feed: the own accounts' rows with an expectedRetryAt each, how
-     * many rows of other accounts were left out, and the worker.
+     * The filter a request asked for, as fetch() takes it: "all" or "mine",
+     * with anything else (missing, unknown, not a string) falling back to
+     * "mine".
+     *
+     * @param mixed $value The raw value, e.g. the query string's filter.
+     *
+     * @return string One of FILTERS.
+     */
+    public function normalizeFilter($value): string
+    {
+        if (in_array($value, self::FILTERS, true) === true) {
+            return $value;
+        }
+
+        return self::FILTER_MINE;
+
+    }//end normalizeFilter()
+
+
+    /**
+     * The feed: the rows with an expectedRetryAt each, how many rows of
+     * other accounts were left out, and the worker. With the "mine" filter
+     * (the default, and any unknown value) only the own accounts' rows are
+     * listed; with "all" every row the API returns is, and none is hidden.
+     *
+     * @param string $filter One of FILTERS.
      *
      * @return array {items: array, hidden: integer, worker: array}
      */
-    public function fetch(): array
+    public function fetch(string $filter=self::FILTER_MINE): array
     {
         $rows = $this->getWebhooks()->getPullRequestsIdle();
         if (is_array($rows) === false) {
@@ -85,7 +127,10 @@ class IdlePullRequestsFeed
         $worker['checkStatus'] = ($check['status'] ?? null);
 
         $projected = $forecast->apply($rows);
-        $own       = $this->getOwnRows($projected);
+        $own       = $projected;
+        if ($filter !== self::FILTER_ALL) {
+            $own = $this->getOwnRows($projected);
+        }
 
         $feed = [];
 

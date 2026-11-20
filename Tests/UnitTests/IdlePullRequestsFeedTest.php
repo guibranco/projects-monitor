@@ -140,6 +140,69 @@ class IdlePullRequestsFeedTest extends TestCase
 
 
     /**
+     * The "all" filter lists every account's rows, in the API's order and
+     * with the same projection, and hides none.
+     *
+     * @return void
+     */
+    public function testAllFilterKeepsOtherAccounts(): void
+    {
+        $rows = [];
+
+        $rows[] = $this->getRow('octocat', '2026-10-01 00:00:00');
+        $rows[] = $this->getRow('guibranco', '2026-10-10 08:30:00');
+        $rows[] = $this->getRow('ApiBR', '2026-10-12 08:30:00');
+
+        $feed = (new IdlePullRequestsFeed($this->getWebhooks($rows), $this->getHealthChecks()))->fetch(IdlePullRequestsFeed::FILTER_ALL);
+
+        $this->assertSame(0, $feed['hidden']);
+        $this->assertSame(['octocat', 'guibranco', 'ApiBR'], array_column($feed['items'], 'repositoryOwner'));
+        $this->assertSame('2026-10-23 12:05:12', $feed['items'][0]['expectedRetryAt']);
+        $this->assertSame('2026-10-23 13:05:12', $feed['items'][1]['expectedRetryAt']);
+
+    }//end testAllFilterKeepsOtherAccounts()
+
+
+    /**
+     * An unknown filter falls back to "mine".
+     *
+     * @return void
+     */
+    public function testUnknownFilterIsMine(): void
+    {
+        $rows = [];
+
+        $rows[] = $this->getRow('octocat', '2026-10-01 00:00:00');
+        $rows[] = $this->getRow('guibranco', '2026-10-10 08:30:00');
+
+        $feed = (new IdlePullRequestsFeed($this->getWebhooks($rows), $this->getHealthChecks()))->fetch('everything');
+
+        $this->assertSame(1, $feed['hidden']);
+        $this->assertSame(['guibranco'], array_column($feed['items'], 'repositoryOwner'));
+
+    }//end testUnknownFilterIsMine()
+
+
+    /**
+     * A request's filter is kept when it is "all" or "mine" and falls back
+     * to "mine" when missing, unknown or not a string.
+     *
+     * @return void
+     */
+    public function testNormalizeFilter(): void
+    {
+        $feed = new IdlePullRequestsFeed($this->getWebhooks([]), $this->getHealthChecks());
+
+        $this->assertSame('all', $feed->normalizeFilter('all'));
+        $this->assertSame('mine', $feed->normalizeFilter('mine'));
+        $this->assertSame('mine', $feed->normalizeFilter(null));
+        $this->assertSame('mine', $feed->normalizeFilter('ALL'));
+        $this->assertSame('mine', $feed->normalizeFilter(['all']));
+
+    }//end testNormalizeFilter()
+
+
+    /**
      * When HealthChecks.io cannot be read, the rows still come through
      * without a projection and the worker says nothing is known.
      *

@@ -396,7 +396,7 @@ class IdleRetryForecast
 
         foreach ($keys as $pair) {
             if ($pair[0] !== $pair[1]) {
-                return ($pair[0] < $pair[1]);
+                return $pair[0] < $pair[1];
             }
         }
 

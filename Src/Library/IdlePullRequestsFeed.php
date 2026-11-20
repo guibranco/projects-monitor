@@ -91,7 +91,7 @@ class IdlePullRequestsFeed
      *
      * @return string One of FILTERS.
      */
-    public static function normalizeFilter($value): string
+    public function normalizeFilter($value): string
     {
         if (in_array($value, self::FILTERS, true) === true) {
             return $value;

@@ -191,11 +191,13 @@ class IdlePullRequestsFeedTest extends TestCase
      */
     public function testNormalizeFilter(): void
     {
-        $this->assertSame('all', IdlePullRequestsFeed::normalizeFilter('all'));
-        $this->assertSame('mine', IdlePullRequestsFeed::normalizeFilter('mine'));
-        $this->assertSame('mine', IdlePullRequestsFeed::normalizeFilter(null));
-        $this->assertSame('mine', IdlePullRequestsFeed::normalizeFilter('ALL'));
-        $this->assertSame('mine', IdlePullRequestsFeed::normalizeFilter(['all']));
+        $feed = new IdlePullRequestsFeed($this->getWebhooks([]), $this->getHealthChecks());
+
+        $this->assertSame('all', $feed->normalizeFilter('all'));
+        $this->assertSame('mine', $feed->normalizeFilter('mine'));
+        $this->assertSame('mine', $feed->normalizeFilter(null));
+        $this->assertSame('mine', $feed->normalizeFilter('ALL'));
+        $this->assertSame('mine', $feed->normalizeFilter(['all']));
 
     }//end testNormalizeFilter()
 

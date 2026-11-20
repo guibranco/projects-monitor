@@ -139,7 +139,9 @@ export class UIManager {
 
     toggle.checked = this.idlePullRequestsState.filter === FEED_FILTERS.MINE;
     toggle.addEventListener("change", () => {
-      this.idlePullRequestsState.filter = toggle.checked ? FEED_FILTERS.MINE : FEED_FILTERS.ALL;
+      this.idlePullRequestsState.filter = toggle.checked
+        ? FEED_FILTERS.MINE
+        : FEED_FILTERS.ALL;
       onChange?.();
     });
   }

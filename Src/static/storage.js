@@ -36,7 +36,10 @@ export class FeedState {
    * @param {string} storageKey - The localStorage key the filter is kept under.
    * @param {string} defaultFilter - The filter when none (or an invalid one) is stored.
    */
-  constructor(storageKey = STORAGE_KEYS.FEED_FILTER, defaultFilter = FEED_FILTERS.ALL) {
+  constructor(
+    storageKey = STORAGE_KEYS.FEED_FILTER,
+    defaultFilter = FEED_FILTERS.ALL,
+  ) {
     this.storageKey = storageKey;
     this.defaultFilter = defaultFilter;
     this._filter = this.loadFeedFilter();

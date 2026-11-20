@@ -2,7 +2,7 @@
 export const STORAGE_KEYS = {
   OPTIONS_BOX_STATE: 'optionsBoxState',
   FEED_FILTER: 'feedFilter',
-  IDLE_PULL_REQUESTS_FILTER: 'idlePullRequestsFilter',
+  IDLE_PULL_REQUESTS_FILTER: "idlePullRequestsFilter",
   COLLAPSIBLE_SECTIONS: 'collapsibleSections',
   TABLE_PAGE_SIZES: 'tablePageSizes',
 };

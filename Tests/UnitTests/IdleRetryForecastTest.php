@@ -313,7 +313,7 @@ class IdleRetryForecastTest extends TestCase
         $rows[] = $this->getRow('guibranco/b', 'DUE', '2026-10-01 00:00:00', '2026-10-20 00:00:00');
         $rows[] = $this->getRow('guibranco/b', 'DUE', '2026-10-01 00:00:00', '2026-10-20 00:00:00');
 
-        foreach ($rows as $index => $row) {
+        foreach (array_keys($rows) as $index) {
             $rows[$index]['ownerLastIdleRetry'] = '2026-10-22 10:00:00';
         }
 

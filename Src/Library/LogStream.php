@@ -365,10 +365,10 @@ class LogStream
     /**
      * Creates the client from a secrets file.
      *
-     * @param string $secretsFile The secrets file path.
-     *
      * The client sends over UDP to the host of `$logStreamServer`, on
      * `$logStreamUdpPort` when set, otherwise the server's default port.
+     *
+     * @param string $secretsFile The secrets file path.
      *
      * @return PancakeLogStream|null The client, or null when the file or its settings are missing.
      */

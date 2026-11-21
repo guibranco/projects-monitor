@@ -232,6 +232,8 @@ jobs:
           LOGSTREAM_SERVER: ${{ secrets.LOGSTREAM_SERVER }}
           LOGSTREAM_API_KEY: ${{ secrets.LOGSTREAM_API_KEY }}
           LOGSTREAM_API_TOKEN: ${{ secrets.LOGSTREAM_API_TOKEN }}
+          # Entries go over UDP to the LOGSTREAM_SERVER host on this port.
+          LOGSTREAM_UDP_PORT: ${{ vars.LOGSTREAM_UDP_PORT || '8082' }}
         run: |
           cd Src
           mkdir -p secrets
@@ -241,6 +243,7 @@ jobs:
           echo "\$logStreamServer   = '$(php_literal "$LOGSTREAM_SERVER")';" >> logStream.secrets.php
           echo "\$logStreamApiKey   = '$(php_literal "$LOGSTREAM_API_KEY")';" >> logStream.secrets.php
           echo "\$logStreamApiToken = '$(php_literal "$LOGSTREAM_API_TOKEN")';" >> logStream.secrets.php
+          echo "\$logStreamUdpPort  = (int) '$(php_literal "$LOGSTREAM_UDP_PORT")';" >> logStream.secrets.php
 
       - name: 🔑 Generate Cloudflare Configuration
         env:

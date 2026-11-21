@@ -28,6 +28,10 @@ use GuiBranco\Pancake\Response;
  * `X-Request-Id`/`X-Trace-Id` header when valid, otherwise a generated UUID.
  * Throwables at the top level of the context are expanded.
  *
+ * Entries go over UDP: one HMAC-signed datagram each, sent to the host of
+ * `$logStreamServer` on `$logStreamUdpPort` (default 8082). Entries too large
+ * for one datagram are posted over HTTP instead.
+ *
  * The client, the server variables and the user are shared by every instance:
  * bootstrap.php registers $_SERVER and session_validator.php the user, so no
  * class reads superglobals itself.
@@ -322,18 +326,21 @@ class LogStream
      */
     private function write(string $level, string $message, ?array $context, string $category): void
     {
-        $client = $this->getClient();
-        if ($client === null) {
-            return;
-        }
-
-        $logContext  = new LogContext();
-        $skipFiles   = [__FILE__];
-        $callSite    = $logContext->getCallSite(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 4), $skipFiles);
-        $fullContext = $logContext->build($context, self::$server, self::$userId, $callSite, PHP_SAPI);
-
         try {
-            $client->{$level}($message, $fullContext, $category, $this->getTraceId());
+            $client = $this->getClient();
+            if ($client === null) {
+                return;
+            }
+
+            $logContext  = new LogContext();
+            $skipFiles   = [__FILE__];
+            $callSite    = $logContext->getCallSite(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 4), $skipFiles);
+            $fullContext = $logContext->build($context, self::$server, self::$userId, $callSite, PHP_SAPI);
+
+            $response = $client->{$level}($message, $fullContext, $category, $this->getTraceId());
+            if ($response->transportError !== null) {
+                error_log(sprintf("LogStream: failed to send entry: %s", $response->transportError));
+            }
         } catch (\Throwable $exception) {
             error_log(sprintf("LogStream: failed to send entry: %s", $exception->getMessage()));
         }
@@ -361,6 +368,10 @@ class LogStream
     /**
      * Creates the client from a secrets file.
      *
+     * The client sends over UDP to the host of `$logStreamServer`, on
+     * `$logStreamUdpPort` when set to a valid port, otherwise the server's
+     * default port.
+     *
      * @param string $secretsFile The secrets file path.
      *
      * @return PancakeLogStream|null The client, or null when the file or its settings are missing.
@@ -371,7 +382,7 @@ class LogStream
             return null;
         }
 
-        global $logStreamServer, $logStreamApiKey, $logStreamApiToken;
+        global $logStreamServer, $logStreamApiKey, $logStreamApiToken, $logStreamUdpPort;
         include_once $secretsFile;
 
         if (empty($logStreamServer) === true || empty($logStreamApiToken) === true) {
@@ -381,6 +392,16 @@ class LogStream
         $appKey = self::DEFAULT_APP_KEY;
         if (empty($logStreamApiKey) === false) {
             $appKey = $logStreamApiKey;
+        }
+
+        $udpPort = PancakeLogStream::DEFAULT_UDP_PORT;
+        if (empty($logStreamUdpPort) === false) {
+            $udpPort = (int) $logStreamUdpPort;
+        }
+
+        if ($udpPort < 1 || $udpPort > 65535) {
+            error_log(sprintf("LogStream: invalid UDP port %d, using %d", $udpPort, PancakeLogStream::DEFAULT_UDP_PORT));
+            $udpPort = PancakeLogStream::DEFAULT_UDP_PORT;
         }
 
         $configuration = new Configuration();
@@ -393,7 +414,9 @@ class LogStream
             authMode: PancakeLogStream::AUTH_API_KEY,
             apiKey: $appKey,
             apiToken: $logStreamApiToken,
-            userAgent: $configuration->getUserAgent()
+            userAgent: $configuration->getUserAgent(),
+            transport: PancakeLogStream::TRANSPORT_UDP,
+            udpPort: $udpPort
         );
 
     }//end createClient()

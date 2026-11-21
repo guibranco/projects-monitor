@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "55386f1310421513af3609a8723f254f",
+    "content-hash": "c99c319392ff2d99932ad9d47693f643",
     "packages": [
         {
             "name": "fastvolt/markdown",
@@ -2341,7 +2341,9 @@
     "stability-flags": {},
     "prefer-stable": false,
     "prefer-lowest": false,
-    "platform": {},
+    "platform": {
+        "ext-mbstring": "*"
+    },
     "platform-dev": {},
     "platform-overrides": {
         "php": "8.2.0"

@@ -81,6 +81,7 @@ jobs:
           echo "\$logStreamServer   = \"\";" >> logStream.secrets.php
           echo "\$logStreamApiKey   = \"\";" >> logStream.secrets.php
           echo "\$logStreamApiToken = \"\";" >> logStream.secrets.php
+          echo "\$logStreamUdpPort  = 8082;" >> logStream.secrets.php
 
       - name: 🐳 Docker compose up
         run: docker compose up -d

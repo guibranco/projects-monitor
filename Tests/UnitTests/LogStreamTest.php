@@ -204,7 +204,8 @@ class LogStreamTest extends TestCase
 
 
     /**
-     * The client is created only from a secrets file with a server and a token.
+     * The client is created only from a secrets file with a server and a token,
+     * and sends over UDP.
      *
      * @return void
      */
@@ -218,7 +219,9 @@ class LogStreamTest extends TestCase
 
         $this->assertNull($this->logStream->createClient("{$directory}/missing.secrets.php"));
         $this->assertNull($this->logStream->createClient($partial));
-        $this->assertInstanceOf(PancakeLogStream::class, $this->logStream->createClient($complete));
+        $client = $this->logStream->createClient($complete);
+        $this->assertInstanceOf(PancakeLogStream::class, $client);
+        $this->assertSame(PancakeLogStream::TRANSPORT_UDP, $client->getTransport());
 
         unlink($partial);
         unlink($complete);

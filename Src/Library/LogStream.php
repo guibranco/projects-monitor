@@ -28,6 +28,10 @@ use GuiBranco\Pancake\Response;
  * `X-Request-Id`/`X-Trace-Id` header when valid, otherwise a generated UUID.
  * Throwables at the top level of the context are expanded.
  *
+ * Entries go over UDP: one HMAC-signed datagram each, sent to the host of
+ * `$logStreamServer` on `$logStreamUdpPort` (default 8082). Entries too large
+ * for one datagram are posted over HTTP instead.
+ *
  * The client, the server variables and the user are shared by every instance:
  * bootstrap.php registers $_SERVER and session_validator.php the user, so no
  * class reads superglobals itself.
@@ -363,6 +367,9 @@ class LogStream
      *
      * @param string $secretsFile The secrets file path.
      *
+     * The client sends over UDP to the host of `$logStreamServer`, on
+     * `$logStreamUdpPort` when set, otherwise the server's default port.
+     *
      * @return PancakeLogStream|null The client, or null when the file or its settings are missing.
      */
     public function createClient(string $secretsFile): ?PancakeLogStream
@@ -371,7 +378,7 @@ class LogStream
             return null;
         }
 
-        global $logStreamServer, $logStreamApiKey, $logStreamApiToken;
+        global $logStreamServer, $logStreamApiKey, $logStreamApiToken, $logStreamUdpPort;
         include_once $secretsFile;
 
         if (empty($logStreamServer) === true || empty($logStreamApiToken) === true) {
@@ -381,6 +388,11 @@ class LogStream
         $appKey = self::DEFAULT_APP_KEY;
         if (empty($logStreamApiKey) === false) {
             $appKey = $logStreamApiKey;
+        }
+
+        $udpPort = PancakeLogStream::DEFAULT_UDP_PORT;
+        if (empty($logStreamUdpPort) === false) {
+            $udpPort = (int) $logStreamUdpPort;
         }
 
         $configuration = new Configuration();
@@ -393,7 +405,9 @@ class LogStream
             authMode: PancakeLogStream::AUTH_API_KEY,
             apiKey: $appKey,
             apiToken: $logStreamApiToken,
-            userAgent: $configuration->getUserAgent()
+            userAgent: $configuration->getUserAgent(),
+            transport: PancakeLogStream::TRANSPORT_UDP,
+            udpPort: $udpPort
         );
 
     }//end createClient()

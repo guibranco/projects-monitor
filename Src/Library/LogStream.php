@@ -326,18 +326,21 @@ class LogStream
      */
     private function write(string $level, string $message, ?array $context, string $category): void
     {
-        $client = $this->getClient();
-        if ($client === null) {
-            return;
-        }
-
-        $logContext  = new LogContext();
-        $skipFiles   = [__FILE__];
-        $callSite    = $logContext->getCallSite(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 4), $skipFiles);
-        $fullContext = $logContext->build($context, self::$server, self::$userId, $callSite, PHP_SAPI);
-
         try {
-            $client->{$level}($message, $fullContext, $category, $this->getTraceId());
+            $client = $this->getClient();
+            if ($client === null) {
+                return;
+            }
+
+            $logContext  = new LogContext();
+            $skipFiles   = [__FILE__];
+            $callSite    = $logContext->getCallSite(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 4), $skipFiles);
+            $fullContext = $logContext->build($context, self::$server, self::$userId, $callSite, PHP_SAPI);
+
+            $response = $client->{$level}($message, $fullContext, $category, $this->getTraceId());
+            if ($response->transportError !== null) {
+                error_log(sprintf("LogStream: failed to send entry: %s", $response->transportError));
+            }
         } catch (\Throwable $exception) {
             error_log(sprintf("LogStream: failed to send entry: %s", $exception->getMessage()));
         }
@@ -366,7 +369,8 @@ class LogStream
      * Creates the client from a secrets file.
      *
      * The client sends over UDP to the host of `$logStreamServer`, on
-     * `$logStreamUdpPort` when set, otherwise the server's default port.
+     * `$logStreamUdpPort` when set to a valid port, otherwise the server's
+     * default port.
      *
      * @param string $secretsFile The secrets file path.
      *
@@ -393,6 +397,11 @@ class LogStream
         $udpPort = PancakeLogStream::DEFAULT_UDP_PORT;
         if (empty($logStreamUdpPort) === false) {
             $udpPort = (int) $logStreamUdpPort;
+        }
+
+        if ($udpPort < 1 || $udpPort > 65535) {
+            error_log(sprintf("LogStream: invalid UDP port %d, using %d", $udpPort, PancakeLogStream::DEFAULT_UDP_PORT));
+            $udpPort = PancakeLogStream::DEFAULT_UDP_PORT;
         }
 
         $configuration = new Configuration();

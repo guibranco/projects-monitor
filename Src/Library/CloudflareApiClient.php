@@ -12,6 +12,7 @@ use GuiBranco\Pancake\Response;
  */
 abstract class CloudflareApiClient
 {
+
     /**
      * The HTTP client of the API.
      *

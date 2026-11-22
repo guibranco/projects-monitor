@@ -261,7 +261,10 @@ class CloudflarePagesTest extends TestCase
      */
     public function testDerivesPagesFromTotalCount(): void
     {
-        $info = ["per_page" => 10, "total_count" => 11];
+        $info                = [];
+        $info["per_page"]    = 10;
+        $info["total_count"] = 11;
+
         $last = $this->getPage([$this->getProject("p10", $this->getDeployment("deploy", "success", null))], $info);
 
         $rows = $this->getTile($this->getFullPage($info), $last)->getProjects();

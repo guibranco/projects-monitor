@@ -38,6 +38,7 @@ class CloudflarePages extends CloudflareApiClient
 
     private const STATUS_SUCCESS = "success";
 
+
     /**
      * One page of the account's Pages projects, as the API lists them.
      *

@@ -1,7 +1,11 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
+use GuiBranco\Pancake\Request;
+use GuiBranco\Pancake\Response;
 use GuiBranco\ProjectsMonitor\Library\CloudflarePages;
+use GuiBranco\ProjectsMonitor\Library\RequestException;
+use GuiBranco\ProjectsMonitor\Library\SecretsFileNotFoundException;
 
 /**
  * Tests the Cloudflare Pages tile: every project of the account, across all
@@ -10,6 +14,15 @@ use GuiBranco\ProjectsMonitor\Library\CloudflarePages;
 class CloudflarePagesTest extends TestCase
 {
     private const ACCOUNT_ID = "account123";
+
+    private const API_URL = "https://api.cloudflare.com/client/v4/accounts/account123/pages/projects";
+
+    /**
+     * The URLs the tile requested, in order.
+     *
+     * @var array
+     */
+    private $urls = [];
 
 
     /**
@@ -21,21 +34,21 @@ class CloudflarePagesTest extends TestCase
      * @param string|null $endedOn When the stage ended, null while running.
      * @param string|null $branch  The branch deployed.
      *
-     * @return object
+     * @return array
      */
-    private function getDeployment(string $stage, string $status, ?string $endedOn, ?string $branch=null): object
+    private function getDeployment(string $stage, string $status, ?string $endedOn, ?string $branch=null): array
     {
-        $deployment                       = new stdClass();
-        $deployment->created_on           = "2026-11-20T10:00:00Z";
-        $deployment->latest_stage         = new stdClass();
-        $deployment->latest_stage->name   = $stage;
-        $deployment->latest_stage->status = $status;
-        $deployment->latest_stage->ended_on = $endedOn;
+        $latestStage             = [];
+        $latestStage["name"]     = $stage;
+        $latestStage["status"]   = $status;
+        $latestStage["ended_on"] = $endedOn;
+
+        $deployment                 = [];
+        $deployment["created_on"]   = "2026-11-20T10:00:00Z";
+        $deployment["latest_stage"] = $latestStage;
 
         if ($branch !== null) {
-            $deployment->deployment_trigger = new stdClass();
-            $deployment->deployment_trigger->metadata         = new stdClass();
-            $deployment->deployment_trigger->metadata->branch = $branch;
+            $deployment["deployment_trigger"] = ["metadata" => ["branch" => $branch]];
         }
 
         return $deployment;
@@ -46,22 +59,23 @@ class CloudflarePagesTest extends TestCase
     /**
      * A project as GET /accounts/{id}/pages/projects lists it.
      *
-     * @param string      $name      The project name.
-     * @param object|null $canonical The latest production deployment.
-     * @param object|null $latest    The latest deployment of any environment.
-     * @param array       $domains   The project's domains.
+     * @param string     $name      The project name.
+     * @param array|null $canonical The latest production deployment.
+     * @param array|null $latest    The latest deployment of any environment.
+     * @param array      $domains   The project's domains.
      *
-     * @return object
+     * @return array
      */
-    private function getProject(string $name, ?object $canonical, ?object $latest=null, array $domains=[]): object
+    private function getProject(string $name, ?array $canonical, ?array $latest=null, array $domains=[]): array
     {
-        $project                    = new stdClass();
-        $project->name              = $name;
-        $project->subdomain         = "{$name}.pages.dev";
-        $project->domains           = $domains;
-        $project->production_branch = "main";
-        $project->canonical_deployment = $canonical;
-        $project->latest_deployment    = $latest;
+        $project                         = [];
+        $project["id"]                   = md5($name);
+        $project["name"]                 = $name;
+        $project["subdomain"]            = "{$name}.pages.dev";
+        $project["domains"]              = $domains;
+        $project["production_branch"]    = "main";
+        $project["canonical_deployment"] = $canonical;
+        $project["latest_deployment"]    = $latest;
 
         return $project;
 
@@ -71,46 +85,74 @@ class CloudflarePagesTest extends TestCase
     /**
      * One page of the projects endpoint.
      *
-     * @param array   $projects   The projects of the page.
-     * @param integer $totalPages The total pages reported.
+     * @param array $projects The projects of the page.
+     * @param array $info     The result_info of the page.
      *
-     * @return object
+     * @return Response
      */
-    private function getPage(array $projects, int $totalPages): object
+    private function getPage(array $projects, array $info): Response
     {
-        $page          = new stdClass();
-        $page->success = true;
-        $page->result  = $projects;
-        $page->result_info = new stdClass();
-        $page->result_info->total_pages = $totalPages;
+        $answer                = [];
+        $answer["success"]     = true;
+        $answer["errors"]      = [];
+        $answer["result"]      = $projects;
+        $answer["result_info"] = $info;
 
-        return $page;
+        return new Response(true, json_encode($answer), "", 200, self::API_URL, []);
 
     }//end getPage()
 
 
     /**
-     * The tile with the API call mocked to answer the given pages in order.
+     * The tile with its constructor skipped and the HTTP client answering
+     * the given responses in order.
      *
-     * @param array $pages The pages, the first one being page 1.
+     * @param Response ...$responses The answers of the projects endpoint.
      *
      * @return CloudflarePages
      */
-    private function getTile(array $pages): CloudflarePages
+    private function getTile(Response ...$responses): CloudflarePages
     {
-        $builder = $this->getMockBuilder(CloudflarePages::class);
-        $builder->disableOriginalConstructor();
-        $builder->onlyMethods(['fetchProjects']);
+        $reflection = new ReflectionClass(CloudflarePages::class);
+        $tile       = $reflection->newInstanceWithoutConstructor();
 
-        $tile = $builder->getMock();
-        $tile->method('fetchProjects')->willReturnCallback(fn (int $page) => $pages[($page - 1)]);
+        $this->urls = [];
 
-        $reflection = new ReflectionProperty(CloudflarePages::class, 'accountId');
-        $reflection->setValue($tile, self::ACCOUNT_ID);
+        $request = $this->createMock(Request::class);
+        $request->method('get')->willReturnCallback(
+            function (string $url) use (&$responses): Response {
+                $this->urls[] = $url;
+                return array_shift($responses);
+            }
+        );
+
+        foreach (["request" => $request, "headers" => [], "accountId" => self::ACCOUNT_ID] as $name => $value) {
+            $property = new ReflectionProperty(CloudflarePages::class, $name);
+            $property->setValue($tile, $value);
+        }
 
         return $tile;
 
     }//end getTile()
+
+
+    /**
+     * A page of ten projects named p00 to p09.
+     *
+     * @param array $info The result_info of the page.
+     *
+     * @return Response
+     */
+    private function getFullPage(array $info): Response
+    {
+        $projects = [];
+        for ($index = 0; $index < 10; $index++) {
+            $projects[] = $this->getProject(sprintf("p%02d", $index), $this->getDeployment("deploy", "success", null));
+        }
+
+        return $this->getPage($projects, $info);
+
+    }//end getFullPage()
 
 
     /**
@@ -129,11 +171,12 @@ class CloudflarePagesTest extends TestCase
         $second[] = $this->getProject("mid", $this->getDeployment("build", "active", null));
         $second[] = $this->getProject("never", null);
 
-        $pages   = [];
-        $pages[] = $this->getPage($first, 2);
-        $pages[] = $this->getPage($second, 2);
+        $firstPage  = $this->getPage($first, ["total_pages" => 2]);
+        $secondPage = $this->getPage($second, ["total_pages" => 2]);
+        $rows       = $this->getTile($firstPage, $secondPage)->getProjects();
 
-        $rows = $this->getTile($pages)->getProjects();
+        $this->assertSame(self::API_URL."?per_page=10&page=1", $this->urls[0]);
+        $this->assertSame(self::API_URL."?per_page=10&page=2", $this->urls[1]);
 
         $this->assertSame(["Project", "Status", "Branch", "Last Deployment"], $rows[0]);
         $this->assertCount(5, $rows);
@@ -142,6 +185,7 @@ class CloudflarePagesTest extends TestCase
         $this->assertStringContainsString("red", $rows[1][0]);
         $this->assertSame("main", $rows[1][2]);
         $this->assertSame("BUILD_ACTIVE", $rows[2][1]);
+        $this->assertStringContainsString("yellow", $rows[2][0]);
         $this->assertSame(date("H:i:s d/m/Y", strtotime("2026-11-20T10:00:00Z")), $rows[2][3]);
         $this->assertSame("NOT_DEPLOYED", $rows[3][1]);
         $this->assertSame("-", $rows[3][3]);
@@ -149,6 +193,25 @@ class CloudflarePagesTest extends TestCase
         $this->assertStringContainsString("green", $rows[4][0]);
 
     }//end testListsEveryProjectSortedWithItsState()
+
+
+    /**
+     * A stage that succeeded before the deploy stage means the deployment
+     * is still going: not green.
+     *
+     * @return void
+     */
+    public function testEarlierStageSuccessIsStillInProgress(): void
+    {
+        $project = $this->getProject("half", $this->getDeployment("build", "success", "2026-11-21T12:00:00Z"));
+
+        $rows = $this->getTile($this->getPage([$project], ["total_pages" => 1]))->getProjects();
+
+        $this->assertSame("BUILD_SUCCESS", $rows[1][1]);
+        $this->assertStringContainsString("yellow", $rows[1][0]);
+        $this->assertStringNotContainsString("green", $rows[1][0]);
+
+    }//end testEarlierStageSuccessIsStillInProgress()
 
 
     /**
@@ -161,9 +224,10 @@ class CloudflarePagesTest extends TestCase
     {
         $project = $this->getProject("preview", null, $this->getDeployment("queued", "idle", null));
 
-        $rows = $this->getTile([$this->getPage([$project], 1)])->getProjects();
+        $rows = $this->getTile($this->getPage([$project], ["total_pages" => 1]))->getProjects();
 
         $this->assertSame("QUEUED_IDLE", $rows[1][1]);
+        $this->assertStringContainsString("blue", $rows[1][0]);
 
     }//end testFallsBackToLatestDeployment()
 
@@ -181,12 +245,124 @@ class CloudflarePagesTest extends TestCase
         $projects[] = $this->getProject("custom", $deployment, null, ["custom.pages.dev", "www.example.com"]);
         $projects[] = $this->getProject("plain", $deployment, null, ["plain.pages.dev"]);
 
-        $rows = $this->getTile([$this->getPage($projects, 1)])->getProjects();
+        $rows = $this->getTile($this->getPage($projects, ["total_pages" => 1]))->getProjects();
 
         $this->assertStringContainsString("href='https://www.example.com'", $rows[1][0]);
         $this->assertStringContainsString("href='https://plain.pages.dev'", $rows[2][0]);
 
     }//end testLinksToCustomDomainThenSubdomain()
+
+
+    /**
+     * Without total_pages, the page count comes from total_count and
+     * per_page.
+     *
+     * @return void
+     */
+    public function testDerivesPagesFromTotalCount(): void
+    {
+        $info = ["per_page" => 10, "total_count" => 11];
+        $last = $this->getPage([$this->getProject("p10", $this->getDeployment("deploy", "success", null))], $info);
+
+        $rows = $this->getTile($this->getFullPage($info), $last)->getProjects();
+
+        $this->assertCount(2, $this->urls);
+        $this->assertCount(12, $rows);
+
+    }//end testDerivesPagesFromTotalCount()
+
+
+    /**
+     * Without any count, pages are read while they come back full, and a
+     * project listed on two pages (the listing shifted) is kept once.
+     *
+     * @return void
+     */
+    public function testReadsWhileFullAndKeepsDuplicatesOnce(): void
+    {
+        $deployment = $this->getDeployment("deploy", "success", null);
+        $second     = [];
+        $second[]   = $this->getProject("p09", $deployment);
+        $second[]   = $this->getProject("p10", $deployment);
+
+        $rows = $this->getTile($this->getFullPage([]), $this->getPage($second, []))->getProjects();
+
+        $this->assertCount(2, $this->urls);
+        $this->assertCount(12, $rows);
+
+    }//end testReadsWhileFullAndKeepsDuplicatesOnce()
+
+
+    /**
+     * An answer other than 200 fails with its status code and body.
+     *
+     * @return void
+     */
+    public function testFailsOnHttpError(): void
+    {
+        $denied = new Response(true, "{\"success\":false}", "", 403, self::API_URL, []);
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage("Code: 403");
+
+        $this->getTile($denied)->getProjects();
+
+    }//end testFailsOnHttpError()
+
+
+    /**
+     * A transport failure fails with the transport error.
+     *
+     * @return void
+     */
+    public function testFailsOnTransportError(): void
+    {
+        $down = new Response(false, null, "Could not resolve host", -1, self::API_URL, null);
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage("Could not resolve host");
+
+        $this->getTile($down)->getProjects();
+
+    }//end testFailsOnTransportError()
+
+
+    /**
+     * A 200 answer without success fails with the API errors.
+     *
+     * @return void
+     */
+    public function testFailsWhenTheApiReportsErrors(): void
+    {
+        $body   = "{\"success\":false,\"errors\":[{\"code\":10000,\"message\":\"Authentication error\"}]}";
+        $answer = new Response(true, $body, "", 200, self::API_URL, []);
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage("Authentication error");
+
+        $this->getTile($answer)->getProjects();
+
+    }//end testFailsWhenTheApiReportsErrors()
+
+
+    /**
+     * Without the secrets file the real constructor fails closed, like every
+     * other integration.
+     *
+     * @return void
+     */
+    public function testConstructorFailsClosedWithoutSecretsFile(): void
+    {
+        if (file_exists(__DIR__.'/../../Src/secrets/cloudflare.secrets.php') === true) {
+            $this->markTestSkipped('cloudflare.secrets.php exists in this checkout.');
+        }
+
+        $this->expectException(SecretsFileNotFoundException::class);
+        $this->expectExceptionMessage("File not found: cloudflare.secrets.php");
+
+        new CloudflarePages();
+
+    }//end testConstructorFailsClosedWithoutSecretsFile()
 
 
 }//end class

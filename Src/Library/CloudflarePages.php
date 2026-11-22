@@ -2,7 +2,6 @@
 
 namespace GuiBranco\ProjectsMonitor\Library;
 
-use GuiBranco\Pancake\Request;
 use GuiBranco\Pancake\ShieldsIo;
 
 /**
@@ -12,7 +11,7 @@ use GuiBranco\Pancake\ShieldsIo;
  * Shares cloudflare.secrets.php with the Cloudflare tile: the token needs
  * Account → Cloudflare Pages → Read on top of the zone permissions.
  */
-class CloudflarePages
+class CloudflarePages extends CloudflareApiClient
 {
     private const CLOUDFLARE_API_URL = "https://api.cloudflare.com/client/v4/accounts/%s/pages/projects";
 
@@ -40,57 +39,6 @@ class CloudflarePages
     private const STATUS_SUCCESS = "success";
 
     /**
-     * The HTTP client of the API.
-     *
-     * @var Request
-     */
-    private $request;
-
-    /**
-     * The headers of every API request.
-     *
-     * @var array
-     */
-    private $headers;
-
-    /**
-     * The account whose projects are listed.
-     *
-     * @var string
-     */
-    private $accountId;
-
-
-    /**
-     * Reads the account ID and the API token from the secrets file.
-     *
-     * @throws SecretsFileNotFoundException When the secrets file is missing.
-     */
-    public function __construct()
-    {
-        $config = new Configuration();
-        $config->init();
-
-        global $cloudflareAccountId, $cloudflareApiToken;
-
-        $secrets = __DIR__."/../secrets/cloudflare.secrets.php";
-        if (file_exists($secrets) === false) {
-            throw new SecretsFileNotFoundException("File not found: cloudflare.secrets.php");
-        }
-
-        include_once $secrets;
-
-        $this->accountId = $cloudflareAccountId;
-        $this->request   = new Request();
-        $this->headers   = [];
-        $this->headers[] = "Authorization: Bearer {$cloudflareApiToken}";
-        $this->headers[] = "Accept: application/json";
-        $this->headers[] = constant("USER_AGENT");
-
-    }//end __construct()
-
-
-    /**
      * One page of the account's Pages projects, as the API lists them.
      *
      * @param integer $page The page to fetch, starting at 1.
@@ -105,32 +53,48 @@ class CloudflarePages
         $parameters["per_page"] = self::PAGE_SIZE;
         $parameters["page"]     = $page;
 
-        $url      = sprintf(self::CLOUDFLARE_API_URL, rawurlencode($this->accountId));
-        $url      = sprintf("%s?%s", $url, http_build_query($parameters));
-        $response = $this->request->get($url, $this->headers);
+        $url = sprintf(self::CLOUDFLARE_API_URL, rawurlencode($this->accountId));
+        $url = sprintf("%s?%s", $url, http_build_query($parameters));
 
-        if ($response->getStatusCode() !== 200) {
-            $error = $response->getBody();
-            if ($response->getStatusCode() === -1) {
-                $error = $response->getMessage();
-            }
-
-            throw new RequestException("Code: {$response->getStatusCode()} - Error: {$error}");
-        }
-
-        $body = json_decode($response->getBody());
-        if (($body->success ?? false) !== true) {
-            $errors = json_encode(($body->errors ?? []));
-            throw new RequestException("Code: {$response->getStatusCode()} - Error: {$errors}");
-        }
-
-        return $body;
+        return $this->getJson($url);
 
     }//end fetchProjects()
 
 
     /**
-     * Every Pages project of the account, across all pages.
+     * The number of pages of the listing: total_pages when the API reports
+     * it, else derived from total_count and per_page, else one more page
+     * for as long as pages come back full.
+     *
+     * @param object  $response The decoded answer of a page.
+     * @param integer $page     The page that answered.
+     *
+     * @return integer
+     */
+    private function getTotalPages($response, int $page): int
+    {
+        $info = ($response->result_info ?? null);
+        if (isset($info->total_pages) === true) {
+            return (int) $info->total_pages;
+        }
+
+        $perPage = (int) ($info->per_page ?? self::PAGE_SIZE);
+        if (isset($info->total_count) === true && $perPage > 0) {
+            return (int) ceil(((int) $info->total_count / $perPage));
+        }
+
+        if (count(($response->result ?? [])) >= $perPage) {
+            return ($page + 1);
+        }
+
+        return $page;
+
+    }//end getTotalPages()
+
+
+    /**
+     * Every Pages project of the account, across all pages. A project seen
+     * twice, because the listing shifted between two pages, is kept once.
      *
      * @return array
      */
@@ -140,14 +104,17 @@ class CloudflarePages
         $page     = 1;
 
         do {
-            $response   = $this->fetchProjects($page);
-            $result     = ($response->result ?? []);
-            $projects   = array_merge($projects, $result);
-            $totalPages = (int) ($response->result_info->total_pages ?? 1);
+            $response = $this->fetchProjects($page);
+            $result   = ($response->result ?? []);
+            foreach ($result as $project) {
+                $projects[($project->id ?? $project->name)] = $project;
+            }
+
+            $totalPages = $this->getTotalPages($response, $page);
             $page++;
         } while (empty($result) === false && $page <= $totalPages && $page <= self::MAX_PAGES);
 
-        return $projects;
+        return array_values($projects);
 
     }//end getAllProjects()
 
@@ -204,7 +171,9 @@ class CloudflarePages
 
 
     /**
-     * The status part of a state: the text after the stage name.
+     * The status part of a state: the text after the stage name. A stage
+     * that succeeded before the deploy stage (BUILD_SUCCESS...) means the
+     * deployment is still going, so it counts as ACTIVE.
      *
      * @param string $state The state shown for a project.
      *
@@ -217,7 +186,12 @@ class CloudflarePages
             return $state;
         }
 
-        return substr($state, ($position + 1));
+        $status = substr($state, ($position + 1));
+        if ($status === "SUCCESS") {
+            return "ACTIVE";
+        }
+
+        return $status;
 
     }//end getStatus()
 

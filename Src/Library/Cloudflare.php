@@ -12,7 +12,7 @@ use GuiBranco\Pancake\ShieldsIo;
  * the last days (requests, cache ratio, bandwidth, visitors and page views),
  * read from the GraphQL Analytics API.
  */
-class Cloudflare
+class Cloudflare extends CloudflareApiClient
 {
     private const CLOUDFLARE_API_URL = "https://api.cloudflare.com/client/v4/zones";
 
@@ -70,57 +70,6 @@ class Cloudflare
     private const STATE_UNKNOWN = "unknown";
 
     /**
-     * The HTTP client of the API.
-     *
-     * @var Request
-     */
-    private $request;
-
-    /**
-     * The headers of every API request.
-     *
-     * @var array
-     */
-    private $headers;
-
-    /**
-     * The account whose zones are listed.
-     *
-     * @var string
-     */
-    private $accountId;
-
-
-    /**
-     * Reads the account ID and the API token from the secrets file.
-     *
-     * @throws SecretsFileNotFoundException When the secrets file is missing.
-     */
-    public function __construct()
-    {
-        $config = new Configuration();
-        $config->init();
-
-        global $cloudflareAccountId, $cloudflareApiToken;
-
-        $secrets = __DIR__."/../secrets/cloudflare.secrets.php";
-        if (file_exists($secrets) === false) {
-            throw new SecretsFileNotFoundException("File not found: cloudflare.secrets.php");
-        }
-
-        include_once $secrets;
-
-        $this->accountId = $cloudflareAccountId;
-        $this->request   = new Request();
-        $this->headers   = [];
-        $this->headers[] = "Authorization: Bearer {$cloudflareApiToken}";
-        $this->headers[] = "Accept: application/json";
-        $this->headers[] = constant("USER_AGENT");
-
-    }//end __construct()
-
-
-    /**
      * One page of the account's zones, as the API lists them.
      *
      * @param integer $page The page to fetch, starting at 1.
@@ -138,25 +87,9 @@ class Cloudflare
         $parameters["order"]      = "name";
         $parameters["direction"]  = "asc";
 
-        $url      = sprintf("%s?%s", self::CLOUDFLARE_API_URL, http_build_query($parameters));
-        $response = $this->request->get($url, $this->headers);
+        $url = sprintf("%s?%s", self::CLOUDFLARE_API_URL, http_build_query($parameters));
 
-        if ($response->getStatusCode() !== 200) {
-            $error = $response->getBody();
-            if ($response->getStatusCode() === -1) {
-                $error = $response->getMessage();
-            }
-
-            throw new RequestException("Code: {$response->getStatusCode()} - Error: {$error}");
-        }
-
-        $body = json_decode($response->getBody());
-        if (($body->success ?? false) !== true) {
-            $errors = json_encode(($body->errors ?? []));
-            throw new RequestException("Code: {$response->getStatusCode()} - Error: {$errors}");
-        }
-
-        return $body;
+        return $this->getJson($url);
 
     }//end fetchZones()
 

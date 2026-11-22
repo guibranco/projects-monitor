@@ -33,13 +33,13 @@
         "domain": "gstraccini.bot",
         "ip2whois": true,
         "registrar": "NameCheap",
-        "dnsManager": "NameCheap"
+        "dnsManager": "Cloudflare"
     },
     {
         "domain": "gstraccini.dev",
         "ip2whois": true,
         "registrar": "NameCheap",
-        "dnsManager": "NameCheap"
+        "dnsManager": "Cloudflare"
     },
     {
         "domain": "progress-bar.xyz",

@@ -712,6 +712,13 @@ export class DataDisplayManager {
   }
 
   /**
+   * Draws a data table listing Cloudflare Pages projects with their latest production deployment status.
+   */
+  showCloudflarePages(response) {
+    this.chartManager.drawDataTable(response.projects, "cloudflare_pages", CHART_OPTIONS.table);
+  }
+
+  /**
    * Draws a data table listing Render services with their latest deploy status.
    */
   showRender(response) {

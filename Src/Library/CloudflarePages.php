@@ -38,6 +38,10 @@ class CloudflarePages extends CloudflareApiClient
 
     private const STATUS_SUCCESS = "success";
 
+    private const MESSAGE_NO_PROJECTS = "No Pages projects in this account. Sites created as Workers are not listed here.";
+
+    private const MESSAGE_ERROR = "⚠️ Could not read Cloudflare Pages: %s";
+
 
     /**
      * One page of the account's Pages projects, as the API lists them.
@@ -340,12 +344,11 @@ class CloudflarePages extends CloudflareApiClient
 
         $shields = new ShieldsIo();
 
-        $header   = [];
-        $header[] = "Project";
-        $header[] = "Status";
-        $header[] = "Branch";
-        $header[] = "Last Deployment";
-        $result   = [$header];
+        $result = [$this->getHeader()];
+        if (empty($projects) === true) {
+            $result[] = $this->getMessageRow(self::MESSAGE_NO_PROJECTS);
+            return $result;
+        }
 
         foreach ($projects as $project) {
             $result[] = $this->getRow($project, $shields);
@@ -354,6 +357,73 @@ class CloudflarePages extends CloudflareApiClient
         return $result;
 
     }//end getProjects()
+
+
+    /**
+     * The rows of the tile, or, when the API cannot be read, the header and
+     * one row with the reason. The failure is reported, as an uncaught one
+     * would be, so it still reaches the messages table and LogStream.
+     *
+     * @param ErrorReporter $reporter The reporter of the failure.
+     *
+     * @return array
+     */
+    public function getProjectsOrError(ErrorReporter $reporter): array
+    {
+        try {
+            return $this->getProjects();
+        } catch (RequestException $exception) {
+            $reason = (new ErrorText())->summarize($exception->getMessage());
+
+            $context              = [];
+            $context["reason"]    = $reason;
+            $context["exception"] = $exception;
+            $reporter->error("Cloudflare Pages could not be read: {reason}", $context, "api");
+
+            $message = sprintf(self::MESSAGE_ERROR, htmlspecialchars($reason, ENT_QUOTES));
+
+            return [$this->getHeader(), $this->getMessageRow($message)];
+        }
+
+    }//end getProjectsOrError()
+
+
+    /**
+     * The header row of the tile.
+     *
+     * @return array
+     */
+    private function getHeader(): array
+    {
+        $header   = [];
+        $header[] = "Project";
+        $header[] = "Status";
+        $header[] = "Branch";
+        $header[] = "Last Deployment";
+
+        return $header;
+
+    }//end getHeader()
+
+
+    /**
+     * A row carrying a message in its first column.
+     *
+     * @param string $message The message.
+     *
+     * @return array
+     */
+    private function getMessageRow(string $message): array
+    {
+        $row   = [];
+        $row[] = $message;
+        $row[] = self::NO_DATA;
+        $row[] = self::NO_DATA;
+        $row[] = self::NO_DATA;
+
+        return $row;
+
+    }//end getMessageRow()
 
 
 }//end class

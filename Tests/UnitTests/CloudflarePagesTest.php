@@ -4,6 +4,7 @@ use PHPUnit\Framework\TestCase;
 use GuiBranco\Pancake\Request;
 use GuiBranco\Pancake\Response;
 use GuiBranco\ProjectsMonitor\Library\CloudflarePages;
+use GuiBranco\ProjectsMonitor\Library\ErrorReporter;
 use GuiBranco\ProjectsMonitor\Library\RequestException;
 use GuiBranco\ProjectsMonitor\Library\SecretsFileNotFoundException;
 
@@ -346,6 +347,52 @@ class CloudflarePagesTest extends TestCase
         $this->getTile($answer)->getProjects();
 
     }//end testFailsWhenTheApiReportsErrors()
+
+
+    /**
+     * An account without Pages projects shows a note instead of an empty
+     * table, saying that Workers are not listed.
+     *
+     * @return void
+     */
+    public function testShowsANoteWhenThereAreNoProjects(): void
+    {
+        $rows = $this->getTile($this->getPage([], ["total_pages" => 0]))->getProjects();
+
+        $this->assertCount(2, $rows);
+        $this->assertStringContainsString("No Pages projects", $rows[1][0]);
+        $this->assertStringContainsString("Workers", $rows[1][0]);
+
+    }//end testShowsANoteWhenThereAreNoProjects()
+
+
+    /**
+     * When the API cannot be read the tile shows the reason in place of the
+     * rows, and reports the failure.
+     *
+     * @return void
+     */
+    public function testShowsAndReportsTheReasonWhenTheApiFails(): void
+    {
+        $body   = "{\"success\":false,\"errors\":[{\"code\":10000,\"message\":\"Authentication error\"}]}";
+        $denied = new Response(true, $body, "", 403, self::API_URL, []);
+
+        $reporter = $this->createMock(ErrorReporter::class);
+        $reporter->expects($this->once())->method('error')->with(
+            $this->stringContains("Cloudflare Pages"),
+            $this->callback(fn (array $context) => str_contains($context["reason"], "Code: 403")),
+            "api"
+        );
+
+        $rows = $this->getTile($denied)->getProjectsOrError($reporter);
+
+        $this->assertSame(["Project", "Status", "Branch", "Last Deployment"], $rows[0]);
+        $this->assertCount(2, $rows);
+        $this->assertStringContainsString("Could not read Cloudflare Pages", $rows[1][0]);
+        $this->assertStringContainsString("Authentication error", $rows[1][0]);
+        $this->assertStringNotContainsString("\"", $rows[1][0]);
+
+    }//end testShowsAndReportsTheReasonWhenTheApiFails()
 
 
     /**

@@ -46,10 +46,10 @@ class CloudflarePagesTest extends TestCase
     /**
      * A project as GET /accounts/{id}/pages/projects lists it.
      *
-     * @param string      $name       The project name.
-     * @param object|null $canonical  The latest production deployment.
-     * @param object|null $latest     The latest deployment of any environment.
-     * @param array       $domains    The project's domains.
+     * @param string      $name      The project name.
+     * @param object|null $canonical The latest production deployment.
+     * @param object|null $latest    The latest deployment of any environment.
+     * @param array       $domains   The project's domains.
      *
      * @return object
      */
@@ -121,21 +121,17 @@ class CloudflarePagesTest extends TestCase
      */
     public function testListsEveryProjectSortedWithItsState(): void
     {
+        $first   = [];
+        $first[] = $this->getProject("zeta", $this->getDeployment("deploy", "success", "2026-11-21T12:00:00Z", "main"));
+        $first[] = $this->getProject("alpha", $this->getDeployment("build", "failure", "2026-11-21T11:00:00Z"));
+
+        $second   = [];
+        $second[] = $this->getProject("mid", $this->getDeployment("build", "active", null));
+        $second[] = $this->getProject("never", null);
+
         $pages   = [];
-        $pages[] = $this->getPage(
-            [
-                $this->getProject("zeta", $this->getDeployment("deploy", "success", "2026-11-21T12:00:00Z", "main")),
-                $this->getProject("alpha", $this->getDeployment("build", "failure", "2026-11-21T11:00:00Z")),
-            ],
-            2
-        );
-        $pages[] = $this->getPage(
-            [
-                $this->getProject("mid", $this->getDeployment("build", "active", null)),
-                $this->getProject("never", null),
-            ],
-            2
-        );
+        $pages[] = $this->getPage($first, 2);
+        $pages[] = $this->getPage($second, 2);
 
         $rows = $this->getTile($pages)->getProjects();
 

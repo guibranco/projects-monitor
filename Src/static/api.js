@@ -536,7 +536,12 @@ const LOADERS = [
   },
   { endpoint: "VERCEL", every: 60, show: "showVercel", pages: ["ops"] },
   { endpoint: "CLOUDFLARE", every: 60, show: "showCloudflare", pages: ["ops"] },
-  { endpoint: "CLOUDFLARE_PAGES", every: 60, show: "showCloudflarePages", pages: ["ops"] },
+  {
+    endpoint: "CLOUDFLARE_PAGES",
+    every: 60,
+    show: "showCloudflarePages",
+    pages: ["ops"],
+  },
   { endpoint: "RENDER", every: 60, show: "showRender", pages: ["ops"] },
   { endpoint: "WIREGUARD", every: 60, show: "showWireGuard", pages: ["ops"] },
   { endpoint: "RELEASES", every: 60, show: "showReleases", pages: ["github"] },

@@ -382,7 +382,11 @@ class CloudflarePages extends CloudflareApiClient
 
             $message = sprintf(self::MESSAGE_ERROR, htmlspecialchars($reason, ENT_QUOTES));
 
-            return [$this->getHeader(), $this->getMessageRow($message)];
+            $rows   = [];
+            $rows[] = $this->getHeader();
+            $rows[] = $this->getMessageRow($message);
+
+            return $rows;
         }
 
     }//end getProjectsOrError()

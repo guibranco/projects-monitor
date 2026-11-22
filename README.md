@@ -34,7 +34,7 @@ Projects Monitor is a PHP dashboard backed by a REST-like API (`Src/api/v1`). It
 - **Webhooks & automation** — GitHub webhook statistics and processing-state
   counts, plus the live webhook workers and GStraccini Bot job runs, with their
   Run buttons, on the Pipeline page.
-- **Infrastructure health** — HealthChecks.io, UpTimeRobot, AppVeyor CI, Cloudflare domains (each zone's status — paused wins — plan and activation date, linked to the Cloudflare dashboard, plus the last 7 days of traffic from the GraphQL Analytics API: requests, cache ratio, bandwidth, visitors — the sum of each day's unique visitors — and page views), and Vercel project status (the production deployment's state, overridden by the project's paused flag and by what its production URL actually answers — `DEPLOYMENT_DISABLED`, `DEPLOYMENT_PAUSED`, `DEPLOYMENT_NOT_FOUND`, a 5xx or an unreachable host — each URL probed at most once every 10 minutes) and Render service status (the latest deploy's status, overridden by the service's suspended flag, plus the HTTP requests each web service served in the last 24 hours and 7 days); CloudAMQP/RabbitMQ queue, message, consumer, and connection stats; WireGuard VPN client/connection status over SSH; a remote server health report (load average, CPU/memory/swap/disk usage, pending-reboot flag, and key systemd service states) collected by running a `monitor-report` script on the host over the same SSH connection.
+- **Infrastructure health** — HealthChecks.io, UpTimeRobot, AppVeyor CI, Cloudflare domains (each zone's status — paused wins — plan and activation date, linked to the Cloudflare dashboard, plus the last 7 days of traffic from the GraphQL Analytics API: requests, cache ratio, bandwidth, visitors — the sum of each day's unique visitors — and page views), Cloudflare Pages project status (the latest production deployment's stage and status — `SUCCESS`, `BUILD_FAILURE`, `BUILD_ACTIVE`... — its branch and date, linked to the project's custom domain or `*.pages.dev` URL), and Vercel project status (the production deployment's state, overridden by the project's paused flag and by what its production URL actually answers — `DEPLOYMENT_DISABLED`, `DEPLOYMENT_PAUSED`, `DEPLOYMENT_NOT_FOUND`, a 5xx or an unreachable host — each URL probed at most once every 10 minutes) and Render service status (the latest deploy's status, overridden by the service's suspended flag, plus the HTTP requests each web service served in the last 24 hours and 7 days); CloudAMQP/RabbitMQ queue, message, consumer, and connection stats; WireGuard VPN client/connection status over SSH; a remote server health report (load average, CPU/memory/swap/disk usage, pending-reboot flag, and key systemd service states) collected by running a `monitor-report` script on the host over the same SSH connection.
 - **Domains** — registrar and lifecycle information (expiration, transfer status) via IP2WHOIS, plus a dedicated [DNS Records page](Src/dns.php) listing every zone record (A, CNAME, MX, TXT, ...) pulled live from cPanel, filterable by source domain/record type and sortable by any column.
 - **Logs & errors** — cPanel error logs and SQL-backed application errors, aggregated with grouping and statistics by application or error content.
 - **Public stats** — a pre-computed, unauthenticated stats page fed by a cron worker (see [Background workers](#background-workers)).
@@ -103,7 +103,7 @@ The full set of integrations and their secrets files:
 | GitHub                      | `gitHub.secrets.php`                 |
 | AppVeyor CI                 | `appVeyor.secrets.php`               |
 | cPanel                      | `cPanel.secrets.php`                 |
-| Cloudflare                  | `cloudflare.secrets.php`             |
+| Cloudflare (zones and Pages) | `cloudflare.secrets.php`            |
 | HealthChecks.io             | `healthChecksIo.secrets.php`         |
 | UptimeRobot                 | `upTimeRobot.secrets.php`            |
 | Vercel                      | `vercel.secrets.php`                 |
@@ -144,6 +144,8 @@ push opens the right page). The deploy writes it only when the
 The Cloudflare API token needs **Zone → Zone → Read** and
 **Zone → Analytics → Read**. Without the analytics permission the
 Cloudflare tile still lists the zones, with a dash in every traffic column.
+The Cloudflare Pages tile uses the same token and account ID and needs
+**Account → Cloudflare Pages → Read** as well.
 
 ### GitHub Actions billing
 
@@ -223,7 +225,8 @@ freshness indicator, and a Ctrl+K palette to jump to any page or section.
 - **GitHub work** (`github.php`) — What needs me on GitHub? Needs me, Waiting on
   others, Blocked and Activity groups.
 - **Ops** (`ops.php`) — Is my infra up? Server health, Healthchecks.io,
-  UptimeRobot, WireGuard, domains, cronjobs, Cloudflare, Vercel, Render,
+  UptimeRobot, WireGuard, domains, cronjobs, Cloudflare, Cloudflare Pages,
+  Vercel, Render,
   AppVeyor, GitHub API and Actions usage.
 - **Stats** (`stats.php`) — How am I doing? GitHub stats and streak, Wakatime,
   Postman, pie charts.
@@ -316,7 +319,7 @@ anonymous visitors *Try it out* is hidden and the protected endpoints answer
 
 Key endpoint groups: `attention` / `attention/state`, `github`, `webhooks*`
 (statistics, per-entity processing, worker control), `gstraccini-jobs` /
-`gstraccini-job-run`, `appveyor`, `cloudflare`, `cpanel`, `dns-records`,
+`gstraccini-job-run`, `appveyor`, `cloudflare`, `cloudflare-pages`, `cpanel`, `dns-records`,
 `domains`, `healthchecksio`, `uptimerobot`, `vercel`, `render`, `queues` /
 `queues-purge`, `wireguard`, `system-report`, `messages*` / `errors*` (log
 retrieval, details, deletion), and `public-stats`.

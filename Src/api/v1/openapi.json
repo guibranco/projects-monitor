@@ -25,6 +25,7 @@
     { "name": "AppVeyor",    "description": "AppVeyor CI build data" },
     { "name": "Attention",   "description": "Manage-by-exception feed: what needs attention now, with snooze and acknowledge" },
     { "name": "Cloudflare",  "description": "Cloudflare domains (zones) of the account, with status and plan" },
+    { "name": "Cloudflare Pages", "description": "Cloudflare Pages projects of the account, with their latest production deployment status" },
     { "name": "cPanel",      "description": "cPanel server stats and error-log file management" },
     { "name": "DNS",         "description": "cPanel DNS zone records for all hosted domains" },
     { "name": "Domains",     "description": "Domain SSL/expiry validity information" },
@@ -1525,6 +1526,35 @@
                   "type": "object",
                   "properties": {
                     "zones": {
+                      "type": "array",
+                      "items": { "type": "array", "items": { "type": "string" } }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/cloudflare-pages": {
+      "get": {
+        "summary": "Cloudflare Pages projects",
+        "description": "Returns every Cloudflare Pages project of the account as table rows: a header row, then one row per project sorted by name with a badge linked to its first custom domain (falling back to its *.pages.dev subdomain), the state of its latest production deployment (SUCCESS, or the latest stage and its status such as BUILD_FAILURE or BUILD_ACTIVE; NOT_DEPLOYED when it has none), its branch and the date of that deployment.",
+        "operationId": "getCloudflarePages",
+        "tags": ["Cloudflare Pages"],
+        "responses": {
+          "200": {
+            "description": "Project list.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "projects": {
                       "type": "array",
                       "items": { "type": "array", "items": { "type": "string" } }
                     }

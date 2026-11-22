@@ -31,6 +31,7 @@ export const API_ENDPOINTS = {
   MESSAGES_DELETE_GROUP: "api/v1/messages/delete-group",
   BROKER_USAGE: "api/v1/broker-usage",
   CLOUDFLARE: "api/v1/cloudflare",
+  CLOUDFLARE_PAGES: "api/v1/cloudflare-pages",
   THROTTLED_REPOSITORIES: "api/v1/throttled-repositories",
   GITHUB_API_PROXY: "api/v1/github-api-proxy",
   QUEUES: "api/v1/queues",

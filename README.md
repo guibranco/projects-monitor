@@ -328,8 +328,9 @@ Key endpoint groups: `attention` / `attention/state`, `github`, `webhooks*`
 (statistics, per-entity processing, worker control), `gstraccini-jobs` /
 `gstraccini-job-run`, `appveyor`, `cloudflare`, `cloudflare-pages`,
 `cloudflare-workers`, `cpanel`, `dns-records`, `domains`, `healthchecksio`,
-`uptimerobot`, `vercel`, `render`, `queues` / `queues-purge`, `wireguard`, `system-report`, `messages*` / `errors*` (log
-retrieval, details, deletion), and `public-stats`.
+`uptimerobot`, `vercel`, `render`, `queues` / `queues-purge`, `wireguard`,
+`system-report`, `messages*` / `errors*` (log retrieval, details, deletion),
+and `public-stats`.
 
 ---
 

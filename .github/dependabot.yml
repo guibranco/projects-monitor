@@ -26,6 +26,10 @@ updates:
   labels:
     - "github-actions"
     - "dependencies"
+  ignore:
+    # GitTools/actions v5+ requires GitVersion 7.x; deploy.yml pins versionSpec 6.x.
+    - dependency-name: "gittools/actions"
+      update-types: ["version-update:semver-major"]
 
 - package-ecosystem: "composer"
   directory: "/Src"

@@ -23,13 +23,13 @@ jobs:
           fetch-depth: 0
 
       - name: 🔧 Install GitVersion
-        uses: gittools/actions/gitversion/setup@389fe43e6b0189b98c40c43553070ac029304635 # v5.0.0
+        uses: gittools/actions/gitversion/setup@220647997b450f3e9364b6cf6a357197f17d924b # v4.7.2
         with:
           versionSpec: "6.x"
 
       - name: 🏷️ Determine Version Number
         id: gitversion
-        uses: gittools/actions/gitversion/execute@389fe43e6b0189b98c40c43553070ac029304635 # v5.0.0
+        uses: gittools/actions/gitversion/execute@220647997b450f3e9364b6cf6a357197f17d924b # v4.7.2
 
       - name: 💾 Cache Composer Dependencies
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6

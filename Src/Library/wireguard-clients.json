@@ -9,5 +9,6 @@
         { "allowedIps": "10.141.230.6/32", "name": "GH Actions - API BR - Sports Agenda" },
         { "allowedIps": "10.141.230.7/32", "name": "GH Actions - LogStream Server" },
         { "allowedIps": "10.141.230.8/32", "name": "GH Actions - PoC" }
+        { "allowedIps": "10.141.230.9/32", "name": "GH Actions - Bancos Brasileiros" }
     ]
 }

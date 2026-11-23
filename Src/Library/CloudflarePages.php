@@ -318,6 +318,4 @@ class CloudflarePages extends CloudflareDeploymentTile
     }//end getRows()
 
 
-
-
 }//end class

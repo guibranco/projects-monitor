@@ -82,7 +82,11 @@ class CloudflareWorkers extends CloudflareDeploymentTile
             return null;
         }
 
-        return (empty($subdomain) === true) ? null : $subdomain;
+        if (empty($subdomain) === true) {
+            return null;
+        }
+
+        return $subdomain;
 
     }//end getSubdomain()
 
@@ -236,7 +240,7 @@ class CloudflareWorkers extends CloudflareDeploymentTile
         foreach ($scripts as $script) {
             $build  = $this->getLatestBuild($script);
             $branch = ($build->build_trigger_metadata->branch ?? null);
-            $date   = ($build === null) ? ($script->modified_on ?? null) : ($build->stopped_on ?? $build->created_on ?? null);
+            $date   = ($build->stopped_on ?? $build->created_on ?? $script->modified_on ?? null);
             $link   = $this->getLink($script, $domains, $subdomain);
 
             $result[] = $this->getBadgeRow($script->id, $link, $this->getState($build), $branch, $date, $shields);

@@ -24,7 +24,7 @@ class CloudflareWorkersTest extends TestCase
      *
      * @return Response
      */
-    private function ok($result): Response
+    private function answer($result): Response
     {
         $answer            = [];
         $answer["success"] = true;
@@ -33,7 +33,7 @@ class CloudflareWorkersTest extends TestCase
 
         return new Response(true, json_encode($answer), "", 200, self::BASE_URL, []);
 
-    }//end ok()
+    }//end answer()
 
 
     /**
@@ -94,7 +94,10 @@ class CloudflareWorkersTest extends TestCase
         $build["status"]        = $status;
         $build["build_outcome"] = $outcome;
         $build["created_on"]    = $createdOn;
-        $build["stopped_on"]    = ($status === "stopped") ? $createdOn : null;
+        $build["stopped_on"]    = null;
+        if ($status === "stopped") {
+            $build["stopped_on"] = $createdOn;
+        }
 
         if ($branch !== null) {
             $build["build_trigger_metadata"] = ["branch" => $branch];
@@ -144,30 +147,29 @@ class CloudflareWorkersTest extends TestCase
      */
     public function testListsEveryWorkerSortedWithItsState(): void
     {
-        $scripts = [
-            $this->script("zeta"),
-            $this->script("alpha"),
-            $this->script("mid"),
-            $this->script("plain", "2026-11-02T09:30:00Z"),
-            $this->script("locked"),
-        ];
+        $scripts   = [];
+        $scripts[] = $this->script("zeta");
+        $scripts[] = $this->script("alpha");
+        $scripts[] = $this->script("mid");
+        $scripts[] = $this->script("plain", "2026-11-02T09:30:00Z");
+        $scripts[] = $this->script("locked");
 
         $domain             = [];
         $domain["hostname"] = "zeta.example.com";
         $domain["service"]  = "zeta";
 
-        $answers = [
-            "workers/scripts" => $this->ok($scripts),
-            "workers/subdomain" => $this->ok(["subdomain" => "guibranco"]),
-            "workers/domains" => $this->ok([$domain]),
-            "builds/workers/tag-zeta/builds" => $this->ok([
-                $this->build("stopped", "fail", "2026-11-20T10:00:00Z"),
-                $this->build("stopped", "success", "2026-11-21T10:00:00Z", "main"),
-            ]),
-            "builds/workers/tag-alpha/builds" => $this->ok([$this->build("stopped", "fail", "2026-11-21T11:00:00Z", "dev")]),
-            "builds/workers/tag-mid/builds" => $this->ok([$this->build("running", null, "2026-11-22T12:00:00Z")]),
-            "builds/workers/tag-plain/builds" => $this->ok([]),
-        ];
+        $zetaBuilds   = [];
+        $zetaBuilds[] = $this->build("stopped", "fail", "2026-11-20T10:00:00Z");
+        $zetaBuilds[] = $this->build("stopped", "success", "2026-11-21T10:00:00Z", "main");
+
+        $answers                                    = [];
+        $answers["workers/scripts"]                 = $this->answer($scripts);
+        $answers["workers/subdomain"]               = $this->answer(["subdomain" => "guibranco"]);
+        $answers["workers/domains"]                 = $this->answer([$domain]);
+        $answers["builds/workers/tag-zeta/builds"]  = $this->answer($zetaBuilds);
+        $answers["builds/workers/tag-alpha/builds"] = $this->answer([$this->build("stopped", "fail", "2026-11-21T11:00:00Z", "dev")]);
+        $answers["builds/workers/tag-mid/builds"]   = $this->answer([$this->build("running", null, "2026-11-22T12:00:00Z")]);
+        $answers["builds/workers/tag-plain/builds"] = $this->answer([]);
 
         $rows = $this->getTile($answers)->getWorkers();
 
@@ -205,10 +207,9 @@ class CloudflareWorkersTest extends TestCase
      */
     public function testLinksToTheDashboardWithoutAddresses(): void
     {
-        $answers = [
-            "workers/scripts" => $this->ok([$this->script("solo")]),
-            "builds/workers/tag-solo/builds" => $this->ok([$this->build("stopped", "cancelled", "2026-11-21T10:00:00Z")]),
-        ];
+        $answers                                   = [];
+        $answers["workers/scripts"]                = $this->answer([$this->script("solo")]);
+        $answers["builds/workers/tag-solo/builds"] = $this->answer([$this->build("stopped", "cancelled", "2026-11-21T10:00:00Z")]);
 
         $rows = $this->getTile($answers)->getWorkers();
 
@@ -226,7 +227,7 @@ class CloudflareWorkersTest extends TestCase
      */
     public function testShowsANoteWhenThereAreNoWorkers(): void
     {
-        $rows = $this->getTile(["workers/scripts" => $this->ok([])])->getWorkers();
+        $rows = $this->getTile(["workers/scripts" => $this->answer([])])->getWorkers();
 
         $this->assertCount(2, $rows);
         $this->assertSame("No Workers in this account.", $rows[1][0]);

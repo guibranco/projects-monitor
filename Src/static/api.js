@@ -542,6 +542,12 @@ const LOADERS = [
     show: "showCloudflarePages",
     pages: ["ops"],
   },
+  {
+    endpoint: "CLOUDFLARE_WORKERS",
+    every: 60,
+    show: "showCloudflareWorkers",
+    pages: ["ops"],
+  },
   { endpoint: "RENDER", every: 60, show: "showRender", pages: ["ops"] },
   { endpoint: "WIREGUARD", every: 60, show: "showWireGuard", pages: ["ops"] },
   { endpoint: "RELEASES", every: 60, show: "showReleases", pages: ["github"] },

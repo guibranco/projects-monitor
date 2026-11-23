@@ -34,7 +34,7 @@ Projects Monitor is a PHP dashboard backed by a REST-like API (`Src/api/v1`). It
 - **Webhooks & automation** — GitHub webhook statistics and processing-state
   counts, plus the live webhook workers and GStraccini Bot job runs, with their
   Run buttons, on the Pipeline page.
-- **Infrastructure health** — HealthChecks.io, UpTimeRobot, AppVeyor CI, Cloudflare domains (each zone's status — paused wins — plan and activation date, linked to the Cloudflare dashboard, plus the last 7 days of traffic from the GraphQL Analytics API: requests, cache ratio, bandwidth, visitors — the sum of each day's unique visitors — and page views), Cloudflare Pages project status (the latest production deployment's stage and status — `SUCCESS`, `BUILD_FAILURE`, `BUILD_ACTIVE`... — its branch and date, linked to the project's custom domain or `*.pages.dev` URL; the reason in place of the rows when it cannot be read), and Vercel project status (the production deployment's state, overridden by the project's paused flag and by what its production URL actually answers — `DEPLOYMENT_DISABLED`, `DEPLOYMENT_PAUSED`, `DEPLOYMENT_NOT_FOUND`, a 5xx or an unreachable host — each URL probed at most once every 10 minutes) and Render service status (the latest deploy's status, overridden by the service's suspended flag, plus the HTTP requests each web service served in the last 24 hours and 7 days); CloudAMQP/RabbitMQ queue, message, consumer, and connection stats; WireGuard VPN client/connection status over SSH; a remote server health report (load average, CPU/memory/swap/disk usage, pending-reboot flag, and key systemd service states) collected by running a `monitor-report` script on the host over the same SSH connection.
+- **Infrastructure health** — HealthChecks.io, UpTimeRobot, AppVeyor CI, Cloudflare domains (each zone's status — paused wins — plan and activation date, linked to the Cloudflare dashboard, plus the last 7 days of traffic from the GraphQL Analytics API: requests, cache ratio, bandwidth, visitors — the sum of each day's unique visitors — and page views), Cloudflare Pages project status (the latest production deployment's stage and status — `SUCCESS`, `BUILD_FAILURE`, `BUILD_ACTIVE`... — its branch and date, linked to the project's custom domain or `*.pages.dev` URL; the reason in place of the rows when it cannot be read), Cloudflare Workers status (the latest Workers Builds build — `SUCCESS`, `BUILD_RUNNING`, `BUILD_FAILURE`... — or `DEPLOYED` for a Worker without builds, its branch and date, linked to its custom domain or `workers.dev` address), and Vercel project status (the production deployment's state, overridden by the project's paused flag and by what its production URL actually answers — `DEPLOYMENT_DISABLED`, `DEPLOYMENT_PAUSED`, `DEPLOYMENT_NOT_FOUND`, a 5xx or an unreachable host — each URL probed at most once every 10 minutes) and Render service status (the latest deploy's status, overridden by the service's suspended flag, plus the HTTP requests each web service served in the last 24 hours and 7 days); CloudAMQP/RabbitMQ queue, message, consumer, and connection stats; WireGuard VPN client/connection status over SSH; a remote server health report (load average, CPU/memory/swap/disk usage, pending-reboot flag, and key systemd service states) collected by running a `monitor-report` script on the host over the same SSH connection.
 - **Domains** — registrar and lifecycle information (expiration, transfer status) via IP2WHOIS, plus a dedicated [DNS Records page](Src/dns.php) listing every zone record (A, CNAME, MX, TXT, ...) pulled live from cPanel, filterable by source domain/record type and sortable by any column.
 - **Logs & errors** — cPanel error logs and SQL-backed application errors, aggregated with grouping and statistics by application or error content.
 - **Public stats** — a pre-computed, unauthenticated stats page fed by a cron worker (see [Background workers](#background-workers)).
@@ -103,7 +103,7 @@ The full set of integrations and their secrets files:
 | GitHub                      | `gitHub.secrets.php`                 |
 | AppVeyor CI                 | `appVeyor.secrets.php`               |
 | cPanel                      | `cPanel.secrets.php`                 |
-| Cloudflare (zones and Pages) | `cloudflare.secrets.php`            |
+| Cloudflare (zones, Pages, Workers) | `cloudflare.secrets.php`      |
 | HealthChecks.io             | `healthChecksIo.secrets.php`         |
 | UptimeRobot                 | `upTimeRobot.secrets.php`            |
 | Vercel                      | `vercel.secrets.php`                 |
@@ -149,6 +149,10 @@ the account permission **Pages Read** as well. If it cannot read the
 projects, the tile shows the reason in its first row (and reports it to the
 messages table); an account with no Pages projects shows a note saying so —
 sites created as Workers are not Pages projects and are not listed.
+The Cloudflare Workers tile lists those: it needs **Workers Scripts Read**
+and, for the build status, **Workers CI Read**. A Worker not connected to
+Workers Builds (deployed with wrangler from CI, say) shows as `DEPLOYED`,
+dated by its last change.
 
 ### GitHub Actions billing
 
@@ -229,7 +233,7 @@ freshness indicator, and a Ctrl+K palette to jump to any page or section.
   others, Blocked and Activity groups.
 - **Ops** (`ops.php`) — Is my infra up? Server health, Healthchecks.io,
   UptimeRobot, WireGuard, domains, cronjobs, Cloudflare, Cloudflare Pages,
-  Vercel, Render,
+  Cloudflare Workers, Vercel, Render,
   AppVeyor, GitHub API and Actions usage.
 - **Stats** (`stats.php`) — How am I doing? GitHub stats and streak, Wakatime,
   Postman, pie charts.
@@ -322,7 +326,7 @@ anonymous visitors *Try it out* is hidden and the protected endpoints answer
 
 Key endpoint groups: `attention` / `attention/state`, `github`, `webhooks*`
 (statistics, per-entity processing, worker control), `gstraccini-jobs` /
-`gstraccini-job-run`, `appveyor`, `cloudflare`, `cloudflare-pages`, `cpanel`, `dns-records`,
+`gstraccini-job-run`, `appveyor`, `cloudflare`, `cloudflare-pages`, `cloudflare-workers`, `cpanel`, `dns-records`,
 `domains`, `healthchecksio`, `uptimerobot`, `vercel`, `render`, `queues` /
 `queues-purge`, `wireguard`, `system-report`, `messages*` / `errors*` (log
 retrieval, details, deletion), and `public-stats`.

@@ -719,6 +719,13 @@ export class DataDisplayManager {
   }
 
   /**
+   * Draws a data table listing Cloudflare Workers with their latest build status.
+   */
+  showCloudflareWorkers(response) {
+    this.chartManager.drawDataTable(response.workers, "cloudflare_workers", CHART_OPTIONS.table);
+  }
+
+  /**
    * Draws a data table listing Render services with their latest deploy status.
    */
   showRender(response) {

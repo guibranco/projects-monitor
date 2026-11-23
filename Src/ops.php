@@ -92,6 +92,12 @@ require_once "partials/dashboard-head.php";
          </div>
          <div id="cloudflare_pages" class="section-content"></div>
       </div>
+      <div class="data-item" data-section="cloudflare_workers">
+         <div class="section-header">
+            <i class="bi bi-cpu me-2"></i>Cloudflare Workers <span id="counter_cloudflare_workers" class="badge rounded-pill"></span>
+         </div>
+         <div id="cloudflare_workers" class="section-content"></div>
+      </div>
       <div class="data-item" data-section="vercel">
          <div class="section-header">
             <i class="bi bi-triangle me-2"></i>Vercel <span id="counter_vercel" class="badge rounded-pill"></span>

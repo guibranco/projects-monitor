@@ -11,13 +11,11 @@ use GuiBranco\Pancake\ShieldsIo;
  * Shares cloudflare.secrets.php with the Cloudflare tile: the token needs
  * Account → Cloudflare Pages → Read on top of the zone permissions.
  */
-class CloudflarePages extends CloudflareApiClient
+class CloudflarePages extends CloudflareDeploymentTile
 {
     private const CLOUDFLARE_API_URL = "https://api.cloudflare.com/client/v4/accounts/%s/pages/projects";
 
     private const CLOUDFLARE_DASHBOARD_URL = "https://dash.cloudflare.com/%s/pages/view/%s";
-
-    private const NO_DATA = "-";
 
     /**
      * The page size asked for. Pages answers at most 10 projects per page,
@@ -32,15 +30,12 @@ class CloudflarePages extends CloudflareApiClient
 
     private const STATE_UNKNOWN = "UNKNOWN";
 
-    private const STATE_NOT_DEPLOYED = "NOT_DEPLOYED";
-
     private const STAGE_DEPLOY = "deploy";
 
     private const STATUS_SUCCESS = "success";
 
     private const MESSAGE_NO_PROJECTS = "No Pages projects in this account. Sites created as Workers are not listed here.";
 
-    private const MESSAGE_ERROR = "⚠️ Could not read Cloudflare Pages: %s";
 
 
     /**
@@ -184,15 +179,10 @@ class CloudflarePages extends CloudflareApiClient
      *
      * @return string
      */
-    private function getStatus(string $state): string
+    protected function getStatus(string $state): string
     {
-        $position = strrpos($state, "_");
-        if ($position === false || $state === self::STATE_NOT_DEPLOYED) {
-            return $state;
-        }
-
-        $status = substr($state, ($position + 1));
-        if ($status === "SUCCESS") {
+        $status = parent::getStatus($state);
+        if ($status === "SUCCESS" && $state !== "SUCCESS") {
             return "ACTIVE";
         }
 
@@ -201,48 +191,6 @@ class CloudflarePages extends CloudflareApiClient
     }//end getStatus()
 
 
-    /**
-     * The icon of a state.
-     *
-     * @param string $state The state shown for a project.
-     *
-     * @return string
-     */
-    private function mapStatus(string $state): string
-    {
-        return match ($this->getStatus($state)) {
-            "SUCCESS" => "✅",
-            "FAILURE" => "❌",
-            "ACTIVE" => "🔨",
-            "IDLE" => "⏳",
-            "CANCELED" => "⏸",
-            "SKIPPED" => "⏭",
-            self::STATE_NOT_DEPLOYED => "💤",
-            default => "❓",
-        };
-
-    }//end mapStatus()
-
-
-    /**
-     * The badge colour of a state.
-     *
-     * @param string $state The state shown for a project.
-     *
-     * @return string
-     */
-    private function mapColor(string $state): string
-    {
-        return match ($this->getStatus($state)) {
-            "SUCCESS" => "green",
-            "FAILURE" => "red",
-            "ACTIVE" => "yellow",
-            "IDLE" => "blue",
-            "CANCELED", "SKIPPED", self::STATE_NOT_DEPLOYED => "gray",
-            default => "lightgray",
-        };
-
-    }//end mapColor()
 
 
     /**
@@ -270,30 +218,6 @@ class CloudflarePages extends CloudflareApiClient
     }//end getLink()
 
 
-    /**
-     * The date of a deployment: when its latest stage ended, or when it was
-     * created while it is still running.
-     *
-     * @param object|null $deployment The deployment.
-     *
-     * @return string
-     */
-    private function getLastDeployment($deployment): string
-    {
-        $date = ($deployment->latest_stage->ended_on ?? $deployment->created_on ?? null);
-        if (empty($date) === true) {
-            return self::NO_DATA;
-        }
-
-        $timestamp = strtotime($date);
-        if ($timestamp === false) {
-            return self::NO_DATA;
-        }
-
-        return date("H:i:s d/m/Y", $timestamp);
-
-    }//end getLastDeployment()
-
 
     /**
      * The row of a project: its badge, linked to its URL, its state, its
@@ -307,25 +231,10 @@ class CloudflarePages extends CloudflareApiClient
     private function getRow($project, ShieldsIo $shields): array
     {
         $deployment = $this->getDeployment($project);
-        $state      = $this->getState($deployment);
-        $status     = $this->mapStatus($state);
-        $color      = $this->mapColor($state);
-        $name       = htmlspecialchars($project->name, ENT_QUOTES);
-        $link       = htmlspecialchars($this->getLink($project), ENT_QUOTES);
+        $branch     = ($deployment->deployment_trigger->metadata->branch ?? $project->production_branch ?? null);
+        $date       = ($deployment->latest_stage->ended_on ?? $deployment->created_on ?? null);
 
-        $badgeUrl  = $shields->generateBadgeUrl($status, $project->name, $color, "for-the-badge", "white", null);
-        $image     = "<img src='{$badgeUrl}' alt='{$name}' />";
-        $badgeLink = "<a href='{$link}' title='{$state}' target='_blank' rel='noopener noreferrer'>{$image}</a>";
-
-        $branch = ($deployment->deployment_trigger->metadata->branch ?? $project->production_branch ?? self::NO_DATA);
-
-        $row   = [];
-        $row[] = $badgeLink;
-        $row[] = $state;
-        $row[] = htmlspecialchars($branch, ENT_QUOTES);
-        $row[] = $this->getLastDeployment($deployment);
-
-        return $row;
+        return $this->getBadgeRow($project->name, $this->getLink($project), $this->getState($deployment), $branch, $date, $shields);
 
     }//end getRow()
 
@@ -360,9 +269,7 @@ class CloudflarePages extends CloudflareApiClient
 
 
     /**
-     * The rows of the tile, or, when the API cannot be read, the header and
-     * one row with the reason. The failure is reported, as an uncaught one
-     * would be, so it still reaches the messages table and LogStream.
+     * The rows of the tile, or the reason when the API cannot be read.
      *
      * @param ErrorReporter $reporter The reporter of the failure.
      *
@@ -370,64 +277,45 @@ class CloudflarePages extends CloudflareApiClient
      */
     public function getProjectsOrError(ErrorReporter $reporter): array
     {
-        try {
-            return $this->getProjects();
-        } catch (RequestException $exception) {
-            $reason = (new ErrorText())->summarize($exception->getMessage());
-
-            $context              = [];
-            $context["reason"]    = $reason;
-            $context["exception"] = $exception;
-            $reporter->error("Cloudflare Pages could not be read: {reason}", $context, "api");
-
-            $message = sprintf(self::MESSAGE_ERROR, htmlspecialchars($reason, ENT_QUOTES));
-
-            $rows   = [];
-            $rows[] = $this->getHeader();
-            $rows[] = $this->getMessageRow($message);
-
-            return $rows;
-        }
+        return $this->getRowsOrError($reporter);
 
     }//end getProjectsOrError()
 
 
     /**
-     * The header row of the tile.
+     * The name of the tile in messages.
      *
-     * @return array
+     * @return string
      */
-    private function getHeader(): array
+    protected function getLabel(): string
     {
-        $header   = [];
-        $header[] = "Project";
-        $header[] = "Status";
-        $header[] = "Branch";
-        $header[] = "Last Deployment";
+        return "Cloudflare Pages";
 
-        return $header;
-
-    }//end getHeader()
+    }//end getLabel()
 
 
     /**
-     * A row carrying a message in its first column.
+     * The title of the first column.
      *
-     * @param string $message The message.
+     * @return string
+     */
+    protected function getFirstColumn(): string
+    {
+        return "Project";
+
+    }//end getFirstColumn()
+
+
+    /**
+     * The rows of the tile.
      *
      * @return array
      */
-    private function getMessageRow(string $message): array
+    protected function getRows(): array
     {
-        $row   = [];
-        $row[] = $message;
-        $row[] = self::NO_DATA;
-        $row[] = self::NO_DATA;
-        $row[] = self::NO_DATA;
+        return $this->getProjects();
 
-        return $row;
-
-    }//end getMessageRow()
+    }//end getRows()
 
 
 }//end class

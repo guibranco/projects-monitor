@@ -24,7 +24,7 @@
     },
     "require": {
         "ext-mbstring": "*",
-        "guibranco/pancake": "^1.12.2",
+        "guibranco/pancake": "^1.12.3",
         "fastvolt/markdown": "^0.2.5",
         "phpseclib/phpseclib": "^3.0"
     },

@@ -143,14 +143,14 @@ export function compareRuns(first, second, sort) {
  * carries it any more, so a refresh never silently drops the choice.
  *
  * @param {Array<object>} rows - Rows with their sort keys under `keys`.
- * @param {string} field - The sort key ("owner" or "actor").
+ * @param {(keys: object) => string} pick - Reads the value from a row's keys.
  * @param {string} [selected] - The value currently picked ("" for all).
  * @returns {Array<{value: string, count: number}>}
  */
-export function filterOptions(rows, field, selected = "") {
+export function filterOptions(rows, pick, selected = "") {
   const counts = new Map();
   for (const row of rows) {
-    const value = String(row?.keys?.[field] ?? "");
+    const value = String((row?.keys ? pick(row.keys) : "") ?? "");
     if (value !== "") counts.set(value, (counts.get(value) ?? 0) + 1);
   }
   if (selected !== "" && !counts.has(selected)) counts.set(selected, 0);
@@ -558,12 +558,12 @@ export class WorkflowRunsPage {
       rows: rows,
       accountOptions: filterOptions(
         base.filter((row) => matchesPeople(row.keys, "", this.sender)),
-        "owner",
+        (keys) => keys.owner,
         this.account,
       ),
       senderOptions: filterOptions(
         base.filter((row) => matchesPeople(row.keys, this.account, "")),
-        "actor",
+        (keys) => keys.actor,
         this.sender,
       ),
       hiddenByRepo: filtered.hidden,

@@ -346,11 +346,15 @@ class WorkflowRunsPresenterTest extends TestCase
               'repository' => 'guibranco/projects-monitor',
               'workflow'   => 'Build',
               'updated_at' => '2026-10-20 09:05:00',
+              'owner'      => 'guibranco',
+              'actor'      => 'dependabot[bot]',
              ],
              [
               'repository' => '/',
               'workflow'   => '',
               'updated_at' => '',
+              'owner'      => '',
+              'actor'      => '',
              ],
             ],
             $keys

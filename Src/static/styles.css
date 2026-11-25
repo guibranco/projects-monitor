@@ -2089,6 +2089,10 @@ body:not(.show-empty-sections) .page-group:not(:has([data-section]:not(.is-empty
   box-shadow: none;
 }
 
+.wr-select.active {
+  border-color: var(--status-warning);
+}
+
 #wr_pause.active {
   background: var(--status-warning);
   border-color: var(--status-warning);

@@ -173,9 +173,10 @@ class WorkflowRunsPresenter
 
 
     /**
-     * Plain values to sort every run by, in the order of toTable's body rows
-     * (the cells themselves are badges): the repository (owner/repo), the
-     * workflow name and when the run was last updated.
+     * Plain values to sort and filter every run by, in the order of toTable's
+     * body rows (the cells themselves are badges): the repository
+     * (owner/repo), the workflow name, when the run was last updated, the
+     * account owning the repository and the sender (the run's actor).
      *
      * @param array $runs Rows as returned by GET /workflow-runs.
      *
@@ -194,6 +195,8 @@ class WorkflowRunsPresenter
                        'repository' => ($run['owner'] ?? '').'/'.($run['repo'] ?? ''),
                        'workflow'   => (string) ($run['name'] ?? ''),
                        'updated_at' => (string) ($run['updated_at'] ?? ''),
+                       'owner'      => (string) ($run['owner'] ?? ''),
+                       'actor'      => (string) ($run['actor_login'] ?? ''),
                       ];
         }
 

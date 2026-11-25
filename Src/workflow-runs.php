@@ -29,6 +29,14 @@ require_once "partials/dashboard-head.php";
                </div>
                <div class="wr-toolbar-group">
                   <fieldset id="wr_states" class="entity-chips wr-states" aria-label="Filter by outcome"></fieldset>
+                  <label class="wr-label" for="wr_account">Account</label>
+                  <select id="wr_account" class="form-select form-select-sm wr-select" aria-label="Filter by account">
+                     <option value="" selected>All accounts</option>
+                  </select>
+                  <label class="wr-label" for="wr_sender">Sender</label>
+                  <select id="wr_sender" class="form-select form-select-sm wr-select" aria-label="Filter by sender">
+                     <option value="" selected>All senders</option>
+                  </select>
                   <label class="wr-label" for="wr_sort">Sort by</label>
                   <select id="wr_sort" class="form-select form-select-sm wr-select" aria-label="Sort workflow runs">
                      <option value="newest" selected>Newest first</option>

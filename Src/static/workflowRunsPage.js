@@ -6,6 +6,8 @@
 // and a refresh keeps the page you are on. The refresh runs on its own
 // timer: 30 sec to 10 min (1 min by default, remembered), with Pause /
 // Resume and Refresh now. The countdown stops while the tab is hidden.
+// Runs can be narrowed by outcome, by account (the repository owner), by
+// sender (the run's actor) and by a free-text search.
 
 import { API_ENDPOINTS } from "./constants.js";
 import {
@@ -135,6 +137,44 @@ export function compareRuns(first, second, sort) {
 }
 
 /**
+ * The values offered by the Account or Sender picker: every distinct
+ * non-empty value of one sort key among the rows, with how many rows carry
+ * it, in name order. The selected value stays offered (with 0) when no row
+ * carries it any more, so a refresh never silently drops the choice.
+ *
+ * @param {Array<object>} rows - Rows with their sort keys under `keys`.
+ * @param {(keys: object) => string} pick - Reads the value from a row's keys.
+ * @param {string} [selected] - The value currently picked ("" for all).
+ * @returns {Array<{value: string, count: number}>}
+ */
+export function filterOptions(rows, pick, selected = "") {
+  const counts = new Map();
+  for (const row of rows) {
+    const value = String((row?.keys ? pick(row.keys) : "") ?? "");
+    if (value !== "") counts.set(value, (counts.get(value) ?? 0) + 1);
+  }
+  if (selected !== "" && !counts.has(selected)) counts.set(selected, 0);
+  return [...counts.entries()]
+    .map(([value, count]) => ({ value, count }))
+    .sort((first, second) => textOrder.compare(first.value, second.value));
+}
+
+/**
+ * Whether a row belongs to the picked account and sender ("" for any).
+ *
+ * @param {object} keys - The row's sort keys.
+ * @param {string} account - The picked account.
+ * @param {string} sender - The picked sender.
+ * @returns {boolean}
+ */
+export function matchesPeople(keys, account, sender) {
+  return (
+    (account === "" || keys.owner === account) &&
+    (sender === "" || keys.actor === sender)
+  );
+}
+
+/**
  * Whether a row's search text holds every word of the query.
  *
  * @param {string} text - The row's lower-case search text.
@@ -188,13 +228,15 @@ export function formatCountdown(seconds) {
  * One row's sort keys from the API (plain strings, never undefined).
  *
  * @param {*} keys - The row's sort_keys entry.
- * @returns {{repository: string, workflow: string, updatedAt: string}}
+ * @returns {{repository: string, workflow: string, updatedAt: string, owner: string, actor: string}}
  */
 function toSortKeys(keys) {
   const result = {
     repository: String(keys?.repository ?? ""),
     workflow: String(keys?.workflow ?? ""),
     updatedAt: String(keys?.updated_at ?? ""),
+    owner: String(keys?.owner ?? ""),
+    actor: String(keys?.actor ?? ""),
   };
   return result;
 }
@@ -239,6 +281,8 @@ export class WorkflowRunsPage {
     this.rows = []; // { cells, state, text, keys }
     this.total = 0;
     this.state = "";
+    this.account = "";
+    this.sender = "";
     this.query = "";
     this.page = 0;
   }
@@ -251,6 +295,8 @@ export class WorkflowRunsPage {
       interval: document.getElementById("wr_interval"),
       countdown: document.getElementById("wr_countdown"),
       states: document.getElementById("wr_states"),
+      account: document.getElementById("wr_account"),
+      sender: document.getElementById("wr_sender"),
       search: document.getElementById("wr_search"),
       note: document.getElementById("wr_note"),
       table: document.getElementById("wr_table"),
@@ -301,6 +347,17 @@ export class WorkflowRunsPage {
       const chip = event.target.closest("[data-state]");
       if (!chip) return;
       this.state = chip.dataset.state;
+      this.page = 0;
+      this.render();
+    });
+
+    this.elements.account?.addEventListener("change", (event) => {
+      this.account = event.target.value;
+      this.page = 0;
+      this.render();
+    });
+    this.elements.sender?.addEventListener("change", (event) => {
+      this.sender = event.target.value;
       this.page = 0;
       this.render();
     });
@@ -477,7 +534,12 @@ export class WorkflowRunsPage {
     this.render();
   }
 
-  /** The rows left after the repo filter and the search (before the outcome chip). */
+  /**
+   * The rows left after the repo filter, the search, and the account and
+   * sender pickers (before the outcome chip). Each picker's options are
+   * counted with every filter but its own applied, so they show how many
+   * runs choosing them would leave.
+   */
   searchedRows() {
     const repoFilter = getRepoFilter();
     const filtered = filterRows(
@@ -486,11 +548,24 @@ export class WorkflowRunsPage {
       repoFilter,
     );
     const kept = new Set(filtered.rows);
-    const rows = this.rows.filter(
+    const base = this.rows.filter(
       (row) => kept.has(row.cells) && matchesSearch(row.text, this.query),
+    );
+    const rows = base.filter((row) =>
+      matchesPeople(row.keys, this.account, this.sender),
     );
     const result = {
       rows: rows,
+      accountOptions: filterOptions(
+        base.filter((row) => matchesPeople(row.keys, "", this.sender)),
+        (keys) => keys.owner,
+        this.account,
+      ),
+      senderOptions: filterOptions(
+        base.filter((row) => matchesPeople(row.keys, this.account, "")),
+        (keys) => keys.actor,
+        this.sender,
+      ),
       hiddenByRepo: filtered.hidden,
       repoFilter: repoFilter,
     };
@@ -505,6 +580,18 @@ export class WorkflowRunsPage {
     const repoFilter = result.repoFilter;
 
     this.renderStates(searched);
+    this.renderPicker(
+      this.elements.account,
+      result.accountOptions,
+      this.account,
+      "All accounts",
+    );
+    this.renderPicker(
+      this.elements.sender,
+      result.senderOptions,
+      this.sender,
+      "All senders",
+    );
     if (this.elements.counter)
       this.elements.counter.textContent = String(this.total);
 
@@ -560,6 +647,34 @@ export class WorkflowRunsPage {
         return button;
       }),
     );
+  }
+
+  /**
+   * Rebuilds the Account or Sender picker's options (DOM APIs, text only),
+   * keeping the current choice selected. Left alone while it has focus, so
+   * an automatic refresh doesn't close a list being picked from.
+   *
+   * @param {HTMLSelectElement|null} select - The picker.
+   * @param {Array<{value: string, count: number}>} options - From filterOptions.
+   * @param {string} selected - The value picked ("" for all).
+   * @param {string} allLabel - The "no filter" option's text.
+   */
+  renderPicker(select, options, selected, allLabel) {
+    if (!select || document.activeElement === select) return;
+    const all = document.createElement("option");
+    all.value = "";
+    all.textContent = allLabel;
+    select.replaceChildren(
+      all,
+      ...options.map((entry) => {
+        const option = document.createElement("option");
+        option.value = entry.value;
+        option.textContent = `${entry.value} (${entry.count})`;
+        return option;
+      }),
+    );
+    select.value = selected;
+    select.classList.toggle("active", selected !== "");
   }
 
   /**

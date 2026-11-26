@@ -732,7 +732,15 @@ input.gridjs-input {
 }
 
 #messageDetailsModal .modal-dialog {
-  max-width: min(1400px, 95vw);
+  --bs-modal-width: calc(100vw - 2rem);
+  width: calc(100vw - 2rem);
+  max-width: calc(100vw - 2rem);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#messageDetailsModal .modal-body .gridjs-wrapper {
+  overflow-x: auto;
 }
 
 .btn-view-details {

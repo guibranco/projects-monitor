@@ -183,6 +183,7 @@ class DashboardApp {
     let   _msgDetailGroup = null;
     let   _msgDetailGrid = null;
     let   _msgDetailMsgs = [];
+    let   _msgDetailRequestId = 0;
     const _expandedMsgIds = new Set();
 
     const _esc = (s) =>
@@ -274,7 +275,13 @@ class DashboardApp {
         return;
       }
 
-      body.innerHTML = '';
+      // Render into a brand-new container every time: Preact (used by Grid.js)
+      // keeps the previous virtual tree on the container node, so re-rendering
+      // into the same element after innerHTML = '' reuses the old grid's state
+      // and shows the previous group's messages.
+      body.replaceChildren();
+      const container = document.createElement('div');
+      body.appendChild(container);
       _msgDetailGrid = new gridjs.Grid({
         columns,
         data: _buildMsgDetailGridData(),
@@ -284,21 +291,34 @@ class DashboardApp {
         resizable: false,
         className: { table: 'gridjs-table-dark' },
       });
-      _msgDetailGrid.render(body);
+      _msgDetailGrid.render(container);
+    };
+
+    const _resetMsgDetails = () => {
+      const body = document.getElementById('msgDetailBody');
+      _msgDetailRequestId++; // invalidate any in-flight request
+      _msgDetailGrid = null;
+      _msgDetailMsgs = [];
+      _expandedMsgIds.clear();
+      if (body) {
+        body.replaceChildren();
+        body.innerHTML = `<div class="text-center py-4">
+          <div class="spinner-border text-light" role="status">
+            <span class="visually-hidden">Loading…</span>
+          </div></div>`;
+      }
     };
 
     const _loadMsgDetails = async (sampleId) => {
       const body = document.getElementById('msgDetailBody');
       if (!body) return;
-      _msgDetailGrid = null;
-      _expandedMsgIds.clear();
-      body.innerHTML = `<div class="text-center py-4">
-        <div class="spinner-border text-light" role="status">
-          <span class="visually-hidden">Loading…</span>
-        </div></div>`;
+      _resetMsgDetails();
+      const requestId = _msgDetailRequestId;
 
       try {
         const data = await _apiMgr.getMessageDetails(sampleId);
+        // A newer group was opened (or the modal closed) while this was loading.
+        if (requestId !== _msgDetailRequestId) return;
         _msgDetailMsgs = data.messages ?? [];
 
         if (_msgDetailMsgs.length === 0) {
@@ -308,6 +328,7 @@ class DashboardApp {
 
         _renderMsgDetailGrid();
       } catch (_) {
+        if (requestId !== _msgDetailRequestId) return;
         body.innerHTML = '<div class="alert alert-danger m-3">Failed to load message details.</div>';
       }
     };
@@ -341,6 +362,15 @@ class DashboardApp {
 
       document.getElementById('btn_delete_message_group')?.addEventListener('click', () => {
         window.deleteMessageGroup?.();
+      });
+
+      // Clear everything once the modal is closed so the next group never
+      // briefly (or permanently) shows the previous group's details.
+      document.getElementById('messageDetailsModal')?.addEventListener('hidden.bs.modal', () => {
+        _msgDetailGroup = null;
+        _resetMsgDetails();
+        const subtitle = document.getElementById('msgDetailSubtitle');
+        if (subtitle) subtitle.textContent = '';
       });
     });
 

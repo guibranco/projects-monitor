@@ -733,6 +733,7 @@ input.gridjs-input {
 
 #messageDetailsModal .modal-dialog {
   --bs-modal-width: calc(100vw - 2rem);
+
   width: calc(100vw - 2rem);
   max-width: calc(100vw - 2rem);
   margin-left: auto;

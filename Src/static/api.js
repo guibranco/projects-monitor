@@ -208,15 +208,14 @@ export class ApiManager {
     }
   }
 
+  /**
+   * Fetches the messages of a group. Does not notify on failure: the caller
+   * decides, so a superseded request doesn't raise an error for an old group.
+   */
   async getMessageDetails(sampleId) {
-    try {
-      const response = await fetch(`${API_ENDPOINTS.MESSAGES_DETAILS}?id=${encodeURIComponent(sampleId)}`);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      return await response.json();
-    } catch (error) {
-      NotificationManager.show("Error", `Failed to load message details: ${error.message}`, "error");
-      throw error;
-    }
+    const response = await fetch(`${API_ENDPOINTS.MESSAGES_DETAILS}?id=${encodeURIComponent(sampleId)}`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return await response.json();
   }
 
   async deleteMessageById(id) {

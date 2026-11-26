@@ -2,7 +2,7 @@
 import { OptionsBoxState, FeedState } from './storage.js';
 import { ApiManager, DataLoader } from './api.js';
 import { API_ENDPOINTS, STORAGE_KEYS, FEED_FILTERS } from './constants.js';
-import { UIManager, GitHubStatsManager, CookieManager } from './ui.js';
+import { UIManager, GitHubStatsManager, CookieManager, NotificationManager } from './ui.js';
 import { DataDisplayManager } from './dataDisplay.js';
 import { CollapsibleSectionsManager } from './collapsibleSections.js'; // Add this import
 import { AttentionPanel } from './attention.js';
@@ -184,6 +184,7 @@ class DashboardApp {
     let   _msgDetailGrid = null;
     let   _msgDetailMsgs = [];
     let   _msgDetailRequestId = 0;
+    let   _msgDetailHiding = false;
     const _expandedMsgIds = new Set();
 
     const _esc = (s) =>
@@ -327,8 +328,9 @@ class DashboardApp {
         }
 
         _renderMsgDetailGrid();
-      } catch (_) {
+      } catch (error) {
         if (requestId !== _msgDetailRequestId) return;
+        NotificationManager.show("Error", `Failed to load message details: ${error.message}`, "error");
         body.innerHTML = '<div class="alert alert-danger m-3">Failed to load message details.</div>';
       }
     };
@@ -366,7 +368,12 @@ class DashboardApp {
 
       // Clear everything once the modal is closed so the next group never
       // briefly (or permanently) shows the previous group's details.
-      document.getElementById('messageDetailsModal')?.addEventListener('hidden.bs.modal', () => {
+      const detailsModalEl = document.getElementById('messageDetailsModal');
+      detailsModalEl?.addEventListener('hide.bs.modal', () => {
+        _msgDetailHiding = true;
+      });
+      detailsModalEl?.addEventListener('hidden.bs.modal', () => {
+        _msgDetailHiding = false;
         _msgDetailGroup = null;
         _resetMsgDetails();
         const subtitle = document.getElementById('msgDetailSubtitle');
@@ -375,6 +382,15 @@ class DashboardApp {
     });
 
     window.openMessageDetails = (sampleId, rawApp, rawMsg) => {
+      const pendingEl = document.getElementById('messageDetailsModal');
+      if (pendingEl && _msgDetailHiding) {
+        // Bootstrap ignores show() during the hide transition, and the
+        // hidden.bs.modal reset would wipe this group's state. Open once the
+        // previous close has fully finished (this listener runs after the reset).
+        pendingEl.addEventListener('hidden.bs.modal',
+          () => window.openMessageDetails(sampleId, rawApp, rawMsg), { once: true });
+        return;
+      }
       _msgDetailGroup = { sampleId, rawApp, rawMsg };
       const subtitle = document.getElementById('msgDetailSubtitle');
       if (subtitle) {

@@ -2,7 +2,7 @@
 import { OptionsBoxState, FeedState } from './storage.js';
 import { ApiManager, DataLoader } from './api.js';
 import { API_ENDPOINTS, STORAGE_KEYS, FEED_FILTERS } from './constants.js';
-import { UIManager, GitHubStatsManager, CookieManager } from './ui.js';
+import { UIManager, GitHubStatsManager, CookieManager, NotificationManager } from './ui.js';
 import { DataDisplayManager } from './dataDisplay.js';
 import { CollapsibleSectionsManager } from './collapsibleSections.js'; // Add this import
 import { AttentionPanel } from './attention.js';
@@ -183,6 +183,8 @@ class DashboardApp {
     let   _msgDetailGroup = null;
     let   _msgDetailGrid = null;
     let   _msgDetailMsgs = [];
+    let   _msgDetailRequestId = 0;
+    let   _msgDetailHiding = false;
     const _expandedMsgIds = new Set();
 
     const _esc = (s) =>
@@ -274,7 +276,13 @@ class DashboardApp {
         return;
       }
 
-      body.innerHTML = '';
+      // Render into a brand-new container every time: Preact (used by Grid.js)
+      // keeps the previous virtual tree on the container node, so re-rendering
+      // into the same element after innerHTML = '' reuses the old grid's state
+      // and shows the previous group's messages.
+      body.replaceChildren();
+      const container = document.createElement('div');
+      body.appendChild(container);
       _msgDetailGrid = new gridjs.Grid({
         columns,
         data: _buildMsgDetailGridData(),
@@ -284,21 +292,34 @@ class DashboardApp {
         resizable: false,
         className: { table: 'gridjs-table-dark' },
       });
-      _msgDetailGrid.render(body);
+      _msgDetailGrid.render(container);
+    };
+
+    const _resetMsgDetails = () => {
+      const body = document.getElementById('msgDetailBody');
+      _msgDetailRequestId++; // invalidate any in-flight request
+      _msgDetailGrid = null;
+      _msgDetailMsgs = [];
+      _expandedMsgIds.clear();
+      if (body) {
+        body.replaceChildren();
+        body.innerHTML = `<div class="text-center py-4">
+          <div class="spinner-border text-light" role="status">
+            <span class="visually-hidden">Loading…</span>
+          </div></div>`;
+      }
     };
 
     const _loadMsgDetails = async (sampleId) => {
       const body = document.getElementById('msgDetailBody');
       if (!body) return;
-      _msgDetailGrid = null;
-      _expandedMsgIds.clear();
-      body.innerHTML = `<div class="text-center py-4">
-        <div class="spinner-border text-light" role="status">
-          <span class="visually-hidden">Loading…</span>
-        </div></div>`;
+      _resetMsgDetails();
+      const requestId = _msgDetailRequestId;
 
       try {
         const data = await _apiMgr.getMessageDetails(sampleId);
+        // A newer group was opened (or the modal closed) while this was loading.
+        if (requestId !== _msgDetailRequestId) return;
         _msgDetailMsgs = data.messages ?? [];
 
         if (_msgDetailMsgs.length === 0) {
@@ -307,7 +328,9 @@ class DashboardApp {
         }
 
         _renderMsgDetailGrid();
-      } catch (_) {
+      } catch (error) {
+        if (requestId !== _msgDetailRequestId) return;
+        NotificationManager.show("Error", `Failed to load message details: ${error.message}`, "error");
         body.innerHTML = '<div class="alert alert-danger m-3">Failed to load message details.</div>';
       }
     };
@@ -342,9 +365,32 @@ class DashboardApp {
       document.getElementById('btn_delete_message_group')?.addEventListener('click', () => {
         window.deleteMessageGroup?.();
       });
+
+      // Clear everything once the modal is closed so the next group never
+      // briefly (or permanently) shows the previous group's details.
+      const detailsModalEl = document.getElementById('messageDetailsModal');
+      detailsModalEl?.addEventListener('hide.bs.modal', () => {
+        _msgDetailHiding = true;
+      });
+      detailsModalEl?.addEventListener('hidden.bs.modal', () => {
+        _msgDetailHiding = false;
+        _msgDetailGroup = null;
+        _resetMsgDetails();
+        const subtitle = document.getElementById('msgDetailSubtitle');
+        if (subtitle) subtitle.textContent = '';
+      });
     });
 
     window.openMessageDetails = (sampleId, rawApp, rawMsg) => {
+      const pendingEl = document.getElementById('messageDetailsModal');
+      if (pendingEl && _msgDetailHiding) {
+        // Bootstrap ignores show() during the hide transition, and the
+        // hidden.bs.modal reset would wipe this group's state. Open once the
+        // previous close has fully finished (this listener runs after the reset).
+        pendingEl.addEventListener('hidden.bs.modal',
+          () => window.openMessageDetails(sampleId, rawApp, rawMsg), { once: true });
+        return;
+      }
       _msgDetailGroup = { sampleId, rawApp, rawMsg };
       const subtitle = document.getElementById('msgDetailSubtitle');
       if (subtitle) {

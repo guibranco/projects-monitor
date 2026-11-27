@@ -2254,6 +2254,11 @@ body:not(.show-empty-sections) .page-group:not(:has([data-section]:not(.is-empty
   color: #fff;
 }
 
+.badge-count-neutral {
+  background-color: #6c757d;
+  color: #fff;
+}
+
 .badge-count-total {
   background-color: #000;
   color: #fff;

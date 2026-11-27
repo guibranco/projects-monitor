@@ -432,7 +432,7 @@ class CPanel
 
         try {
             $response = $this->getRequest("json-api", "cpanel", $parameters);
-            return CPanelFileOperation::isSuccessful($response);
+            return (new CPanelFileOperation())->isSuccessful($response);
         } catch (RequestException) {
             return false;
         }
@@ -498,7 +498,7 @@ class CPanel
 
         try {
             $response = $this->getRequest("json-api", "cpanel", $parameters);
-            return CPanelFileOperation::isSuccessful($response);
+            return (new CPanelFileOperation())->isSuccessful($response);
         } catch (RequestException) {
             return false;
         }
@@ -522,7 +522,7 @@ class CPanel
 
         try {
             $response = $this->getRequest("json-api", "cpanel", $parameters);
-            return CPanelFileOperation::isSuccessful($response);
+            return (new CPanelFileOperation())->isSuccessful($response);
         } catch (RequestException) {
             return false;
         }

@@ -20,9 +20,9 @@ class CPanelFileOperation
      *
      * @return bool True when the first result entry reports success.
      */
-    public static function isSuccessful(mixed $response): bool
+    public function isSuccessful(mixed $response): bool
     {
-        $data = $response->cpanelresult->data ?? null;
+        $data = ($response->cpanelresult->data ?? null);
 
         if (is_object($data) === true) {
             $data = [$data];
@@ -32,7 +32,7 @@ class CPanelFileOperation
             return false;
         }
 
-        return isset($data[0]->result) === true && (int) $data[0]->result === 1;
+        return isset($data[0]->result) === true && ((int) $data[0]->result) === 1;
 
     }//end isSuccessful()
 

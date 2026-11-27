@@ -411,6 +411,30 @@ class CPanel
     }
 
     /**
+     * Checks whether a cPanel API2 Fileman::fileop response reports success.
+     *
+     * On failure cPanel may return `cpanelresult->data` as an object instead of
+     * an array, so array access must not be used without checking the type first.
+     *
+     * @param mixed $response The decoded JSON response.
+     * @return bool True when the first result entry reports success.
+     */
+    private function isFileOperationSuccessful(mixed $response): bool
+    {
+        $data = $response->cpanelresult->data ?? null;
+
+        if (is_object($data)) {
+            $data = [$data];
+        }
+
+        if (!is_array($data) || !isset($data[0]) || !is_object($data[0])) {
+            return false;
+        }
+
+        return isset($data[0]->result) && (int) $data[0]->result === 1;
+    }
+
+    /**
     * Deletes an error log file by filename.
     *
     * @param string $directory The directory where ther error_log file to delete is
@@ -432,7 +456,7 @@ class CPanel
 
         try {
             $response = $this->getRequest("json-api", "cpanel", $parameters);
-            return isset($response->cpanelresult->data[0]->result) === true && $response->cpanelresult->data[0]->result === 1;
+            return $this->isFileOperationSuccessful($response);
         } catch (RequestException) {
             return false;
         }
@@ -498,7 +522,7 @@ class CPanel
 
         try {
             $response = $this->getRequest("json-api", "cpanel", $parameters);
-            return isset($response->cpanelresult->data[0]->result) && $response->cpanelresult->data[0]->result === 1;
+            return $this->isFileOperationSuccessful($response);
         } catch (RequestException) {
             return false;
         }
@@ -522,7 +546,7 @@ class CPanel
 
         try {
             $response = $this->getRequest("json-api", "cpanel", $parameters);
-            return isset($response->cpanelresult->data[0]->result) && $response->cpanelresult->data[0]->result === 1;
+            return $this->isFileOperationSuccessful($response);
         } catch (RequestException) {
             return false;
         }

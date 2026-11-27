@@ -22,6 +22,7 @@
     { "sessionCookie": [] }
   ],
   "tags": [
+    { "name": "Applications", "description": "Applications that send messages: create, rename, rotate key and token" },
     { "name": "AppVeyor",    "description": "AppVeyor CI build data" },
     { "name": "Attention",   "description": "Manage-by-exception feed: what needs attention now, with snooze and acknowledge" },
     { "name": "Cloudflare",  "description": "Cloudflare domains (zones) of the account, with status and plan" },
@@ -77,6 +78,20 @@
       }
     },
     "schemas": {
+      "Application": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 7 },
+          "name": { "type": "string", "example": "Projects Monitor" },
+          "key": { "type": "string", "description": "Follows pmk-{acronym}-key", "example": "pmk-pm-key" },
+          "tokenMasked": { "type": "string", "example": "••••••••cdef" },
+          "token": { "type": "string", "description": "Only returned when the application is created or its token rotated", "example": "0123456789abcdef0123456789abcdef" },
+          "keyFollowsPattern": { "type": "boolean" },
+          "createdAt": { "type": "string", "nullable": true, "example": "2026-11-27 00:00:00" },
+          "updatedAt": { "type": "string", "nullable": true, "description": "Set when the application is renamed or its key or token rotated" },
+          "lastSeenAt": { "type": "string", "nullable": true, "description": "When the application last sent a message" }
+        }
+      },
       "AttentionItem": {
         "type": "object",
         "properties": {
@@ -308,6 +323,89 @@
     }
   },
   "paths": {
+    "/api/v1/applications": {
+      "get": {
+        "summary": "List applications",
+        "description": "Every application, with its token masked.",
+        "operationId": "getApplications",
+        "tags": ["Applications"],
+        "responses": {
+          "200": {
+            "description": "The applications.",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "applications": { "type": "array", "items": { "$ref": "#/components/schemas/Application" } } } } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      },
+      "post": {
+        "summary": "Create an application",
+        "description": "Creates an application with a pmk-{acronym}-key key (a number is added when it is taken) and a new token. The response is the only time the full token is returned.",
+        "operationId": "createApplication",
+        "tags": ["Applications"],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["name"], "properties": { "name": { "type": "string", "example": "Projects Monitor" } } } } }
+        },
+        "responses": {
+          "201": {
+            "description": "The application, with its full token.",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "application": { "$ref": "#/components/schemas/Application" } } } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/applications/update": {
+      "post": {
+        "summary": "Rename an application",
+        "description": "Renames an application and sets its updated_at. The key is kept; rotate it to follow the new name.",
+        "operationId": "updateApplication",
+        "tags": ["Applications"],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["id", "name"], "properties": { "id": { "type": "integer", "example": 7 }, "name": { "type": "string", "example": "Projects Monitor" } } } } }
+        },
+        "responses": {
+          "200": {
+            "description": "The application.",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "application": { "$ref": "#/components/schemas/Application" } } } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "description": "Application not found." },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/v1/applications/rotate": {
+      "post": {
+        "summary": "Rotate an application's key or token",
+        "description": "target token: generates a new token (returned in full only in this response). target key: sets the key to the pmk-{acronym}-key built from the current name. The old value stops working at once; updated_at is set.",
+        "operationId": "rotateApplication",
+        "tags": ["Applications"],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["id", "target"], "properties": { "id": { "type": "integer", "example": 7 }, "target": { "type": "string", "enum": ["key", "token"] } } } } }
+        },
+        "responses": {
+          "200": {
+            "description": "The application (with its full token when the token was rotated).",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "application": { "$ref": "#/components/schemas/Application" } } } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "description": "Application not found." },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
     "/api/v1/appveyor": {
       "get": {
         "summary": "AppVeyor builds",

@@ -142,10 +142,7 @@ class Logger
             $ipAddress
         );
 
-        $result = $stmt->execute();
-        $stmt->close();
-
-        return $result;
+        return $this->executeInsert($stmt, $appId);
     }
 
     /**
@@ -208,10 +205,7 @@ class Logger
             $ipAddress
         );
 
-        $result = $stmt->execute();
-        $stmt->close();
-
-        return $result;
+        return $this->executeInsert($stmt, $appId);
     }
 
     /**
@@ -346,8 +340,57 @@ class Logger
 
         $stmt->close();
 
+        if ($result === true) {
+            $this->touchLastSeen($appId);
+        }
+
         return $result;
     }
+
+    /**
+     * Runs a prepared message insert, closes it, and on success records that
+     * the application was just seen.
+     *
+     * @param \mysqli_stmt        $stmt  The bound insert.
+     * @param integer|string|null $appId The application's ID.
+     *
+     * @return boolean Whether the message was stored.
+     */
+    private function executeInsert(\mysqli_stmt $stmt, $appId): bool
+    {
+        $result = $stmt->execute();
+        $stmt->close();
+
+        if ($result === true) {
+            $this->touchLastSeen($appId);
+        }
+
+        return $result;
+
+    }//end executeInsert()
+
+    /**
+     * Records that an application was just seen: sets its last_seen_at to now.
+     * Called after each message of the application is stored. Does not touch
+     * updated_at, which only changes when the application itself is changed.
+     *
+     * @param integer|string|null $applicationId The application's ID (nothing is done when null).
+     *
+     * @return void
+     */
+    protected function touchLastSeen($applicationId): void
+    {
+        if ($applicationId === null) {
+            return;
+        }
+
+        // The ID is cast to an integer, so it is safe to inline.
+        $sql = sprintf("UPDATE applications SET last_seen_at = CURRENT_TIMESTAMP WHERE id = %d", (int) $applicationId);
+        if ($this->connection->query($sql) === false) {
+            error_log(sprintf("Failed to update last_seen_at of application %d", (int) $applicationId));
+        }
+
+    }//end touchLastSeen()
 
     public function getTotal()
     {

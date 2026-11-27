@@ -159,6 +159,39 @@ class LoggerTest extends TestCase
         $this->assertNull(end($captured['values']));
     }
 
+    public function testSaveMessageUpdatesTheApplicationsLastSeen(): void
+    {
+        $this->captureInsert();
+        $queries = [];
+        $this->connMock->method('query')->willReturnCallback(
+            function (string $sql) use (&$queries): bool {
+                $queries[] = $sql;
+                return true;
+            }
+        );
+        $logger = $this->loggerWithHeaders([]);
+
+        $this->assertTrue($logger->saveMessage(42));
+
+        $this->assertSame(["UPDATE applications SET last_seen_at = CURRENT_TIMESTAMP WHERE id = 42"], $queries);
+        $this->assertStringNotContainsString('updated_at', $queries[0]);
+    }
+
+    public function testLogErrorDoesNotUpdateLastSeenWhenTheInsertFails(): void
+    {
+        $stmtMock = $this->createMock(mysqli_stmt::class);
+        $stmtMock->method('bind_param')->willReturn(true);
+        $stmtMock->method('execute')->willReturn(false);
+        $this->connMock->method('prepare')->willReturn($stmtMock);
+        $this->connMock->expects($this->never())->method('query');
+        $logger = $this->loggerWithHeaders([]);
+        $prop = (new ReflectionClass(Logger::class))->getProperty('applicationId');
+        $prop->setAccessible(true);
+        $prop->setValue($logger, 7);
+
+        $this->assertFalse($logger->logError('boom'));
+    }
+
     public function testLogMessageStoresRequesterIpAddress(): void
     {
         $captured = $this->captureInsert();

@@ -2176,3 +2176,54 @@ body:not(.show-empty-sections) .page-group:not(:has([data-section]:not(.is-empty
     width: 100%;
   }
 }
+
+/* ── Applications page ─────────────────────────────────────────────────── */
+.apps-hint {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.875rem;
+}
+
+.apps-table {
+  --bs-table-bg: transparent;
+}
+
+.apps-code {
+  color: #79c0ff;
+}
+
+.apps-muted,
+.apps-code.apps-muted {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.apps-empty {
+  color: rgba(255, 255, 255, 0.6);
+  padding: 1.5rem;
+}
+
+.apps-modal {
+  background: rgba(20, 24, 38, 0.97);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius);
+  color: var(--text-primary);
+}
+
+.apps-modal .modal-header,
+.apps-modal .modal-footer {
+  border-color: var(--glass-border-light);
+}
+
+.apps-modal .form-control,
+.apps-modal .form-control:focus {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--glass-border);
+  color: var(--text-primary);
+}
+
+.apps-form-text {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.apps-warning {
+  color: var(--status-warning);
+}

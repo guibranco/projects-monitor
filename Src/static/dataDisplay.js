@@ -1501,7 +1501,9 @@ export class DataDisplayManager {
       const rowTotal = counts[t].reduce((s, n) => s + n, 0);
       return [
         displayName,
-        ...counts[t].map((n) => this.#countBadge(n)),
+        ...counts[t].map((n, i) =>
+          states[i] === "PROCESSED" ? this.#countBadge(n, "badge-count-neutral") : this.#countBadge(n)
+        ),
         this.#countBadge(rowTotal, "badge-count-total"),
       ];
     });

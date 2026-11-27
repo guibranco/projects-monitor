@@ -19,44 +19,72 @@ class CPanelFileOperationTest extends TestCase
 
 
     /**
-     * Response bodies and whether each one reports success.
+     * Response bodies that report success.
      *
-     * @return array<string, array{0: string, 1: bool}>
+     * @return array<string, array<int, string>>
      */
-    public static function responses(): array
+    public static function successfulResponses(): array
     {
         $cases = [];
-        $cases["success list"]         = ['{"cpanelresult":{"data":[{"result":1}]}}', true];
-        $cases["success as string"]    = ['{"cpanelresult":{"data":[{"result":"1"}]}}', true];
-        $cases["success object"]       = ['{"cpanelresult":{"data":{"result":1}}}', true];
-        $cases["failure list"]         = ['{"cpanelresult":{"data":[{"result":0,"reason":"No such file"}]}}', false];
-        $cases["failure object"]       = ['{"cpanelresult":{"data":{"result":0,"reason":"No such file"}}}', false];
-        $cases["empty object"]         = ['{"cpanelresult":{"data":{}}}', false];
-        $cases["empty list"]           = ['{"cpanelresult":{"data":[]}}', false];
-        $cases["scalar entry"]         = ['{"cpanelresult":{"data":[1]}}', false];
-        $cases["missing data"]         = ['{"cpanelresult":{"error":"Access denied"}}', false];
-        $cases["missing cpanelresult"] = ['{}', false];
-        $cases["null"]                 = ['null', false];
+        $cases["list"]          = ['{"cpanelresult":{"data":[{"result":1}]}}'];
+        $cases["result string"] = ['{"cpanelresult":{"data":[{"result":"1"}]}}'];
+        $cases["object"]        = ['{"cpanelresult":{"data":{"result":1}}}'];
 
         return $cases;
 
-    }//end responses()
+    }//end successfulResponses()
 
 
     /**
-     * Each response shape is read without throwing.
+     * Response bodies that report failure or have an unexpected shape.
      *
-     * @param string $body     The JSON body.
-     * @param bool   $expected Whether it reports success.
+     * @return array<string, array<int, string>>
+     */
+    public static function failedResponses(): array
+    {
+        $cases = [];
+        $cases["failure list"]         = ['{"cpanelresult":{"data":[{"result":0,"reason":"No such file"}]}}'];
+        $cases["failure object"]       = ['{"cpanelresult":{"data":{"result":0,"reason":"No such file"}}}'];
+        $cases["empty object"]         = ['{"cpanelresult":{"data":{}}}'];
+        $cases["empty list"]           = ['{"cpanelresult":{"data":[]}}'];
+        $cases["scalar entry"]         = ['{"cpanelresult":{"data":[1]}}'];
+        $cases["missing data"]         = ['{"cpanelresult":{"error":"Access denied"}}'];
+        $cases["missing cpanelresult"] = ['{}'];
+        $cases["null"]                 = ['null'];
+
+        return $cases;
+
+    }//end failedResponses()
+
+
+    /**
+     * A successful response is read as success.
+     *
+     * @param string $body The JSON body.
      *
      * @return void
      */
-    #[DataProvider('responses')]
-    public function testIsSuccessful(string $body, bool $expected): void
+    #[DataProvider('successfulResponses')]
+    public function testIsSuccessful(string $body): void
     {
-        $this->assertSame($expected, (new CPanelFileOperation())->isSuccessful(json_decode($body)));
+        $this->assertTrue((new CPanelFileOperation())->isSuccessful(json_decode($body)));
 
     }//end testIsSuccessful()
+
+
+    /**
+     * A failed or unexpected response is read as failure without throwing.
+     *
+     * @param string $body The JSON body.
+     *
+     * @return void
+     */
+    #[DataProvider('failedResponses')]
+    public function testIsNotSuccessful(string $body): void
+    {
+        $this->assertFalse((new CPanelFileOperation())->isSuccessful(json_decode($body)));
+
+    }//end testIsNotSuccessful()
 
 
     /**

@@ -18,6 +18,9 @@ export const FEED_FILTERS = {
 };
 
 export const API_ENDPOINTS = {
+  APPLICATIONS: "api/v1/applications",
+  APPLICATIONS_UPDATE: "api/v1/applications/update",
+  APPLICATIONS_ROTATE: "api/v1/applications/rotate",
   APPVEYOR: "api/v1/appveyor",
   ATTENTION: "api/v1/attention",
   ATTENTION_STATE: "api/v1/attention/state",

@@ -12,7 +12,7 @@ RewriteRule ^(.*)$ https://guilherme.straccini.com/projects-monitor/$1 [L,R=301]
 # URLs (main.js?<mtime>, ...), so a stale copy would keep pointing the browser
 # at outdated JS/CSS after a deploy (see static/versionCheck.js).
 <IfModule mod_headers.c>
-    <FilesMatch "^(index|releases|dns)\.php$">
+    <FilesMatch "^(index|releases|dns|applications)\.php$">
         Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
         Header set Pragma "no-cache"
     </FilesMatch>

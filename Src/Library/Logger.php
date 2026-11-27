@@ -145,6 +145,10 @@ class Logger
         $result = $stmt->execute();
         $stmt->close();
 
+        if ($result) {
+            $this->touchLastSeen($appId === null ? null : (int) $appId);
+        }
+
         return $result;
     }
 
@@ -210,6 +214,10 @@ class Logger
 
         $result = $stmt->execute();
         $stmt->close();
+
+        if ($result) {
+            $this->touchLastSeen($appId === null ? null : (int) $appId);
+        }
 
         return $result;
     }
@@ -346,7 +354,34 @@ class Logger
 
         $stmt->close();
 
+        if ($result) {
+            $this->touchLastSeen($appId === null ? null : (int) $appId);
+        }
+
         return $result;
+    }
+
+    /**
+     * Records that an application was just seen: sets its last_seen_at to now.
+     * Called after each message of the application is stored. Does not touch
+     * updated_at, which only changes when the application itself is changed.
+     *
+     * @param int|null $applicationId The application's ID (nothing is done when null).
+     *
+     * @return void
+     */
+    protected function touchLastSeen(?int $applicationId): void
+    {
+        if ($applicationId === null) {
+            return;
+        }
+
+        // The ID is an int, so it is safe to inline; query() keeps the insert's
+        // prepared statement the only one the method prepares.
+        $sql = "UPDATE applications SET last_seen_at = CURRENT_TIMESTAMP WHERE id = " . $applicationId;
+        if ($this->connection->query($sql) === false) {
+            error_log("Failed to update last_seen_at of application " . $applicationId);
+        }
     }
 
     public function getTotal()

@@ -50,6 +50,10 @@ require_once "partials/dashboard-head.php";
       <div class="data-item" data-section="messages_by_applications">
          <div class="section-header">
             <i class="bi bi-app-indicator me-2"></i>Messages by application <span id="counter_messages_by_applications" class="badge rounded-pill"></span>
+            <a href="applications.php" class="btn btn-sm btn-nav-action ms-2" title="Manage applications, keys and tokens"
+               onclick="event.stopPropagation()">
+               <i class="bi bi-key"></i>
+            </a>
          </div>
          <div class="section-content">
             <div class="text-end mb-1">

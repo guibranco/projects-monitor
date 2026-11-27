@@ -5,6 +5,7 @@ require_once __DIR__.'/ApplicationsManagerTestCase.php';
 use GuiBranco\ProjectsMonitor\Library\ApplicationKey;
 use GuiBranco\ProjectsMonitor\Library\ApplicationsException;
 use GuiBranco\ProjectsMonitor\Library\ApplicationsManager;
+use GuiBranco\ProjectsMonitor\Library\InvalidApplicationException;
 
 /**
  * Tests listing the applications and the database failures.
@@ -101,6 +102,48 @@ class ApplicationsManagerQueryTest extends ApplicationsManagerTestCase
         $manager->create("Projects Monitor");
 
     }//end testCreateThrowsWhenTheNewRowIsNotFound()
+
+
+    /**
+     * A duplicate entry (a concurrent write took the name) is reported like
+     * the duplicate-name check; other database errors are rethrown.
+     *
+     * @return void
+     */
+    public function testDuplicateEntryBecomesAnInvalidApplication(): void
+    {
+        $stmt = $this->createMock(mysqli_stmt::class);
+        $stmt->method('bind_param')->willReturn(true);
+        $stmt->method('execute')->willThrowException(new mysqli_sql_exception("Duplicate entry", ApplicationsManager::DUPLICATE_ENTRY));
+        $connection = $this->createMock(mysqli::class);
+        $connection->method('prepare')->willReturn($stmt);
+        $manager = new ApplicationsManager($connection, new ApplicationKey());
+
+        $this->expectException(InvalidApplicationException::class);
+        $manager->rotateToken(5);
+
+    }//end testDuplicateEntryBecomesAnInvalidApplication()
+
+
+    /**
+     * Database errors other than a duplicate entry are rethrown.
+     *
+     * @return void
+     */
+    public function testOtherDatabaseErrorsAreRethrown(): void
+    {
+        $stmt = $this->createMock(mysqli_stmt::class);
+        $stmt->method('bind_param')->willReturn(true);
+        $stmt->method('execute')->willThrowException(new mysqli_sql_exception("Gone away", 2006));
+        $connection = $this->createMock(mysqli::class);
+        $connection->method('prepare')->willReturn($stmt);
+        $manager = new ApplicationsManager($connection, new ApplicationKey());
+
+        $this->expectException(mysqli_sql_exception::class);
+        $this->expectExceptionCode(2006);
+        $manager->rotateToken(5);
+
+    }//end testOtherDatabaseErrorsAreRethrown()
 
 
 }//end class

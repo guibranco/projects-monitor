@@ -384,10 +384,15 @@ class Logger
             return;
         }
 
-        // The ID is cast to an integer, so it is safe to inline.
+        // The ID is cast to an integer, so it is safe to inline. A failure is
+        // only logged: the message itself is already stored.
         $sql = sprintf("UPDATE applications SET last_seen_at = CURRENT_TIMESTAMP WHERE id = %d", (int) $applicationId);
-        if ($this->connection->query($sql) === false) {
-            error_log(sprintf("Failed to update last_seen_at of application %d", (int) $applicationId));
+        try {
+            if ($this->connection->query($sql) === false) {
+                error_log(sprintf("Failed to update last_seen_at of application %d", (int) $applicationId));
+            }
+        } catch (\mysqli_sql_exception $exception) {
+            error_log(sprintf("Failed to update last_seen_at of application %d: %s", (int) $applicationId, $exception->getMessage()));
         }
 
     }//end touchLastSeen()

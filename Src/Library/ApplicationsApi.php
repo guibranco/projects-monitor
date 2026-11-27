@@ -60,7 +60,7 @@ class ApplicationsApi
     {
         try {
             $input       = $this->getInput($body);
-            $application = $this->manager->create((string) ($input["name"] ?? ""));
+            $application = $this->manager->create($this->getName($input));
         } catch (InvalidApplicationException $exception) {
             return $this->getBadRequest($exception);
         }
@@ -84,7 +84,7 @@ class ApplicationsApi
     {
         try {
             $input       = $this->getInput($body);
-            $application = $this->manager->rename($this->getId($input), (string) ($input["name"] ?? ""));
+            $application = $this->manager->rename($this->getId($input), $this->getName($input));
         } catch (InvalidApplicationException $exception) {
             return $this->getBadRequest($exception);
         }
@@ -203,6 +203,27 @@ class ApplicationsApi
         return $input;
 
     }//end getInput()
+
+
+    /**
+     * The application's name from the request ("" when there is none).
+     *
+     * @param array<string, mixed> $input The request body, decoded.
+     *
+     * @return string
+     *
+     * @throws InvalidApplicationException When the name is not a string.
+     */
+    private function getName(array $input): string
+    {
+        $name = ($input["name"] ?? "");
+        if (is_string($name) === false) {
+            throw new InvalidApplicationException("The application's name must be a string");
+        }
+
+        return $name;
+
+    }//end getName()
 
 
     /**

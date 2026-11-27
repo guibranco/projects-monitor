@@ -21,6 +21,11 @@ class ApplicationsManager
     public const MAX_SEQUENCE = 1000;
 
     /**
+     * The MySQL error of a duplicate value in a unique index.
+     */
+    public const DUPLICATE_ENTRY = 1062;
+
+    /**
      * The columns read for an application.
      */
     private const COLUMNS = "id, name, `key`, token, created_at, updated_at, last_seen_at";
@@ -140,7 +145,8 @@ class ApplicationsManager
 
 
     /**
-     * Sets the application's key to the one built from its current name.
+     * Sets the application's key to the one built from its current name. When
+     * the key already is that one, nothing changes (updated_at included).
      *
      * @param integer $appId The application's ID.
      *
@@ -153,8 +159,13 @@ class ApplicationsManager
             return null;
         }
 
+        $key = $this->nextFreeKey((string) $row["name"], $appId);
+        if ($key === $row["key"]) {
+            return $this->getFields($row, false);
+        }
+
         $values = [
-                   $this->nextFreeKey((string) $row["name"], $appId),
+                   $key,
                    $appId,
                   ];
         $this->runStatement("UPDATE applications SET `key` = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", "si", $values)->close();
@@ -361,7 +372,8 @@ class ApplicationsManager
      *
      * @return \mysqli_stmt
      *
-     * @throws ApplicationsException When the statement cannot be prepared or run.
+     * @throws ApplicationsException       When the statement cannot be prepared or run.
+     * @throws InvalidApplicationException When another application has the name or key.
      */
     private function runStatement(string $sql, string $types, array $values): \mysqli_stmt
     {
@@ -371,7 +383,15 @@ class ApplicationsManager
         }
 
         $stmt->bind_param($types, ...$values);
-        if ($stmt->execute() === false) {
+        try {
+            $executed = $stmt->execute();
+        } catch (\mysqli_sql_exception $exception) {
+            $stmt->close();
+            $this->throwDuplicate($exception);
+            throw $exception;
+        }
+
+        if ($executed === false) {
             $error = $this->getError($stmt);
             $stmt->close();
             throw new ApplicationsException(sprintf("Failed to run %s: %s", $sql, $error));
@@ -380,6 +400,25 @@ class ApplicationsManager
         return $stmt;
 
     }//end runStatement()
+
+
+    /**
+     * Turns a duplicate entry (another application took the name or key
+     * between the check and the write) into the same error as the check.
+     *
+     * @param \mysqli_sql_exception $exception The database error.
+     *
+     * @return void
+     *
+     * @throws InvalidApplicationException When the error is a duplicate entry.
+     */
+    private function throwDuplicate(\mysqli_sql_exception $exception): void
+    {
+        if ($exception->getCode() === self::DUPLICATE_ENTRY) {
+            throw new InvalidApplicationException("The name or key is already used by another application", 0, $exception);
+        }
+
+    }//end throwDuplicate()
 
 
     /**

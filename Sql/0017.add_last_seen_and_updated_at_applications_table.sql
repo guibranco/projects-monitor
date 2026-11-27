@@ -7,6 +7,9 @@
 ALTER TABLE applications ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NULL DEFAULT NULL;
 ALTER TABLE applications ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMP NULL DEFAULT NULL;
 
+-- Application names are unique: messages are grouped and deleted by name.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_applications_name ON applications (name);
+
 -- Backfill last_seen_at from the messages already stored.
 UPDATE applications
 SET last_seen_at = (

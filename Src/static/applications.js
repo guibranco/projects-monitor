@@ -37,6 +37,9 @@ class ApplicationsPage {
     this.applications = [];
     this.editingId = null;
     this.pendingRotation = null;
+    this.busy = false;
+    this.openModals = 0;
+    this.afterModalsClosed = [];
 
     this.table = document.getElementById("applications_table");
     this.counter = document.getElementById("counter_applications");
@@ -83,18 +86,84 @@ class ApplicationsPage {
           () => void this.copy(button.dataset.copy),
         ),
       );
+    for (const id of ["app_form_modal", "app_confirm_modal"]) {
+      const element = document.getElementById(id);
+      element.addEventListener("show.bs.modal", () => {
+        this.openModals += 1;
+      });
+      element.addEventListener("hidden.bs.modal", () => this.onModalHidden());
+    }
     this.table.addEventListener("click", (event) => this.onTableClick(event));
 
     this.load();
   }
 
-  load() {
-    this.apiManager.load(API_ENDPOINTS.APPLICATIONS, (data) => {
+  async load() {
+    try {
+      const response = await fetch(API_ENDPOINTS.APPLICATIONS);
+      if (response.status === 401 || response.status === 403) {
+        this.apiManager.showLoginModal();
+        return;
+      }
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || `Request failed (${response.status})`);
+      }
+
       this.applications = Array.isArray(data?.applications)
         ? data.applications
         : [];
       this.render();
-    });
+    } catch (error) {
+      this.table.innerHTML = `<tr><td colspan="7" class="text-center apps-empty">
+          Could not load the applications: ${escapeHtml(error.message)}
+          <button type="button" class="btn btn-sm btn-outline-light ms-2" data-action="retry">Retry</button>
+        </td></tr>`;
+    }
+  }
+
+  /**
+   * Runs the callbacks waiting for the form and confirmation dialogs to be
+   * closed, once both are.
+   */
+  onModalHidden() {
+    this.openModals = Math.max(0, this.openModals - 1);
+    if (this.openModals > 0) {
+      return;
+    }
+
+    const callbacks = this.afterModalsClosed;
+    this.afterModalsClosed = [];
+    callbacks.forEach((callback) => callback());
+  }
+
+  /**
+   * Calls back now, or once the form and confirmation dialogs are closed, so
+   * that one dialog never opens while another is still closing.
+   */
+  whenModalsClosed(callback) {
+    if (this.openModals === 0) {
+      callback();
+      return;
+    }
+
+    this.afterModalsClosed.push(callback);
+  }
+
+  /**
+   * Disables every action while a change is being saved, so two changes
+   * (two rotations, say) never overlap.
+   */
+  setBusy(busy) {
+    this.busy = busy;
+    document
+      .querySelectorAll(
+        "#applications_table button, #app_new, #app_form_submit, #app_confirm_ok",
+      )
+      .forEach((button) => {
+        button.disabled = busy;
+      });
   }
 
   render() {
@@ -116,7 +185,7 @@ class ApplicationsPage {
         const keyWarning = app.keyFollowsPattern
           ? ""
           : ` <i class="bi bi-exclamation-circle text-warning" title="This key does not follow pmk-${escapeHtml(previewKey(app.name).slice(4, -4))}-key. Rotate the key to fix it (the application must then use the new key)."></i>`;
-        return `<tr data-id="${app.id}">
+        return `<tr data-id="${Number(app.id)}">
           <td class="fw-semibold">${escapeHtml(app.name)}</td>
           <td><code class="apps-code">${escapeHtml(app.key)}</code>${keyWarning}</td>
           <td><code class="apps-code apps-muted">${escapeHtml(app.tokenMasked)}</code></td>
@@ -135,7 +204,12 @@ class ApplicationsPage {
 
   onTableClick(event) {
     const button = event.target.closest("button[data-action]");
-    if (!button) {
+    if (!button || this.busy) {
+      return;
+    }
+
+    if (button.dataset.action === "retry") {
+      void this.load();
       return;
     }
 
@@ -182,6 +256,10 @@ class ApplicationsPage {
 
   async submitForm() {
     const name = this.nameInput.value.trim();
+    if (this.busy) {
+      return;
+    }
+
     if (!name) {
       NotificationManager.show("Error", "The name is required", "error");
       return;
@@ -199,12 +277,14 @@ class ApplicationsPage {
     }
 
     this.formModal.hide();
-    this.load();
+    void this.load();
 
     if (creating) {
-      this.showSecret(
-        data.application,
-        `Application ${data.application.name} created`,
+      this.whenModalsClosed(() =>
+        this.showSecret(
+          data.application,
+          `Application ${data.application.name} created`,
+        ),
       );
     } else {
       NotificationManager.show("Success", "Application renamed", "success");
@@ -216,10 +296,14 @@ class ApplicationsPage {
     const name = escapeHtml(app.name);
     document.getElementById("app_confirm_title").textContent =
       target === "key" ? "Rotate key" : "Rotate token";
+    const keyText = app.keyFollowsPattern
+      ? `<p>The key of <strong>${name}</strong> is rebuilt from its name: <code>${escapeHtml(previewKey(app.name))}</code>, or the next free one.</p>
+           <p class="mb-0">The current key <code>${escapeHtml(app.key)}</code> already follows the pattern, so it is likely kept. If it changes, the current one stops working at once.</p>`
+      : `<p>The key of <strong>${name}</strong> becomes <code>${escapeHtml(previewKey(app.name))}</code>, or the next free one.</p>
+           <p class="mb-0">The current key <code>${escapeHtml(app.key)}</code> stops working at once.</p>`;
     document.getElementById("app_confirm_body").innerHTML =
       target === "key"
-        ? `<p>The key of <strong>${name}</strong> becomes <code>${escapeHtml(previewKey(app.name))}</code> (or the next free one).</p>
-           <p class="mb-0">The current key <code>${escapeHtml(app.key)}</code> stops working at once.</p>`
+        ? keyText
         : `<p>A new token is generated for <strong>${name}</strong>.</p>
            <p class="mb-0">The current token stops working at once: update the application with the new one.</p>`;
     this.confirmModal.show();
@@ -229,7 +313,7 @@ class ApplicationsPage {
     const rotation = this.pendingRotation;
     this.pendingRotation = null;
     this.confirmModal.hide();
-    if (!rotation) {
+    if (!rotation || this.busy) {
       return;
     }
 
@@ -238,11 +322,13 @@ class ApplicationsPage {
       return;
     }
 
-    this.load();
+    void this.load();
     if (rotation.target === "token") {
-      this.showSecret(
-        data.application,
-        `Token of ${data.application.name} rotated`,
+      this.whenModalsClosed(() =>
+        this.showSecret(
+          data.application,
+          `Token of ${data.application.name} rotated`,
+        ),
       );
     } else {
       NotificationManager.show(
@@ -276,6 +362,7 @@ class ApplicationsPage {
    * POSTs JSON and returns the parsed response, or null after showing the error.
    */
   async post(url, body) {
+    this.setBusy(true);
     try {
       const response = await fetch(url, {
         method: "POST",
@@ -297,6 +384,8 @@ class ApplicationsPage {
     } catch (error) {
       NotificationManager.show("Error", escapeHtml(error.message), "error");
       return null;
+    } finally {
+      this.setBusy(false);
     }
   }
 }

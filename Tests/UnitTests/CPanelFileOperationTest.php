@@ -95,15 +95,10 @@ class CPanelFileOperationTest extends TestCase
         $request->method("get")->willReturn(new Response(true, $body, "", 200, "", []));
 
         $cPanel = (new ReflectionClass(CPanel::class))->newInstanceWithoutConstructor();
-        $properties = [
-            "request"  => $request,
-            "username" => "user",
-            "baseUrl"  => "https://cpanel.example.com",
-            "apiToken" => "token",
-        ];
-        foreach ($properties as $property => $value) {
-            (new ReflectionProperty($cPanel, $property))->setValue($cPanel, $value);
-        }
+        (new ReflectionProperty($cPanel, "request"))->setValue($cPanel, $request);
+        (new ReflectionProperty($cPanel, "username"))->setValue($cPanel, "user");
+        (new ReflectionProperty($cPanel, "baseUrl"))->setValue($cPanel, "https://cpanel.example.com");
+        (new ReflectionProperty($cPanel, "apiToken"))->setValue($cPanel, "token");
 
         return $cPanel;
 

@@ -2246,7 +2246,7 @@ body:not(.show-empty-sections) .page-group:not(:has([data-section]:not(.is-empty
 
 .badge-count-mid {
   background-color: #fd7e14;
-  color: #fff;
+  color: #212529;
 }
 
 .badge-count-lots {

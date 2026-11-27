@@ -1,8 +1,9 @@
 <?php
 /*
  * POST {"id": 1, "target": "token"|"key"}: rotates the token (returned in
- * full only in this response) or rebuilds the key from the current name. The
- * old value stops working at once.
+ * full only in this response) or rebuilds the key from the current name. A
+ * value that changes stops working at once; a key that already is the one
+ * built from the name is kept.
  */
 
 require_once 'session_validator.php';

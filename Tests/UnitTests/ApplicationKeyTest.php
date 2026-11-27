@@ -158,4 +158,20 @@ class ApplicationKeyTest extends TestCase
     }//end testMaskShowsOnlyTheLastFourCharacters()
 
 
+    /**
+     * A long name's acronym is bounded so that its keys fit VARCHAR(100).
+     *
+     * @return void
+     */
+    public function testAcronymIsBoundedSoTheKeyFitsTheColumn(): void
+    {
+        $name = str_repeat("a ", 100);
+
+        $this->assertSame(ApplicationKey::MAX_ACRONYM_LENGTH, strlen($this->applicationKey->acronym($name)));
+        $this->assertLessThanOrEqual(100, strlen($this->applicationKey->build($name, 1000)));
+        $this->assertTrue($this->applicationKey->matchesName($this->applicationKey->build($name, 1), $name));
+
+    }//end testAcronymIsBoundedSoTheKeyFitsTheColumn()
+
+
 }//end class

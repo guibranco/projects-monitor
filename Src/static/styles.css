@@ -2227,3 +2227,43 @@ body:not(.show-empty-sections) .page-group:not(:has([data-section]:not(.is-empty
 .apps-warning {
   color: var(--status-warning);
 }
+
+/* Processing State Counts: severity badges by quantity */
+.badge-count {
+  min-width: 2.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.badge-count-none {
+  background-color: #198754;
+  color: #fff;
+}
+
+.badge-count-few {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.badge-count-mid {
+  background-color: #fd7e14;
+  color: #212529;
+}
+
+.badge-count-lots {
+  background-color: #dc3545;
+  color: #fff;
+}
+
+.badge-count-neutral {
+  background-color: #6c757d;
+  color: #fff;
+}
+
+.badge-count-total {
+  background-color: #000;
+  color: #fff;
+}
+
+[data-bs-theme="dark"] .badge-count-total {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+}

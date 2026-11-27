@@ -18,41 +18,65 @@ class ApplicationsManager
     /**
      * How many keys with the same acronym are tried before giving up.
      */
-    private const MAX_SEQUENCE = 1000;
+    public const MAX_SEQUENCE = 1000;
 
     /**
+     * The columns read for an application.
+     */
+    private const COLUMNS = "id, name, `key`, token, created_at, updated_at, last_seen_at";
+
+    /**
+     * The database connection.
+     *
      * @var \mysqli
      */
     private $connection;
 
     /**
-     * @param \mysqli|null $connection The connection to use (a new one when null).
+     * Builds the keys and tokens.
+     *
+     * @var ApplicationKey
      */
-    public function __construct($connection = null)
+    private ApplicationKey $applicationKey;
+
+
+    /**
+     * Creates the manager.
+     *
+     * @param \mysqli        $connection     The database connection.
+     * @param ApplicationKey $applicationKey Builds the keys and tokens.
+     */
+    public function __construct($connection, ApplicationKey $applicationKey)
     {
-        $this->connection = $connection ?? (new Database())->getConnection();
-    }
+        $this->connection     = $connection;
+        $this->applicationKey = $applicationKey;
+
+    }//end __construct()
+
 
     /**
      * Every application, by name, with its token masked.
      *
      * @return array<int, array<string, mixed>>
+     *
+     * @throws ApplicationsException When the query fails.
      */
     public function list(): array
     {
-        $sql = "SELECT id, name, `key`, token, created_at, updated_at, last_seen_at FROM applications ORDER BY name";
-        $result = $this->connection->query($sql);
+        $result = $this->connection->query(sprintf("SELECT %s FROM applications ORDER BY name", self::COLUMNS));
         if ($result === false) {
-            throw new \RuntimeException("Failed to list the applications: " . $this->connection->error);
+            throw new ApplicationsException(sprintf("Failed to list the applications: %s", $this->getError($this->connection)));
         }
 
         $applications = [];
-        while ($row = $result->fetch_assoc()) {
-            $applications[] = $this->present($row, false);
+        while (($row = $result->fetch_assoc()) !== null) {
+            $applications[] = $this->getFields($row, false);
         }
 
         return $applications;
-    }
+
+    }//end list()
+
 
     /**
      * Creates an application with a new key and token.
@@ -61,279 +85,327 @@ class ApplicationsManager
      *
      * @return array<string, mixed> The application, with its full token.
      *
-     * @throws \InvalidArgumentException When the name is invalid or already used.
+     * @throws InvalidApplicationException When the name is invalid or already used.
+     * @throws ApplicationsException       When the database fails.
      */
     public function create(string $name): array
     {
-        $name = $this->validateName($name);
-        $this->ensureNameIsFree($name, 0);
+        $name = $this->getValidName($name, 0);
+        $key  = $this->nextFreeKey($name, 0);
 
-        $key = $this->nextFreeKey($name, 0);
-        $token = ApplicationKey::generateToken();
-
-        $stmt = $this->prepare("INSERT INTO applications (`name`, `key`, `token`) VALUES (?, ?, ?)");
-        $stmt->bind_param("sss", $name, $key, $token);
-        $this->execute($stmt, "create the application");
-        $stmt->close();
+        $values = [
+                   $name,
+                   $key,
+                   $this->applicationKey->generateToken(),
+                  ];
+        $this->runStatement("INSERT INTO applications (`name`, `key`, `token`) VALUES (?, ?, ?)", "sss", $values)->close();
 
         // The key is unique, so it identifies the new row.
-        $row = $this->findBy("`key`", "s", $key);
+        $row = $this->getRowBy("`key`", "s", $key);
         if ($row === null) {
-            throw new \RuntimeException("The application " . $name . " was not found after being created");
+            throw new ApplicationsException(sprintf("The application %s was not found after being created", $name));
         }
 
-        return $this->present($row, true);
-    }
+        return $this->getFields($row, true);
+
+    }//end create()
+
 
     /**
      * Renames an application. The key is kept, so the application keeps
      * working; rotate the key to make it follow the new name.
      *
-     * @param int    $id   The application's ID.
-     * @param string $name The new name.
+     * @param integer $appId The application's ID.
+     * @param string  $name  The new name.
      *
      * @return array<string, mixed>|null The application, or null when there is none with this ID.
      *
-     * @throws \InvalidArgumentException When the name is invalid or already used.
+     * @throws InvalidApplicationException When the name is invalid or already used.
      */
-    public function rename(int $id, string $name): ?array
+    public function rename(int $appId, string $name): ?array
     {
-        $name = $this->validateName($name);
-        if ($this->find($id) === null) {
+        if ($this->getRowBy("id", "i", $appId) === null) {
             return null;
         }
 
-        $this->ensureNameIsFree($name, $id);
+        $values = [
+                   $this->getValidName($name, $appId),
+                   $appId,
+                  ];
+        $this->runStatement("UPDATE applications SET `name` = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", "si", $values)->close();
 
-        $stmt = $this->prepare("UPDATE applications SET `name` = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
-        $stmt->bind_param("si", $name, $id);
-        $this->execute($stmt, "rename the application");
-        $stmt->close();
+        return $this->getApplication($appId, false);
 
-        return $this->get($id, false);
-    }
+    }//end rename()
+
 
     /**
      * Sets the application's key to the one built from its current name.
      *
-     * @param int $id The application's ID.
+     * @param integer $appId The application's ID.
      *
      * @return array<string, mixed>|null The application, or null when there is none with this ID.
      */
-    public function rotateKey(int $id): ?array
+    public function rotateKey(int $appId): ?array
     {
-        $application = $this->find($id);
-        if ($application === null) {
+        $row = $this->getRowBy("id", "i", $appId);
+        if ($row === null) {
             return null;
         }
 
-        $key = $this->nextFreeKey($application["name"], $id);
+        $values = [
+                   $this->nextFreeKey((string) $row["name"], $appId),
+                   $appId,
+                  ];
+        $this->runStatement("UPDATE applications SET `key` = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", "si", $values)->close();
 
-        $stmt = $this->prepare("UPDATE applications SET `key` = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
-        $stmt->bind_param("si", $key, $id);
-        $this->execute($stmt, "rotate the application's key");
-        $stmt->close();
+        return $this->getApplication($appId, false);
 
-        return $this->get($id, false);
-    }
+    }//end rotateKey()
+
 
     /**
      * Gives the application a new token. The old one stops working at once.
      *
-     * @param int $id The application's ID.
+     * @param integer $appId The application's ID.
      *
      * @return array<string, mixed>|null The application with its full new token, or null when there is none with this ID.
      */
-    public function rotateToken(int $id): ?array
+    public function rotateToken(int $appId): ?array
     {
-        if ($this->find($id) === null) {
+        if ($this->getRowBy("id", "i", $appId) === null) {
             return null;
         }
 
-        $token = ApplicationKey::generateToken();
+        $values = [
+                   $this->applicationKey->generateToken(),
+                   $appId,
+                  ];
+        $this->runStatement("UPDATE applications SET token = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", "si", $values)->close();
 
-        $stmt = $this->prepare("UPDATE applications SET token = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
-        $stmt->bind_param("si", $token, $id);
-        $this->execute($stmt, "rotate the application's token");
-        $stmt->close();
+        return $this->getApplication($appId, true);
 
-        return $this->get($id, true);
-    }
+    }//end rotateToken()
+
 
     /**
      * The first key for the name that no other application uses.
      *
-     * @param string $name      The application's name.
-     * @param int    $excludeId The application the key is for (0 for a new one).
+     * @param string  $name      The application's name.
+     * @param integer $excludeId The application the key is for (0 for a new one).
      *
      * @return string
+     *
+     * @throws ApplicationsException When every key up to MAX_SEQUENCE is taken.
      */
     public function nextFreeKey(string $name, int $excludeId): string
     {
-        $used = $this->keysInUse($name, $excludeId);
+        $used = $this->getKeysInUse($name, $excludeId);
 
         for ($sequence = 1; $sequence <= self::MAX_SEQUENCE; $sequence++) {
-            $key = ApplicationKey::build($name, $sequence);
+            $key = $this->applicationKey->build($name, $sequence);
             if (in_array($key, $used, true) === false) {
                 return $key;
             }
         }
 
-        throw new \RuntimeException("No free key for the application " . $name);
-    }
+        throw new ApplicationsException(sprintf("No free key for the application %s", $name));
+
+    }//end nextFreeKey()
+
 
     /**
-     * Trims the name and checks it is not empty and fits the column.
+     * The name trimmed, once checked: not empty, fits the column, and not used
+     * by another application.
      *
-     * @param string $name The name.
+     * @param string  $name      The name.
+     * @param integer $excludeId The application being named (0 for a new one).
      *
-     * @return string The trimmed name.
+     * @return string
+     *
+     * @throws InvalidApplicationException When the name is invalid or already used.
      */
-    public function validateName(string $name): string
+    public function getValidName(string $name, int $excludeId): string
     {
-        $name = trim(preg_replace("/\s+/u", " ", $name) ?? "");
+        $name = trim((string) preg_replace("/\s+/u", " ", $name));
         if ($name === "") {
-            throw new \InvalidArgumentException("The application's name is required");
+            throw new InvalidApplicationException("The application's name is required");
         }
 
         if (mb_strlen($name) > self::NAME_MAX_LENGTH) {
-            throw new \InvalidArgumentException("The application's name must have at most " . self::NAME_MAX_LENGTH . " characters");
+            throw new InvalidApplicationException(sprintf("The application's name must have at most %d characters", self::NAME_MAX_LENGTH));
+        }
+
+        $stmt = $this->runStatement("SELECT id FROM applications WHERE `name` = ? AND id <> ? LIMIT 1", "si", [$name, $excludeId]);
+        $row  = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if ($row !== null) {
+            throw new InvalidApplicationException(sprintf("There is already an application named %s", $name));
         }
 
         return $name;
-    }
+
+    }//end getValidName()
+
+
+    /**
+     * The fields the UI needs, the token masked unless asked for.
+     *
+     * @param array<string, mixed> $row       The application's row.
+     * @param boolean              $withToken Whether to include the full token.
+     *
+     * @return array<string, mixed>
+     */
+    public function getFields(array $row, bool $withToken): array
+    {
+        $name  = (string) $row["name"];
+        $key   = (string) $row["key"];
+        $token = (string) $row["token"];
+
+        $application = [
+                        "id"                => (int) $row["id"],
+                        "name"              => $name,
+                        "key"               => $key,
+                        "tokenMasked"       => $this->applicationKey->mask($token),
+                        "keyFollowsPattern" => $this->applicationKey->matchesName($key, $name),
+                        "createdAt"         => ($row["created_at"] ?? null),
+                        "updatedAt"         => ($row["updated_at"] ?? null),
+                        "lastSeenAt"        => ($row["last_seen_at"] ?? null),
+                       ];
+
+        if ($withToken === true) {
+            $application["token"] = $token;
+        }
+
+        return $application;
+
+    }//end getFields()
+
 
     /**
      * The keys other applications use that start like the name's key.
      *
-     * @param string $name      The application's name.
-     * @param int    $excludeId The application to leave out.
+     * @param string  $name      The application's name.
+     * @param integer $excludeId The application to leave out.
      *
      * @return string[]
      */
-    private function keysInUse(string $name, int $excludeId): array
+    private function getKeysInUse(string $name, int $excludeId): array
     {
-        $prefix = ApplicationKey::PREFIX . ApplicationKey::acronym($name) . "%";
-        $stmt = $this->prepare("SELECT `key` FROM applications WHERE `key` LIKE ? AND id <> ?");
-        $stmt->bind_param("si", $prefix, $excludeId);
-        $this->execute($stmt, "read the keys in use");
+        $prefix = sprintf("%s%s%%", ApplicationKey::PREFIX, $this->applicationKey->acronym($name));
+        $stmt   = $this->runStatement("SELECT `key` FROM applications WHERE `key` LIKE ? AND id <> ?", "si", [$prefix, $excludeId]);
         $result = $stmt->get_result();
 
         $keys = [];
-        while ($row = $result->fetch_assoc()) {
+        while (($row = $result->fetch_assoc()) !== null) {
             $keys[] = $row["key"];
         }
 
         $stmt->close();
 
         return $keys;
-    }
+
+    }//end getKeysInUse()
+
 
     /**
-     * @throws \InvalidArgumentException When another application has the name.
+     * The application, with the fields the UI needs.
+     *
+     * @param integer $appId     The application's ID.
+     * @param boolean $withToken Whether to include the full token.
+     *
+     * @return array<string, mixed>
+     *
+     * @throws ApplicationsException When there is no application with this ID.
      */
-    private function ensureNameIsFree(string $name, int $excludeId): void
+    private function getApplication(int $appId, bool $withToken): array
     {
-        $stmt = $this->prepare("SELECT id FROM applications WHERE `name` = ? AND id <> ? LIMIT 1");
-        $stmt->bind_param("si", $name, $excludeId);
-        $this->execute($stmt, "check the application's name");
-        $row = $stmt->get_result()->fetch_assoc();
-        $stmt->close();
-
-        if ($row !== null) {
-            throw new \InvalidArgumentException("There is already an application named " . $name);
+        $row = $this->getRowBy("id", "i", $appId);
+        if ($row === null) {
+            throw new ApplicationsException(sprintf("Application %d not found", $appId));
         }
-    }
 
-    /**
-     * The application's row, or null.
-     *
-     * @param int $id The application's ID.
-     *
-     * @return array<string, mixed>|null
-     */
-    private function find(int $id): ?array
-    {
-        return $this->findBy("id", "i", $id);
-    }
+        return $this->getFields($row, $withToken);
+
+    }//end getApplication()
+
 
     /**
      * The row whose column equals the value, or null.
      *
-     * @param string     $column The column, from this class only (never user input).
-     * @param string     $type   The bind_param type of the value.
-     * @param int|string $value  The value.
+     * @param string         $column The column, from this class only (never user input).
+     * @param string         $type   The bind_param type of the value.
+     * @param integer|string $value  The value.
      *
      * @return array<string, mixed>|null
      */
-    private function findBy(string $column, string $type, $value): ?array
+    private function getRowBy(string $column, string $type, $value): ?array
     {
-        $stmt = $this->prepare("SELECT id, name, `key`, token, created_at, updated_at, last_seen_at FROM applications WHERE " . $column . " = ?");
-        $stmt->bind_param($type, $value);
-        $this->execute($stmt, "read the application");
-        $row = $stmt->get_result()->fetch_assoc();
+        $sql  = sprintf("SELECT %s FROM applications WHERE %s = ?", self::COLUMNS, $column);
+        $stmt = $this->runStatement($sql, $type, [$value]);
+        $row  = $stmt->get_result()->fetch_assoc();
         $stmt->close();
 
-        return $row ?: null;
-    }
+        return $row;
+
+    }//end getRowBy()
+
 
     /**
-     * The application, presented.
-     */
-    private function get(int $id, bool $withToken): array
-    {
-        $row = $this->find($id);
-        if ($row === null) {
-            throw new \RuntimeException("Application " . $id . " not found");
-        }
-
-        return $this->present($row, $withToken);
-    }
-
-    /**
-     * The fields the UI needs, the token masked unless asked for.
+     * Prepares, binds and runs a statement. The caller closes it.
      *
-     * @param array<string, mixed> $row       The application's row.
-     * @param bool                 $withToken Whether to include the full token.
+     * @param string            $sql    The SQL, with ? placeholders.
+     * @param string            $types  The bind_param types.
+     * @param array<int, mixed> $values The values.
      *
-     * @return array<string, mixed>
+     * @return \mysqli_stmt
+     *
+     * @throws ApplicationsException When the statement cannot be prepared or run.
      */
-    public function present(array $row, bool $withToken): array
-    {
-        $application = [
-            "id" => (int) $row["id"],
-            "name" => (string) $row["name"],
-            "key" => (string) $row["key"],
-            "tokenMasked" => ApplicationKey::mask((string) $row["token"]),
-            "keyFollowsPattern" => ApplicationKey::matchesName((string) $row["key"], (string) $row["name"]),
-            "createdAt" => $row["created_at"] ?? null,
-            "updatedAt" => $row["updated_at"] ?? null,
-            "lastSeenAt" => $row["last_seen_at"] ?? null,
-        ];
-
-        if ($withToken) {
-            $application["token"] = (string) $row["token"];
-        }
-
-        return $application;
-    }
-
-    private function prepare(string $sql): \mysqli_stmt
+    private function runStatement(string $sql, string $types, array $values): \mysqli_stmt
     {
         $stmt = $this->connection->prepare($sql);
         if ($stmt === false) {
-            throw new \RuntimeException("Prepare failed: " . $this->connection->error);
+            throw new ApplicationsException(sprintf("Prepare failed: %s", $this->getError($this->connection)));
+        }
+
+        $stmt->bind_param($types, ...$values);
+        if ($stmt->execute() === false) {
+            $error = $this->getError($stmt);
+            $stmt->close();
+            throw new ApplicationsException(sprintf("Failed to run %s: %s", $sql, $error));
         }
 
         return $stmt;
-    }
 
-    private function execute(\mysqli_stmt $stmt, string $action): void
+    }//end runStatement()
+
+
+    /**
+     * The error of a connection or statement, or "unknown error" when it
+     * cannot be read (the object is already closed, for example).
+     *
+     * @param \mysqli|\mysqli_stmt $handle The connection or statement.
+     *
+     * @return string
+     */
+    private function getError($handle): string
     {
-        if ($stmt->execute() === false) {
-            $error = $stmt->error;
-            $stmt->close();
-            throw new \RuntimeException("Failed to " . $action . ": " . $error);
+        $error = "";
+        try {
+            $error = (string) $handle->error;
+        } catch (\Throwable $exception) {
+            $error = sprintf("unknown error (%s)", get_class($exception));
         }
-    }
-}
+
+        if ($error === "") {
+            $error = "unknown error";
+        }
+
+        return $error;
+
+    }//end getError()
+
+
+}//end class

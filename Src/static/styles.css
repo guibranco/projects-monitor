@@ -2187,12 +2187,12 @@ body:not(.show-empty-sections) .page-group:not(:has([data-section]:not(.is-empty
   --bs-table-bg: transparent;
 }
 
-.apps-table code {
+.apps-code {
   color: #79c0ff;
 }
 
 .apps-muted,
-.apps-table code.apps-muted {
+.apps-code.apps-muted {
   color: rgba(255, 255, 255, 0.5);
 }
 

@@ -8,10 +8,9 @@ ALTER TABLE applications ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NULL DEFA
 ALTER TABLE applications ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMP NULL DEFAULT NULL;
 
 -- Backfill last_seen_at from the messages already stored.
-UPDATE applications AS a
-INNER JOIN (
-    SELECT application_id, MAX(created_at) AS last_message_at
+UPDATE applications
+SET last_seen_at = (
+    SELECT MAX(messages.created_at)
     FROM messages
-    GROUP BY application_id
-) AS m ON m.application_id = a.id
-SET a.last_seen_at = m.last_message_at;
+    WHERE messages.application_id = applications.id
+);

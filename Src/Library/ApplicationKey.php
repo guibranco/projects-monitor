@@ -23,10 +23,16 @@ class ApplicationKey
      */
     public const TOKEN_LENGTH = 32;
 
+    /**
+     * The longest acronym, so that a key (prefix, acronym, sequence up to
+     * 4 digits, suffix) fits the applications.key column, VARCHAR(100).
+     */
+    public const MAX_ACRONYM_LENGTH = 80;
+
 
     /**
      * The acronym of an application's name: the first character of each word,
-     * lowercase. Words are split on spaces, punctuation and camelCase
+     * lowercase, at most MAX_ACRONYM_LENGTH characters. Words are split on spaces, punctuation and camelCase
      * boundaries, and accents are dropped ("Projects Monitor" → "pm",
      * "WebhooksHandler" → "wh", "API BR - Vagas" → "abv").
      *
@@ -48,7 +54,7 @@ class ApplicationKey
             $acronym .= strtolower($word[0]);
         }
 
-        return $acronym;
+        return substr($acronym, 0, self::MAX_ACRONYM_LENGTH);
 
     }//end acronym()
 

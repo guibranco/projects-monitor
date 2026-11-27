@@ -386,7 +386,7 @@
     "/api/v1/applications/rotate": {
       "post": {
         "summary": "Rotate an application's key or token",
-        "description": "target token: generates a new token (returned in full only in this response). target key: sets the key to the pmk-{acronym}-key built from the current name. The old value stops working at once; updated_at is set.",
+        "description": "target token: generates a new token (returned in full only in this response). target key: sets the key to the pmk-{acronym}-key built from the current name; when the key already is that one, nothing changes. A value that changes stops working at once, and updated_at is set.",
         "operationId": "rotateApplication",
         "tags": ["Applications"],
         "requestBody": {

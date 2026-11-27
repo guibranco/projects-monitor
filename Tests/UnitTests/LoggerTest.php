@@ -177,6 +177,15 @@ class LoggerTest extends TestCase
         $this->assertStringNotContainsString('updated_at', $queries[0]);
     }
 
+    public function testSaveMessageSucceedsWhenTheLastSeenUpdateFails(): void
+    {
+        $this->captureInsert();
+        $this->connMock->method('query')->willThrowException(new mysqli_sql_exception('Lock wait timeout', 1205));
+        $logger = $this->loggerWithHeaders([]);
+
+        $this->assertTrue($logger->saveMessage(42));
+    }
+
     public function testLogErrorDoesNotUpdateLastSeenWhenTheInsertFails(): void
     {
         $stmtMock = $this->createMock(mysqli_stmt::class);

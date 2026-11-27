@@ -4,7 +4,7 @@
 import { API_ENDPOINTS } from "./constants.js";
 import { ApiManager } from "./api.js";
 import { NotificationManager } from "./ui.js";
-import { relativeTimeHtml } from "./timeFormat.js";
+import { formatRelative, parseTableDate } from "./timeFormat.js";
 
 const escapeHtml = (value) =>
   String(value ?? "")
@@ -13,6 +13,44 @@ const escapeHtml = (value) =>
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+
+/**
+ * Creates an element with the given attributes and children (strings become
+ * text nodes, so no value is ever parsed as HTML).
+ *
+ * @param {string} tag - The tag name.
+ * @param {Object<string, string>} [attributes] - The attributes to set.
+ * @param {...(Node|string)} children - The child nodes or texts.
+ * @returns {HTMLElement}
+ */
+function el(tag, attributes = {}, ...children) {
+  const element = document.createElement(tag);
+  for (const [name, value] of Object.entries(attributes)) {
+    element.setAttribute(name, value);
+  }
+  element.append(...children);
+  return element;
+}
+
+/**
+ * A <time> element showing a table date relatively, the exact value on
+ * hover; the text itself when it is not a date.
+ *
+ * @param {string} text - The date text.
+ * @returns {Node}
+ */
+function relativeTimeNode(text) {
+  const date = parseTableDate(text);
+  if (!date) {
+    return document.createTextNode(String(text));
+  }
+
+  return el(
+    "time",
+    { datetime: date.toISOString(), title: String(text) },
+    formatRelative(date, Date.now()),
+  );
+}
 
 /**
  * The key built from a name, as ApplicationKey::build() does on the server
@@ -189,36 +227,82 @@ class ApplicationsPage {
     this.counter.textContent = String(this.applications.length);
 
     if (this.applications.length === 0) {
-      this.table.innerHTML =
-        '<tr><td colspan="7" class="text-center apps-empty">No applications yet.</td></tr>';
+      this.table.replaceChildren(
+        el(
+          "tr",
+          {},
+          el(
+            "td",
+            { colspan: "7", class: "text-center apps-empty" },
+            "No applications yet.",
+          ),
+        ),
+      );
       return;
     }
 
     const when = (value, empty) =>
       value
-        ? (relativeTimeHtml(value) ?? escapeHtml(value))
-        : `<span class="apps-muted">${empty}</span>`;
+        ? relativeTimeNode(value)
+        : el("span", { class: "apps-muted" }, empty);
+    const action = (name, title, style, icon) =>
+      el(
+        "button",
+        {
+          type: "button",
+          class: `btn btn-sm btn-outline-${style}`,
+          "data-action": name,
+          title,
+        },
+        el("i", { class: `bi ${icon}` }),
+      );
 
-    this.table.innerHTML = this.applications
-      .map((app) => {
-        const keyWarning = app.keyFollowsPattern
-          ? ""
-          : ` <i class="bi bi-exclamation-circle text-warning" title="This key does not follow pmk-${escapeHtml(previewKey(app.name).slice(4, -4))}-key. Rotate the key to fix it (the application must then use the new key)."></i>`;
-        return `<tr data-id="${Number(app.id)}">
-          <td class="fw-semibold">${escapeHtml(app.name)}</td>
-          <td><code class="apps-code">${escapeHtml(app.key)}</code>${keyWarning}</td>
-          <td><code class="apps-code apps-muted">${escapeHtml(app.tokenMasked)}</code></td>
-          <td>${when(app.lastSeenAt, "never")}</td>
-          <td>${when(app.updatedAt, "—")}</td>
-          <td>${when(app.createdAt, "—")}</td>
-          <td class="text-end text-nowrap">
-            <button type="button" class="btn btn-sm btn-outline-light" data-action="rename" title="Rename"><i class="bi bi-pencil"></i></button>
-            <button type="button" class="btn btn-sm btn-outline-warning" data-action="rotate-key" title="Rotate key"><i class="bi bi-key"></i></button>
-            <button type="button" class="btn btn-sm btn-outline-danger" data-action="rotate-token" title="Rotate token"><i class="bi bi-arrow-repeat"></i></button>
-          </td>
-        </tr>`;
-      })
-      .join("");
+    this.table.replaceChildren(
+      ...this.applications.map((app) => {
+        const keyCell = el(
+          "td",
+          {},
+          el("code", { class: "apps-code" }, String(app.key ?? "")),
+        );
+        if (!app.keyFollowsPattern) {
+          keyCell.append(
+            " ",
+            el("i", {
+              class: "bi bi-exclamation-circle text-warning",
+              title: `This key does not follow pmk-${previewKey(app.name).slice(4, -4)}-key. Rotate the key to fix it (the application must then use the new key).`,
+            }),
+          );
+        }
+
+        return el(
+          "tr",
+          { "data-id": String(Number(app.id)) },
+          el("td", { class: "fw-semibold" }, String(app.name ?? "")),
+          keyCell,
+          el(
+            "td",
+            {},
+            el(
+              "code",
+              { class: "apps-code apps-muted" },
+              String(app.tokenMasked ?? ""),
+            ),
+          ),
+          el("td", {}, when(app.lastSeenAt, "never")),
+          el("td", {}, when(app.updatedAt, "—")),
+          el("td", {}, when(app.createdAt, "—")),
+          el(
+            "td",
+            { class: "text-end text-nowrap" },
+            action("rename", "Rename", "light", "bi-pencil"),
+            " ",
+            action("rotate-key", "Rotate key", "warning", "bi-key"),
+            " ",
+            action("rotate-token", "Rotate token", "danger", "bi-arrow-repeat"),
+          ),
+        );
+      }),
+    );
   }
 
   onTableClick(event) {
@@ -268,9 +352,16 @@ class ApplicationsPage {
       return;
     }
 
-    this.preview.innerHTML = name
-      ? `Key: <code>${escapeHtml(previewKey(name))}</code> (a number is added when it is taken)`
-      : "";
+    if (!name) {
+      this.preview.replaceChildren();
+      return;
+    }
+
+    this.preview.replaceChildren(
+      "Key: ",
+      el("code", {}, previewKey(name)),
+      " (a number is added when it is taken)",
+    );
   }
 
   async submitForm() {
@@ -312,19 +403,61 @@ class ApplicationsPage {
 
   askRotation(app, target) {
     this.pendingRotation = { id: app.id, target };
-    const name = escapeHtml(app.name);
+    const name = () => el("strong", {}, String(app.name ?? ""));
+    const code = (text) => el("code", {}, String(text ?? ""));
     document.getElementById("app_confirm_title").textContent =
       target === "key" ? "Rotate key" : "Rotate token";
-    const keyText = app.keyFollowsPattern
-      ? `<p>The key of <strong>${name}</strong> is rebuilt from its name: <code>${escapeHtml(previewKey(app.name))}</code>, or the next free one.</p>
-           <p class="mb-0">The current key <code>${escapeHtml(app.key)}</code> already follows the pattern, so it is likely kept. If it changes, the current one stops working at once.</p>`
-      : `<p>The key of <strong>${name}</strong> becomes <code>${escapeHtml(previewKey(app.name))}</code>, or the next free one.</p>
-           <p class="mb-0">The current key <code>${escapeHtml(app.key)}</code> stops working at once.</p>`;
-    document.getElementById("app_confirm_body").innerHTML =
-      target === "key"
-        ? keyText
-        : `<p>A new token is generated for <strong>${name}</strong>.</p>
-           <p class="mb-0">The current token stops working at once: update the application with the new one.</p>`;
+
+    let paragraphs;
+    if (target !== "key") {
+      paragraphs = [
+        el("p", {}, "A new token is generated for ", name(), "."),
+        el(
+          "p",
+          { class: "mb-0" },
+          "The current token stops working at once: update the application with the new one.",
+        ),
+      ];
+    } else if (app.keyFollowsPattern) {
+      paragraphs = [
+        el(
+          "p",
+          {},
+          "The key of ",
+          name(),
+          " is rebuilt from its name: ",
+          code(previewKey(app.name)),
+          ", or the next free one.",
+        ),
+        el(
+          "p",
+          { class: "mb-0" },
+          "The current key ",
+          code(app.key),
+          " already follows the pattern, so it is likely kept. If it changes, the current one stops working at once.",
+        ),
+      ];
+    } else {
+      paragraphs = [
+        el(
+          "p",
+          {},
+          "The key of ",
+          name(),
+          " becomes ",
+          code(previewKey(app.name)),
+          ", or the next free one.",
+        ),
+        el(
+          "p",
+          { class: "mb-0" },
+          "The current key ",
+          code(app.key),
+          " stops working at once.",
+        ),
+      ];
+    }
+    document.getElementById("app_confirm_body").replaceChildren(...paragraphs);
     this.confirmModal.show();
   }
 

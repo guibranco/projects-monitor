@@ -95,11 +95,12 @@ class ApplicationsPage {
     }
     this.table.addEventListener("click", (event) => this.onTableClick(event));
 
-    this.load();
+    void this.load();
   }
 
   async load() {
     try {
+      // eslint-disable-next-line compat/compat
       const response = await fetch(API_ENDPOINTS.APPLICATIONS);
       if (response.status === 401 || response.status === 403) {
         this.apiManager.showLoginModal();
@@ -116,11 +117,29 @@ class ApplicationsPage {
         : [];
       this.render();
     } catch (error) {
-      this.table.innerHTML = `<tr><td colspan="7" class="text-center apps-empty">
-          Could not load the applications: ${escapeHtml(error.message)}
-          <button type="button" class="btn btn-sm btn-outline-light ms-2" data-action="retry">Retry</button>
-        </td></tr>`;
+      this.showLoadError(error.message);
     }
+  }
+
+  /**
+   * Replaces the table body with the load error and a Retry button.
+   */
+  showLoadError(message) {
+    const cell = document.createElement("td");
+    cell.colSpan = 7;
+    cell.className = "text-center apps-empty";
+    cell.textContent = `Could not load the applications: ${message}`;
+
+    const retry = document.createElement("button");
+    retry.type = "button";
+    retry.className = "btn btn-sm btn-outline-light ms-2";
+    retry.dataset.action = "retry";
+    retry.textContent = "Retry";
+    cell.append(retry);
+
+    const row = document.createElement("tr");
+    row.append(cell);
+    this.table.replaceChildren(row);
   }
 
   /**
@@ -364,6 +383,7 @@ class ApplicationsPage {
   async post(url, body) {
     this.setBusy(true);
     try {
+      // eslint-disable-next-line compat/compat
       const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

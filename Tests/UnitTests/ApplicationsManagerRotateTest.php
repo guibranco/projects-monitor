@@ -107,4 +107,21 @@ class ApplicationsManagerRotateTest extends ApplicationsManagerTestCase
     }//end testNextFreeKeyThrowsWhenEveryKeyIsTaken()
 
 
+    /**
+     * A key that already is the one built from the name is kept, and nothing is updated.
+     *
+     * @return void
+     */
+    public function testRotateKeyKeepsAKeyThatAlreadyFollowsTheName(): void
+    {
+        $manager = $this->getManager(["WHERE id = ?" => [[$this->getRow([])]]]);
+
+        $application = $manager->rotateKey(5);
+
+        $this->assertSame("pmk-pm-key", $application["key"]);
+        $this->assertCount(0, $this->getStatements("UPDATE applications"));
+
+    }//end testRotateKeyKeepsAKeyThatAlreadyFollowsTheName()
+
+
 }//end class

@@ -160,4 +160,22 @@ class ApplicationsApiTest extends TestCase
     }//end testRotateAnswers400Or404()
 
 
+    /**
+     * A name that is not a string answers 400 without calling the manager.
+     *
+     * @return void
+     */
+    public function testNonStringNameAnswers400(): void
+    {
+        $manager = $this->getManager();
+        $manager->expects($this->never())->method("create");
+        $manager->expects($this->never())->method("rename");
+        $api = new ApplicationsApi($manager);
+
+        $this->assertSame([400, ["error" => "The application's name must be a string"]], $api->create('{"name":[]}'));
+        $this->assertSame(400, $api->update('{"id":5,"name":42}')[0]);
+
+    }//end testNonStringNameAnswers400()
+
+
 }//end class

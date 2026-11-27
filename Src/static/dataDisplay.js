@@ -857,6 +857,20 @@ export class DataDisplayManager {
     }
   }
 
+  /**
+   * Maps a count to a severity badge class: 0 green, few yellow, mid orange, lots red.
+   */
+  #countBadgeClass(count) {
+    if (count <= 0) return "badge-count-none";
+    if (count <= 10) return "badge-count-few";
+    if (count <= 100) return "badge-count-mid";
+    return "badge-count-lots";
+  }
+
+  #countBadge(count, cls = this.#countBadgeClass(count)) {
+    return `<span class="badge badge-count ${cls}">${Number(count).toLocaleString()}</span>`;
+  }
+
   #stateBadge(state) {
     return `<span class="badge ${this.#stateBadgeClass(state)}">${this.#escHtml(state)}</span>`;
   }
@@ -1480,19 +1494,23 @@ export class DataDisplayManager {
       "github_users",
     ];
 
-    const header = ["Table", ...states];
-    const rows = tables.map((table) => {
+    const header = ["Table", ...states, "Total"];
+    const counts = tables.map((table) => states.map((state) => Number(response[state]?.[table] ?? 0)));
+    const rows = tables.map((table, t) => {
       const displayName = table.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-      return [displayName, ...states.map((state) => (response[state]?.[table] ?? 0))];
+      const rowTotal = counts[t].reduce((s, n) => s + n, 0);
+      return [
+        displayName,
+        ...counts[t].map((n) => this.#countBadge(n)),
+        this.#countBadge(rowTotal, "badge-count-total"),
+      ];
     });
 
     const data = [header, ...rows];
 
     const counterEl = document.getElementById("counter_webhook_processing_stats");
     if (counterEl) {
-      const total = rows.reduce((sum, row) => {
-        return sum + states.reduce((s, _, i) => s + (row[i + 1] || 0), 0);
-      }, 0);
+      const total = counts.reduce((sum, row) => sum + row.reduce((s, n) => s + n, 0), 0);
       counterEl.innerHTML = total;
     }
 
